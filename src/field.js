@@ -156,7 +156,6 @@ export class Field {
     for (const p of this.pois) {
       if (p.gone && s.sw[p.gone]) continue; // a beaten Pumpkin / Broccoli
       if (p.when && !holds(s, p.when)) continue; // a spot that is only there at some point of the story (the Z2 maps)
-      if (!meets(s, p.need)) continue; // there only at some point of the story (src/z2b.js)
       if (p === this.spent) continue; // a card / training square works once per visit, like landing on it
       const d = Math.hypot(s.x - (p.x * 32 + 16), s.y - (p.y * 32 + 16));
       if (d < nd) { nd = d; near = p; }
@@ -221,7 +220,7 @@ export class Field {
   bossList() {
     const s = this.game.state;
     const b = (this.world.bosses || { 1: { ...this.world.boss, flag: 'bossDone' } })[s.map];
-    return (Array.isArray(b) ? b : b ? [b] : []).filter((x) => !s.flags[x.flag] && meets(s, x.need));
+    return (Array.isArray(b) ? b : b ? [b] : []).filter((x) => !s.flags[x.flag] && (!x.when || holds(s, x.when)));
   }
   boss() { return this.bossList()[0] || null; }
   bosses() { return this.bossList(); } // (the name chapter 6 uses)
@@ -244,13 +243,7 @@ export const nextEncounterSteps = () => 12 + rand(14);
 // ['sw', id, on] / ['var', id, value, op] (op as the original's conditional branch: 0 == 1 >= 2 <= 3 > 4 < 5 !=)
 const CMP = [(a, b) => a === b, (a, b) => a >= b, (a, b) => a <= b, (a, b) => a > b, (a, b) => a < b, (a, b) => a !== b];
 export function holds(s, c) {
+  if (Array.isArray(c[0])) return c.every((x) => holds(s, x)); // several: all of them
   if (c[0] === 'sw') return !!(s.sw || {})[c[1]] === c[2];
   return CMP[c[3] || 0]((s.var || {})[c[1]] || 0, c[2]);
-}
-// need: the original's spot conditions (145_Event_Check.rb) — { sw: {id: on/off}, var: {id: value} }
-function meets(s, need) {
-  if (!need) return true;
-  for (const [k, v] of Object.entries(need.sw || {})) if (!!(s.sw && s.sw[k]) !== v) return false;
-  for (const [k, v] of Object.entries(need.var || {})) if (((s.var && s.var[k]) || 0) !== v) return false;
-  return true;
 }

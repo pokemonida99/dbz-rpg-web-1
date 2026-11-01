@@ -98,8 +98,8 @@ def add(world, h):
     TRAIN = {'label': '修行', 'effect': 'training'}
     at = lambda spots, kind: [dict(kind, x=x, y=y) for x, y in spots]
     world['pois']['29'] = [
-        {'x': 24, 'y': 4, 'label': '召喚神龍', 'chapter': 'z2porunga', 'need': {'sw': {101: False}}},
-        {'x': 16, 'y': 65, 'label': '去內魯那裡', 'chapter': 'z2nail', 'need': {'sw': {102: False}}},
+        {'x': 24, 'y': 4, 'label': '召喚神龍', 'chapter': 'z2porunga', 'when': ['sw', 101, False]},
+        {'x': 16, 'y': 65, 'label': '去內魯那裡', 'chapter': 'z2nail', 'when': ['sw', 102, False]},
         {'x': 26, 'y': 30, 'label': '和那美克星人說話', 'chapter': 'z2page', 'page': 506},
         {'x': 47, 'y': 22, 'label': '調查宇宙船', 'chapter': 'z2page', 'page': 521},
         {'x': 21, 'y': 61, 'label': '和那美克星人說話', 'chapter': 'z2page', 'page': 602},
@@ -107,9 +107,9 @@ def add(world, h):
       + at([(8, 7), (10, 7), (22, 36), (14, 64), (54, 62), (45, 17), (10, 69)], CARD) + at([(11, 71), (48, 27)], TRAIN)
     # Frieza (map events 8-10, enemy1.png character 4): his first form once Piccolo is back, then the 2nd / 3rd form
     world['bosses']['29'] = [
-        {'x': 22, 'y': 19, 'index': 4, 'flag': 'z2Frieza1', 'key': 'frieza1', 'need': {'sw': {102: True}, 'var': {43: 34}}},
-        {'x': 37, 'y': 59, 'index': 4, 'flag': 'z2Frieza2', 'key': 'frieza2', 'need': {'var': {43: 35}}},
-        {'x': 37, 'y': 59, 'index': 4, 'flag': 'z2Frieza3', 'key': 'frieza3', 'need': {'var': {43: 36}}},
+        {'x': 22, 'y': 19, 'index': 4, 'flag': 'z2Frieza1', 'key': 'frieza1', 'when': [['sw', 102, True], ['var', 43, 34]]},
+        {'x': 37, 'y': 59, 'index': 4, 'flag': 'z2Frieza2', 'key': 'frieza2', 'when': ['var', 43, 35]},
+        {'x': 37, 'y': 59, 'index': 4, 'flag': 'z2Frieza3', 'key': 'frieza3', 'when': ['var', 43, 36]},
     ]
     world['radar']['29'] = [(24, 4), (16, 65), (22, 19), (37, 59)]
     # 140_Field_Main.rb (24,26,29): 3-5 at a time (1-2 when alone); Frieza's last form (概況 36) brings stronger ones

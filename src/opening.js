@@ -29,7 +29,7 @@ const CSS = `
 #opening .dlg.busy .next { visibility: hidden; }
 `;
 
-function overlay() {
+export function overlay() {
   if (!document.getElementById('opening-css')) {
     const st = document.createElement('style');
     st.id = 'opening-css';
@@ -159,7 +159,7 @@ class TitleAnime {
 }
 
 // Bitmap#blt: the source rect is cut to the picture's size
-function blt(c, path, x, y, w, h, sx = 0, sy = 0) {
+export function blt(c, path, x, y, w, h, sx = 0, sy = 0) {
   const e = img(path);
   if (!e.ok) return;
   const sw = Math.min(w, e.im.width - sx), sh = Math.min(h, e.im.height - sy);
@@ -213,14 +213,14 @@ export async function playOpening() {
 // ---------- the opening story (z1opening) ----------
 // positions are the original's 640×480 screen: the scene window is 192×128 at (224,46) (scrolling scenes 512×128
 // at (64,46)), the stranger's face at (288,78), the party's faces under the message window
-const SCROLL_X = 64, SCENE_X = 224, SCENE_Y = 46, ENE = [288, 78], PLAY_X = 288;
+export const SCROLL_X = 64, SCENE_X = 224, SCENE_Y = 46, ENE = [288, 78], PLAY_X = 288;
 const BG = (n) => pic(`Z1_背景_${n}.PNG`), EV = (n) => pic(`Z1_イベント_${n}.PNG`);
 const FACE_PARTY = pic('Z1_顔味方.PNG'), FACE_EVENT = pic('Z1_顔イベント.PNG'), FACE_FOE = pic('Z1_顔敵.PNG');
 const STORY_PICS = [BG('スクロール_山'), BG('スクロール_海'), BG('スクロール_空'), BG('山'), BG('山_スカウター1'), BG('山_スカウター2'),
   BG('平野'), BG('平野_スカウター1'), BG('平野_スカウター2'), BG('カメハウス'), BG('海'), EV('宇宙船'), EV('ラディッツ'),
   EV('ゴクウとゴハン'), EV('ラディッツとゴハン'), EV('ゴクウとピッコロ'), FACE_PARTY, FACE_EVENT, FACE_FOE];
 
-class Stage {
+export class Stage {
   constructor(ui) {
     this.ui = ui;
     this.sprites = [];
@@ -233,13 +233,14 @@ class Stage {
 
   // add_chr: a picture (or the part `src` of it) at the original screen position; `face` = a party face, shown
   // under the scene here since the message box sits at the bottom
-  add(path, x, y, src = [0, 0, 512, 128], face = false) { this.sprites.push({ path, x, y, src, face }); }
+  add(path, x, y, src = [0, 0, 512, 128], face = false, line = 0) { this.sprites.push({ path, x, y, src, face, line }); }
   clear() { this.sprites = []; }
   scrollBg(name, x) { this.add(BG(name), SCROLL_X, SCENE_Y, [x, 0, 512, 128]); }
   bg(name) { this.add(BG(name), SCENE_X, SCENE_Y, [0, 0, 192, 128]); }
   stranger() { this.add(FACE_FOE, ENE[0], ENE[1], [0, 64 * 10, 64, 64]); }
   enemyFace(sheet, row) { this.add(sheet, ENE[0], ENE[1], [0, 64 * row, 64, 64]); }
-  party(sheet, row, dx) { this.add(sheet, PLAY_X + dx, 0, [0, 64 * row, 64, 64], true); }
+  // line: a second row of faces (src/cutscene.js, when more than three are on screen)
+  party(sheet, row, dx, line = 0) { this.add(sheet, PLAY_X + dx, 0, [0, 64 * row, 64, 64], true, line); }
 
   layout() {
     const ui = this.ui;
@@ -251,9 +252,10 @@ class Stage {
     this.dlgH = Math.max(this.dlgH || 190, ui.dlg.offsetHeight); // css px; kept so the scene doesn't jump
     const dlgH = this.dlgH / px;
     // scene, the party's faces, then the message box, centred as one block
-    const block = 128 + 10 + 64 + 12 + dlgH;
+    const rows = 64 + 68 * Math.max(0, ...this.sprites.map((s) => s.line || 0)); // the faces under the scene
+    const block = 128 + 10 + rows + 12 + dlgH;
     const top = Math.max(44 / px + 10, Math.round((h - block) / 2));
-    ui.dlg.style.top = `${(top + 128 + 10 + 64 + 12) * px}px`;
+    ui.dlg.style.top = `${(top + 128 + 10 + rows + 12) * px}px`;
     return { c, scale, w, h, top, ox: Math.round(w / 2 - 320) };
   }
 
@@ -266,7 +268,7 @@ class Stage {
     const oy = top - SCENE_Y;
     for (const s of this.sprites) {
       const [sx, sy, sw, sh] = s.src;
-      if (s.face) { blt(c, s.path, s.x + ox, top + 128 + 10, sw, sh, sx, sy); continue; }
+      if (s.face) { blt(c, s.path, s.x + ox, top + 128 + 10 + 68 * s.line, sw, sh, sx, sy); continue; }
       c.save();
       c.beginPath();
       c.rect(SCROLL_X + ox, top, 512, 128); // nothing shows outside the scene window
@@ -406,15 +408,17 @@ class Stage {
 
 // one message box: the face of whoever speaks, then the text typed out (\| waits 1 s, \. a quarter second, as in
 // the original); a tap shows the rest at once, the next tap goes on
-async function say(ui, faces, [who, text]) {
+// (faceOf: whose face, when not the speaker's — the events' third field)
+export async function say(ui, faces, [who, text, faceOf]) {
   const d = ui.dlg;
-  const face = faces[who];
+  const face = faces[faceOf || who];
   d.classList.toggle('no-face', !face);
   if (face) {
     const fc = d.querySelector('.face').getContext('2d');
     fc.clearRect(0, 0, 64, 64);
     const e = img(face[0]);
-    if (e.ok) fc.drawImage(e.im, 0, face[1] * 64, 64, 64, 0, 0, 64, 64);
+    const paint = () => e.ok && fc.drawImage(e.im, 0, face[1] * 64, 64, 64, 0, 0, 64, 64);
+    if (e.ok) paint(); else e.p.then(paint);
   }
   d.querySelector('.who').textContent = who;
   const out = d.querySelector('.text');

@@ -42,6 +42,7 @@ python3 tools/copy_assets.py game            # 只複製用到的素材到 asset
 | `src/events.js` | 執行原版事件（`tools/build_data.py` 的 `script()` 從 Map007 事件 1 轉出來）：台詞、開關／變數分支、選項、音效 |
 | `src/main.js` | 標題、劇情、HUD、選單、存讀檔（localStorage） |
 | `src/opening.js` | 開場：標題前的原版片頭動畫（`z1_op` 逐格移植）、新遊戲的 Z1 開場劇情（原版 Map007 事件＋`z1opening` 場景，台詞全文，資料由 `tools/opening_data.py` 產生），都有「略過」 |
+| `src/cutscene.js` | 章節之間的劇情照原版演出：原版每段劇情的 `z1field` 場景（場景圖、對方頭像、我方頭像、音樂、淡入淡出）配上全文台詞，用開場同一套畫面與「略過」（略過時劇情旗標、給的卡片照樣生效）。拉蒂茲戰前後、天神／閻王／蛇道／卡里克城／卡林塔、抵達界王星、桑修戰前後、巴布魯斯之後、尼奇戰前後都用它 |
 | `src/chapter2.js` | 第二章（蛇道・桑修篇）：拉蒂茲戰後劇情、卡林塔分組畫面、蛇道（悟空單人）→ 界王星 → 北方小隊的桑修區 → 桑修；資料由 `tools/build_chapter2.py` 產生 |
 | `src/chapter3.js` / `src/kaiotraining.js` | 第三章（界王星・尼奇篇）的流程，與巴布魯斯修行小遊戲；資料由 `tools/build_chapter3.py` 產生。地圖可設 `road`（只能走的圖塊，`src/field.js`），界王星用它限制在格子上 |
 | `src/growth.js` | 角色成長：技能（固有／追加、SP、CAP）與戰鬥效果、熟練度威力、被打倒後的復活規則、ZP、共有經驗值；資料 `world.growth` 由 `tools/build_growth.py` 產生 |

@@ -14,6 +14,7 @@ import { cardSquare, compo } from './cardgames.js?v=20261101-1940'; // card squa
 import { fieldExtraHtml, openFieldEntry, setFieldGame, encounterSteps, battleTally, spotTally, storySoFar, hasRecap, options } from './fieldmenu.js?v=20261101-1940'; // 概況・情報・設定・地圖, records, options
 import { training } from './training.js?v=20261101-1940'; // training squares
 import { chapter3Goal, startChapter3, resumeChapter3, chapter3Spot, isChapter3Map, chapter3Boss } from './chapter3.js?v=20261101-1940';
+import { playEvent, setCutsceneWorld, raditzOutcome } from './cutscene.js?v=20261101-1940'; // story scenes staged like the original
 
 const SAVE_KEY = 'dbz-portrait-save-v1';
 const AUTO_KEY = 'dbz-portrait-autosave-v1'; // the original's Save_Auto.rvdata: after each normal battle won
@@ -97,12 +98,13 @@ const game = {
     this.busy = true;
     this.field.paused = true;
     input.dx = input.dy = 0;
-    await runEvent(this.world.story.boss, this.state);
+    await playEvent(this.world.story.boss, this.state);
     this.busy = false;
     const won = await this.startBattle([this.world.boss.enemy], true);
     if (won) {
       this.state.flags.bossDone = true;
-      await runEvent(this.world.story.ending, this.state);
+      raditzOutcome(this.state);
+      await playEvent(this.world.story.ending, this.state);
       save(true);
       await afterRaditz(this); // chapter 2 (src/chapter2.js)
     }
@@ -320,6 +322,7 @@ async function boot() {
   view.resize();
   window.addEventListener('resize', () => view.resize());
   game.world = await (await fetch('data/world.json?v=20261101-1940')).json();
+  setCutsceneWorld(game.world);
   setFaces(game.world.faces);
   setItemsWorld(game.world);
   setGrowthWorld(game.world);

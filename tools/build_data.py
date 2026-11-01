@@ -177,6 +177,13 @@ def script(lst):
                 out.append({'var': [p[0], p[2], p[4]]})  # op: 0 set, 1 add, 2 sub
             elif code == 250:
                 out.append({'se': p[0]['name']})
+            # the scene drawing of 143_Event_Main.rb (src/cutscene.js): z1field for the current variable 41, fades
+            elif code == 355 and p[0].startswith('$eve.z1field'):
+                out.append({'z1field': True})
+            elif code == 355 and p[0].startswith('Graphics.fadeout'):
+                out.append({'fadeout': 30})
+            elif code == 355 and p[0].replace(' ', '') == '$game_variables[41]+=1':
+                out.append({'var': [41, 1, 1]})
             elif code == 126:
                 out.append({'item': [p[0], -p[3] if p[1] else p[3]]})
             elif code == 119 and p[0] == '終了':
@@ -192,7 +199,7 @@ def script(lst):
 
 
 EVENT_PAGES = {p['condition']['variable_value']: p['list'] for p in D('map007')['events']['1']['pages'] if p['condition']['variable_valid']}
-ev = lambda v: script(EVENT_PAGES[v])
+ev = lambda v: [{'v41': v}] + script(EVENT_PAGES[v])  # v41: the page number, which z1field draws from
 
 # Map 1 spots (145_Event_Check.rb "Z1フィールド1"), with the original event each one runs. `effect` is what this
 # version adds on top: rest = full HP/KI + save, ki = KI only, save = save only.

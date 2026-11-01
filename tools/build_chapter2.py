@@ -74,6 +74,12 @@ def add(world, h):
     cut = next(k for k, n in enumerate(after) if 'say' in n and '開始向地球移動' in n['say'][1])
     rest = after[cut + 1:]
     split = next(k for k, n in enumerate(rest) if 'say' in n and '拜託你了' in n['say'][1])  # team split before this
+    while rest[split - 1].get('z1field'):  # z1field 70 (the team split) and 71 (Karin Tower again) open the second part
+        split -= 1
+    # variable 41 where each part starts (src/cutscene.js), so a save made in between still shows the right scenes:
+    # the Raditz ending leaves it at 63 (z1field 60-62), the team split is z1field 70
+    rest = [{'v41': 63}] + rest[:split] + [{'v41': 70}] + rest[split:]
+    split += 1
 
     world['areas'] = {  # random encounters per map: enemy ids, how many at once
         '1': {'pool': [1, 2, 4, 5], 'n': [1, 3]},

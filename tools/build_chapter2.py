@@ -65,7 +65,7 @@ def add(world, h):
         world['skills'][sid] = skill(sid)
     world['faces'].update({s2t(n): [FACE_PARTY, r] for n, r in [('雅木茶', 4)]})
     world['faces'].update({s2t(n): [FACE_EVENT, r] for n, r in [
-        ('蓝鬼', 6), ('红鬼', 9), ('古雷格利', 13), ('巴布鲁斯', 17)]})
+        ('蓝鬼', 6), ('红鬼', 9), ('古雷格利', 13), ('巴布鲁斯', 17), ('阎王', 16)]})  # 閻王: the face the scene shows (z1field 65)
     world['faces'].setdefault('悟飯', [FACE_EVENT, 0])
 
     # ---------- events ----------

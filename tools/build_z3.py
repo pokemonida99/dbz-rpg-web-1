@@ -200,9 +200,31 @@ def add(world, h):
     for eid in Z3_ENEMIES:
         faces.setdefault(s2t(enemies_db[eid]['name']), [F3, eid - 100])
 
+    def loops(lst):
+        """112 loop … 413 repeat-above → one command 9112 holding its body (one indent less), 113 break → 9113:
+        script() reads a block by the caller's indent, so a choice inside a loop would swallow its other branches.
+        tools/build_data.py EXTRA turns them into {loop: nodes} / {brk: true} (src/cutscene.js runs them)."""
+        out, k = [], 0
+        while k < len(lst):
+            c = lst[k]
+            if c['code'] == 112:
+                ind, body, k = c['indent'], [], k + 1
+                while k < len(lst) and not (lst[k]['code'] == 413 and lst[k]['indent'] == ind):
+                    body.append(dict(lst[k], indent=lst[k]['indent'] - ind - 1))
+                    k += 1
+                out.append({'code': 9112, 'indent': ind, 'parameters': [loops(body)]})
+            elif c['code'] == 113:
+                out.append(dict(c, code=9113))
+            else:
+                out.append(c)
+            k += 1
+        return out
+
     def nodes_of(lst, faces=faces):
-        """script() plus BGM changes ({bgm}); speakers with a Z3 face get say[2] = 'z3:name'."""
-        lst = resolve_jumps(lst)
+        """script() plus BGM changes ({bgm}) and loops ({loop}); speakers with a Z3 face get say[2] = 'z3:name'."""
+        lst = loops(resolve_jumps(lst))
+        h['EXTRA'][9112] = lambda p: [{'loop': script(p[0])}]
+        h['EXTRA'][9113] = lambda p: [{'brk': True}]
         lst = [dict(c, code=250, parameters=[{'name': '\0BGM' + c['parameters'][0]['name']}]) if c['code'] == 241 else c for c in lst]
         ns = script(lst)
 
@@ -217,7 +239,7 @@ def add(world, h):
                         n = {'say': ['', f'{who}「{text}」']}
                     elif who in faces or who == '？':
                         n = {'say': [who, text, 'z3:' + who]}
-                for k in ('then', 'else'):
+                for k in ('then', 'else', 'loop'):
                     if k in n:
                         n[k] = fix(n[k])
                 if 'branches' in n:

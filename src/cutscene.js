@@ -233,7 +233,7 @@ export async function playScenes(list, s, more = {}) {
     for (const n of nodes) {
       const quiet = ui.skipped; // skipped: only the story state still changes
       if (n.say) { if (!quiet) await say(ui, faces, [n.say[0], n.say[1], n.say[2]]); }
-      else if (n.if) { if (await run(test(n.if) ? n.then : n.else)) return true; }
+      else if (n.if) { const r = await run(test(n.if) ? n.then : n.else); if (r) return r; }
       else if (n.sw) { for (let i = n.sw[0]; i <= n.sw[1]; i++) sw[i] = n.sw[2]; }
       else if (n.var) { const [id, op, x] = n.var; v[id] = op === 0 ? x : (v[id] || 0) + (op === 1 ? x : -x); }
       else if (n.v41) v[41] = n.v41;
@@ -252,7 +252,11 @@ export async function playScenes(list, s, more = {}) {
       else if (n.shake != null) ui.el.classList.toggle('shake', n.shake && !quiet); // 画面揺らすフラグ
       else if (n.flash) { if (!quiet) await stage.doFlash(n.flash); }
       else if (n.wait) { if (!quiet) await ui.wait(n.wait); }
-      else if (n.choice) { const k = quiet ? 0 : await choice(ui, n.choice); if (await run(n.branches[k] || [])) return true; } // skipped: the first answer
+      else if (n.choice) { const k = quiet ? 0 : await choice(ui, n.choice); const r = await run(n.branches[k] || []); if (r) return r; } // skipped: the first answer
+      else if (n.loop) { // 112 loop … 413 (a menu asked again until its 113 break); skipped: once round
+        for (let k = 0; k < 99; k++) { const r = await run(n.loop); if (r === 'break' || ui.skipped) break; if (r) return r; }
+      }
+      else if (n.brk) return 'break';
       else if (n.x) { if (EXT[n.x]) await EXT[n.x](n, { ui, stage: quiet ? NO_STAGE : stage, ctx, s, quiet }); }
       else if (n.end) return true;
     }

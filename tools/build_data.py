@@ -290,5 +290,7 @@ import build_chapter5  # noqa: E402  (chapter 5: the Garlic area and King Kai's 
 build_chapter5.add(world, globals())
 import build_chapter6  # noqa: E402  (chapter 6: King Kai's training, Shenron, the Saiyans, the Z1 ending)
 build_chapter6.add(world, globals())
+import build_z2a  # noqa: E402  (Z2 first half: to Namek, Goku's training, the Grand Elder and Zarbon: src/z2a.js)
+build_z2a.add(world, globals())
 json.dump(world, open(os.path.join(root, 'data', 'world.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 print('world.json written')

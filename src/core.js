@@ -34,7 +34,11 @@ export const view = {
 
 // ---------- images ----------
 const images = new Map();
+// the art of a later part of the story: a Z1 picture path → its Z2 version (src/era.js, while variable 40 is 1)
+let alias = {};
+export function setImageAlias(map) { alias = map || {}; }
 export function img(path) {
+  path = alias[path] || path;
   let e = images.get(path);
   if (!e) {
     const im = new Image();
@@ -222,7 +226,7 @@ function showFace(who) {
   const im = img(f[0]);
   const c = dlgFace.getContext('2d');
   c.clearRect(0, 0, 64, 64);
-  const paint = () => { if (im.ok && faces[who] === f) c.drawImage(im.im, 0, f[1] * 64, 64, 64, 0, 0, 64, 64); };
+  const paint = () => { if (im.ok && faces[who] === f) c.drawImage(im.im, 64 * (f[2] || 0), f[1] * 64, 64, 64, 0, 0, 64, 64); }; // f[2]: the column (顔カード: one per part of the story)
   if (im.ok) paint(); else im.p.then(paint);
 }
 window.addEventListener('keydown', (e) => {

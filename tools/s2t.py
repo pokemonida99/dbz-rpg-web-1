@@ -1,6 +1,7 @@
 """Simplified -> Traditional (Taiwan) using the OpenCC-derived table built for the original web port."""
 import json, os
 _t = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 's2t.json'), encoding='utf-8'))
+_t['phrases']['美克星'] = '美克星'  # 那美克星 (Namek), not 克星 → 剋星 (nemesis)
 _max = max(map(len, _t['phrases']))
 
 

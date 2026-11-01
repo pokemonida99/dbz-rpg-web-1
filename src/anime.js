@@ -72,6 +72,12 @@ const MOVES = {
   303: 'paralysis', 304: 'selfDestruct', // 栽培人
   312: 'nappaWave', 313: 'nappaBlast', 314: 'nappaMouth', // 那巴
   316: 'vegetaWave', 319: 'vegetaBlast', 320: 'galickGun', 373: 'vegetaApe', 585: 'apeWave', // 貝吉塔
+  // Z2 (src/z2a.js), by pattern: the Frieza soldiers' and officers' waves, blasts and beams with the nearest Z1 film
+  331: 'foeWave', 332: 'pierce', 333: 'foeWave', 334: 'foeWave', 335: 'nappaBlast', 336: 'raditzWave', // 兵士 / 邱夷
+  337: 'foeWave', 338: 'nappaMouth', 339: 'nappaBlast', 340: 'foeWave', 341: 'raditzBigWave', 342: 'nappaBlast', // 多多利亞 / 薩博
+  343: 'raditzWave', 344: 'raditzBigWave', // 薩博(變身)
+  121: 'vegetaWave', 123: 'vegetaBlast', 124: 'galickGun', // 貝吉塔 (party, CE24)
+  141: 'energyWave', 142: 'mouthBeam', 143: 'makouhou', 144: 'kikouhou', // 青年 (the young Namekian)
 };
 // 拡散エネルギー波 hits every enemy: the battle plays one film per target, and in the original only the first one
 // has the whole charge — the rest are just the beam falling on them. A film started right after the last one
@@ -122,7 +128,7 @@ export class Duel {
       this.done = true;
       audio.seStop();
       if (this.skill === SCATTER || this.skill === BLACK_HOLE) scatterEnd = performance.now();
-      if (this.skill === 313 || this.skill === 319) blastEnd = performance.now();
+      if (MOVES[this.skill] === 'nappaBlast' || MOVES[this.skill] === 'vegetaBlast') blastEnd = performance.now(); // (also the Z2 爆発波)
       this.resolve();
     }
   }

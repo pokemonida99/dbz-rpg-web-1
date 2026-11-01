@@ -427,7 +427,7 @@ export function openCards(game, battle = null) {
         for (const f of x.battle.foes) {
           if (f.hp <= 0) continue;
           const b = h('button');
-          b.appendChild(faceCanvas(FOE_FACES, f.id, f.hp * 4 < f.maxhp ? 1 : 0));
+          b.appendChild(f.face ? faceCanvas(f.face[0], f.face[1], f.hp * 4 < f.maxhp ? 1 : 0) : faceCanvas(FOE_FACES, f.id, f.hp * 4 < f.maxhp ? 1 : 0));
           b.appendChild(h('div', null, f.name));
           if (scouted() && f.card) b.appendChild(handCanvas(f.card)).style.cssText = 'width:32px;height:48px;background:none';
           b.onclick = () => { if (use(id, it, f)) { mode = 'list'; render(); } };

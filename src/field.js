@@ -155,6 +155,7 @@ export class Field {
     if (this.spent && Math.hypot(s.x - (this.spent.x * 32 + 16), s.y - (this.spent.y * 32 + 16)) >= 44) this.spent = null;
     for (const p of this.pois) {
       if (p.gone && s.sw[p.gone]) continue; // a beaten Pumpkin / Broccoli
+      if (p.when && !holds(s, p.when)) continue; // a spot that is only there at some point of the story (the Z2 maps)
       if (p === this.spent) continue; // a card / training square works once per visit, like landing on it
       const d = Math.hypot(s.x - (p.x * 32 + 16), s.y - (p.y * 32 + 16));
       if (d < nd) { nd = d; near = p; }
@@ -227,3 +228,10 @@ export class Field {
 }
 
 export const nextEncounterSteps = () => 12 + rand(14);
+
+// ['sw', id, on] / ['var', id, value, op] (op as the original's conditional branch: 0 == 1 >= 2 <= 3 > 4 < 5 !=)
+const CMP = [(a, b) => a === b, (a, b) => a >= b, (a, b) => a <= b, (a, b) => a > b, (a, b) => a < b, (a, b) => a !== b];
+export function holds(s, c) {
+  if (c[0] === 'sw') return !!(s.sw || {})[c[1]] === c[2];
+  return CMP[c[3] || 0]((s.var || {})[c[1]] || 0, c[2]);
+}

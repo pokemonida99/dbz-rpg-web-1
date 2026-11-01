@@ -437,7 +437,7 @@ export async function say(ui, faces, [who, text, faceOf]) {
     const fc = d.querySelector('.face').getContext('2d');
     fc.clearRect(0, 0, 64, 64);
     const e = img(face[0]);
-    const paint = () => e.ok && fc.drawImage(e.im, 0, face[1] * 64, 64, 64, 0, 0, 64, 64);
+    const paint = () => e.ok && fc.drawImage(e.im, 64 * (face[2] || 0), face[1] * 64, 64, 64, 0, 0, 64, 64);
     if (e.ok) paint(); else e.p.then(paint);
   }
   d.querySelector('.who').textContent = who;

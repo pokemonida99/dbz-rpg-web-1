@@ -39,7 +39,7 @@ export const battleOpts = { quick: false };
 export function battleImages(world) {
   const sheets = new Set([...BACKDROPS, CARDS, FACES, FOE_FACES, DIGITS, FRAME_IMG, ICONS, ...ANIME_IMAGES]);
   for (const a of Object.values(world.actors)) { sheets.add(a.sprite); sheets.add(a.special); }
-  for (const e of Object.values(world.enemies)) { sheets.add(e.sprite); sheets.add(e.portrait); }
+  for (const [id, e] of Object.entries(world.enemies)) if (+id < 30) { sheets.add(e.sprite); sheets.add(e.portrait); } // later parts' enemies load when met
   return [...sheets];
 }
 
@@ -49,8 +49,11 @@ export function battleImages(world) {
 let cardGame = null;
 export function setCardGame(g) { cardGame = g; }
 const late = () => ((cardGame && cardGame.state && cardGame.state.var && cardGame.state.var[43]) || 0) >= 11;
-export function newCard() { return { a: rand(8), g: rand(8), s: (late() ? [0, 1, 3, 4] : [0, 1, 2, 4])[rand(4)] }; }
-const enemyCard = () => ({ a: rand(8), g: rand(8), s: (late() ? [0, 1, 3, 4, 5] : [0, 1, 2, 4, 5])[rand(5)] });
+const era = () => ((cardGame && cardGame.state && cardGame.state.var && cardGame.state.var[40]) || 0); // 1: Z2
+// create_card_i: Z2 ($cardi_max 7) leaves out 神 (2) and 6-7 for the party, 2 and 7 for the enemies (惑 5: Vegeta's school)
+const pick = (l) => l[rand(l.length)];
+export function newCard() { return { a: rand(8), g: rand(8), s: pick(era() === 1 ? [0, 1, 3, 4, 5] : late() ? [0, 1, 3, 4] : [0, 1, 2, 4]) }; }
+const enemyCard = () => ({ a: rand(8), g: rand(8), s: pick(era() === 1 ? [0, 1, 3, 4, 5, 6] : late() ? [0, 1, 3, 4, 5] : [0, 1, 2, 4, 5]) });
 export function newHand() { return Array.from({ length: HAND }, newCard); }
 
 export function rollEncounter(world) {
@@ -114,7 +117,7 @@ function slash(c, x, y) { const d = img(DIGITS); if (d.ok) c.drawImage(d.im, 160
 function card(c, cd, x, y) {
   const s = img(CARDS);
   if (!s.ok) return;
-  c.drawImage(s.im, 0, 96, 64, 96, x, y, 64, 96);
+  c.drawImage(s.im, era() >= 1 ? 448 : 0, 96, 64, 96, x, y, 64, 96); // the Z2 card face
   c.drawImage(s.im, 32 * cd.a, 0, 32, 32, x + 2, y + 2, 32, 32);
   c.drawImage(s.im, 32 * cd.g, 32, 32, 32, x + 30, y + 62, 32, 32);
   c.drawImage(s.im, 32 * cd.s, 64, 32, 32, x + 16, y + 32, 32, 32);
@@ -133,9 +136,9 @@ function face(c, m, x, y, size = 64) {
   c.drawImage(f.im, 64 * col, 64 * (m.id - 3), 64, 64, x, y, size, size);
 }
 function foeFace(c, f, x, y) {
-  const im = img(FOE_FACES);
+  const im = img(f.face ? f.face[0] : FOE_FACES); // face: [sheet, row] (the Z2 enemies: Z2_顔敵)
   if (!im.ok) return;
-  c.drawImage(im.im, f.hp * 4 < f.maxhp ? 64 : 0, 64 * f.id, 64, 64, x, y, 64, 64);
+  c.drawImage(im.im, f.hp * 4 < f.maxhp ? 64 : 0, 64 * (f.face ? f.face[1] : f.id), 64, 64, x, y, 64, 64);
 }
 function text(c, s, x, y, color = INK, size = 16, align = 'left') {
   c.font = `${size}px ${FONT}`;
@@ -173,7 +176,7 @@ export class Battle {
     this.foes = enemyIds.map((id, i) => ({ ...world.enemies[id], id, slot: i, hp: (opts.foeHp && opts.foeHp[i]) || world.enemies[id].maxhp }));
     this.plans = []; // filled by startPlanning; drawn (card owners) from the first frame, before planning starts
     this.anim = null; // the Duel being played
-    this.backdrop = BACKDROPS[rand(BACKDROPS.length)];
+    this.backdrop = (game.backdrop && game.backdrop()) || BACKDROPS[rand(BACKDROPS.length)]; // game.backdrop: by the map (src/z2a.js)
     this.phase = 'plan'; // plan | fight | result
     this.mode = 'card'; // while planning: card | move | target | ready
     this.history = []; // members in the order they picked (返回)

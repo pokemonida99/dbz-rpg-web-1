@@ -256,6 +256,11 @@ export class Battle {
     if (this.phase === 'fight' && this.anim && !this.cont) { this.fast = true; return; } // tap to speed the film up
     const r = view.canvas.getBoundingClientRect();
     const x = (e.clientX - r.left) / view.cssPerPx, y = (e.clientY - r.top) / view.cssPerPx;
+    const st = this.L && this.L.status;
+    if (this.pages() > 1 && st && y >= st.y && y < st.y + st.h && !e.fromSwipe) { // more than six: a swipe here turns the page
+      this.swipe = { x0: e.clientX, y0: e.clientY, e: { clientX: e.clientX, clientY: e.clientY, fromSwipe: true } };
+      return;
+    }
     const h = this.hits.find((b) => x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.h);
     audio.unlock();
     if (this.phase === 'plan' && (this.mode === 'move' || this.mode === 'target') && !(h && h.tag === 'modal')) {
@@ -291,8 +296,18 @@ export class Battle {
     else if (back) this.undo();
   }
 
+  // more than six members: the status window shows six at a time (like the original's pages), swipe / ◀▶ to turn
+  pages() { return Math.ceil(this.party.length / 6); }
+  turnPage(d) {
+    const p = Math.max(0, Math.min(this.pages() - 1, (this.page || 0) + d));
+    if (p !== (this.page || 0)) { this.page = p; audio.se(SE_MOVE); }
+  }
+
   drawStatus(c) {
-    if (this.party.length > 6) { this.drawStatusMany(c); return; } // 5-6: drawStatusNarrow below
+    if (this.pages() > 1 && this.phase === 'plan' && this.cur != null && this.cur !== this.pageFor) { // follow the one choosing
+      this.pageFor = this.cur;
+      this.page = Math.floor(this.cur / 6);
+    }
     const { x, y, w, h } = this.L.status;
     win(c, x, y, w, h);
     // TN (turn) column and the HP / KI labels, like the original
@@ -300,7 +315,7 @@ export class Battle {
     text(c, 'TN', x + 12, y + 10, INK, 16);
     num(c, this.turn, x + 44, y + 30);
     const colW = Math.min(124, (w - 64) / Math.max(2, this.party.length));
-    if (colW < 66) { this.drawStatusNarrow(c, colW); return; }
+    if (colW < 66) { this.drawStatusNarrow(c); return; }
     this.party.forEach((m, i) => {
       const cx = x + 56 + i * colW;
       text(c, m.name, cx + 32, y + 8, INK, 18, 'center');
@@ -322,12 +337,21 @@ export class Battle {
 
   // five or six in the party (the Garlic area): columns narrower than a face — smaller faces, the level as text,
   // the numbers right-aligned in each column
-  drawStatusNarrow(c, colW) {
-    const { x, y, h } = this.L.status;
-    colW = (this.L.status.w - 48) / this.party.length; // the columns start right after the HP / KI labels
+  drawStatusNarrow(c) {
+    const { x, y, w, h } = this.L.status;
+    const paged = this.pages() > 1, page = paged ? Math.min(this.page || 0, this.pages() - 1) : 0;
+    const shown = this.party.map((m, i) => [m, i]).slice(page * 6, page * 6 + 6);
+    const colW = (w - 48) / (paged ? 6 : this.party.length); // the columns start right after the HP / KI labels
     const fs = Math.min(48, Math.floor(colW) - 6);
-    this.party.forEach((m, i) => {
-      const cx = Math.round(x + 44 + i * colW), mid = cx + colW / 2, fx = Math.round(mid - fs / 2), rx = Math.round(cx + colW - 2);
+    if (paged) { // which page, and the original's ◀ ▶ cursors (tap them, or swipe)
+      const dots = Array.from({ length: this.pages() }, (_, k) => (k === page ? '●' : '○')).join('');
+      text(c, dots, x + 24, y + 54, '#7a5230', 10, 'center'); // under the turn number
+      const blink = Math.floor(performance.now() / 400) % 2;
+      if (page > 0) { if (blink) text(c, '◀', x + 10, y + 52, RUST, 14, 'center'); this.hit(x, y + 40, 26, 40, () => this.turnPage(-1)); }
+      if (page < this.pages() - 1) { if (blink) text(c, '▶', x + w - 8, y + 52, RUST, 14, 'center'); this.hit(x + w - 18, y + 40, 18, 40, () => this.turnPage(1)); }
+    }
+    shown.forEach(([m, i], col) => {
+      const cx = Math.round(x + 44 + col * colW), mid = cx + colW / 2, fx = Math.round(mid - fs / 2), rx = Math.round(cx + colW - 2);
       text(c, m.name, mid, y + 10, INK, Math.min(15, Math.floor(colW / 3.6)), 'center');
       face(c, m, fx, y + 30, fs);
       if (this.phase === 'plan' && this.cur === i) {
@@ -343,33 +367,6 @@ export class Battle {
       num(c, m.hp, rx, y + 116); sl(m.maxhp, y + 132); num(c, m.maxhp, rx, y + 132);
       num(c, m.ki, rx, y + 152); sl(m.maxki, y + 168); num(c, m.maxki, rx, y + 168);
       this.hit(cx, y + 20, colW, h - 20, () => this.onFighterTap(i));
-    });
-  }
-
-  // seven or more members (the Z fighters on Earth): two rows of small cells — name, face, LV, HP / KI with bars
-  drawStatusMany(c) {
-    const { x, y, w, h } = this.L.status;
-    win(c, x, y, w, h);
-    text(c, 'TN', x + 8, y + 10, INK, 14);
-    num(c, this.turn, x + 40, y + 28);
-    const n = this.party.length, per = Math.ceil(n / 2), colW = (w - 48) / per, rowH = (h - 12) / 2;
-    this.party.forEach((m, i) => {
-      const cx = Math.round(x + 44 + (i % per) * colW), cy = Math.round(y + 6 + Math.floor(i / per) * rowH);
-      text(c, m.name, cx + colW / 2, cy, INK, 13, 'center');
-      c.save(); c.translate(cx + 2, cy + 18); c.scale(0.625, 0.625); face(c, m, 0, 0); c.restore();
-      if (this.phase === 'plan' && this.cur === i) { c.strokeStyle = '#f83800'; c.lineWidth = 2; c.strokeRect(cx + 1, cy + 17, 42, 42); }
-      const tx = cx + 46, tw = Math.max(20, colW - 50);
-      text(c, `Lv${m.level}`, tx, cy + 18, INK, 11);
-      text(c, `${m.hp}`, tx, cy + 31, INK, 11);
-      c.fillStyle = '#3a2a1a'; c.fillRect(tx, cy + 45, tw, 3); c.fillRect(tx, cy + 51, tw, 3);
-      c.fillStyle = '#58d858'; c.fillRect(tx, cy + 45, (tw * m.hp) / m.maxhp, 3);
-      c.fillStyle = '#58a8f8'; c.fillRect(tx, cy + 51, (tw * m.ki) / m.maxki, 3);
-      const plan = this.plans && this.plans[i];
-      if (this.phase === 'plan' && plan) {
-        c.fillStyle = 'rgba(0,0,0,.7)'; c.fillRect(cx + 2, cy + 60, colW - 6, 15);
-        text(c, plan.skill ? plan.skill.name : '攻擊', cx + colW / 2, cy + 61, '#fff', 11, 'center');
-      } else text(c, `KI ${m.ki}`, cx + 2, cy + 62, INK, 11);
-      this.hit(cx, cy, colW, rowH, () => this.onFighterTap(i));
     });
   }
 
@@ -875,6 +872,15 @@ export class Battle {
     this.measure();
     const onTap = (e) => this.onTap(e);
     this.el.addEventListener('pointerdown', onTap);
+    const onUp = (e) => { // the end of a touch on the status window: a swipe turns the page, a tap is a tap
+      const sw = this.swipe;
+      this.swipe = null;
+      if (!sw) return;
+      const dx = e.clientX - sw.x0, dy = e.clientY - sw.y0;
+      if (Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy)) this.turnPage(dx < 0 ? 1 : -1);
+      else this.onTap(sw.e);
+    };
+    this.el.addEventListener('pointerup', onUp);
     const onResize = () => this.measure();
     window.addEventListener('resize', onResize);
     const onKey = (e) => this.onKey(e);
@@ -897,6 +903,7 @@ export class Battle {
     window.removeEventListener('resize', onResize);
     window.removeEventListener('keydown', onKey);
     this.el.removeEventListener('pointerdown', onTap);
+    this.el.removeEventListener('pointerup', onUp);
     this.el.hidden = true;
     this.el.innerHTML = '';
     items.battleEnd();

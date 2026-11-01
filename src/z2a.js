@@ -8,16 +8,16 @@
 //        Piccolo with King Kai (21).
 //   Z2-3 大長老 the Grand Elder's house, Vegeta joins, Zarbon twice, the last ball (26) → the second half (game.startZ2b).
 // state.flags.z2a: 'on' while in this part, 'done' after page 445. Variable 40 = 1 (Z2 art, src/era.js).
-import { input, audio, toast } from './core.js?v=20261101-2326';
-import { scenes, setParty, moveTo, enterMap, card } from './chapter2.js?v=20261101-2326';
-import { makeMember, applyLevel, levelUp } from './party.js?v=20261101-2326';
-import { eventCard } from './items.js?v=20261101-2326';
-import { addScenes, playScenes } from './cutscene.js?v=20261101-2326';
-import { shootingGame } from './z2shoot.js?v=20261101-2326';
-import { gravityTraining } from './gravitytraining.js?v=20261101-2326';
-import { pondPuzzle } from './z2pond.js?v=20261101-2326';
-import { applyEra } from './era.js?v=20261101-2326';
-import { newHand } from './battle.js?v=20261101-2326';
+import { input, audio, toast } from './core.js?v=20261101-2330';
+import { scenes, setParty, moveTo, enterMap, card } from './chapter2.js?v=20261101-2330';
+import { makeMember, applyLevel, levelUp } from './party.js?v=20261101-2330';
+import { eventCard } from './items.js?v=20261101-2330';
+import { addScenes, playScenes } from './cutscene.js?v=20261101-2330';
+import { shootingGame } from './z2shoot.js?v=20261101-2330';
+import { gravityTraining } from './gravitytraining.js?v=20261101-2330';
+import { pondPuzzle } from './z2pond.js?v=20261101-2330';
+import { applyEra } from './era.js?v=20261101-2330';
+import { newHand } from './battle.js?v=20261101-2330';
 
 const MAPS = ['17', '18', '20', '21', '22', '23', '24', '26'];
 export const isZ2aMap = (s) => MAPS.includes(s.map) && !!s.flags.z2a;

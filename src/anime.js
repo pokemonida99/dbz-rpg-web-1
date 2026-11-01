@@ -29,7 +29,7 @@ const RAY = {
   foeBig: [pic('Z1_戦闘_必殺技_エネルギー波_敵_大.PNG'), 88, 134], liquid: [pic('Z1_戦闘_必殺技_エネルギー液.PNG'), 32, 150],
   pierce: [pic('Z1_戦闘_必殺技_貫光線_横.PNG'), 32, 150], huge: [pic('Z1_戦闘_必殺技_エネルギー波_特大.PNG'), 192, 76],
   big: [pic('Z1_戦闘_必殺技_エネルギー波_大.PNG'), 92, 124], smallPurple: [pic('Z1_戦闘_必殺技_エネルギー波(紫).PNG'), 28, 150],
-  circlePink: [pic('Z1_戦闘_必殺技_エネルギー波_円_中(桃).PNG'), 60, 140],
+  circlePink: [pic('Z1_戦闘_必殺技_エネルギー波_円_中(桃).PNG'), 60, 140], midPink: [pic('Z1_戦闘_必殺技_エネルギー波_中(桃).PNG'), 60, 140],
 };
 const RAY_DOWN = pic('Z1_戦闘_必殺技_エネルギー波_中_縦.PNG'); // 120×400, the right half falls from the sky
 const KIENZAN = pic('Z1_戦闘_必殺技_気円斬.PNG'); // 4 frames of 128×28, the disc growing
@@ -59,6 +59,7 @@ const MOVES = {
   301: 'paralysis', 302: 'paralysis', 305: 'foeWave', 306: 'pierce', 384: 'oozaru', // 雜兵
   310: 'raditzWave', 311: 'raditzBigWave', // 拉蒂茲
   307: 'gingerWave', 321: 'gingerWave', 324: 'sanshoWave', 325: 'sanshoBigWave', // 卡里克的手下
+  322: 'nikkiBigWave', 323: 'swordAttack', // 尼奇
 };
 // 拡散エネルギー波 hits every enemy: the battle plays one film per target, and in the original only the first one
 // has the whole charge — the rest are just the beam falling on them. A film started right after the last one
@@ -792,6 +793,46 @@ export class Duel {
     yield* this.cut(RAY.circlePink);
   }
 
+  * nikkiBigWave() { // 408 強力エネルギー波(ジンジャー・ニッキー系): a pink ball, then a pink beam
+    this.se('Z1 気を溜める2');
+    this.pose(this.A, 0, true);
+    this.behind(this.cycler(BACKS.aura, 160, 222, 234, 70));
+    yield* this.wait(60);
+    this.se('Z1 エネルギー波2');
+    this.pose(this.A, 2, true);
+    this.effect(this.ball(BALL.pink, 250, 114));
+    yield* this.wait(64);
+    yield* this.cut(RAY.midPink);
+  }
+
+  * swordAttack() { // 409 刀攻撃(ジンジャー・ニッキー系): draws the sword, dashes, and cuts through the defender (effect 46)
+    this.se('Z1 気を溜める2');
+    this.pose(this.A, 0, true);
+    this.behind(this.cycler(BACKS.aura, 160, 222, 234, 70));
+    yield* this.wait(60);
+    audio.seStop();
+    this.se('Z1 刀');
+    yield;
+    this.pose(this.A, 3, true);
+    yield* this.wait(28);
+    this.behind(null);
+    this.se('Z1 高速移動');
+    yield;
+    for (const k of [4, 5, 6]) { this.pose(this.A, k, true); yield* this.wait(10); }
+    yield* this.wait(5);
+    const sheet = this.A.sheets.special;
+    this.aim();
+    yield;
+    this.behind(this.shockBack());
+    this.effect((c, t) => draw(c, sheet, 0, (4 + Math.min(6, Math.floor(Math.max(0, t - 1) / 10))) * 96, 96, 96, CENTER_ENEX, STD_Y));
+    yield* this.wait(55);
+    this.se('Z1 刀攻撃');
+    yield* this.wait(27);
+    this.effect(null);
+    this.behind(null);
+    return 'shock';
+  }
+
   // ---------- drawing ----------
   // the fighters and effects on a transparent stage; the battle draws the background and the fade around it
   render() {
@@ -822,6 +863,6 @@ function spark(c, sx, sy, w, h, x, y) { draw(c, SPARK, sx, sy, w, h, x, y); }
 export const ANIME_SOUNDS = ['Z1 打撃', 'Z3 打撃', 'Z3 避ける', 'Z1 必殺技', 'Z3 光線系ヒット', 'Z3 跳ね返し', 'Z1 高速移動', 'Z1 衝撃波',
   'Z1 エネルギー波', 'Z1 エネルギー波2', 'Z1 エネルギー波3', 'Z1 気を溜める', 'Z1 気を溜める2', 'Z1 気を溜める3', 'Z1 気を溜める5',
   'Z1 怪光線', 'Z1 ザー', 'Z1 貫光線', 'Z1 パワーアップ', 'Z1 大猿', 'Z1 ブン', 'Z1 気円斬', 'Z1 逃げる', 'Z1 分身', 'Z1 気を溜める4',
-  'Z1 強打', 'Z3 超能力'];
+  'Z1 強打', 'Z3 超能力', 'Z1 刀', 'Z1 刀攻撃'];
 // for the S-combo films (src/combo-anime.js)
 export { draw, spark, BALL, RAY, BACKS, MAKANKO_BALL, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED };

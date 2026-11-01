@@ -13,7 +13,7 @@ const FACE_PARTY = 'Graphics/Pictures/Z1_顔味方.PNG'; // 64×64, one row per 
 // random encounter for the current map: world.areas[map] = { pool, n: [min, max] } (140_Field_Main.rb encounter)
 export function rollArea(world, s) {
   const a = world.areas && world.areas[s.map];
-  if (!a) return null;
+  if (!a) return a === null ? [] : null; // null: a map without encounters (King Kai's planet)
   const n = a.n[0] + rand(a.n[1] - a.n[0] + 1);
   return Array.from({ length: n }, () => a.pool[rand(a.pool.length)]);
 }
@@ -89,33 +89,34 @@ export async function chapterBoss(game) {
   game.save(true);
   game.busy = false;
   await card('第二章　完', 2000);
+  if (game.nextChapter) return game.nextChapter(game); // chapter 3 (src/chapter3.js)
   game.showTitle('第二章　完');
 }
 
-// ---------- helpers ----------
+// ---------- helpers (also used by src/chapter3.js) ----------
 
-async function scenes(list, s) {
+export async function scenes(list, s) {
   for (const sc of list) {
     audio.playBgm(sc.bgm);
     await runEvent(sc.nodes, s);
   }
 }
 
-function setParty(s, ids) {
+export function setParty(s, ids) {
   for (const m of s.party) s.bench[m.id] = m;
   s.party = ids.map((id) => s.bench[id]);
   for (const id of ids) delete s.bench[id];
   s.var[42] = ids[0]; // the character shown on the map
 }
 
-function moveTo(s, at) {
+export function moveTo(s, at) {
   s.map = at.map;
   s.x = at.x * 32 + 16;
   s.y = at.y * 32 + 16;
   s.travel = 0;
 }
 
-function enterMap(game) {
+export function enterMap(game) {
   game.startField();
   game.busy = false;
   game.field.paused = false;
@@ -123,7 +124,7 @@ function enterMap(game) {
 }
 
 // black screen with a line of text (chapter titles)
-function card(text, ms) {
+export function card(text, ms) {
   const el = document.createElement('div');
   el.className = 'ch2-card';
   el.textContent = text;

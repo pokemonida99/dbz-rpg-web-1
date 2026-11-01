@@ -200,9 +200,31 @@ def add(world, h):
     for eid in Z3_ENEMIES:
         faces.setdefault(s2t(enemies_db[eid]['name']), [F3, eid - 100])
 
+    def loops(lst):
+        """112 loop … 413 repeat-above → one command 9112 holding its body (one indent less), 113 break → 9113:
+        script() reads a block by the caller's indent, so a choice inside a loop would swallow its other branches.
+        tools/build_data.py EXTRA turns them into {loop: nodes} / {brk: true} (src/cutscene.js runs them)."""
+        out, k = [], 0
+        while k < len(lst):
+            c = lst[k]
+            if c['code'] == 112:
+                ind, body, k = c['indent'], [], k + 1
+                while k < len(lst) and not (lst[k]['code'] == 413 and lst[k]['indent'] == ind):
+                    body.append(dict(lst[k], indent=lst[k]['indent'] - ind - 1))
+                    k += 1
+                out.append({'code': 9112, 'indent': ind, 'parameters': [loops(body)]})
+            elif c['code'] == 113:
+                out.append(dict(c, code=9113))
+            else:
+                out.append(c)
+            k += 1
+        return out
+
     def nodes_of(lst, faces=faces):
-        """script() plus BGM changes ({bgm}); speakers with a Z3 face get say[2] = 'z3:name'."""
-        lst = resolve_jumps(lst)
+        """script() plus BGM changes ({bgm}) and loops ({loop}); speakers with a Z3 face get say[2] = 'z3:name'."""
+        lst = loops(resolve_jumps(lst))
+        h['EXTRA'][9112] = lambda p: [{'loop': script(p[0])}]
+        h['EXTRA'][9113] = lambda p: [{'brk': True}]
         lst = [dict(c, code=250, parameters=[{'name': '\0BGM' + c['parameters'][0]['name']}]) if c['code'] == 241 else c for c in lst]
         ns = script(lst)
 
@@ -211,13 +233,15 @@ def add(world, h):
             for n in ns:
                 if isinstance(n.get('se'), str) and n['se'].startswith('\0BGM'):
                     n = {'bgm': n['se'][4:]}
+                if n.get('var') and n['var'][0] == 25:  # CAP is variable 25 in the original, state.zeni here
+                    n = {'x': 'cap', 'op': n['var'][1], 'n': n['var'][2]}
                 if 'say' in n:
                     who, text = n['say'][0], n['say'][1]
                     if who in NARRATION:
                         n = {'say': ['', f'{who}「{text}」']}
                     elif who in faces or who == '？':
                         n = {'say': [who, text, 'z3:' + who]}
-                for k in ('then', 'else'):
+                for k in ('then', 'else', 'loop'):
                     if k in n:
                         n[k] = fix(n[k])
                 if 'branches' in n:
@@ -236,7 +260,23 @@ def add(world, h):
         k = max(i for i, n in enumerate(ns) if n.get('z1field'))
         return [ns[:k], ns[k + 1:]]
 
+    # the map events' graphics by tile (get_event_id_and_graphic: the highest event id there, its first page), for the
+    # Z3 battle backgrounds of set_battle_map (src/z3.js z3Backdrop)
+    tile_events = {}
+    for mid in (33, 34, 36, 37, 38, 39, 40, 78, 79, 80, 81, 82):
+        ev = D('map%03d' % mid)['events']
+        best = {}
+        for k, e in ev.items():
+            g = e['pages'][0]['graphic']
+            if int(k) == 2 or not g.get('character_name'):
+                continue
+            key = f"{e['x']},{e['y']}"
+            if key not in best or int(k) > best[key][0]:
+                best[key] = (int(k), [g['character_name'], g['character_index'], g['direction']])
+        tile_events[str(mid)] = {k: v[1] for k, v in best.items()}
+
     world['z3'] = {
+        'tileEvents': tile_events,
         'battles': battles,
         'pages': {},  # the chapters put the pages they play here (page(v) / split_battle(page(v)))
         'faces': {},  # 'z3:' faces are in world.faces; this is for the chapters' own tables

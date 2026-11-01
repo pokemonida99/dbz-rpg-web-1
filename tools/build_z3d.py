@@ -65,12 +65,7 @@ def add(world, h, z3):
     world['areas'].update({'37': {'pool': [104, 107, 110, 112, 115, 118], 'n': [1, 2]},
                            '38': {'pool': [104, 107, 110, 112, 115, 118], 'n': [2, 5]},
                            '39': {'pool': [105, 108, 110, 112, 115, 118], 'n': [2, 5]}})
-    # set_battle_map (variable 40 = 2): 1552 / 1555 平原 → 1, 1553 砂漠 → 5, 1600-1602 崖 → by variable 101 (0: 1,
-    # 2 from page 1310 on: 5)
-    plain = {'1552': 1, '1555': 1, '1553': 5, 'default': 1}
-    z['backdrops'].update({'37': dict(plain, **{k: 1 for k in ('1600', '1601', '1602')}),
-                           '38': dict(plain, **{k: 1 for k in ('1600', '1601', '1602')}),
-                           '39': dict(plain, **{k: 5 for k in ('1600', '1601', '1602')})})
+    # (the field's battle backgrounds: src/z3.js z3Backdrop, set_battle_map; the story battles' own below)
 
     # ---------- the story pages ----------
     faces = dict(z3['faces'], **faces_of(z3))

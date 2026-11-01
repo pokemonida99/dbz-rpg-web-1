@@ -94,7 +94,7 @@ def convert(h, z3, faces):
         223: lambda p: [{'x': 'z3cdTint', 'dark': p[0][0] < 0}],  # tint the screen black (-255) / back
         225: lambda p: [{'x': 'quake', 'dur': p[2]}],
         242: lambda p: [{'bgmFade': p[0]}], 251: lambda p: [{'x': 'z3cdSeStop'}],
-        125: lambda p: [{'x': 'z3cdGold', 'n': p[2] if p[0] == 0 else -p[2]}],  # 信用點 (this version's CAP)
+        125: lambda p: [{'x': 'cap', 'op': 1 if p[0] == 0 else 2, 'n': p[2]}],  # 信用點 (gold: state.zeni here, like CAP)
     })
     OPTS.update(shakeSw=True)
 
@@ -104,8 +104,6 @@ def convert(h, z3, faces):
             if n.get('x') == 'exp' and n.pop('ss'):  # the same EXP twice (base and Super Saiyan form): once
                 if out and out[-1].get('x') == 'exp' and out[-1]['id'] == n['id']:
                     continue
-            if n.get('var') and n['var'][0] == 25:  # variable 25 (CAP) is this version's 信用點
-                n = {'x': 'z3cdGold', 'n': n['var'][2] if n['var'][1] == 1 else -n['var'][2]}
             for k in ('then', 'else'):
                 if k in n:
                     n[k] = fix(n[k])

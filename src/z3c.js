@@ -253,7 +253,6 @@ addNodes({
   z3cdHand: async () => { if (gameRef) gameRef.state.hand = newHand(gameRef.world); },
   z3cdLead: async () => { const s = gameRef && gameRef.state; if (s && s.party[0]) s.var[42] = s.party[0].id; },
   z3cdZp: async (node) => { const s = gameRef && gameRef.state; if (s) for (const m of [...s.party, ...Object.values(s.bench || {})]) ensure(m).zp += node.n; },
-  z3cdGold: async (node) => { const s = gameRef && gameRef.state; if (s) s.zeni = Math.max(0, (s.zeni || 0) + node.n); },
   z3cdAgain: async () => { again = true; },
 });
 // battle films of the new members' moves (src/anime.js MOVES; the nearest Z1 / Z2 film, as src/z2b.js does)

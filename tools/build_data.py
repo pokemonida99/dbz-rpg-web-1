@@ -118,6 +118,8 @@ def cond(p):
         return ['sw', p[1], p[2] == 0]
     if p[0] == 1 and p[2] == 0:  # variable vs constant: == >= <= > < !=
         return ['var', p[1], p[3], p[4]]
+    if p[0] == 1 and p[2] == 1:  # variable vs variable (Z3: the loops of Porunga's flashes, variable 87 == 88)
+        return ['vv', p[1], p[3], p[4]]
     if p[0] == 12 and p[1].replace(' ', '') == '$partyc.size>1':  # a script condition: more than one in the party
         return ['party', 1]
     return ['never']

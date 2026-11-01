@@ -11,7 +11,7 @@
 // state.foeKills[enemy] ($ene_defeat_num), state.foeSeen[enemy] ($ene_enc_history_flag),
 // state.foeScouted[enemy] ($ene_sco_history_flag: HP and drops shown), state.cardUses[item] ($card_run_num).
 import { view, img, audio, say, choose, textSpeed } from './core.js?v=20261101-1909';
-import { Battle } from './battle.js?v=20261101-1909';
+import { Battle, battleOpts } from './battle.js?v=20261101-1909';
 import { fieldCards } from './items.js?v=20261101-1909';
 
 const SE_OK = 'Z3 決定', SE_MOVE = 'Z3 カーソル移動', SE_ERR = 'Z3 エラー';
@@ -21,10 +21,11 @@ const RADAR = 'Graphics/Pictures/ドラゴンレーダー.PNG', BALL = 'Graphics
 
 // ---------- options (Scene_Db_Option) ----------
 const OPT_KEY = 'dbz-portrait-options';
-export const options = { bgm: 0, enc: 1, encSe: 0, battleFast: 0, fastMsg: 0, skipOp: 0, skipRecap: 0 };
+export const options = { bgm: 0, enc: 1, encSe: 0, battleFast: 0, quickGo: 0, fastMsg: 0, skipOp: 0, skipRecap: 0 };
 try { Object.assign(options, JSON.parse(localStorage.getItem(OPT_KEY)) || {}); } catch (e) { /* first run */ }
 const saveOptions = () => { try { localStorage.setItem(OPT_KEY, JSON.stringify(options)); } catch (e) { /* private mode */ } };
 textSpeed.instant = !!options.fastMsg;
+battleOpts.quick = !!options.quickGo;
 
 // 戰鬥BGM (set_battle_bgm_name): 0 默認 follows the story (Z1 戦闘2 from the Sansho area on), 1 隨機, 8-11 the Z1 songs
 const BATTLE_BGM = { 8: ['Z1 戦闘1', 'DBZ 強襲！サイヤ人！『サイヤ人編』'], 9: ['Z1 戦闘2', 'DBZ 強襲！サイヤ人！『ガーリック編』'],
@@ -292,6 +293,7 @@ const OPTION_ROWS = [
   ['enc', '遇敵', [[0, '少'], [1, '普通'], [2, '多']], '設定遇敵頻率'],
   ['encSe', '遇敵音樂', [[0, 'DBZ 強襲！サイヤ人！'], [1, 'DBZ3 烈戦人造人間'], [2, 'DBZ 超サイヤ伝説'], [3, 'DBZ 悟空激闘伝']], '設定遇敵音'],
   ['battleFast', '戰鬥速度', [[0, '默認值'], [1, '高速化']], '設定戰鬥動畫的速度'],
+  ['quickGo', '選完直接出招', [[0, '關閉'], [1, '打開']], '全員選好卡片後不用按「出招！」，直接開始（和原版一樣）'],
   ['fastMsg', '消息高速化', [[0, '無效'], [1, '有效']], '訊息一次全部顯示'],
   ['skipOp', '跳過ＯＰ', [[0, '關閉'], [1, '打開']], '啟動時不播放片頭動畫'],
   ['skipRecap', '跳過概況', [[0, '關閉'], [1, '打開']], '讀取存檔時不顯示前情提要'],
@@ -307,6 +309,7 @@ function openOptions(g) {
         options[key] = values[(i + d + values.length) % values.length][0];
         saveOptions();
         textSpeed.instant = !!options.fastMsg;
+        battleOpts.quick = !!options.quickGo;
         help = desc;
         if (key === 'encSe') audio.se('Z1 敵発見');
         render();

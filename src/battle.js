@@ -5,11 +5,14 @@
 //                    for each action (src/anime.js)
 //   lower area     — message window; choosing: buttons + the six cards; fighting: the original duel bar
 //                    (party face, HP/KI, both cards, enemy face)
-// Choosing a card that allows a special move opens the move window over the stage.
+// Choosing (touch): the highlighted member takes the card you tap; one that allows a special move opens the move
+// window over the stage. Tapping outside the window / anything but an enemy while targeting cancels that card.
+// A picked card wears its member's face: tap it (or the face above) to pick again for that member; 返回 undoes the
+// last pick. With everyone picked a big 出招！ starts the turn (or right away with 設定「選完直接出招」).
 import { view, img, audio, sleep, rand } from './core.js?v=20261101-1909';
 import { levelUp } from './party.js?v=20261101-1909';
 import { Duel, ANIME_IMAGES, SW, SH, BACK_Y } from './anime.js?v=20261101-1909';
-import { battleCommand, autoSkill, autoTarget, tally } from './partymenu.js?v=20261101-1909'; // command menu, 作戰, counters
+import { commandButtons, autoSkill, autoTarget, tally } from './partymenu.js?v=20261101-1909'; // command row, 作戰, counters
 import * as items from './items.js?v=20261101-1909'; // item cards: effects that touch the battle rules
 import { tryCombo, announceCombos, comboHints, hasCombos, HINT_TEXT } from './combo.js?v=20261101-1909'; // 組合技
 import * as growth from './growth.js?v=20261101-1909'; // passive skills, proficiency, KO, SP / ZP / EXP pool
@@ -28,6 +31,8 @@ const FONT = 'Cubic11, system-ui, sans-serif';
 // one is picked per battle and kept for the whole fight. Film row 0 sits on image row BACKDROP_TOP.
 const BACKDROPS = ['bg/battle_night.png', 'bg/battle_dusk.png', 'bg/battle_day.png'];
 const BACKDROP_TOP = 205;
+// 設定「選完直接出招」(src/fieldmenu.js keeps it in sync): resolve as soon as everyone has picked, like the original
+export const battleOpts = { quick: false };
 
 export function battleImages(world) {
   const sheets = new Set([...BACKDROPS, CARDS, FACES, FOE_FACES, DIGITS, FRAME_IMG, ...ANIME_IMAGES]);
@@ -150,7 +155,8 @@ export class Battle {
     this.anim = null; // the Duel being played
     this.backdrop = BACKDROPS[rand(BACKDROPS.length)];
     this.phase = 'plan'; // plan | fight | result
-    this.mode = 'card'; // while planning: card | move | target
+    this.mode = 'card'; // while planning: card | move | target | ready
+    this.history = []; // members in the order they picked (返回)
     this.turn = 1;
     this.msg = [];
     this.buttons = [];
@@ -217,14 +223,43 @@ export class Battle {
     if (this.mode === 'move' && this.phase === 'plan') this.drawMoves(c);
   }
 
-  hit(x, y, w, h, fn) { this.hits.unshift({ x, y, w, h, fn }); } // later = on top
+  // later = on top; tag: 'modal' (the move window, enemies and buttons while targeting) or { card: k }
+  hit(x, y, w, h, fn, tag) { this.hits.unshift({ x, y, w, h, fn, tag }); }
 
   onTap(e) {
     if (this.phase === 'fight' && this.anim && !this.cont) { this.fast = true; return; } // tap to speed the film up
     const r = view.canvas.getBoundingClientRect();
     const x = (e.clientX - r.left) / view.cssPerPx, y = (e.clientY - r.top) / view.cssPerPx;
     const h = this.hits.find((b) => x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.h);
-    if (h) { audio.unlock(); h.fn(); }
+    audio.unlock();
+    if (this.phase === 'plan' && (this.mode === 'move' || this.mode === 'target') && !(h && h.tag === 'modal')) {
+      // the move window / targeting is open: another free card takes over, anything else cancels this card
+      const k = h && h.tag && h.tag.card;
+      const other = k != null && k !== this.pending.card && this.owner(k) == null;
+      this.cancelPending();
+      if (other) this.onCard(k);
+      return;
+    }
+    if (h) h.fn();
+  }
+
+  // desktop keys: Enter / Z / Space = continue or 出招！, X / Escape = cancel or 返回, 1-6 = that card
+  onKey(e) {
+    if (document.querySelector('.pm, #cards, .combo-list') || this.el.hidden) return; // a menu screen is open
+    const ok = ['Enter', 'Space', 'KeyZ'].includes(e.code), back = ['KeyX', 'Escape', 'Backspace'].includes(e.code);
+    const n = /^(Digit|Numpad)([1-6])$/.exec(e.code);
+    if (!ok && !back && !n) return;
+    e.preventDefault();
+    audio.unlock();
+    if (this.phase === 'fight' && this.anim && !this.cont) { this.fast = true; return; }
+    if (this.cont) { if (ok) this.cont(); return; }
+    if (this.phase !== 'plan') return;
+    if (n) { if (this.mode === 'move' || this.mode === 'target') this.cancelPending(); this.tapCard(Number(n[2]) - 1); return; }
+    if (ok && this.mode === 'ready') this.go();
+    else if (ok && this.mode === 'move') this.chooseTarget(); // 普通攻擊
+    else if (back && (this.mode === 'move' || this.mode === 'target')) this.cancelPending();
+    else if (back && this.buttons.some((b) => b[0] === '隊伍')) this.resume(); // close the 菜單 row
+    else if (back) this.undo();
   }
 
   drawStatus(c) {
@@ -271,13 +306,21 @@ export class Battle {
       if (items.stopCount(f)) text(c, '停', f.fx + 56, f.fy + 2, '#ff5050', 16, 'center'); // じいちゃん
       if (this.mode === 'target') {
         cursor(c, f.fx + 32, f.fy - 14);
-        this.hit(f.fx - 6, f.fy - 20, 76, 90, () => this.commit(f.slot));
+        this.hit(f.fx - 6, f.fy - 20, 76, 90, () => this.commit(f.slot), 'modal');
       }
     }
     if (this.mode === 'target') {
       c.fillStyle = 'rgba(0,0,0,.6)';
       c.fillRect(0, this.L.stage.y + 8, view.w, 26);
-      text(c, '點選要攻擊的敵人', view.w / 2, this.L.stage.y + 12, '#ffd8a0', 16, 'center');
+      text(c, '點選要攻擊的敵人（點其他地方取消）', view.w / 2, this.L.stage.y + 12, '#ffd8a0', 16, 'center');
+    }
+    // everyone has picked: a big 出招！ above the enemies when there's room (the button row has one too)
+    const room = (this.foes[0] ? this.foes[0].fy - 20 : this.L.stage.y + this.L.stage.h) - this.L.stage.y;
+    if (this.mode === 'ready' && this.phase === 'plan' && room >= 84) {
+      const bw = 200, bh = 64, bx = Math.round((view.w - bw) / 2), by = Math.round(this.L.stage.y + (room - bh) / 2);
+      win(c, bx, by, bw, bh, '#ffe070');
+      text(c, '出招！', bx + bw / 2, by + 16, RUST, 30, 'center');
+      this.hit(bx, by, bw, bh, () => this.go());
     }
   }
 
@@ -286,31 +329,38 @@ export class Battle {
     const W = view.w;
     // buttons row
     const n = this.buttons.length;
-    if (n) {
-      const gap = 6, bw = (W - 8 - gap * (n - 1)) / n;
-      this.buttons.forEach(([label, fn], i) => {
-        const bx = 4 + i * (bw + gap);
-        win(c, bx, L.btnY, bw, 40);
-        text(c, label, bx + bw / 2, L.btnY + 11, INK, 18, 'center');
-        this.hit(bx, L.btnY, bw, 40, fn);
+    if (n) { // [label, fn, weight]: 出招！ is drawn wider and bolder
+      const gap = 6, units = this.buttons.reduce((t, b) => t + (b[2] || 1), 0), u = (W - 8 - gap * (n - 1)) / units;
+      let bx = 4;
+      this.buttons.forEach(([label, fn, wt = 1]) => {
+        const bw = u * wt + gap * (wt - 1);
+        win(c, bx, L.btnY, bw, 40, wt > 1 ? '#ffe070' : CREAM);
+        text(c, label, bx + bw / 2, L.btnY + (wt > 1 ? 8 : 11), wt > 1 ? RUST : INK, wt > 1 ? 22 : 18, 'center');
+        this.hit(bx, L.btnY, bw, 40, fn, this.mode === 'target' ? 'modal' : undefined);
+        bx += bw + gap;
       });
     }
     // the six cards
     const m = this.phase === 'plan' && this.cur != null ? this.party[this.cur] : null;
-    const step = Math.min(66, (W - 4) / HAND), x0 = Math.round((W - step * (HAND - 1) - 64) / 2);
+    const step = Math.min(66, (W - 8 - 64) / (HAND - 1)), x0 = Math.round((W - step * (HAND - 1) - 64) / 2);
     this.hand.forEach((cd, k) => {
-      const used = this.plans && this.plans.some((p) => p && p.card === k);
+      const owner = this.phase === 'plan' ? this.owner(k) : null; // the member who picked this card
       const x = Math.round(x0 + k * step);
-      const special = m && (cd.s === m.school || cd.s === 0) && m.skills.length;
+      const special = m && owner == null && (cd.s === m.school || cd.s === 0) && m.skills.length;
       const picked = this.pending && this.pending.card === k;
       const y = L.cardsY + (picked ? -10 : special ? -4 : 0);
-      if (used) c.globalAlpha = 0.25;
+      if (owner != null) c.globalAlpha = 0.45;
       card(c, cd, x, y);
       c.globalAlpha = 1;
+      if (owner != null) { // whose card: a small face badge
+        const bx = x + 64 - 34, by = y + 2;
+        c.fillStyle = '#fff'; c.fillRect(bx - 2, by - 2, 36, 36);
+        c.save(); c.translate(bx, by); c.scale(0.5, 0.5); face(c, this.party[owner], 0, 0); c.restore();
+      }
       if (picked || (special && cd.s === m.school)) {
         c.strokeStyle = picked ? '#fff' : '#ffd27a'; c.lineWidth = 2; c.strokeRect(x - 1, y - 1, 66, 98);
       }
-      if (m && !used && this.mode === 'card') this.hit(x, y, step, 100, () => this.onCard(k));
+      if (this.phase === 'plan' && !this.cont) this.hit(x, y, step, 100, () => this.tapCard(k), { card: k });
     });
   }
 
@@ -323,6 +373,7 @@ export class Battle {
     const rowH = hints.some((x) => x.length) ? 46 : 30, h = 46 + skills.length * rowH + 50;
     const x = 10, w = view.w - 20, y = Math.max(L.stage.y + 4, L.msg.y - 4 - h);
     win(c, x, y, w, h);
+    this.hit(x, y, w, h, () => {}, 'modal'); // taps on the window itself don't cancel
     text(c, `${m.name} 的招式`, x + 14, y + 12, RUST, 18);
     word(c, 'KI', x + w - 96, y + 12); num(c, m.ki, x + w - 14, y + 12);
     skills.forEach((s, i) => {
@@ -333,9 +384,9 @@ export class Battle {
       text(c, `KI ${ki}`, x + w - 14, ry + 8, ok ? '#7a5230' : '#c0a080', 14, 'right');
       hints[i].forEach((t, k) => text(c, `組合技 ${t.name}（${t.need}）${this.pending.solo ? '不使用' : HINT_TEXT[t.st]}`,
         x + 30, ry + 27 + k * 14, t.st === 'ok' && !this.pending.solo ? RUST : '#a08060', 12));
-      if (ok) this.hit(x, ry, w, rowH, () => { this.pending.skill = s; this.mode = 'card'; this.chooseTarget(); });
+      if (ok) this.hit(x, ry, w, rowH, () => { this.pending.skill = s; this.chooseTarget(); }, 'modal');
     });
-    const btns = [['普通攻擊', () => { this.mode = 'card'; this.chooseTarget(); }], ['換一張卡', () => { this.pending = null; this.mode = 'card'; this.promptCard(); }]];
+    const btns = [['普通攻擊', () => this.chooseTarget()], ['取消', () => this.cancelPending()]];
     if (hasCombos(this, this.cur)) btns.push([this.pending.solo ? '組合技：關' : '組合技：開', () => { this.pending.solo = !this.pending.solo; }]);
     const by = y + h - 46, bw = (w - 10 - 10 * btns.length) / btns.length;
     btns
@@ -343,7 +394,7 @@ export class Battle {
         const bx = x + 10 + i * (bw + 10);
         win(c, bx, by, bw, 36, '#fff0d0');
         text(c, label, bx + bw / 2, by + 9, INK, 17, 'center');
-        this.hit(bx, by, bw, 36, fn);
+        this.hit(bx, by, bw, 36, fn, 'modal');
       });
   }
 
@@ -402,32 +453,89 @@ export class Battle {
     this.fast = false;
     this.duel = null;
     this.plans = this.party.map(() => null);
+    this.history = [];
     for (const f of this.foes) if (f.hp > 0) f.card = enemyCard(); // §2.1: enemy cards are dealt at turn start
-    this.cur = this.party.findIndex((m) => this.able(m));
     growth.turnStart(this);
-    battleCommand(this); // 戰鬥・菜單・逃跑 (src/partymenu.js)
+    this.cur = null;
+    this.resume();
+  }
+
+  // the member a hand card is picked by (index), or null
+  owner(k) { const i = this.plans.findIndex((p) => p && p.card === k); return i < 0 ? null : i; }
+  nextFree() { return this.party.findIndex((m, i) => this.able(m) && !this.plans[i]); }
+
+  // back to choosing: the current member if still free, else the next one, else 出招！
+  resume() {
+    this.pending = null;
+    if (this.cur == null || !this.able(this.party[this.cur]) || this.plans[this.cur]) this.cur = this.nextFree();
+    if (this.cur < 0) { this.cur = null; this.ready(); return; }
+    this.promptCard();
   }
 
   promptCard() {
     const m = this.party[this.cur];
     this.mode = 'card';
     this.pending = null;
-    this.say(`${m.name}：請選一張卡。`, `${SCHOOL[m.school]}流或「必」的卡可以使用必殺技。`);
-    this.buttons = [['自動', () => this.autoPlan()], ['返回', () => battleCommand(this)]];
+    this.say(`${m.name}：點一張卡出招。`, `${SCHOOL[m.school]}流或「必」的卡可以使用必殺技。`);
+    this.buttons = commandButtons(this); // 自動・菜單・(返回)・逃跑 (src/partymenu.js)
+  }
+
+  // everyone able has picked
+  ready() {
+    if (battleOpts.quick) { this.go(); return; }
+    this.mode = 'ready';
+    this.say('全員準備好了！', '按「出招！」開始；點卡片或頭像可重選');
+    this.buttons = [['出招！', () => this.go(), 2], ['返回', () => this.undo()]];
+  }
+
+  go() {
+    if (this.phase !== 'plan' || this.nextFree() >= 0) return;
+    audio.se('Z3 決定');
+    this.cur = null;
+    this.resolveTurn();
+  }
+
+  // un-pick one member (their card / face tapped, or 返回); the others keep their picks
+  unpick(i) {
+    this.plans[i] = null;
+    this.history = this.history.filter((j) => j !== i);
+    this.cur = i;
+    audio.se('Z3 カーソル移動');
+    this.promptCard();
+  }
+  undo() { if (this.history.length) this.unpick(this.history[this.history.length - 1]); }
+
+  // the move window or targeting is closed without picking: back to cards for the same member
+  cancelPending() {
+    this.pending = null;
+    if (this.cur == null) { this.resume(); return; }
+    this.promptCard();
   }
 
   onFighterTap(i) {
-    if (this.phase !== 'plan' || !this.able(this.party[i])) return;
-    this.plans[i] = null;
+    if (this.phase !== 'plan' || this.cont || !this.able(this.party[i])) return;
+    if (this.plans[i]) { this.unpick(i); return; }
     this.cur = i;
     this.promptCard();
+  }
+
+  tapCard(k) {
+    const j = this.owner(k);
+    if (j != null) { this.unpick(j); return; }
+    if (this.cur == null) return; // 出招！ is up: tap a picked card or face to change it
+    this.onCard(k);
   }
 
   onCard(k) {
     const m = this.party[this.cur];
     const cd = this.hand[k];
     this.pending = { card: k, skill: null };
-    if ((cd.s === m.school || cd.s === 0) && m.skills.length) { this.mode = 'move'; this.buttons = []; return; }
+    if ((cd.s === m.school || cd.s === 0) && m.skills.length) {
+      this.mode = 'move';
+      this.buttons = [];
+      this.say(`${m.name}：選一個招式。`, '點視窗外面可以取消這張卡。');
+      return;
+    }
     this.chooseTarget();
   }
 
@@ -438,17 +546,28 @@ export class Battle {
     this.say(`${this.party[this.cur].name}：點選要攻擊的敵人。`);
     this.buttons = [
       ['打 HP 最少的', () => this.commit(alive.reduce((a, b) => (b.hp < a.hp ? b : a)).slot)],
-      ['換一張卡', () => this.promptCard()],
+      ['取消', () => this.cancelPending()],
     ];
   }
 
   commit(target) {
     this.plans[this.cur] = { ...this.pending, target };
+    this.history.push(this.cur);
     this.pending = null;
-    const next = this.party.findIndex((m, i) => this.able(m) && !this.plans[i]);
-    if (next < 0) { this.cur = null; this.resolveTurn(); return; }
-    this.cur = next;
-    this.promptCard();
+    this.resume();
+  }
+
+  // the battle menu (src/partymenu.js) may reorder the party (隊伍) or change the hand / KO state (卡牌):
+  // keep each member's pick across it
+  async keepPlans(fn) {
+    const by = new Map(this.party.map((m, i) => [m, this.plans[i]]));
+    const hist = this.history.map((i) => this.party[i]);
+    const cur = this.cur != null ? this.party[this.cur] : null;
+    const r = await fn();
+    this.plans = this.party.map((m) => (this.able(m) && by.get(m)) || null);
+    this.history = hist.map((m) => this.party.indexOf(m)).filter((i) => i >= 0 && this.plans[i]);
+    this.cur = cur ? this.party.indexOf(cur) : null;
+    return r;
   }
 
   // Auto mode (§2.3): own-school card first, then 必; the move and the target follow 作戰 (src/partymenu.js).
@@ -597,6 +716,8 @@ export class Battle {
     this.el.addEventListener('pointerdown', onTap);
     const onResize = () => this.measure();
     window.addEventListener('resize', onResize);
+    const onKey = (e) => this.onKey(e);
+    window.addEventListener('keydown', onKey);
     await document.fonts.load(`16px ${FONT}`).catch(() => {});
     audio.playBgm(this.boss ? 'Z1 戦闘ボス1(中ボス)' : 'Z1 戦闘1');
     this.say(`${this.foes.map((f) => f.name).join('、')} 出現了！`);
@@ -613,6 +734,7 @@ export class Battle {
     });
     if (result === 'win') { audio.stopBgm(); audio.se('GBZ1 ファンファーレ1', 80); await this.rewards(); }
     window.removeEventListener('resize', onResize);
+    window.removeEventListener('keydown', onKey);
     this.el.removeEventListener('pointerdown', onTap);
     this.el.hidden = true;
     this.el.innerHTML = '';

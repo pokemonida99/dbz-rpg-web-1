@@ -19,16 +19,18 @@ export class Field {
     this.pois = world.pois[game.state.map] || [];
     this.near = null; // the interactive spot the player is next to
     this.look = { x: 0, y: 0 }; // camera lead on road maps
-    if (this.map.road != null) this.setupRoad(game.state);
+    if (this.map.road != null || this.map.path) this.setupRoad(game.state);
   }
 
-  // ---------- road maps (Snake Way): the player keeps to the road ----------
-  // The road is the passable tiles of one layer (world.maps[id].road = layer index). Movement goes tile centre to tile
-  // centre along the road; at a bend the player turns by itself, at a fork the stick decides.
+  // ---------- road maps (Snake Way, King Kai's planet): the player keeps to the road / squares ----------
+  // The road is the passable tiles of one layer (world.maps[id].road = layer index), or the ground tiles listed in
+  // world.maps[id].path (the training squares). Movement goes tile centre to tile centre along it; at a bend the
+  // player turns by itself, at a fork the stick decides.
   setupRoad(s) {
-    const { w, h, layers } = this.map, L = layers[this.map.road], pas = this.world.passages;
+    const { w, h, layers } = this.map, pas = this.world.passages;
     this.open = new Uint8Array(w * h);
-    for (let i = 0; i < w * h; i++) if (L[i] && !(pas[L[i]] & 1)) this.open[i] = 1;
+    if (this.map.path) { for (let i = 0; i < w * h; i++) if (this.map.path.includes(layers[0][i])) this.open[i] = 1; }
+    else { const L = layers[this.map.road]; for (let i = 0; i < w * h; i++) if (L[i] && !(pas[L[i]] & 1)) this.open[i] = 1; }
     if (!this.isOpen(Math.floor(s.x / 32), Math.floor(s.y / 32))) { // e.g. an old save made while flying freely
       let best = null, bd = Infinity;
       for (let i = 0; i < w * h; i++) {
@@ -93,7 +95,8 @@ export class Field {
   walkable(px, py) {
     const tx = Math.floor(px / 32), ty = Math.floor(py / 32);
     if (tx < 0 || ty < 0 || tx >= this.map.w || ty >= this.map.h) return false;
-    return this.map.layers[0][tx + ty * this.map.w] > 0;
+    const id = this.map.layers[0][tx + ty * this.map.w];
+    return id > 0 && (!this.map.path || this.map.path.includes(id)); // path maps (King Kai's planet): only these ground tiles
   }
 
   update(dt) {
@@ -167,7 +170,7 @@ export class Field {
       const pat = [0, 1, 2, 1][Math.floor(this.anim) % 4];
       const bob = Math.round(Math.sin(this.anim * 1.3) * 1.5);
       const k = ((s.var && s.var[42]) || 3) - 3; // the leading character (actor id - 3), 4 a row like the VX sheets
-      c.drawImage(fi.im, ((k % 4) * 3 + pat) * 48, (Math.floor(k / 4) * 4 + this.dir) * 48, 48, 48, Math.round(s.x - 24 - cx), Math.round(s.y - 36 - cy + bob), 48, 48);
+      c.drawImage(fi.im, ((k % 4) * 3 + pat) * 48, (Math.floor(k / 4) * 4 + this.dir) * 48, 48, 48, Math.round(s.x - 24 - cx), Math.round(s.y - (this.map.path ? 28 : 36) - cy + bob), 48, 48); // on the squares: standing on them
     }
     c.drawImage(this.layers.upper, -cx, -cy);
     if (this.near) { // "!" over the player's head

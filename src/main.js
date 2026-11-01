@@ -13,6 +13,7 @@ import { setGrowthWorld } from './growth.js?v=20261101-1918'; // skill cards and
 import { cardSquare, compo } from './cardgames.js?v=20261101-1918'; // card squares (shop / lottery / memory), 合成
 import { fieldExtraHtml, openFieldEntry, setFieldGame, encounterSteps, battleTally, spotTally, storySoFar, hasRecap, options } from './fieldmenu.js?v=20261101-1918'; // 概況・情報・設定・地圖, records, options
 import { training } from './training.js?v=20261101-1918'; // training squares
+import { chapter3Goal, startChapter3, resumeChapter3, chapter3Spot, isChapter3Map, chapter3Boss } from './chapter3.js?v=20261101-1918';
 
 const SAVE_KEY = 'dbz-portrait-save-v1';
 const AUTO_KEY = 'dbz-portrait-autosave-v1'; // the original's Save_Auto.rvdata: after each normal battle won
@@ -44,7 +45,8 @@ const game = {
     s.steps++;
     if (this.busy || bubbles(s) || --s.nextEnc > 0) return; // バブルス card keeps enemies away
     s.nextEnc = encounterSteps(nextEncounterSteps());
-    if (await this.startBattle(rollArea(this.world, s) || rollEncounter(this.world), false)) save(true, AUTO_KEY); // all.rb:47000
+    const foes = rollArea(this.world, s) || rollEncounter(this.world);
+    if (foes.length && await this.startBattle(foes, false)) save(true, AUTO_KEY); // all.rb:47000
   },
 
   // the "examine / enter" button appears while standing next to a building
@@ -66,7 +68,7 @@ const game = {
     this.field.paused = true;
     input.dx = input.dy = 0;
     const s = this.state;
-    if (poi.chapter) { await chapterSpot(this, poi); renderHud(); this.busy = false; this.field.paused = false; return; }
+    if (poi.chapter) { await (chapter3Spot(this, poi) || chapterSpot(this, poi)); renderHud(); this.busy = false; this.field.paused = false; return; }
     spotTally(s, poi);
     if (poi.effect === 'training') { await training(this); renderHud(); this.busy = false; this.field.paused = false; return; }
     if (poi.fight) { // Pumpkin / Broccoli: their lines, then the fight
@@ -89,6 +91,7 @@ const game = {
   },
 
   async onBoss() {
+    if (isChapter3Map(this.state)) return chapter3Boss(this);
     if (this.state.map !== '1') return chapterBoss(this);
     if (this.busy) return;
     this.busy = true;
@@ -162,7 +165,7 @@ function renderHud() {
     party.appendChild(el);
   }
   hud.querySelector('.menu-btn').onclick = openMenu;
-  hud.querySelector('.goal').textContent = chapterGoal(game.world, s) ?? (s.flags.bossDone ? '' : '目標：飛往右上方救回悟飯（建議練到 Lv6 以上）');
+  hud.querySelector('.goal').textContent = chapter3Goal(game.world, s) ?? chapterGoal(game.world, s) ?? (s.flags.bossDone ? '' : '目標：飛往右上方救回悟飯（建議練到 Lv6 以上）');
 }
 game.renderHud = renderHud;
 
@@ -226,6 +229,7 @@ function load(key = SAVE_KEY) {
     s.var = s.var || { 42: 3 };
     startField();
     resumeChapter(game);
+    resumeChapter3(game);
     return true;
   } catch (e) { return false; }
 }
@@ -248,7 +252,7 @@ function startField() {
   renderHud();
 }
 
-Object.assign(game, { startField, save, showTitle: (sub) => showTitle(sub) }); // for src/chapter2.js
+Object.assign(game, { startField, save, showTitle: (sub) => showTitle(sub), nextChapter: startChapter3 }); // for src/chapter2.js, src/chapter3.js
 
 // ---------- title ----------
 const title = document.getElementById('title');
@@ -258,7 +262,7 @@ function showTitle(sub) {
   audio.playBgm(game.world.titleBgm);
   const has = !!localStorage.getItem(SAVE_KEY);
   title.innerHTML = `<img src="${assetUrl('Graphics/System/Title.png')}" alt="">
-    <div class="sub">${sub || '重製版・Z1 拉蒂茲篇～桑修篇'}</div>
+    <div class="sub">${sub || '重製版・Z1 拉蒂茲篇～尼奇篇'}</div>
     <div class="actions">
       <button class="btn" data-a="new">新的開始</button>
       ${has ? '<button class="btn" data-a="cont">繼續遊戲</button>' : ''}

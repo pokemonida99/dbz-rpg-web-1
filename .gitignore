@@ -3,3 +3,4 @@ game
 data/*.json
 !data/world.json
 !data/combos.json
+research/

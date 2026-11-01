@@ -100,7 +100,8 @@ def add(world, h):
         'after': one(p961),
         'bgm': {'bio': 'ZArrang_btl02_恐怖のギニュー特戦隊', 'willow': 'ZArrang_btl13_戦(IKUSA)3'},
         # page 962: what Z2 starts from (variable 41 = 281 is the Z2 opening)
-        'z2': {'party': [5, 6, 7, 8, 9], 'var40': 1, 'progress': 1, 'v41': 281},
+        # (the original sets 281 and its Map007 page leads on to 201, the Z2 あらすじ; Z2 here starts from 201)
+        'z2': {'party': [5, 6, 7, 8, 9], 'var40': 1, 'progress': 1, 'v41': 201},
         'end': s2t('威洛篇　完'),
         'next': s2t('Ｚ２　弗利沙篇　待续'),
         'goals': {'50': s2t('目标：前往左上方的威洛要塞'),

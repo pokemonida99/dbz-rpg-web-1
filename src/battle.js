@@ -6,14 +6,13 @@
 //   lower area     — message window; choosing: buttons + the six cards; fighting: the original duel bar
 //                    (party face, HP/KI, both cards, enemy face)
 // Choosing a card that allows a special move opens the move window over the stage.
-import { view, img, audio, sleep, rand } from './core.js?v=20261101-1711';
-import { levelUp } from './party.js?v=20261101-1711';
-import { Duel, ANIME_IMAGES, SW, SH, BACK_Y } from './anime.js?v=20261101-1711';
-import * as items from './items.js?v=20261101-1711'; // item cards: effects that touch the battle rules
+import { view, img, audio, sleep, rand } from './core.js?v=20261101-1835';
+import { levelUp } from './party.js?v=20261101-1835';
+import { Duel, ANIME_IMAGES, SW, SH, BACK_Y } from './anime.js?v=20261101-1835';
+import { battleCommand, autoSkill, autoTarget, tally } from './partymenu.js?v=20261101-1835'; // command menu, 作戰, counters
+import * as items from './items.js?v=20261101-1835'; // item cards: effects that touch the battle rules
 
 export const SCHOOL = ['必', '龜', '神', '界', '魔', '惑'];
-// entries of the battle menu (菜單): { id, label, order, open: async (battle) => {} } — 隊伍 0, 卡牌 1, 組合技 2, 作戰 3
-export const BATTLE_MENU = [];
 const HAND = 6;
 const EXP_RATE = 8; // the original's "経験値倍率" option; at 1 the opening chapter takes ~100 fights (Raditz needs about Lv6-7)
 const CARDS = 'Graphics/Pictures/カード関係.PNG';
@@ -395,7 +394,7 @@ export class Battle {
     this.plans = this.party.map(() => null);
     for (const f of this.foes) if (f.hp > 0) f.card = enemyCard(); // §2.1: enemy cards are dealt at turn start
     this.cur = this.party.findIndex((m) => this.able(m));
-    this.promptCard();
+    battleCommand(this); // 戰鬥・菜單・逃跑 (src/partymenu.js)
   }
 
   promptCard() {
@@ -403,12 +402,7 @@ export class Battle {
     this.mode = 'card';
     this.pending = null;
     this.say(`${m.name}：請選一張卡。`, `${SCHOOL[m.school]}流或「必」的卡可以使用必殺技。`);
-    this.buttons = [['自動', () => this.autoPlan()], ...this.menuButtons(), ...(this.boss ? [] : [['逃跑', () => this.done('escape')]])];
-  }
-
-  menuButtons() {
-    return [...BATTLE_MENU].sort((a, b) => a.order - b.order)
-      .map((e) => [e.label, async () => { this.buttons = []; await e.open(this); if (this.phase === 'plan') this.promptCard(); }]);
+    this.buttons = [['自動', () => this.autoPlan()], ['返回', () => battleCommand(this)]];
   }
 
   onFighterTap(i) {
@@ -446,24 +440,19 @@ export class Battle {
     this.promptCard();
   }
 
-  // Auto mode (§2.3): own-school card first, then 必; a random affordable move; target the weakest enemy.
+  // Auto mode (§2.3): own-school card first, then 必; the move and the target follow 作戰 (src/partymenu.js).
   autoPlan() {
     const usedCards = new Set(this.plans.filter(Boolean).map((p) => p.card));
-    const weakest = () => this.foes.filter((f) => f.hp > 0).reduce((a, b) => (b.hp < a.hp ? b : a)).slot;
     this.party.forEach((m, i) => {
       if (!this.able(m) || this.plans[i]) return;
       const free = this.hand.map((c, k) => k).filter((k) => !usedCards.has(k));
       let k = free.find((x) => this.hand[x].s === m.school);
       if (k == null) k = free.find((x) => this.hand[x].s === 0);
       let skill = null;
-      if (k != null) {
-        const ok = m.skills.map((s) => this.world.skills[s]).filter((s) => m.ki >= items.kiNeed(m, s.ki));
-        skill = ok.length ? ok[rand(ok.length)] : null;
-      } else {
-        k = free[rand(free.length)];
-      }
+      if (k != null) skill = autoSkill(this.world, this.game.state, m); // 作戰 (src/partymenu.js)
+      else k = free[rand(free.length)];
       usedCards.add(k);
-      this.plans[i] = { card: k, skill, target: weakest() };
+      this.plans[i] = { card: k, skill, target: autoTarget(this.game.state, m, this.foes) };
     });
     this.cur = null;
     this.resolveTurn();
@@ -527,6 +516,7 @@ export class Battle {
     if (skill && m.ki < items.kiNeed(m, skill.ki)) skill = null;
     const targets = skill && skill.all ? this.foes.filter((f) => f.hp > 0) : [foe];
     if (skill) items.payKi(m, skill.ki);
+    const alive = targets.filter((t) => t.hp > 0).length;
     for (const t of targets) {
       t.card = t.card || enemyCard();
       this.duel = { m, mc: cd, f: t, fc: t.card };
@@ -534,6 +524,7 @@ export class Battle {
       const dmg = playerDamage(m, skill && { power: skill.power, noDamage: skill.noDamage }, cd, t, t.card);
       await this.play(m, t, true, skill ? skill.id : null, dmg, t);
     }
+    tally(this.game.state, m, skill, alive - targets.filter((t) => t.hp > 0).length); // use counts, KOs
   }
 
   async enemyAct(f) {

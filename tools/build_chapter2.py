@@ -34,7 +34,7 @@ def add(world, h):
         world['maps'][str(mid)] = build_map(mid, rows=rows)
 
     INN = {'label': '進入旅館', 'event': 11, 'effect': 'rest'}
-    CARD = {'label': '記錄', 'effect': 'save', 'lines': [['', '這是一個 Z 標記。\n在這裡記錄了冒險的進度。']]}
+    CARD = {'label': '卡片商店', 'effect': 'shop'}
     TRAIN = {'label': '在修行場修行', 'effect': 'ki', 'lines': [['', '在修行場靜下心來修行……'], ['', '全員的 KI 恢復了！']]}
     at = lambda spots, kind: [dict(kind, x=x, y=y) for x, y in spots]
     world['pois']['5'] = [

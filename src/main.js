@@ -2,11 +2,12 @@
 import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-1711';
 import { tileSheetPaths } from './tiles.js?v=20261101-1711';
 import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-1711';
-import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-1711';
+import { Battle, battleImages, newHand, rollEncounter, BATTLE_MENU } from './battle.js?v=20261101-1711';
 import { makeMember, levelUp } from './party.js?v=20261101-1711';
 import { runEvent } from './events.js?v=20261101-1711';
 import { playOpening, playStory } from './opening.js?v=20261101-1711'; // the original's title animation and opening story
 import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapterBoss } from './chapter2.js?v=20261101-1711';
+import { openCards, openShop, setItemsWorld } from './items.js?v=20261101-1711'; // item cards: field menu, battle menu, card shops
 
 const SAVE_KEY = 'dbz-portrait-save-v1';
 const FACES = 'Graphics/Pictures/GBZ1 顔アイコン.PNG'; // 40×56 cells, one row per character
@@ -61,10 +62,11 @@ const game = {
     const s = this.state;
     if (poi.chapter) { await chapterSpot(this, poi); renderHud(); this.busy = false; this.field.paused = false; return; }
     if (poi.event) await runEvent(this.world.events[poi.event], s);
-    else await say(poi.lines);
+    else if (poi.lines) await say(poi.lines);
     if (poi.effect === 'rest') for (const m of s.party) { m.hp = m.maxhp; m.ki = m.maxki; }
     if (poi.effect === 'ki') for (const m of s.party) m.ki = m.maxki;
-    if (poi.effect === 'rest' || poi.effect === 'save') { save(true); toast('已存檔'); }
+    if (poi.effect === 'shop') await openShop(this); // a Z mark: the original's card square (also saves)
+    if (poi.effect === 'rest' || poi.effect === 'save' || poi.effect === 'shop') { save(true); toast('已存檔'); }
     renderHud();
     this.busy = false;
     this.field.paused = false;
@@ -116,6 +118,7 @@ const game = {
   },
 };
 window.__game = game;
+BATTLE_MENU.push({ id: 'cards', label: '卡牌', order: 1, open: (b) => openCards(game, b) });
 
 // ---------- HUD ----------
 const hud = document.getElementById('hud');
@@ -154,6 +157,7 @@ function openMenu() {
   game.field.leave();
   const has = !!localStorage.getItem(SAVE_KEY);
   menu.innerHTML = `<div class="box"><h2>選單</h2>
+    <button class="btn" data-a="cards">卡片<small>查看、使用持有的特殊卡片</small></button>
     <button class="btn" data-a="save">存檔<small>隨時記錄目前的位置與狀態</small></button>
     <button class="btn" data-a="load" ${has ? '' : 'disabled'}>讀檔<small>${has ? '回到上次存檔的地方' : '還沒有存檔'}</small></button>
     <button class="btn" data-a="heal">休息<small>回復全員 HP・KI（測試用）</small></button>
@@ -164,6 +168,7 @@ function openMenu() {
     const a = e.target.closest('[data-a]');
     if (!a && e.target !== menu) return;
     const act = a ? a.dataset.a : 'close';
+    if (act === 'cards') { menu.hidden = true; game.busy = true; openCards(game).then(() => { game.busy = false; game.field.paused = false; game.field.enter(); renderHud(); }); return; }
     if (act === 'save') { save(); toast('已存檔'); }
     if (act === 'load') { if (load()) toast('已讀檔'); }
     if (act === 'heal') { for (const m of game.state.party) { m.hp = m.maxhp; m.ki = m.maxki; } renderHud(); toast('全員回復了'); }
@@ -267,6 +272,7 @@ async function boot() {
   window.addEventListener('resize', () => view.resize());
   game.world = await (await fetch('data/world.json?v=20261101-1711')).json();
   setFaces(game.world.faces);
+  setItemsWorld(game.world);
   const faceSheets = new Set(Object.values(game.world.faces).map((f) => f[0]));
   await loadImages([...tileSheetPaths, ...fieldImages, ...battleImages(game.world), FACES, ...faceSheets]);
   await playOpening(); // the title animation, like the original plays before its title screen

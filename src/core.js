@@ -1,6 +1,6 @@
 // Shared runtime: canvas scaling, assets, input, audio, dialogue, toast.
 
-export const VERSION = '20261101-1618'; // stamped by tools/bump.py on each deploy
+export const VERSION = '20261101-1649'; // stamped by tools/bump.py on each deploy
 export const ASSET_ROOT = 'assets/';
 export const assetUrl = (p) => (ASSET_ROOT + p).split('/').map(encodeURIComponent).join('/');
 
@@ -174,18 +174,35 @@ export const audio = {
 // ---------- dialogue box: say(lines) resolves when the player has read them all ----------
 const dlg = document.getElementById('dialog');
 const dlgWho = dlg.querySelector('.who'), dlgText = dlg.querySelector('.text');
+const dlgFace = dlg.querySelector('.face'), dlgChoices = dlg.querySelector('.choices');
 let dlgAdvance = null;
 dlg.addEventListener('pointerdown', (e) => { e.stopPropagation(); if (dlgAdvance) dlgAdvance(); });
+
+// speaker name → [face sheet, row] (64×64 faces of the original); set from world.faces
+let faces = {};
+export function setFaces(map) { faces = map || {}; }
+function showFace(who) {
+  const f = faces[who];
+  dlg.classList.toggle('has-face', !!f);
+  if (!f) return;
+  const im = img(f[0]);
+  const c = dlgFace.getContext('2d');
+  c.clearRect(0, 0, 64, 64);
+  const paint = () => { if (im.ok && faces[who] === f) c.drawImage(im.im, 0, f[1] * 64, 64, 64, 0, 0, 64, 64); };
+  if (im.ok) paint(); else im.p.then(paint);
+}
 window.addEventListener('keydown', (e) => {
   if (!dlg.hidden && (e.code === 'Enter' || e.code === 'Space' || e.code === 'KeyZ')) { e.stopImmediatePropagation(); if (dlgAdvance) dlgAdvance(); }
 }, true);
 
-// lines: [[who, text], ...] or plain strings (narration)
-export async function say(lines) {
+// lines: [[who, text], ...] or plain strings (narration); `keep` leaves the last line up (for a choice after it)
+export async function say(lines, keep = false) {
   dlg.hidden = false;
+  dlgChoices.hidden = true;
   for (const line of lines) {
-    const [who, text] = Array.isArray(line) ? line : ['', line];
+    const [who, text, face] = Array.isArray(line) ? line : ['', line]; // face: whose face, when not the speaker's
     dlgWho.textContent = who;
+    showFace(face || who);
     dlgText.textContent = '';
     dlg.classList.add('busy');
     // type the text out quickly; a tap shows it all at once
@@ -200,10 +217,28 @@ export async function say(lines) {
       step();
     });
     dlg.classList.remove('busy');
+    if (keep && line === lines[lines.length - 1]) break;
     await new Promise((res) => { dlgAdvance = res; });
   }
   dlgAdvance = null;
-  dlg.hidden = true;
+  if (!keep) dlg.hidden = true;
+}
+
+// the original's choice window: buttons under the last line; resolves with the chosen index
+export function choose(options) {
+  dlg.hidden = false;
+  dlg.classList.add('busy'); // no ▼ while choosing
+  dlgChoices.innerHTML = '';
+  dlgChoices.hidden = false;
+  return new Promise((res) => {
+    options.forEach((label, k) => {
+      const b = document.createElement('button');
+      b.className = 'btn';
+      b.textContent = label;
+      b.onpointerdown = (e) => { e.stopPropagation(); dlgChoices.hidden = true; dlg.classList.remove('busy'); dlg.hidden = true; res(k); };
+      dlgChoices.appendChild(b);
+    });
+  });
 }
 
 let toastTimer = 0;

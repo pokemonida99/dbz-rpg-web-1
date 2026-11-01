@@ -1,9 +1,10 @@
 // Boot, game state, scene switching, story beats, HUD, menu, save/load.
-import { view, img, loadImages, audio, say, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-1618';
-import { tileSheetPaths } from './tiles.js?v=20261101-1618';
-import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-1618';
-import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-1618';
-import { makeMember, levelUp } from './party.js?v=20261101-1618';
+import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-1649';
+import { tileSheetPaths } from './tiles.js?v=20261101-1649';
+import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-1649';
+import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-1649';
+import { makeMember, levelUp } from './party.js?v=20261101-1649';
+import { runEvent } from './events.js?v=20261101-1649';
 
 const SAVE_KEY = 'dbz-portrait-save-v1';
 const FACES = 'Graphics/Pictures/GBZ1 顔アイコン.PNG'; // 40×56 cells, one row per character
@@ -24,6 +25,8 @@ const game = {
       hand: newHand(w),
       zeni: 0,
       flags: {},
+      sw: {}, // the original's switches and variables, for its events (src/events.js)
+      var: { 42: 3 }, // 42 = the character leading on the map (3 = 悟空)
     };
   },
 
@@ -53,8 +56,9 @@ const game = {
     actBtn.hidden = true;
     this.field.paused = true;
     input.dx = input.dy = 0;
-    await say(poi.lines);
     const s = this.state;
+    if (poi.event) await runEvent(this.world.events[poi.event], s);
+    else await say(poi.lines);
     if (poi.effect === 'rest') for (const m of s.party) { m.hp = m.maxhp; m.ki = m.maxki; }
     if (poi.effect === 'ki') for (const m of s.party) m.ki = m.maxki;
     if (poi.effect === 'rest' || poi.effect === 'save') { save(true); toast('已存檔'); }
@@ -68,12 +72,12 @@ const game = {
     this.busy = true;
     this.field.paused = true;
     input.dx = input.dy = 0;
-    await say(this.world.story.boss);
+    await runEvent(this.world.story.boss, this.state);
     this.busy = false;
     const won = await this.startBattle([this.world.boss.enemy], true);
     if (won) {
       this.state.flags.bossDone = true;
-      await say(this.world.story.ending);
+      await runEvent(this.world.story.ending, this.state);
       save(true);
       showTitle('第一章　完');
     }
@@ -173,6 +177,8 @@ function load() {
     const s = JSON.parse(localStorage.getItem(SAVE_KEY));
     if (!s) return false;
     game.state = s;
+    s.sw = s.sw || {};
+    s.var = s.var || { 42: 3 };
     startField();
     return true;
   } catch (e) { return false; }
@@ -213,7 +219,7 @@ function showTitle(sub) {
     startField();
     game.field.paused = true;
     game.busy = true;
-    await say(game.world.story.intro);
+    await runEvent(game.world.story.intro, game.state);
     game.busy = false;
     game.field.paused = false;
     save(true);
@@ -251,8 +257,10 @@ async function boot() {
   if (!(await ensureLatest())) return;
   view.resize();
   window.addEventListener('resize', () => view.resize());
-  game.world = await (await fetch('data/world.json?v=20261101-1618')).json();
-  await loadImages([...tileSheetPaths, ...fieldImages, ...battleImages(game.world), FACES]);
+  game.world = await (await fetch('data/world.json?v=20261101-1649')).json();
+  setFaces(game.world.faces);
+  const faceSheets = new Set(Object.values(game.world.faces).map((f) => f[0]));
+  await loadImages([...tileSheetPaths, ...fieldImages, ...battleImages(game.world), FACES, ...faceSheets]);
   showTitle();
   requestAnimationFrame(frame);
 }

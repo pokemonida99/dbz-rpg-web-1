@@ -55,6 +55,11 @@ button { font: inherit; color: inherit; -webkit-appearance: none; appearance: no
 
 /* ---------- dialogue ---------- */
 #dialog { position: absolute; left: 6px; right: 6px; bottom: calc(var(--safe-b) + 10px); min-height: 130px; padding: 6px 8px 10px; z-index: 30; border: 12px solid transparent; border-image: url("../assets/ui/frame.png") 8 / 12px stretch; background: var(--cream) padding-box; color: var(--ink); }
+#dialog .face { display: none; position: absolute; left: 2px; top: 4px; width: 64px; height: 64px; image-rendering: pixelated; }
+#dialog.has-face { padding-left: 78px; min-height: 130px; }
+#dialog.has-face .face { display: block; }
+#dialog .choices { display: flex; gap: 8px; margin-top: 6px; }
+#dialog .choices .btn { width: auto; flex: 1; text-align: center; margin: 0; }
 #dialog .who { font-size: 16px; color: #d0480c; min-height: 1.2em; }
 #dialog .text { font-size: 19px; line-height: 1.6; white-space: pre-wrap; margin-top: 2px; }
 #dialog .next { position: absolute; right: 12px; bottom: 6px; color: var(--rust); animation: blink 1s steps(2) infinite; }

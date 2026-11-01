@@ -18,6 +18,7 @@ files |= {'Graphics/Characters/chara_fly1.png', 'Graphics/Characters/enemy1.png'
           'Graphics/Pictures/Z1_顔味方.PNG', 'Graphics/Pictures/Z1_顔敵.PNG', 'Graphics/Pictures/数字英語.PNG', 'Graphics/Pictures/アイコン.PNG'}
 for a in world['actors'].values():
     files |= {a['sprite'], a['beam'], a['special']}
+files |= {f[0] for f in world['faces'].values()}  # dialogue faces
 for e in world['enemies'].values():
     files |= {e['sprite'], e['portrait']}
 bgm = {m['bgm'] for m in world['maps'].values()} | {world['titleBgm'], 'Z1 戦闘1', 'Z1 戦闘ボス1(中ボス)'}

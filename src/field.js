@@ -1,8 +1,8 @@
 // Field: free flight over the map, random encounters, the boss marker.
-import { view, img, input, audio, rand } from './core.js?v=20261101-1618';
-import { renderMap } from './tiles.js?v=20261101-1618';
+import { view, img, input, audio, rand } from './core.js?v=20261101-1649';
+import { renderMap } from './tiles.js?v=20261101-1649';
 
-const SPEED = 120; // art pixels per second (~3.7 tiles/s)
+const SPEED = 150; // art pixels per second (~4.7 tiles/s)
 const FLY = 'Graphics/Characters/chara_fly1.png'; // 48×48 frames, Goku = character 0
 const BOSS = 'Graphics/Characters/enemy1.png'; // 32×32 frames, Raditz = character 0
 export const fieldImages = [FLY, BOSS];

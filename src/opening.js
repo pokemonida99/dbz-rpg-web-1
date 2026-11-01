@@ -5,7 +5,7 @@
 //    the pod landing, Raditz meeting Piccolo, Goku at the Kame House), with the original text in full
 //    (world.opening, built by tools/opening_data.py) and the speaker's face in the dialogue box.
 // Both draw on their own layer above everything else and have a 略過 (skip) button, like the classic version.
-import { img, loadImages, audio } from './core.js?v=20261101-1903';
+import { img, loadImages, audio } from './core.js?v=20261101-1909';
 
 const pic = (n) => `Graphics/Pictures/${n}`;
 const FPS = 60;

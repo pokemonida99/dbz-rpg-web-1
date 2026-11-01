@@ -1,18 +1,18 @@
 // Boot, game state, scene switching, story beats, HUD, menu, save/load.
-import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-1903';
-import { tileSheetPaths } from './tiles.js?v=20261101-1903';
-import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-1903';
-import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-1903';
-import { makeMember, levelUp } from './party.js?v=20261101-1903';
-import { runEvent } from './events.js?v=20261101-1903';
-import { playOpening, playStory } from './opening.js?v=20261101-1903'; // the original's title animation and opening story
-import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapterBoss } from './chapter2.js?v=20261101-1903';
-import { fieldMenuHtml, openEntry } from './partymenu.js?v=20261101-1903'; // 隊伍・卡牌・組合技・作戰
-import { setItemsWorld, bubbles } from './items.js?v=20261101-1903'; // item cards (its 卡牌 menu entry registers itself)
-import { setGrowthWorld } from './growth.js?v=20261101-1903'; // skill cards and the other growth cards
-import { cardSquare, compo } from './cardgames.js?v=20261101-1903'; // card squares (shop / lottery / memory), 合成
-import { fieldExtraHtml, openFieldEntry, setFieldGame, encounterSteps, battleTally, spotTally, storySoFar, hasRecap, options } from './fieldmenu.js?v=20261101-1903'; // 概況・情報・設定・地圖, records, options
-import { training } from './training.js?v=20261101-1903'; // training squares
+import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-1909';
+import { tileSheetPaths } from './tiles.js?v=20261101-1909';
+import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-1909';
+import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-1909';
+import { makeMember, levelUp } from './party.js?v=20261101-1909';
+import { runEvent } from './events.js?v=20261101-1909';
+import { playOpening, playStory } from './opening.js?v=20261101-1909'; // the original's title animation and opening story
+import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapterBoss } from './chapter2.js?v=20261101-1909';
+import { fieldMenuHtml, openEntry } from './partymenu.js?v=20261101-1909'; // 隊伍・卡牌・組合技・作戰
+import { setItemsWorld, bubbles } from './items.js?v=20261101-1909'; // item cards (its 卡牌 menu entry registers itself)
+import { setGrowthWorld } from './growth.js?v=20261101-1909'; // skill cards and the other growth cards
+import { cardSquare, compo } from './cardgames.js?v=20261101-1909'; // card squares (shop / lottery / memory), 合成
+import { fieldExtraHtml, openFieldEntry, setFieldGame, encounterSteps, battleTally, spotTally, storySoFar, hasRecap, options } from './fieldmenu.js?v=20261101-1909'; // 概況・情報・設定・地圖, records, options
+import { training } from './training.js?v=20261101-1909'; // training squares
 
 const SAVE_KEY = 'dbz-portrait-save-v1';
 const AUTO_KEY = 'dbz-portrait-autosave-v1'; // the original's Save_Auto.rvdata: after each normal battle won
@@ -315,7 +315,7 @@ async function boot() {
   if (!(await ensureLatest())) return;
   view.resize();
   window.addEventListener('resize', () => view.resize());
-  game.world = await (await fetch('data/world.json?v=20261101-1903')).json();
+  game.world = await (await fetch('data/world.json?v=20261101-1909')).json();
   setFaces(game.world.faces);
   setItemsWorld(game.world);
   setGrowthWorld(game.world);

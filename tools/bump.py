@@ -15,6 +15,7 @@ v = datetime.datetime.now().strftime('%Y%m%d-%H%M')
 for f in (root / 'src').glob('*.js'):
     s = f.read_text()
     s = re.sub(r"(from '\./[\w-]+\.js)(\?v=[\w-]+)?'", rf"\1?v={v}'", s)
+    s = re.sub(r"(import '\./[\w-]+\.js)(\?v=[\w-]+)?'", rf"\1?v={v}'", s)  # (side-effect imports: the Z3 chapters)
     s = re.sub(r"export const VERSION = '[^']*';", f"export const VERSION = '{v}';", s)
     s = re.sub(r"fetch\('data/world\.json(\?v=[\w-]+)?'\)", f"fetch('data/world.json?v={v}')", s)
     f.write_text(s)

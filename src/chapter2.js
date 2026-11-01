@@ -2,9 +2,9 @@
 //   after Raditz → the other world, Garlic Jr., Karin Tower → team split (north / east / west pairs)
 //   → Snake Way (map 5, Goku alone) → King Kai → the north pair in the Sansho area (map 8) → 桑修 → end of chapter.
 // state.flags.ch2 tracks the step: 'snake' → 'north' → 'done'. Members not in the party wait in state.bench.
-import { img, audio, rand, input, sleep } from './core.js?v=20261101-2330';
-import { playScenes } from './cutscene.js?v=20261101-2330';
-import { makeMember } from './party.js?v=20261101-2330';
+import { img, audio, rand, input, sleep } from './core.js?v=20261102-0749';
+import { playScenes } from './cutscene.js?v=20261102-0749';
+import { makeMember } from './party.js?v=20261102-0749';
 
 const FACE_PARTY = 'Graphics/Pictures/Z1_顔味方.PNG'; // 64×64, one row per actor (actor id - 3)
 

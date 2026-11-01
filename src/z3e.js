@@ -9,18 +9,18 @@
 //   1383 Piccolo and Kami fuse, Cell → battle 1390 (Piccolo alone, 4 turns, enemy damage × 0.5) → 1401 太陽拳, the
 //     ending cut-ins → variable 41 = 2001 → 「Z3 完」 and the title screen (Z4 待續).
 // A "stop" (the original's Event_Check after each move on the board): the stick let go after flying a few squares.
-import { input, audio, toast, rand } from './core.js?v=20261101-2330';
-import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261101-2330';
-import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261101-2330';
-import { addMoves } from './anime.js?v=20261101-2330';
-import { makeMember, applyLevel } from './party.js?v=20261101-2330';
-import { superSaiyan } from './supersaiyan.js?v=20261101-2330';
-import { eventCard } from './items.js?v=20261101-2330';
-import { applyEra } from './era.js?v=20261101-2330';
-import { newHand } from './battle.js?v=20261101-2330';
-import { cardSquare } from './cardgames.js?v=20261101-2330';
-import { spotTally } from './fieldmenu.js?v=20261101-2330';
-import { registerZ3, Z3, begin, fight, toField, party, addMember, member, heal, card, moveTo, setParty } from './z3.js?v=20261101-2330';
+import { input, audio, toast, rand } from './core.js?v=20261102-0749';
+import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261102-0749';
+import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261102-0749';
+import { addMoves } from './anime.js?v=20261102-0749';
+import { makeMember, applyLevel } from './party.js?v=20261102-0749';
+import { superSaiyan } from './supersaiyan.js?v=20261102-0749';
+import { eventCard } from './items.js?v=20261102-0749';
+import { applyEra } from './era.js?v=20261102-0749';
+import { newHand } from './battle.js?v=20261102-0749';
+import { cardSquare } from './cardgames.js?v=20261102-0749';
+import { spotTally } from './fieldmenu.js?v=20261102-0749';
+import { registerZ3, Z3, begin, fight, toField, party, addMember, member, heal, card, moveTo, setParty } from './z3.js?v=20261102-0749';
 
 const MAPS = ['40'];
 const C = (game) => Z3(game).z3e;

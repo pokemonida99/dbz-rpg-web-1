@@ -6,10 +6,10 @@
 //   lower area     — message window; choosing: buttons + the six cards; fighting: the original duel bar
 //                    (party face, HP/KI, both cards, enemy face)
 // Choosing a card that allows a special move opens the move window over the stage.
-import { view, img, audio, sleep, rand } from './core.js?v=20261101-1711';
-import { levelUp } from './party.js?v=20261101-1711';
-import { Duel, ANIME_IMAGES, SW, SH, BACK_Y } from './anime.js?v=20261101-1711';
-import { battleCommand, autoSkill, autoTarget, tally } from './partymenu.js?v=20261101-1711'; // command menu, 作戰, counters
+import { view, img, audio, sleep, rand } from './core.js?v=20261101-1835';
+import { levelUp } from './party.js?v=20261101-1835';
+import { Duel, ANIME_IMAGES, SW, SH, BACK_Y } from './anime.js?v=20261101-1835';
+import { battleCommand, autoSkill, autoTarget, tally } from './partymenu.js?v=20261101-1835'; // command menu, 作戰, counters
 
 export const SCHOOL = ['必', '龜', '神', '界', '魔', '惑'];
 const HAND = 6;

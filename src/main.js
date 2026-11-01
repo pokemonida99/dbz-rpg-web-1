@@ -1,13 +1,13 @@
 // Boot, game state, scene switching, story beats, HUD, menu, save/load.
-import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-1711';
-import { tileSheetPaths } from './tiles.js?v=20261101-1711';
-import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-1711';
-import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-1711';
-import { makeMember, levelUp } from './party.js?v=20261101-1711';
-import { runEvent } from './events.js?v=20261101-1711';
-import { playOpening, playStory } from './opening.js?v=20261101-1711'; // the original's title animation and opening story
-import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapterBoss } from './chapter2.js?v=20261101-1711';
-import { fieldMenuHtml, openEntry } from './partymenu.js?v=20261101-1711'; // 隊伍・卡牌・組合技・作戰
+import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-1835';
+import { tileSheetPaths } from './tiles.js?v=20261101-1835';
+import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-1835';
+import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-1835';
+import { makeMember, levelUp } from './party.js?v=20261101-1835';
+import { runEvent } from './events.js?v=20261101-1835';
+import { playOpening, playStory } from './opening.js?v=20261101-1835'; // the original's title animation and opening story
+import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapterBoss } from './chapter2.js?v=20261101-1835';
+import { fieldMenuHtml, openEntry } from './partymenu.js?v=20261101-1835'; // 隊伍・卡牌・組合技・作戰
 
 const SAVE_KEY = 'dbz-portrait-save-v1';
 const FACES = 'Graphics/Pictures/GBZ1 顔アイコン.PNG'; // 40×56 cells, one row per character
@@ -272,7 +272,7 @@ async function boot() {
   if (!(await ensureLatest())) return;
   view.resize();
   window.addEventListener('resize', () => view.resize());
-  game.world = await (await fetch('data/world.json?v=20261101-1711')).json();
+  game.world = await (await fetch('data/world.json?v=20261101-1835')).json();
   setFaces(game.world.faces);
   const faceSheets = new Set(Object.values(game.world.faces).map((f) => f[0]));
   await loadImages([...tileSheetPaths, ...fieldImages, ...battleImages(game.world), FACES, ...faceSheets]);

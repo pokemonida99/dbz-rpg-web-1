@@ -105,6 +105,7 @@ function playerDamage(b, m, skill, card, foe, foeCard, P) {
   if (card.s === m.school || items.powerUp(m)) d = Math.floor(d * 1.3);
   d = growth.dealt(b, m, skill, d); // passive skills (set_damage_add)
   if (skill && skill.noDamage) d = 0;
+  if (b.foesEvade) return -1; // switch 18 敵必ず回避 (an event battle: src/z3c.js, Mecha Frieza)
   const avoid = Math.trunc((foe.agi * 1.2 + foeCard.g) / 3 - (m.agi * 1.1 + card.a) / 3);
   if (avoid > 0 && rand(100) + 1 < avoid) return -1;
   return b.dmgRate ? Math.trunc(d * b.dmgRate) : d; // variable 81 味方攻撃ダメージn倍 (an event battle: src/z3.js fight)

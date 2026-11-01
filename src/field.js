@@ -6,6 +6,8 @@ const SPEED = 150; // art pixels per second (~4.7 tiles/s)
 const FLY = 'Graphics/Characters/chara_fly1.png'; // 48×48 frames, Goku = character 0
 const BOSS = 'Graphics/Characters/enemy1.png'; // 32×32 frames, Raditz = character 0
 export const fieldImages = [FLY, BOSS];
+// leaders past the eight of chara_fly1 (the Z3 maps' 飛行キャラ event pages: actor → [sheet, character])
+const FLY_MORE = { 12: 'chara_fly2:7', 14: 'chara_fly4:0', 17: 'chara_fly3:0', 18: 'chara_fly1:4', 19: 'chara_fly5:4', 20: 'chara_fly5:5', 21: 'chara_fly4:5', 22: 'chara_fly4:4', 23: 'chara_fly4:6', 25: 'chara_fly3:4', 26: 'chara_fly5:2' };
 
 export class Field {
   constructor(world, game) {
@@ -187,11 +189,12 @@ export class Field {
       const f = Math.floor(this.anim) % 3, k = b.index || 0; // enemy1.png: 4 characters a row, 3×4 frames each
       c.drawImage(bi.im, ((k % 4) * 3 + f) * 32, Math.floor(k / 4) * 128, 32, 32, b.x * 32 - cx, b.y * 32 - cy, 32, 32);
     }
-    const fi = img(FLY);
+    const lead = (s.var && s.var[42]) || 3, more = FLY_MORE[lead] && FLY_MORE[lead].split(':');
+    const fi = img(more ? `Graphics/Characters/${more[0]}.png` : FLY);
     if (fi.ok) {
       const pat = [0, 1, 2, 1][Math.floor(this.anim) % 4];
       const bob = Math.round(Math.sin(this.anim * 1.3) * 1.5);
-      const k = ((s.var && s.var[42]) || 3) - 3; // the leading character (actor id - 3), 4 a row like the VX sheets
+      const k = more ? +more[1] : lead - 3; // the leading character (actor id - 3), 4 a row like the VX sheets
       c.drawImage(fi.im, ((k % 4) * 3 + pat) * 48, (Math.floor(k / 4) * 4 + this.dir) * 48, 48, 48, Math.round(s.x - 24 - cx), Math.round(s.y - (this.map.path ? 28 : 36) - cy + bob), 48, 48); // on the squares: standing on them
     }
     c.drawImage(this.layers.upper, -cx, -cy);

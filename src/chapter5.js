@@ -4,11 +4,11 @@
 //   planet, Goku alone (map 14): the training squares are fights with King Kai himself (130; his HP carries over,
 //   losing only sends Goku back to the map) → 132: the training is over, Shenron is called → end of chapter.
 // state.flags.ch5 tracks the step: 'garlic' → 'kaio' → 'done'.
-import { input, say } from './core.js?v=20261101-2006';
-import { scenes, setParty, moveTo, enterMap, card } from './chapter2.js?v=20261101-2006';
-import { addScenes } from './cutscene.js?v=20261101-2006';
-import { makeMember, levelUp } from './party.js?v=20261101-2006';
-import { eventCard } from './items.js?v=20261101-2006';
+import { input, say } from './core.js?v=20261101-2112';
+import { scenes, setParty, moveTo, enterMap, card } from './chapter2.js?v=20261101-2112';
+import { addScenes } from './cutscene.js?v=20261101-2112';
+import { makeMember, levelUp } from './party.js?v=20261101-2112';
+import { eventCard } from './items.js?v=20261101-2112';
 
 const MAPS = ['13', '14'];
 const pic = (n) => `Graphics/Pictures/${n}.PNG`;

@@ -4,6 +4,7 @@ import { tileSheetPaths } from './tiles.js?v=20261101-1618';
 import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-1618';
 import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-1618';
 import { makeMember, levelUp } from './party.js?v=20261101-1618';
+import { playOpening, playStory } from './opening.js?v=20261101-1618'; // the original's title animation and opening story
 
 const SAVE_KEY = 'dbz-portrait-save-v1';
 const FACES = 'Graphics/Pictures/GBZ1 顔アイコン.PNG'; // 40×56 cells, one row per character
@@ -209,6 +210,7 @@ function showTitle(sub) {
     audio.unlock();
     title.hidden = true;
     if (a.dataset.a === 'cont') { load(); return; }
+    if (a.dataset.a === 'new') await playStory(game.world); // the opening story, then the field
     game.state = game.newState();
     startField();
     game.field.paused = true;
@@ -253,6 +255,7 @@ async function boot() {
   window.addEventListener('resize', () => view.resize());
   game.world = await (await fetch('data/world.json?v=20261101-1618')).json();
   await loadImages([...tileSheetPaths, ...fieldImages, ...battleImages(game.world), FACES]);
+  await playOpening(); // the title animation, like the original plays before its title screen
   showTitle();
   requestAnimationFrame(frame);
 }

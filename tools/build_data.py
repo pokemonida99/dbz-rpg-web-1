@@ -133,15 +133,8 @@ world = {
     'boss': {'x': 58, 'y': 5, 'enemy': 10},
     # condensed from the original opening (Map007 event 1); already Traditional Chinese
     'story': {
+        # the full original opening story is played by src/opening.js (world.opening); this is the controls hint after it
         'intro': [
-            ['', '距離比克大魔王那一場慘烈的戰鬥\n已經過去了五年……'],
-            ['', '就在和平的某一天\n一個神秘的物體降落在地球！'],
-            ['？', '呵呵呵…　你長大了啊…\n但我一眼就認出你了 卡卡羅特…'],
-            ['？', '告訴你吧！　你出生在貝吉塔行星！\n是全宇宙最強戰士 賽亞人！！\n然後我就是你的親生哥哥 拉蒂茲！！！'],
-            ['拉蒂茲', '卡卡羅特！　你兒子就由我幫你保管！\n想要他活著還給你 就好好聽哥哥的話…\n哈哈哈哈哈！！！'],
-            ['悟空', '悟…悟飯！！！'],
-            ['比克', '本大爺和你一起去！\n如果我和你聯手的話 還是有一點機會打倒他！'],
-            ['悟空', '比克…！！！\n好！　一起去救悟飯！'],
             ['', '拖曳畫面任何地方就能飛行。\n拉蒂茲在地圖的右上方！'],
         ],
         'boss': [
@@ -158,5 +151,8 @@ world = {
         ],
     },
 }
+# the title animation and opening story (src/opening.js)
+from opening_data import build as build_opening  # noqa: E402
+world['opening'] = build_opening(D, s2t)
 json.dump(world, open(os.path.join(root, 'data', 'world.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 print('world.json written')

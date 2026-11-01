@@ -57,8 +57,15 @@ const S = {
   106: { bgm: 'Z1 界王', party: [3], fadein: true, next: '+' },
   107: { bg: '界王星_地上', foe: [EVENT, 18], out: true, next: '+' },
   108: { bg: '界王星_地上', foe: [EVENT, 13], out: true }, // グレゴリー
+  109: { bgm: 'Z1 界王', bg: '界王星_地上', foe: [EVENT, 18], out: true }, // 界王様 (after the Gregory training)
+  110: { bgm: 'DB3 イベント02', party: (v) => [v[49], v[50]], out: true, fadein: true, next: 86 }, // 西へ (ジンジャーエリア前)
+  111: { bgm: 'Z1 イベント1', foe: [EVENT, 30], out: true }, // 牛魔王
+  112: { bgm: 'DB3 戦闘前', foe: [FOE, 13], out: true, next: '+' }, // ジンジャー
+  114: { bgm: 'DB3 戦闘前', foe: [FOE, 13], out: true, next: '+' },
+  115: { foe: [EVENT, 28], out: true, next: '+' }, // 七星球
+  116: { bgm: 'Z1 イベント3', party: [4, 5, 6, 7, 8, 9], bg: 'ガーリック城', out: true, fadein: true, next: '+' }, // ガーリック城集結
 };
-const BATTLES = [59, 93, 103]; // battle_process: the battle itself is run by the chapter code
+const BATTLES = [59, 93, 103, 113]; // battle_process: the battle itself is run by the chapter code
 const PICS = [PARTY, EVENT, FOE, ...new Set(Object.values(S).flatMap((d) => [d.bg && BG(d.bg), d.scroll && BG(d.scroll)]).filter(Boolean)),
   BG('ピッコロと悟飯')];
 

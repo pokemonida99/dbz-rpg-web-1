@@ -60,6 +60,7 @@ const MOVES = {
   310: 'raditzWave', 311: 'raditzBigWave', // 拉蒂茲
   307: 'gingerWave', 321: 'gingerWave', 324: 'sanshoWave', 325: 'sanshoBigWave', // 卡里克的手下
   322: 'nikkiBigWave', 323: 'swordAttack', // 尼奇
+  308: 'nikkiBigWave', 309: 'swordAttack', // 吉加
 };
 // 拡散エネルギー波 hits every enemy: the battle plays one film per target, and in the original only the first one
 // has the whole charge — the rest are just the beam falling on them. A film started right after the last one

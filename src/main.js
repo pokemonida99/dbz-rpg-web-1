@@ -14,6 +14,7 @@ import { cardSquare, compo } from './cardgames.js?v=20261101-2006'; // card squa
 import { fieldExtraHtml, openFieldEntry, setFieldGame, encounterSteps, battleTally, spotTally, storySoFar, hasRecap, options } from './fieldmenu.js?v=20261101-2006'; // 概況・情報・設定・地圖, records, options
 import { training } from './training.js?v=20261101-2006'; // training squares
 import { chapter3Goal, startChapter3, resumeChapter3, chapter3Spot, isChapter3Map, chapter3Boss } from './chapter3.js?v=20261101-2006';
+import { chapter4Goal, startChapter4, resumeChapter4, chapter4Spot, isChapter4Map, chapter4Boss } from './chapter4.js?v=20261101-2006';
 import { playEvent, setCutsceneWorld, raditzOutcome } from './cutscene.js?v=20261101-2006'; // story scenes staged like the original
 
 const SAVE_KEY = 'dbz-portrait-save-v1';
@@ -69,7 +70,7 @@ const game = {
     this.field.paused = true;
     input.dx = input.dy = 0;
     const s = this.state;
-    if (poi.chapter) { await (chapter3Spot(this, poi) || chapterSpot(this, poi)); renderHud(); this.busy = false; this.field.paused = false; return; }
+    if (poi.chapter) { await (chapter4Spot(this, poi) || chapter3Spot(this, poi) || chapterSpot(this, poi)); renderHud(); this.busy = false; this.field.paused = false; return; }
     spotTally(s, poi);
     if (['training', 'shop'].includes(poi.effect)) this.field.spent = poi; // once per visit (src/field.js)
     if (poi.effect === 'training') { await training(this); renderHud(); this.busy = false; this.field.paused = false; return; }
@@ -93,6 +94,7 @@ const game = {
   },
 
   async onBoss() {
+    if (isChapter4Map(this.state)) return chapter4Boss(this);
     if (isChapter3Map(this.state)) return chapter3Boss(this);
     if (this.state.map !== '1') return chapterBoss(this);
     if (this.busy) return;
@@ -174,7 +176,7 @@ function renderHud() {
     party.appendChild(el);
   }
   hud.querySelector('.menu-btn').onclick = openMenu;
-  hud.querySelector('.goal').textContent = chapter3Goal(game.world, s) ?? chapterGoal(game.world, s) ?? (s.flags.bossDone ? '' : '目標：飛往右上方救回悟飯（建議練到 Lv6 以上）');
+  hud.querySelector('.goal').textContent = chapter4Goal(game.world, s) ?? chapter3Goal(game.world, s) ?? chapterGoal(game.world, s) ?? (s.flags.bossDone ? '' : '目標：飛往右上方救回悟飯（建議練到 Lv6 以上）');
 }
 game.renderHud = renderHud;
 
@@ -238,7 +240,7 @@ function load(key = SAVE_KEY) {
     s.var = s.var || { 42: 3 };
     startField();
     resumeChapter(game);
-    resumeChapter3(game);
+    resumeChapter3(game) || resumeChapter4(game);
     return true;
   } catch (e) { return false; }
 }
@@ -261,7 +263,7 @@ function startField() {
   renderHud();
 }
 
-Object.assign(game, { startField, save, showTitle: (sub) => showTitle(sub), nextChapter: startChapter3 }); // for src/chapter2.js, src/chapter3.js
+Object.assign(game, { startField, save, showTitle: (sub) => showTitle(sub), nextChapter: startChapter3, startChapter4 }); // for src/chapter2.js, src/chapter3.js
 
 // ---------- title ----------
 const title = document.getElementById('title');
@@ -271,7 +273,7 @@ function showTitle(sub) {
   audio.playBgm(game.world.titleBgm);
   const has = !!localStorage.getItem(SAVE_KEY);
   title.innerHTML = `<img src="${assetUrl('Graphics/System/Title.png')}" alt="">
-    <div class="sub">${sub || '重製版・Z1 拉蒂茲篇～尼奇篇'}</div>
+    <div class="sub">${sub || '重製版・Z1 拉蒂茲篇～吉加篇'}</div>
     <div class="actions">
       <button class="btn" data-a="new">新的開始</button>
       ${has ? '<button class="btn" data-a="cont">繼續遊戲</button>' : ''}

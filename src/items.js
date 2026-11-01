@@ -11,7 +11,7 @@
 // Menus: the 卡牌 slot of src/partymenu.js (battle 菜單 and field menu, battle = null on the field).
 import { img, audio, toast, rand } from './core.js?v=20261101-1853';
 import { newCard } from './battle.js?v=20261101-1853';
-import { menuEntries } from './partymenu.js?v=20261101-1853';
+import { menuEntries, hooks } from './partymenu.js?v=20261101-1853';
 
 const ICONS = 'ui/item_cards.png'; // 64×64 icons, 10 a row, the Z1 column of the original 顔カード.PNG
 const CARDS = 'Graphics/Pictures/カード関係.PNG';
@@ -86,6 +86,7 @@ export const powerUp = (m) => !!(fx && mf(m).pow); // ×1.3 like a school match 
 export const guardUp = (m) => !!(fx && (fx.oneTurnDef || mf(m).def)); // damage taken ×0.7 (102:16325)
 export const evades = (m) => !!(fx && mf(m).evade); // every attack misses this turn (102:16366)
 export const kiNeed = (m, ki) => (fx && mf(m).kiZero ? 0 : ki); // 必殺技 card: one move without KI (008:4614)
+hooks.kiNeed = (m, ki) => kiNeed(m, ki); // 自動 (partymenu.js autoSkill) sees the 必殺技 card too
 export function payKi(m, ki) { m.ki -= kiNeed(m, ki); if (fx) mf(m).kiZero = false; }
 // 少年: acts first this turn (101:203)
 export function firstMovers(b, order) {
@@ -201,7 +202,7 @@ function target(id, it) {
 
 // can this card be used here at all (chk_card_run), before picking a target
 function usable(x, id, it) {
-  if (it.kind === 'hook') return !!fieldCards[id];
+  if (it.kind === 'hook') return !!fieldCards[id] && !(it.occ === 1 && !x.battle) && !(it.occ === 2 && x.battle);
   if (it.kind === 'none' || it.occ === 3) return false;
   if (it.occ === 1 && !x.battle) return false;
   if (it.occ === 2 && x.battle) return false;

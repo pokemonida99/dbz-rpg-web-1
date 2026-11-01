@@ -23,6 +23,9 @@ export const isZ2bMap = (s) => s.map === '29' || (s.flags && s.flags.z2b && ['27
 // the battle films of this half's moves (src/anime.js): the closest of the Z1 films
 addMoves({
   121: 'energyWave', 122: 'energyWave', 123: 'vegetaBlast', 124: 'galickGun', 125: 'galickGun', 26: 'kamehameha',
+  147: 'energyWave', 148: 'kamehameha', 149: 'vegetaBlast', 150: 'kaioken', 151: 'galickGun', 152: 'genkidama', // バーダック
+  374: 'foeWave', 375: 'nappaBlast', 376: 'swordAttack', 377: 'garlicBall', 378: 'raditzBigWave', 379: 'nappaBlast', // ターレス・スラッグ
+  380: 'giantWave', 381: 'garlicBall',
   345: 'foeWave', 346: 'raditzBigWave', 347: 'nappaBlast', 349: 'foeWave', 350: 'garlicBall', 382: 'raditzBigWave',
   351: 'foeWave', 352: 'swordAttack', 383: 'raditzBigWave', 353: 'foeWave', 354: 'raditzWave', 355: 'raditzBigWave',
   356: 'foeWave', 357: 'paralysis', 358: 'foeWave', 359: 'nappaBlast', 360: 'raditzBigWave', 361: 'foeWave', 362: 'nappaBlast',
@@ -100,7 +103,14 @@ async function fight(game, key, opts = {}) {
   s.flags.z2bAt = key;
   game.save(true);
   game.busy = false;
-  const won = await game.startBattle(b.foes, true, { bgm: b.bgm, alone: b.alone, hp40: b.hp40, hp30: b.hp30, ...opts });
+  // the extra-attack switches the page set (all.rb 140508): 25 last one standing, 26 / 27 / 29 HP ≤ 30 / 40 / 50 %,
+  // 28 two or fewer standing; reset_battle_flag clears them after the battle
+  const sw = s.sw;
+  const flags = { alone: !!sw[25], hp30: !!sw[26], hp40: !!sw[27], two: !!sw[28], hp50: !!sw[29] };
+  // 493 / 497: with the planet Kanassa seen (93), Bardock in the party (109) and leading, ソリッドステートスカウター
+  const bgm = b.sorid && sw[93] && sw[109] && s.var[42] === 16 ? b.sorid : b.bgm;
+  const won = await game.startBattle(b.foes, true, { bgm, ...flags, ...opts });
+  for (let k = 25; k <= 29; k++) sw[k] = false;
   begin(game);
   return won ? 'win' : game.lastResult;
 }
@@ -135,6 +145,7 @@ async function ginyuBattle(game) {
 
 // ---------- map 29 ----------
 export function z2bSpot(game, poi) {
+  if (poi.chapter === 'z2turles') return turlesSlug(game);
   if (poi.chapter === 'z2porunga') return porunga(game);
   if (poi.chapter === 'z2nail') return nail(game);
   if (poi.chapter === 'z2page') return sidePage(game, poi.page);
@@ -160,6 +171,23 @@ async function friezaFirst(game) {
   s.var[41] = 473;
   await play(game, '473'); // Piccolo, alone (475), heads for the Z fighters; 概況 34
   toField(game, game.world.z2b.piccoloAt);
+}
+
+// 514 (11,5) at 概況 36: Turles and Slug appear (map 30) → 508: Bardock arrives and joins → the battle (511);
+// then back on the field with Bardock in the party until the end of Z2 (502 / 561: 512 his farewell)
+async function turlesSlug(game) {
+  const s = game.state;
+  begin(game);
+  s.var[41] = 514;
+  await play(game, '514');
+  await play(game, 'turlesSlug'); // map 30
+  s.var[41] = 508;
+  await play(game, '508'); // Bardock joins (509), switch 109
+  await turlesBattle(game);
+}
+async function turlesBattle(game) {
+  if (await fight(game, 'turlesSlug') !== 'win') return;
+  toField(game);
 }
 
 // 476 Nail: the fusion
@@ -294,7 +322,7 @@ async function ending(game) {
 // ---------- loading: a save made before a story battle picks up there ----------
 const AT = {
   ginyu: ginyuBattle, frieza0: friezaFirst, frieza1: (g) => friezaForm2(g, false), frieza2: (g) => friezaForm3(g, false),
-  frieza3: (g) => friezaLast(g, false), frieza3ss: friezaSuper, superVegeta, fullPower,
+  frieza3: (g) => friezaLast(g, false), frieza3ss: friezaSuper, superVegeta, fullPower, turlesSlug: turlesBattle,
 };
 export function resumeZ2b(game) {
   const s = game.state;
@@ -347,12 +375,12 @@ export function devZ2b(game, step) {
   Object.assign(s.sw, { 101: true, 102: true, 154: true, 483: true });
   s.var[43] = 34;
   setParty(s, [4, 5, 6, 7, 8, 9, 12]);
-  if (step === 'z2last') { // Frieza's last form, Goku back (概況 36)
+  if (step === 'z2last' || step === 'z2turles') { // Frieza's last form, Goku back (概況 36); z2turles: by Turles and Slug
     s.var[43] = 36;
     Object.assign(s.flags, { z2Frieza1: true, z2Frieza2: true });
     goku.skills = [...goku.skills.filter((x) => x !== 3)];
     setParty(s, [3, 4, 5, 6, 7, 8, 9, 12]);
-    moveTo(s, w.z2b.beforeFrieza3);
+    moveTo(s, step === 'z2turles' ? { map: '29', x: 11, y: 8 } : w.z2b.beforeFrieza3);
   } else moveTo(s, { map: '29', x: 22, y: 21 });
   s.var[42] = s.party[0].id;
   after(() => toField(game));

@@ -130,7 +130,13 @@ const D = {
   506: (st, ctx) => { bg(st, 'ナメック星_家'); face(st, FE, 1); out(st, ctx); next(ctx); },
   507: (st, ctx) => { bg(st, 'ナメック星_家'); face(st, FE, 7); out(st, ctx); next(ctx); uses(['piccolo', 'uses507']); },
   508: (st, ctx) => { bg(st, 'ナメック星_地上'); face(st, FF, 29, -32); face(st, FF, 30, 32); out(st, ctx); next(ctx); },
+  509: (st, ctx) => { // バーダック: he joins at the end of the party
+    bg(st, 'ナメック星_地上'); face(st, FP, 13); party(ctx, [...ctx.partyc.filter((id) => id !== 16), 16]); out(st, ctx); next(ctx);
+  },
   510: (st, ctx) => { bg(st, 'ナメック星_地上'); face(st, FF, 29, -32); face(st, FF, 30, 32); out(st, ctx); next(ctx); },
+  512: (st, ctx) => { party(ctx, ctx.partyc.filter((id) => id !== 16)); out(st, ctx); face(st, FP, 13); next(ctx); }, // バーダック別れ
+  513: (st, ctx) => { out(st, ctx); next(ctx); },
+  514: (st, ctx) => next(ctx), // ターレスとスラッグ(登場): map 30 next
   521: (st, ctx) => { out(st, ctx); if ([33, 35].includes(ctx.s.var[43])) dende(st); },
   522: (st, ctx) => { out(st, ctx); bg(st, 'フリーザ_宇宙船_内部'); face(st, FC, 40); if ([33, 35].includes(ctx.s.var[43])) dende(st); },
   543: (st) => { bg(st, '界王星'); face(st, FC, 25, 0, 0, 1); },
@@ -199,6 +205,7 @@ addNodes({
   },
   bgm: async (node, { quiet }) => { if (!quiet) { if (node.name) audio.playBgm(node.name); else audio.stopBgm(); } },
   exp: async (node) => env && env.gainExp(node.id, node.n),
+  uses: async (node) => env && env.addUses(node.map), // cha_tec_puls (CE227)
   recover: async (node) => env && env.heal(node.id),
   skill: async (node) => env && env.learn(node.id, node.skill, node.learn),
   ss: async (node, { ctx }) => { if (env) { superSaiyan(env.game.world, ctx.s, node.on, true); ctx.partyc = ctx.s.party.map((m) => m.id); } },

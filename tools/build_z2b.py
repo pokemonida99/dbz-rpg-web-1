@@ -55,7 +55,9 @@ def add(world, h):
             return [{'item': [i, -99]} for i in range(2, 9)]
         if n == 180:  # 時の間新エリア開放 (and its notice card)
             return [{'sw': [483, 483, True]}, {'item': [67, 1]}]
-        return []
+        if n == 227:  # バーダック初回加入調整: his move counts (cha_tec_puls)
+            return [{'x': 'uses', 'map': {147: 200, 148: 150, 149: 150, 150: 100, 151: 50, 152: 30}}]
+        return []  # (CE9 必殺技設定: the moves are in world.actors)
 
     def code355(p):
         t = p[0].strip()
@@ -84,10 +86,10 @@ def add(world, h):
     film = lambda mid, page=0: script(D('map%03d' % mid)['events']['1']['pages'][page]['list'])
     one = lambda nodes: scenes(nodes, [(None, None)])
     z2 = {str(v): one(ev2(v)) for v in (445, 447, 453, 463, 466, 473, 476, 478, 481, 484, 486, 492, 494, 498, 502,
-                                       506, 508, 521, 543, 561, 602)}
+                                       506, 508, 514, 521, 543, 561, 602)}
     z2['ginyuPose'] = one(film(27))  # map 27 (then 447)
     z2['porunga'] = one(film(28))  # map 28 (then 466)
-    # (Turles and Slug with Bardock — spot (11,5) → 514 → map 30 → 508 → 511 — needs Bardock as a party member: later)
+    z2['turlesSlug'] = one(film(30))  # map 30: Slug and Turles appear (then 508)
     # the battle_process numbers of these pages: the battles themselves are run by src/z2b.js
     EXTRA.clear()
 
@@ -103,6 +105,8 @@ def add(world, h):
         {'x': 26, 'y': 30, 'label': '和那美克星人說話', 'chapter': 'z2page', 'page': 506},
         {'x': 47, 'y': 22, 'label': '調查宇宙船', 'chapter': 'z2page', 'page': 521},
         {'x': 21, 'y': 61, 'label': '和那美克星人說話', 'chapter': 'z2page', 'page': 602},
+        # Turles and Slug (and Bardock): at 概況 36, until Bardock has joined (145_Event_Check.rb, all.rb 185253)
+        {'x': 11, 'y': 5, 'label': '這股氣是……', 'chapter': 'z2turles', 'when': [['sw', 109, False], ['var', 43, 36]]},
     ] + at([(10, 65), (50, 68), (19, 38), (40, 23)], INN) \
       + at([(8, 7), (10, 7), (22, 36), (14, 64), (54, 62), (45, 17), (10, 69)], CARD) + at([(11, 71), (48, 27)], TRAIN)
     # Frieza (map events 8-10, enemy1.png character 4): his first form once Piccolo is back, then the 2nd / 3rd form
@@ -137,7 +141,7 @@ def add(world, h):
              381: '流星爆發', 331: '能量波', 332: '光線槍', 333: '能量波', 334: '能量波', 337: '能量波', 340: '能量波'}
     h['SKILL_NAMES'].update(names)
     sdb = D('skills')
-    for sid in list(names) + [26, 29, 121, 122, 123, 124, 125]:
+    for sid in list(names) + [26, 29, 121, 122, 123, 124, 125, 147, 148, 149, 150, 151, 152, 158]:
         world['skills'][sid] = skill(sid)
         el = sdb[sid]['element_set']
         if 12 in el and 11 in el:
@@ -150,6 +154,9 @@ def add(world, h):
     world['actors'].setdefault(12, z2actor(12, '貝吉塔', 'ベジータ', [121, 123, 124]))
     world['actors'][14] = z2actor(14, '悟空', 'ゴクウ(超)', [1, 2, 5, 26])
     world['actors'][14]['ss'] = 3  # the Super Saiyan form of actor 3 (src/supersaiyan.js)
+    # Bardock (16): joins against Turles and Slug (page 508); CE9 outside his own chapters: 147 148 149 151 152
+    # (158 スーパーサイヤ人変身 only after switch 595, his own story)
+    world['actors'][16] = z2actor(16, '巴達克', 'バーダック', [147, 148, 149, 151, 152])
 
     # ---------- faces: the Z2 sheets (rows: party = actor id - 3, enemies = enemy id - 30) ----------
     FP, FF, FE, FC = P('Z2_顔味方.PNG'), P('Z2_顔敵.PNG'), P('Z2_顔イベント.PNG'), P('顔カード.PNG')
@@ -159,6 +166,7 @@ def add(world, h):
                                                 ('弗利萨', 23), ('达列斯', 29), ('史拉格', 30)]})
     faces.update({s2t(n): [FE, r] for n, r in [('那美克星人', 1), ('青年', 7)]})
     faces.update({s2t('丹迪'): [FC, 14, 1], s2t('界王'): [FC, 25, 1], s2t('波仑加'): [FC, 31, 1]})
+    faces['？'] = None  # the stranger not yet named (Bardock, Turles, Slug): no face (the opening's ？ is Raditz's shadow)
 
     def say_names(nodes, acc):
         for n in nodes:
@@ -183,17 +191,18 @@ def add(world, h):
         'namek4': {'map': '29', 'x': 47, 'y': 24},
         'piccoloAt': {'map': '29', 'x': 10, 'y': 69},
         'beforeFrieza3': {'map': '29', 'x': 38, 'y': 62},  # the original's (38,59) is right by him: here he would start at once
-        # battle_process (all.rb 182847-182898): enemies, music ($bgm_no_*), the original's battle flags
+        # battle_process (all.rb 182847-182898): enemies, music ($bgm_no_*); the extra-attack flags are the switches the
+        # pages set before each battle (25-29, src/z2b.js fight); sorid: the 493/497 music with Bardock leading (and 93)
         'battles': {
-            'ginyu': {'foes': [51, 52, 48, 49, 50], 'bgm': 'ZArrang_劇場版BGM1', 'alone': True},
+            'ginyu': {'foes': [51, 52, 48, 49, 50], 'bgm': 'ZArrang_劇場版BGM1'},
             'frieza0': {'foes': [53], 'bgm': 'ZArrang_劇場版BGM1'},
             'frieza1': {'foes': [54], 'bgm': 'ZSB1 ピッコロのテーマ(GB音源Ver)'},
             'frieza2': {'foes': [55], 'bgm': 'ZSB1 フリーザのテーマ(GXSCC音源Ver)'},
-            'frieza3': {'foes': [56], 'bgm': 'ZSSD 戦闘2', 'hp40': True},
-            'frieza3ss': {'foes': [56], 'bgm': 'ZSSD 戦闘2', 'hp40': True},
-            'fullPower': {'foes': [57], 'bgm': 'GBZ2 戦闘5', 'hp40': True},
-            'superVegeta': {'foes': [58], 'bgm': 'ZSSD 戦闘1(GB音源Ver)', 'hp40': True},
-            'turlesSlug': {'foes': [59, 60], 'bgm': 'ZG 戦闘4', 'hp30': True, 'alone': True},
+            'frieza3': {'foes': [56], 'bgm': 'ZSSD 戦闘2', 'sorid': 'ZArrang_ソリッドステートスカウター'},
+            'frieza3ss': {'foes': [56], 'bgm': 'ZSSD 戦闘2', 'sorid': 'ZArrang_ソリッドステートスカウター'},
+            'fullPower': {'foes': [57], 'bgm': 'GBZ2 戦闘5'},
+            'superVegeta': {'foes': [58], 'bgm': 'ZSSD 戦闘1(GB音源Ver)'},
+            'turlesSlug': {'foes': [59, 60], 'bgm': 'ZG 戦闘4'},
         },
         'goku': {'uses450': {1: 50, 2: 40, 5: 30, 6: 25, 7: 20, 18: 15}, 'uses488': {1: 25, 2: 20, 5: 20, 6: 15, 7: 15, 18: 15}},
         'piccolo': {'uses475': {31: 20, 33: 20, 34: 20, 35: 10, 36: 30}, 'uses477': {31: 20, 33: 20, 34: 20, 35: 15, 36: 45},
@@ -208,7 +217,7 @@ def add(world, h):
     # tools/s2t.py turns 那美克星 into 那美剋星; put the name right everywhere in this chapter's text
     world['z2b'] = json.loads(json.dumps(world['z2b'], ensure_ascii=False).replace('美剋', '美克'))
     c = world['z2b']
-    for k in c['faces'].values():
+    for k in filter(None, c["faces"].values()):
         pics.add(k[0])
     pics |= {P(n) for n in ['Z2_背景_ナメック星_地上.PNG', 'Z2_背景_フリーザ_宇宙船_内部.PNG', 'Z2_背景_メディカルルーム.PNG',
                             'Z2_背景_最長老の家.PNG', 'Z2_背景_ナメック星_暗い.PNG', 'Z2_背景_界王星.PNG', 'Z2_背景_ナメック星_家.PNG',
@@ -219,7 +228,7 @@ def add(world, h):
                             'Z2_戦闘_ゴハン_バトルスーツ.png', 'Z2_戦闘_必殺技_ゴハン_バトルスーツ.png',  # 521 (src/z2b.js suits)
                             'Z2_戦闘_クリリン_バトルスーツ.png', 'Z2_戦闘_必殺技_クリリン_バトルスーツ.png']}
     # sounds and music the pages use
-    se, bgm = set(), {b['bgm'] for b in c['battles'].values()} | {'Z2 エンディング', 'GBZ2 フィールド1'}
+    se, bgm = set(), {b['bgm'] for b in c['battles'].values()} | {b['sorid'] for b in c['battles'].values() if 'sorid' in b} | {'Z2 エンディング', 'GBZ2 フィールド1'}
     def walk(nodes):
         for n in nodes:
             if 'se' in n:

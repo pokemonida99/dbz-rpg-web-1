@@ -756,12 +756,15 @@ export class Battle {
   stopped() { return !!(this.stopWhen && this.stopWhen(this)); }
 
   // attacks a turn ($data_enemies.eva), plus the event battle's switches (all.rb 140508): alone = one more for the
-  // last one standing (25), hp40 / hp30 = one more at 40 % / 30 % HP or less (27 / 26)
+  // last one standing (25), hp40 / hp30 / hp50 = one more at 40 / 30 / 50 % HP or less (27 / 26 / 29), two = two or
+  // fewer standing (28)
   attacks(f) {
     let n = f.eva;
     if (this.alone && this.foes.filter((x) => x.hp > 0).length === 1) n++;
     if (this.hp30 && (f.hp * 100) / f.maxhp <= 30) n++;
     if (this.hp40 && (f.hp * 100) / f.maxhp <= 40) n++;
+    if (this.two && this.foes.filter((x) => x.hp > 0).length <= 2) n++; // 28
+    if (this.hp50 && (f.hp * 100) / f.maxhp <= 50) n++; // 29
     return n;
   }
 

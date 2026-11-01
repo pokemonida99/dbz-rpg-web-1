@@ -216,9 +216,16 @@ export async function playScenes(list, s) {
       else if (n.var) { const [id, op, x] = n.var; v[id] = op === 0 ? x : (v[id] || 0) + (op === 1 ? x : -x); }
       else if (n.v41) v[41] = n.v41;
       else if (n.item) { const it = eventCard(s, n.item[0], n.item[1]); if (it && n.item[1] > 0 && !quiet) { audio.se('Z1 アイテム取得', 80); toast(`得到了「${it.name}」卡片！`); } }
-      else if (n.se) { if (!quiet) audio.se(n.se, 80); }
+      else if (n.se) { // (repeat: a sound played every few frames, like the scouter beeping)
+        if (!quiet) for (let k = 0; k < (n.repeat || 1) && !ui.skipped; k++) { audio.se(n.se, 80); if (n.repeat) await ui.wait(n.every); }
+      }
       else if (n.z1field) { ui.dlg.hidden = true; await z1field(quiet ? NO_STAGE : stage, ctx, quiet); }
       else if (n.fadeout) { ui.dlg.hidden = true; if (!quiet) await stage.fadeTo(1, 30); }
+      else if (n.bgs) { if (!quiet) audio.playBgs(n.bgs, n.vol); }
+      else if (n.bgsFade != null) audio.fadeBgs(n.bgsFade);
+      else if (n.shake != null) ui.el.classList.toggle('shake', n.shake && !quiet); // 画面揺らすフラグ
+      else if (n.flash) { if (!quiet) await stage.doFlash(n.flash); }
+      else if (n.wait) { if (!quiet) await ui.wait(n.wait); }
       else if (n.choice) { if (await run(n.branches[0] || [])) return true; } // (none in these pages)
       else if (n.end) return true;
     }
@@ -229,6 +236,7 @@ export async function playScenes(list, s) {
     if (await run(sc.nodes)) break;
   }
   if (ui.skipped) audio.seStop();
+  audio.stopBgs();
   stage.running = false;
   ui.close();
 }

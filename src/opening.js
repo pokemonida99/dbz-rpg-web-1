@@ -21,6 +21,8 @@ const CSS = `
 #opening .dlg { position: absolute; left: 6px; right: 6px; min-height: 154px; padding: 6px 8px 10px 80px; z-index: 1;
   border: 12px solid transparent; border-image: url("../assets/ui/frame.png") 8 / 12px stretch; background: var(--cream) padding-box; color: var(--ink); }
 #opening .dlg.no-face { padding-left: 8px; }
+#opening.shake .dlg, #opening.shake > canvas { animation: dlg-shake .12s steps(2) infinite; }
+@keyframes dlg-shake { 0% { transform: translate(-3px, 1px); } 50% { transform: translate(3px, -1px); } 100% { transform: translate(-3px, 1px); } }
 #opening .dlg .face { position: absolute; left: 2px; top: 4px; width: 64px; height: 64px; image-rendering: pixelated; }
 #opening .dlg.no-face .face { display: none; }
 #opening .dlg .who { font-size: 16px; color: #d0480c; min-height: 1.2em; }

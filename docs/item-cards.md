@@ -41,6 +41,22 @@ Enemy cards are now dealt at the start of each turn (§2.1 of battle-rules.md) s
   Until the 菜單 shell exists the entries show as buttons next to 自動 / 逃跑.
 - `src/main.js`: field menu「卡片」, Z mark → `openShop`. `src/events.js`: `{item}` → `eventCard`.
 
+## Card squares, lottery, concentration, composition (`src/cardgames.js`)
+- **Z marks** (`chk_card`): each visit picks one of three at random — card shop (BGM DB3 メニュー), card lottery, concentration. The Z mark still saves.
+- **Prize pool** (`create_get_card`, Z1): `world.cardLottery`; the original's `rand(size - 1)` never picks the last entry (197), kept.
+- **Lottery** (`Scene_Db_Card_lot`, BGM Z1 ミニゲーム): two prize cards, six face-down slots (2 rows × 3 columns, linked with the original's
+  dashed X). Pick top or bottom from left to right. 1st ≠ 2nd: 沒中獎. 1st = 2nd, 3rd different: +1 of that card. All three the same: +2.
+- **Concentration** (`Scene_Db_Card_Concentration`, BGM DB3 ミニゲーム, 爺爺): four random prize cards, two of each face down (4 × 2 here,
+  one row of 8 in the original). Two misses and it ends. Each pair found = one card.
+- **合成** (field menu; Map007 event 1 page 45, 卡林大人, BGM ZD イベント3): the first visit plays common event 269 (`state.sw[34]`).
+  自己選擇合成: pick two cards (element 9 cards — dragon balls, radar — can't be used). A matching recipe (`world.cardCompo`, 85 recipes,
+  all 100 %, order-free) makes the result. The first time a recipe is made it is remembered (`state.recipes`). No match: both cards come back.
+  配方合成: the recipe list (??? until made) or 想做的卡 (results of known recipes → their recipes). Greyed when you lack the cards, count in orange at the holding limit.
+- **More cards** for these pools now exist in `world.items`: those with simple effects work (93 成龍, 106 烏巴, 98 金屬軍曹, 104 阿拉蕾, 105 波拉,
+  42/43/44 rank-ups, 89 仙豆罐, 205 神探測器, 46/47/60/61/69/97/170 heals, 27 巴布魯斯 = no encounters for 5 "moves", one move = 4 tiles flown).
+  The rest are `kind: 'hook'` (skill / SP / ZP / skill-slot cards …). They show 「這張卡片的功能還沒做好」 until a system sets `items.fieldCards[id]`.
+- New game: 三星球, 六星球, 龜屋, 哥美拉 (Map007 event 1 page 1). 龜屋 (71) and 哥美拉 (77) are hooks for the growth session.
+
 ## Not built (yet)
-Card lottery / concentration on the Z marks, skill / SP / ZP cards, synthesis, 飛機, 巴布魯斯, 妖怪 (the remake has no
+Skill / SP / ZP cards (hooks), 飛機, 妖怪 (the remake has no
 "KO'd with HP > 0" state), 龍珠雷達 (shown, not usable).

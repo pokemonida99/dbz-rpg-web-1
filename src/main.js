@@ -8,7 +8,8 @@ import { runEvent } from './events.js?v=20261101-1841';
 import { playOpening, playStory } from './opening.js?v=20261101-1841'; // the original's title animation and opening story
 import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapterBoss } from './chapter2.js?v=20261101-1841';
 import { fieldMenuHtml, openEntry, menuEntries } from './partymenu.js?v=20261101-1841'; // 隊伍・卡牌・組合技・作戰
-import { openCards, openShop, setItemsWorld } from './items.js?v=20261101-1841'; // item cards: field menu, battle menu, card shops
+import { openCards, setItemsWorld, bubbles } from './items.js?v=20261101-1841';
+import { cardSquare, compo } from './cardgames.js?v=20261101-1841'; // card squares (shop / lottery / memory), 合成 // item cards: field menu, battle menu, card shops
 
 const SAVE_KEY = 'dbz-portrait-save-v1';
 const FACES = 'Graphics/Pictures/GBZ1 顔アイコン.PNG'; // 40×56 cells, one row per character
@@ -37,7 +38,7 @@ const game = {
   async onStep() {
     const s = this.state;
     s.steps++;
-    if (this.busy || --s.nextEnc > 0) return;
+    if (this.busy || bubbles(s) || --s.nextEnc > 0) return; // バブルス card keeps enemies away
     s.nextEnc = nextEncounterSteps();
     await this.startBattle(rollArea(this.world, s) || rollEncounter(this.world), false);
   },
@@ -66,7 +67,7 @@ const game = {
     else if (poi.lines) await say(poi.lines);
     if (poi.effect === 'rest') for (const m of s.party) { m.hp = m.maxhp; m.ki = m.maxki; }
     if (poi.effect === 'ki') for (const m of s.party) m.ki = m.maxki;
-    if (poi.effect === 'shop') await openShop(this); // a Z mark: the original's card square (also saves)
+    if (poi.effect === 'shop') await cardSquare(this); // a Z mark: the original's card square (also saves)
     if (poi.effect === 'rest' || poi.effect === 'save' || poi.effect === 'shop') { save(true); toast('已存檔'); }
     renderHud();
     this.busy = false;
@@ -164,6 +165,7 @@ function openMenu() {
   game.field.leave();
   const has = !!localStorage.getItem(SAVE_KEY);
   menu.innerHTML = `<div class="box"><h2>選單</h2>${fieldMenuHtml()}
+    <button class="btn" data-a="compo">合成<small>請卡林大人把兩張卡片合成一張</small></button>
     <button class="btn" data-a="save">存檔<small>隨時記錄目前的位置與狀態</small></button>
     <button class="btn" data-a="load" ${has ? '' : 'disabled'}>讀檔<small>${has ? '回到上次存檔的地方' : '還沒有存檔'}</small></button>
     <button class="btn" data-a="heal">休息<small>回復全員 HP・KI（測試用）</small></button>
@@ -180,6 +182,7 @@ function openMenu() {
     const a = e.target.closest('[data-a]');
     if (!a && e.target !== menu) return;
     const act = a ? a.dataset.a : 'close';
+    if (act === 'compo') { menu.hidden = true; game.busy = true; compo(game).then(() => { game.busy = false; game.field.paused = false; renderHud(); }); return; }
     if (act === 'save') { save(); toast('已存檔'); }
     if (act === 'load') { if (load()) toast('已讀檔'); }
     if (act === 'heal') { for (const m of game.state.party) { m.hp = m.maxhp; m.ki = m.maxki; } renderHud(); toast('全員回復了'); }

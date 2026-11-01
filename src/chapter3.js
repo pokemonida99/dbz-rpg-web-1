@@ -78,5 +78,6 @@ export async function chapter3Boss(game) {
   game.save(true);
   game.busy = false;
   await card(c.end, 2000);
+  if (game.startChapter4) return game.startChapter4(game); // Gregory's training and the Ginger area (src/chapter4.js)
   game.showTitle(c.end);
 }

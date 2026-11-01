@@ -96,7 +96,7 @@ export function z3Backdrop(game) {
   if (!t) return null;
   const m = game.world.maps[s.map];
   const i = Math.floor(s.y / 32) * m.w + Math.floor(s.x / 32);
-  const row = t[m.layers[0][i]] ?? t.default ?? 0;
+  const row = (t.at && t.at[i]) ?? t[m.layers[0][i]] ?? t.default ?? 0; // at: squares that differ from their tile (trees, the top layer)
   return `bg/z3_battle_${row}.png`;
 }
 // index.html?dev=z3… (&timer in a hidden pane): the chapter whose dev() knows the step

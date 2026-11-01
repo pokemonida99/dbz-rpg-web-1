@@ -14,7 +14,7 @@ const FACE_PARTY = 'Graphics/Pictures/Z1_顔味方.PNG'; // 64×64, one row per 
 export function rollArea(world, s) {
   const a = world.areas && world.areas[s.map];
   if (!a) return a === null ? [] : null; // null: a map without encounters (King Kai's planet)
-  const [lo, hi] = a.alone && s.party.length === 1 ? a.alone : a.n; // alone: fewer for a party of one (Z2 Namek)
+  const [lo, hi] = (a.size && a.size[s.party.length]) || (a.alone && s.party.length === 1 ? a.alone : a.n); // size / alone: by the party's size (Z3 魔凶星: two → fewer), one (Z2 Namek)
   const pool = a.late && (s.var[43] || 0) === a.late.var43 ? a.late.pool : a.pool; // late: another set at that 概況
   const n = lo + rand(hi - lo + 1);
   return Array.from({ length: n }, () => pool[rand(pool.length)]);

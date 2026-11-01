@@ -59,6 +59,20 @@ cutscene = ''.join(open(os.path.join(root, 'src', f), encoding='utf-8').read()  
                    for f in sorted(os.listdir(os.path.join(root, 'src'))) if f == 'cutscene.js' or f.startswith('chapter'))
 files |= {f'Graphics/Pictures/Z1_背景_{n}.PNG' for n in re.findall(r"(?:BG\(|bg: |scroll: )'([^']+)'", cutscene)}
 files |= {f'Audio/BGM/{n}.ogg' for n in re.findall(r"bgm: '([^']+)'", cutscene)}
+files |= {f'Graphics/Pictures/Z1_イベント_{n}.PNG' for n in re.findall(r"'([^']+)'\]\.map\(EV\)|EV\('([^']+)'\)", cutscene) for n in n if n}
+files |= {f'Graphics/Pictures/Z1_イベント_{n}.PNG' for n in re.findall(r"'([^']+)'", cutscene.split('...[')[1].split(']')[0])}
+files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)(?:\.replace\('\.PNG', '(\.png)'\))?", cutscene) for n in [n[0] + (n[1] or '.PNG')]}
+files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"(?:se: |se\()'([^']+)'", cutscene)}
+
+# the Shenron summoning (src/ending.js): map 117's 550 pictures (Z1_syenron/…_0000-0549, one a frame at 60 fps) as one
+# animated WebP — 61 MB of PNG frames become a few MB
+film = os.path.join(root, 'assets', 'film', 'shenron.webp')
+if not os.path.exists(film):
+    from PIL import Image  # noqa: E402
+    d = os.path.join(src, 'Graphics', 'Pictures', 'Z1_syenron')
+    frames = [Image.open(os.path.join(d, f)).convert('RGB') for f in sorted(os.listdir(d)) if f.lower().endswith('.png')]
+    os.makedirs(os.path.dirname(film), exist_ok=True)
+    frames[0].save(film, save_all=True, append_images=frames[1:], duration=17, quality=82, method=4, loop=1)
 
 total = 0
 for f in sorted(files):

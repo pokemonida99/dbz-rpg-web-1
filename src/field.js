@@ -211,6 +211,7 @@ export class Field {
     return (Array.isArray(b) ? b : b ? [b] : []).filter((x) => !s.flags[x.flag]);
   }
   boss() { return this.bossList()[0] || null; }
+  bosses() { return this.bossList(); } // (the name chapter 6 uses)
 
   enter() {
     input.stickEnabled = true;

@@ -42,6 +42,15 @@ button { font: inherit; color: inherit; -webkit-appearance: none; appearance: no
 .bar > i { display: block; height: 100%; background: var(--hp); }
 .bar.ki > i { background: var(--ki); }
 #hud .menu-btn { pointer-events: auto; width: 46px; height: 46px; font-size: 16px; color: var(--ink); border: 8px solid transparent; border-image: url("../assets/ui/frame.png") 8 / 8px stretch; background: var(--cream) padding-box; }
+/* a party of four or more (the Z fighters on Earth): four small cards a row, the goal line under them */
+#hud.many .party { flex-wrap: wrap; gap: 4px; }
+#hud.many .pcard { flex: 0 0 calc((100% - 12px) / 4); gap: 3px; border-width: 6px; border-image-width: 6px; }
+#hud.many .pcard canvas { width: 26px; height: 26px; }
+#hud.many .pcard > div { min-width: 0; flex: 1; }
+#hud.many .pcard .nm { font-size: 11px; white-space: nowrap; overflow: hidden; }
+#hud.many .pcard .lv { display: block; font-size: 10px; }
+#hud.many .bar { width: 100%; height: 4px; }
+#hud.many .goal { top: calc(var(--safe-t) + 104px); }
 #hud .goal { position: absolute; left: 10px; right: 10px; top: calc(var(--safe-t) + 60px); text-align: center; font-size: 13px; color: var(--gold); text-shadow: 0 1px 2px #000; }
 /* more than three in the party (the Garlic area: all six): two rows of small cards, level only */
 #hud .party.many { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }

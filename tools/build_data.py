@@ -270,5 +270,7 @@ import build_chapter4  # noqa: E402  (chapter 4: Gregory's training and the Ging
 build_chapter4.add(world, globals())
 import build_chapter5  # noqa: E402  (chapter 5: the Garlic area and King Kai's training)
 build_chapter5.add(world, globals())
+import build_chapter6  # noqa: E402  (chapter 6: King Kai's training, Shenron, the Saiyans, the Z1 ending)
+build_chapter6.add(world, globals())
 json.dump(world, open(os.path.join(root, 'data', 'world.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 print('world.json written')

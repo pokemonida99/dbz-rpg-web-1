@@ -6,7 +6,7 @@
 // Skipping still applies every switch, variable and card of the rest of the event, so the story flags stay right.
 import { audio, loadImages, toast } from './core.js?v=20261101-2115';
 import { eventCard } from './items.js?v=20261101-2115';
-import { overlay, Stage, say, SCENE_Y, SCROLL_X, ENE } from './opening.js?v=20261101-2115';
+import { overlay, Stage, say, SCENE_X, SCENE_Y, SCROLL_X, ENE } from './opening.js?v=20261101-2115';
 
 const pic = (n) => `Graphics/Pictures/${n}.PNG`;
 const BG = (n) => pic(`Z1_背景_${n}`);
@@ -64,10 +64,75 @@ const S = {
   114: { bgm: 'DB3 戦闘前', foe: [FOE, 13], out: true, next: '+' },
   115: { foe: [EVENT, 28], out: true, next: '+' }, // 七星球
   116: { bgm: 'Z1 イベント3', party: [4, 5, 6, 7, 8, 9], bg: 'ガーリック城', out: true, fadein: true, next: '+' }, // ガーリック城集結
+  // ---- chapter 6 (src/chapter6.js): King Kai's last training, Shenron, the Saiyans, the end of Z1 ----
+  128: { bgm: 'Z1 界王', party: [3], fadein: true, next: '+' }, // 界王星そのころ
+  129: { bg: '界王星_地上', foe: [EVENT, 18], out: true, next: '+' }, // 界王様
+  132: { bgm: 'Z1 界王', bg: '界王星_地上', foe: [EVENT, 18], out: true, next: '+' }, // 界王様 (beaten)
+  133: { bgm: 'DB3 カメハウス', bg: 'カメハウス', foe: [EVENT, 1], out: true, fadein: true, next: '+' }, // カメハウス
+  // ドラゴンボール: the seven balls in the scene (at half size, so they fit the narrow scene), the Kame House people under it
+  134: { balls: true, faces: [[EVENT, 1, -32], [EVENT, 3, 32], [EVENT, 20, -32, 1], [EVENT, 5, 32, 1]], next: '+' },
+  135: { full: pic('Z1_背景_シェンロン').replace('.PNG', '.png'), next: '+' }, // シェンロン (a 640×480 picture)
+  136: { bgm: 'Z1 フィールド1', bg: '界王星_地上', foe: [EVENT, 18], out: true, fadein: true, next: '+' },
+  137: { anim: 'snakeWay', next: '+' }, // 悟空蛇の道を帰る
+  138: { bgm: 'Z1 イベント2', scroll: '都(長い)', fadein: true, next: '+' }, // 都
+  139: { anim: 'podFalls', next: '+' }, // 都(宇宙船落下)
+  // ベジータとナッパ: beside the scene in the original, under it here (as in 61)
+  140: { bg: '都', faces: [[FOE, 12, -32], [FOE, 11, 32]], fadein: true, next: '+' },
+  141: { se: 'Z1 都爆発', bg: '爆発', faces: [[FOE, 12, -32], [FOE, 11, 32]], next: '+', wait: 40 },
+  142: { bg: '都崩壊', faces: [[FOE, 12, -32], [FOE, 11, 32]], fadein: true, next: '+' },
+  143: { anim: 'saiyansFly', next: '+' }, // ベジータとナッパ飛ぶ
+  144: { bgm: 'Z1 イベント4', party: [4, 5, 6, 7, 8, 9], out: true, bg: 'カメハウス', foe: [EVENT, 14], fadein: true }, // 神様とZ戦士
+  147: { bgm: 'Z1 戦闘前', se: 'Z1 怪しい気', bg: '平野_サイバイマン', out: true, next: '+' }, // サイバイマン
+  148: { se: 'Z1 ダメージ', bg: '平野_サイバイマン', saibamen: true, out: true, next: '+' }, // サイバイマン(発見)
+  150: { bgm: 'Z1 イベント3', bg: '岩場_ナッパ', foe: [FOE, 11], out: true, next: '+' }, // ナッパ
+  152: { anim: 'gokuFlies', next: '+' }, // 悟空到着
+  153: { bgm: 'Z1 イベント4', foe: [PARTY, 0], out: true }, // ゴクウ到着2 (src/chapter6.js adds him to the party)
+  154: { bgm: 'Z1 イベント3', bg: '岩場_ベジータ', foe: [FOE, 12], out: true, next: '+' }, // ベジータ
+  156: { bgm: 'Z1 イベント3', bg: '岩場_ベジータ', foe: [FOE, 12], out: true, next: '+' }, // ベジータ撃破
+  157: { bg: '岩場_ベジータ', out: true, next: '+' }, // ベジータ逃走
+  158: { anim: 'podLeaves', next: '+' }, // ベジータ逃走(宇宙船)
+  159: { bgm: 'Z1 フィールド1', bg: '界王星_地上', foe: [EVENT, 18], fadein: true, next: '+' }, // 界王様
+  160: { fadein: true, next: 200 }, // エンディング前
 };
-const BATTLES = [59, 93, 103, 113]; // battle_process: the battle itself is run by the chapter code
-const pics = () => [PARTY, EVENT, FOE, ...new Set(Object.values(S).flatMap((d) => [d.bg && BG(d.bg), d.scroll && BG(d.scroll)]).filter(Boolean)),
-  BG('ピッコロと悟飯')];
+const BATTLES = [59, 93, 103, 113, 130, 149, 151, 155]; // battle_process: the battle itself is run by the chapter code
+const EV = (n) => pic(`Z1_イベント_${n}`);
+// the moving scenes (a loop of Graphics.update in the original: one picture per frame)
+const ANIM = {
+  * snakeWay(stage) { // 137: Goku flies back down Snake Way
+    stage.se('Z1 飛ぶ');
+    for (let x = 0; x <= 100; x++) {
+      yield () => { stage.add(BG('スクロール_蛇の道'), SCROLL_X, SCENE_Y, [512 - x * 4, 0, 512, 128]); stage.add(EV('ゴクウ_蛇の道を飛ぶ'), SCROLL_X + 226, SCENE_Y + 40, [0, 0, 54, 18]); };
+    }
+  },
+  * podFalls(stage) { // 139: the pod falls on the city
+    stage.se('Z1 宇宙船落下');
+    for (let x = 0; x <= 35; x++) {
+      yield () => { stage.add(BG('都(長い)'), SCROLL_X, SCENE_Y, [0, 0, 512, 128]); stage.add(EV('都に落ちる宇宙船'), SCROLL_X + 320 - x * 6, x * 4, [0, 0, 80, 76]); };
+    }
+  },
+  * saiyansFly(stage) { // 143: Vegeta and Nappa fly off over the mountains
+    stage.se('Z1 エネルギー波2');
+    for (let x = 0; x <= 100; x++) {
+      yield () => { stage.add(BG('スクロール_山'), SCROLL_X, SCENE_Y, [512 - x * 4, 0, 512, 128]); stage.add(EV('ベジータとナッパ'), SCROLL_X + 194, SCENE_Y + 20, [0, 0, 126, 54]); };
+    }
+  },
+  * gokuFlies(stage) { // 152: Goku on the Nimbus
+    audio.playBgm('DB3 筋斗雲');
+    stage.se('Z1 飛ぶ');
+    for (let x = 0; x <= 100; x++) {
+      yield () => { stage.add(BG('スクロール_山'), SCROLL_X, SCENE_Y, [512 - x * 4, 0, 512, 128]); stage.add(EV('ゴクウ'), SCROLL_X + 210, SCENE_Y + 20, [0, 0, 96, 74]); };
+    }
+  },
+  * podLeaves(stage, ctx) { // 158: Vegeta's pod rises out of the rocks
+    stage.se('Z1 飛ぶ');
+    for (let x = 0; x <= 20; x++) {
+      yield () => { partyFaces(stage, ctx.partyc); stage.bg('岩場_ベジータ'); stage.add(EV('宇宙船(ベジータ逃走)'), ENE[0] + 24, ENE[1] + 54 - x * 4, [0, 0, 16, 16]); };
+    }
+  },
+};
+const pics = () => [PARTY, EVENT, FOE, ...new Set(Object.values(S).flatMap((d) => [d.bg && BG(d.bg), d.scroll && BG(d.scroll), d.full]).filter(Boolean)),
+  BG('ピッコロと悟飯'), BG('スクロール_蛇の道'), BG('スクロール_山'), pic('顔カード'),
+  ...['ゴクウ_蛇の道を飛ぶ', '都に落ちる宇宙船', 'ベジータとナッパ', 'ゴクウ', '宇宙船(ベジータ逃走)'].map(EV)];
 
 // later chapters bring their own scenes (src/chapter5.js …): z1field entries as above, and their battle_process numbers
 export function addScenes(more, battles = []) {
@@ -77,9 +142,12 @@ export function addScenes(more, battles = []) {
 export const registerScenes = addScenes; // the same, by the name src/chapter4.js uses
 
 // character_output: the party's faces centred under the scene, three to a row
+// (more than six: four a row, drawn smaller, so the message box still fits on a short phone)
 function partyFaces(stage, ids) {
+  const per = ids.length > 6 ? 4 : 3;
+  stage.faceSize = ids.length > 6 ? 48 : 64;
   ids.forEach((id, k) => {
-    const line = Math.floor(k / 3), m = Math.min(3, ids.length - 3 * line), j = k % 3;
+    const line = Math.floor(k / per), m = Math.min(per, ids.length - per * line), j = k % per;
     stage.party(PARTY, id - 3, -32 * (m - 1) + 64 * j, line);
   });
 }
@@ -92,7 +160,7 @@ async function z1field(stage, ctx, quiet = false) {
   if (BATTLES.includes(n)) return;
   const d = S[n];
   if (!d) { stage.clear(); return; }
-  if (!d.keep) stage.clear();
+  if (!d.keep) { stage.clear(); stage.faceSize = 64; }
   if (d.bgm && !quiet) audio.playBgm(d.bgm);
   if (d.party) ctx.partyc = typeof d.party === 'function' ? d.party(v) : d.party;
   if (d.piccoloGohan) {
@@ -105,14 +173,27 @@ async function z1field(stage, ctx, quiet = false) {
     }
     return;
   }
+  if (d.se && !quiet) audio.se(d.se, 80);
+  if (d.anim) {
+    if (!quiet) for (const frame of ANIM[d.anim](stage, ctx)) { if (stage.ui.skipped) break; stage.clear(); frame(); await stage.ui.wait(1); }
+    stage.clear();
+  }
   if (d.bg) stage.bg(d.bg);
   if (d.scroll) stage.add(BG(d.scroll), SCROLL_X, SCENE_Y, [0, 0, 512, 128]);
+  if (d.full) stage.add(d.full, 0, 0, [0, 0, 640, 480], false, 0, 'full');
   if (d.foe) stage.add(d.foe[0], ENE[0], ENE[1] + (d.foe[2] || 0), [0, 64 * d.foe[1], 64, 64]);
   for (const [sheet, row, dx, dy] of d.adds || []) stage.add(sheet, ENE[0] + dx, ENE[1] + dy, [0, 64 * row, 64, 64]); // more faces in the scene
-  for (const [sheet, row, dx] of (typeof d.faces === 'function' ? d.faces(ctx.s.sw) : d.faces) || []) stage.party(sheet, row, dx);
+  if (d.balls) { // z1field 134: the balls one to seven in a diamond round the middle
+    [[-128, 0], [-64, -32], [-64, 32], [0, 0], [64, -32], [64, 32], [128, 0]].forEach(([dx, dy], k) => {
+      stage.add(EVENT, ENE[0] + 16 + dx / 2, ENE[1] + 16 + dy / 2, [0, 64 * (22 + k), 64, 64], false, 0, [32, 32]);
+    });
+  }
+  if (d.saibamen) for (let k = 0; k < 6; k++) stage.add(FOE, SCENE_X + 32 * k, ENE[1] + 16, [0, 64 * 3, 64, 64], false, 0, [32, 32]); // six in a row
+  for (const [sheet, row, dx, line] of (typeof d.faces === 'function' ? d.faces(ctx.s.sw) : d.faces) || []) stage.party(sheet, row, dx, line);
   if (d.out) partyFaces(stage, ctx.partyc);
   if (d.next === '+') v[41] = n + 1;
   else if (d.next) v[41] = d.next;
+  if (d.wait && !quiet) await stage.ui.wait(d.wait);
   if (d.fadein) await stage.fadeTo(0, 30);
 }
 

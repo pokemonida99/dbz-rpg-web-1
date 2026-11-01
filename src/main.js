@@ -2,7 +2,7 @@
 import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-2115';
 import { tileSheetPaths } from './tiles.js?v=20261101-2115';
 import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-2115';
-import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-2115';
+import { Battle, battleImages, newHand, rollEncounter, setCardGame } from './battle.js?v=20261101-2115';
 import { makeMember, levelUp } from './party.js?v=20261101-2115';
 import { runEvent } from './events.js?v=20261101-2115';
 import { playOpening, playStory } from './opening.js?v=20261101-2115'; // the original's title animation and opening story
@@ -17,6 +17,10 @@ import { chapter3Goal, startChapter3, resumeChapter3, chapter3Spot, isChapter3Ma
 import { chapter4Goal, startChapter4, resumeChapter4, chapter4Spot, isChapter4Map, chapter4Boss } from './chapter4.js?v=20261101-2115';
 import { playEvent, setCutsceneWorld, raditzOutcome } from './cutscene.js?v=20261101-2115'; // story scenes staged like the original
 import { chapter5Goal, startChapter5, resumeChapter5, isChapter5Map, chapter5Boss, devChapter5 } from './chapter5.js?v=20261101-2115';
+import { chapter6Goal, startChapter6, resumeChapter6, chapter6Spot, isChapter6Map, chapter6Boss, devChapter6 } from './chapter6.js?v=20261101-2115'; // King Kai, the Saiyans, the end of Z1
+
+// testing in a hidden browser pane (no animation frames there): ?timer drives every frame with timers instead
+if (new URLSearchParams(location.search).has('timer')) window.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16);
 
 const SAVE_KEY = 'dbz-portrait-save-v1';
 const AUTO_KEY = 'dbz-portrait-autosave-v1'; // the original's Save_Auto.rvdata: after each normal battle won
@@ -71,7 +75,7 @@ const game = {
     this.field.paused = true;
     input.dx = input.dy = 0;
     const s = this.state;
-    if (poi.chapter) { await (chapter4Spot(this, poi) || chapter3Spot(this, poi) || chapterSpot(this, poi)); renderHud(); this.busy = false; this.field.paused = false; return; }
+    if (poi.chapter) { await (chapter6Spot(this, poi) || chapter4Spot(this, poi) || chapter3Spot(this, poi) || chapterSpot(this, poi)); renderHud(); this.busy = false; this.field.paused = false; return; }
     spotTally(s, poi);
     if (['training', 'shop'].includes(poi.effect)) this.field.spent = poi; // once per visit (src/field.js)
     if (poi.effect === 'training') { await training(this); renderHud(); this.busy = false; this.field.paused = false; return; }
@@ -95,6 +99,7 @@ const game = {
   },
 
   async onBoss(b) {
+    if (isChapter6Map(this.state)) return chapter6Boss(this, b);
     if (isChapter5Map(this.state)) return chapter5Boss(this, b);
     if (isChapter4Map(this.state)) return chapter4Boss(this);
     if (isChapter3Map(this.state)) return chapter3Boss(this);
@@ -127,9 +132,10 @@ const game = {
     await sleep(60);
     flash.style.opacity = '0';
     setTimeout(() => flash.remove(), 400);
-    const battle = new Battle(this.world, this, enemyIds, boss);
-    Object.assign(battle, opts); // e.g. eventBgm (src/fieldmenu.js), bgm (an event battle's own music)
+    const battle = new Battle(this.world, this, enemyIds, boss, opts);
+    Object.assign(battle, opts); // e.g. eventBgm (src/fieldmenu.js), bgm, loseOk, foeHp (src/chapter5.js, src/chapter6.js)
     this.scene = battle;
+    this.lastBattle = battle;
     const result = await battle.run();
     battleTally(this, battle, result);
     this.scene = this.field;
@@ -138,7 +144,7 @@ const game = {
     this.field.paused = false;
     this.field.enter();
     this.busy = false;
-    if (result === 'lose') {
+    if (result === 'lose' && !(opts && opts.loseOk)) {
       await say([['', '悟空們被打倒了……'], ['', '回到最後的存檔。']]);
       if (!load(newest())) restart();
     }
@@ -166,6 +172,7 @@ function faceCanvas(m) {
 export { faceCanvas };
 function renderHud() {
   const s = game.state;
+  hud.classList.toggle('many', s.party.length > 3);
   hud.innerHTML = '<div class="party"></div><button class="menu-btn" aria-label="選單">☰</button><div class="goal"></div>';
   const party = hud.querySelector('.party');
   party.classList.toggle('many', s.party.length > 3); // all six (src/style.css)
@@ -180,7 +187,7 @@ function renderHud() {
     party.appendChild(el);
   }
   hud.querySelector('.menu-btn').onclick = openMenu;
-  hud.querySelector('.goal').textContent = chapter5Goal(game.world, s) ?? chapter4Goal(game.world, s) ?? chapter3Goal(game.world, s) ?? chapterGoal(game.world, s) ?? (s.flags.bossDone ? '' : '目標：飛往右上方救回悟飯（建議練到 Lv6 以上）');
+  hud.querySelector('.goal').textContent = chapter6Goal(game.world, s) ?? chapter5Goal(game.world, s) ?? chapter4Goal(game.world, s) ?? chapter3Goal(game.world, s) ?? chapterGoal(game.world, s) ?? (s.flags.bossDone ? '' : '目標：飛往右上方救回悟飯（建議練到 Lv6 以上）');
 }
 game.renderHud = renderHud;
 
@@ -244,7 +251,7 @@ function load(key = SAVE_KEY) {
     s.var = s.var || { 42: 3 };
     startField();
     resumeChapter(game);
-    resumeChapter3(game) || resumeChapter4(game) || resumeChapter5(game);
+    resumeChapter3(game) || resumeChapter4(game) || resumeChapter5(game) || resumeChapter6(game);
     return true;
   } catch (e) { return false; }
 }
@@ -268,19 +275,21 @@ function startField() {
 }
 
 // the chapter that follows, by name (a later part calls game.nextChapter('ch6') …); false when it isn't there
-const CHAPTERS = { ch4: startChapter4, ch5: startChapter5 };
+const CHAPTERS = { ch4: startChapter4, ch5: startChapter5, ch6: startChapter6 };
 const nextChapter = (k) => (typeof k !== 'string' ? startChapter3(game) : CHAPTERS[k] ? CHAPTERS[k](game) : false);
-Object.assign(game, { startField, save, renderHud: () => renderHud(), showTitle: (sub) => showTitle(sub), nextChapter, startChapter4, startChapter5, devChapter5: () => devChapter5(game) }); // for src/chapter*.js
+Object.assign(game, { startField, save, renderHud: () => renderHud(), showTitle: (sub, notes) => showTitle(sub, notes), nextChapter, startChapter4, startChapter5, startChapter6, devChapter5: () => devChapter5(game), devChapter6: () => devChapter6(game) }); // for src/chapter*.js
 
 // ---------- title ----------
 const title = document.getElementById('title');
-function showTitle(sub) {
+// notes: lines under the subtitle (after Z1: what the original opens next)
+function showTitle(sub, notes) {
   if (game.field) { game.field.leave(); game.field.paused = true; }
   hud.hidden = true;
   audio.playBgm(game.world.titleBgm);
   const has = !!localStorage.getItem(SAVE_KEY);
   title.innerHTML = `<img src="${assetUrl('Graphics/System/Title.png')}" alt="">
-    <div class="sub">${sub || '重製版・Z1 拉蒂茲篇～卡里克篇'}</div>
+    <div class="sub">${sub || '重製版・Z1 拉蒂茲篇～貝吉塔篇'}</div>
+    ${notes ? `<div class="note unlocks">原版接下來開放：<br>${notes.join('<br>')}<br>（本版尚未製作）</div>` : ''}
     <div class="actions">
       <button class="btn" data-a="new">新的開始</button>
       ${has ? '<button class="btn" data-a="cont">繼續遊戲</button>' : ''}
@@ -345,6 +354,9 @@ async function boot() {
   const faceSheets = new Set(Object.values(game.world.faces).map((f) => f[0]));
   await loadImages([...tileSheetPaths, ...fieldImages, ...battleImages(game.world), FACES, ...faceSheets]);
   setFieldGame(game);
+  setCardGame(game); // the card schools change from 概況 11 on
+  const dev = new URLSearchParams(location.search).get('dev'); // ?dev=ch6 / ch6earth / ch6vegeta: jump to chapter 6
+  if (dev && dev.startsWith('ch6')) { title.hidden = true; devChapter6(game, dev); requestAnimationFrame(frame); return; }
   if (!options.skipOp) await playOpening(); // the title animation, like the original plays before its title screen
   showTitle();
   if (new URLSearchParams(location.search).get('dev') === 'ch5') { title.hidden = true; devChapter5(game); } // testing: start at the Garlic area

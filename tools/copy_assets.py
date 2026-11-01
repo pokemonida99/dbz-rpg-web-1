@@ -52,6 +52,8 @@ files |= {f'Audio/BGM/{n}.ogg' for n in re.findall(r"playBgm\('([^']+)'\)", open
 # the party / tactics menus (src/partymenu.js): the original's cursor sounds
 partymenu = open(os.path.join(root, 'src', 'partymenu.js'), encoding='utf-8').read()
 files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"SE_\w+ = '([^']+)'", partymenu)}
+battle = open(os.path.join(root, 'src', 'battle.js'), encoding='utf-8').read()  # its cursor sounds too
+files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"SE_\w+ = '([^']+)'", battle)}
 
 total = 0
 for f in sorted(files):

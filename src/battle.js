@@ -118,7 +118,7 @@ function enemyDamage(b, foe, skill, card, m, guardCard) {
   d = growth.taken(b, m, d); // passive skills (set_damage_add)
   if (items.evades(m)) return -1;
   const avoid = Math.trunc((m.agi * 1.2 + guardCard.g) / 3 - (foe.agi * 1.1 + card.a) / 3);
-  return avoid > 0 && rand(100) + 1 < avoid ? -1 : d;
+  return avoid > 0 && rand(100) + 1 < avoid ? -1 : b.foeRate ? Math.trunc(d * b.foeRate) : d; // variable 82 敵攻撃ダメージn倍 (src/z3e.js)
 }
 
 // ---------- drawing helpers (original art) ----------

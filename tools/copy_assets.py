@@ -21,7 +21,7 @@ for a in world['actors'].values():
 files |= {f[0] for f in world['faces'].values()}  # dialogue faces
 for e in world['enemies'].values():
     files |= {e['sprite'], e['portrait']}
-bgm = {m['bgm'] for m in world['maps'].values()} | set(world.get('extraBgm', [])) | {world['titleBgm'], 'Z1 戦闘1', 'Z1 戦闘ボス1(中ボス)'}
+bgm = {m['bgm'] for m in world['maps'].values() if m['bgm']} | set(world.get('extraBgm', [])) | {world['titleBgm'], 'Z1 戦闘1', 'Z1 戦闘ボス1(中ボス)'}
 files |= {f'Audio/BGM/{n}.ogg' for n in bgm}
 se = ['Z1 敵発見', 'Z1 エネルギー波', 'Z1 エネルギー波2', 'Z1 打撃', 'Z1 避ける', 'Z1 ダメージ', 'GBZ1 ファンファーレ1', 'Z1 レベルアップ']
 files |= {f'Audio/SE/{n}.ogg' for n in se + world.get('itemSe', [])}

@@ -3,7 +3,7 @@
 //   901 the story (Willow wakes from the ice, the Kame House, the Z fighters set off; Piccolo and Chichi join)
 //   → map 50 the snowfield → the fortress door (931) → map 51 the fortress: the Bio-Warriors (941, Master Roshi
 //   joins; battle 943) and Dr. Willow (951; battle 953) → 961 / 962 → the hand-over to Z2 (variable 40 = 1,
-//   $game_progress = 1, party [5..9], variable 41 = 281), shown here as a 「待續」 card until Z2 exists.
+//   $game_progress = 1, party [5..9], variable 41 = 201 for Z2's opening), shown here as a 「待續」 card until Z2 exists.
 // state.flags.willow tracks the step: 'snow' → 'fortress' → 'done'.
 import { input } from './core.js?v=20261101-2130';
 import { scenes, setParty, moveTo, enterMap, card } from './chapter2.js?v=20261101-2130';
@@ -96,7 +96,7 @@ export function resumeWillow(game) {
   const s = game.state;
   if (!game.world.willow || s.flags.ch6 !== 'done') return false;
   if (!s.flags.willow) { startWillow(game); return true; }
-  if (s.flags.willow === 'done') { toZ2(game); return true; }
+  if (s.flags.willow === 'done' && !game.startZ2a) { toZ2(game); return true; } // (with Z2 its own resume takes over)
   return false;
 }
 
@@ -184,7 +184,7 @@ function handOver(game) {
 // until Z2 is built: the 待續 card, then the title screen with what the original opens next
 async function toZ2(game) {
   const c = game.world.willow;
-  if (game.startZ2) return game.startZ2(game);
+  if (game.startZ2a) return game.startZ2a(game); // Z2 first half (it plays 201+, the Z2 あらすじ, itself)
   game.busy = true;
   if (game.field) { game.field.paused = true; game.field.leave(); }
   await card(c.next, 2600);

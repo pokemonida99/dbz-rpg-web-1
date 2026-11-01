@@ -32,7 +32,8 @@ ICON_ROW = {13: 37, 14: 12, 15: 13, 16: 14, 17: 15, 18: 16, 19: 17, 20: 18, 21: 
 for i in range(46, 71):
     ICON_ROW[i] = i - 1
 SE = ['Z3 回復', 'Z2 カードアップ', 'Z1 パワーアップ', 'Z1 アイテム取得', 'Z1 刀', 'Z1 飛ぶ', 'Z1 高速移動', 'Z1 歩く音',
-      'Z3 レベルアップ', 'Z3 決定', 'Z3 エラー', 'Z3 カーソル移動', 'Z1 ピンポン', 'Z1 ブザー', 'Z1 出る', 'Z3 アイテム取得']
+      'Z3 レベルアップ', 'Z3 決定', 'Z3 エラー', 'Z3 カーソル移動', 'Z1 ピンポン', 'Z1 ブザー', 'Z1 出る', 'Z3 アイテム取得',
+      'dbzsbk_購入(低音無しver)']  # Scene_Shop's Sound.play_shop (System sounds[17])
 BGM = ['Z1 ミニゲーム', 'DB3 ミニゲーム', 'DB3 メニュー', 'ZD イベント3']  # lottery, concentration, shop, composition
 PICTURES = ['Graphics/Pictures/カードミニゲーム素材1.png', 'Graphics/Pictures/ZD_カリン様.PNG']
 # effects src/items.js knows (Scene_Db_Card / Scene_Db_Status run_card); any other card is a 'hook' that a later

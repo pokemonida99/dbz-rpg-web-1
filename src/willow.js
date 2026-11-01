@@ -5,12 +5,12 @@
 //   joins; battle 943) and Dr. Willow (951; battle 953) → 961 / 962 → the hand-over to Z2 (variable 40 = 1,
 //   $game_progress = 1, party [5..9], variable 41 = 201 for Z2's opening), shown here as a 「待續」 card until Z2 exists.
 // state.flags.willow tracks the step: 'snow' → 'fortress' → 'done'.
-import { input } from './core.js?v=20261101-2256';
-import { scenes, setParty, moveTo, enterMap, card } from './chapter2.js?v=20261101-2256';
-import { addScenes } from './cutscene.js?v=20261101-2256';
-import { makeMember, applyLevel } from './party.js?v=20261101-2256';
-import { eventCard } from './items.js?v=20261101-2256';
-import { ensure } from './growth.js?v=20261101-2256';
+import { input } from './core.js?v=20261101-2312';
+import { scenes, setParty, moveTo, enterMap, card } from './chapter2.js?v=20261101-2312';
+import { addScenes } from './cutscene.js?v=20261101-2312';
+import { makeMember, applyLevel } from './party.js?v=20261101-2312';
+import { eventCard } from './items.js?v=20261101-2312';
+import { ensure } from './growth.js?v=20261101-2312';
 
 const MAPS = ['50', '51'];
 const pic = (n) => `Graphics/Pictures/${n}.PNG`;

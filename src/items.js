@@ -9,9 +9,9 @@
 //               effects (power, guard, first strike, dodge, KI-free move, stopping or weakening an enemy, scouter).
 // Data: world.items / cardShop / drops (tools/build_items.py). Battle hooks: the exports under "battle" below.
 // Menus: the 卡牌 slot of src/partymenu.js (battle 菜單 and field menu, battle = null on the field).
-import { img, audio, toast, rand } from './core.js?v=20261101-2256';
-import { newCard } from './battle.js?v=20261101-2256';
-import { menuEntries, hooks } from './partymenu.js?v=20261101-2256';
+import { img, audio, toast, rand } from './core.js?v=20261101-2312';
+import { newCard } from './battle.js?v=20261101-2312';
+import { menuEntries, hooks } from './partymenu.js?v=20261101-2312';
 
 const ICONS = 'ui/item_cards.png'; // 64×64 icons, 10 a row, the Z1 column of the original 顔カード.PNG
 const CARDS = 'Graphics/Pictures/カード関係.PNG';
@@ -19,6 +19,7 @@ const FACES = 'Graphics/Pictures/Z1_顔味方.PNG';
 const FOE_FACES = 'Graphics/Pictures/Z1_顔敵.PNG';
 const MAX_RANK_UP = 7; // $max_item_card_num_syokiti: a rank-up card raises a limit up to 7
 const RINGANA_CAP = 30; // variable 384 in Z1 (010_Share.rb set_ringana_card_kouka)
+const SE_BUY = 'dbzsbk_購入(低音無しver)'; // Scene_Shop Sound.play_shop (System sounds[17])
 const SE_OK = 'Z3 決定', SE_ERR = 'Z3 エラー', SE_CARD = 'Z2 カードアップ', SE_HEAL = 'Z3 回復', SE_POWER = 'Z1 パワーアップ';
 const OCC = ['戰鬥・地圖', '只能在戰鬥中', '只能在地圖上', '不能使用'];
 
@@ -290,6 +291,19 @@ const CSS = `
 #cards .detail canvas { image-rendering: pixelated; flex: none; }
 #cards .detail .tx { flex: 1; font-size: 15px; line-height: 1.35; white-space: pre-line; }
 #cards .detail .tag { display: inline-block; font-size: 12px; padding: 0 4px; margin: 4px 4px 0 0; border: 1px solid #b08850; color: #6a4a24; }
+#cards .acts button { transition: transform .06s, filter .06s; }
+#cards .acts button:active, #cards .tabs button:active, #cards .it:active { transform: translateY(2px) scale(.96); filter: brightness(1.25); }
+#cards .acts button.lock { filter: grayscale(1) brightness(.9); pointer-events: none; }
+#cards .acts button.bad { background: #c33; color: #fff; }
+#cards .head small.tick { color: #d0480c; }
+#cards .it.flash { animation: cflash .5s steps(4); }
+@keyframes cflash { 0%, 50% { background: #fff6c8; } 25%, 75% { background: #ffd23c; } 100% { background: #fbe6bf; } }
+#cards .ct.bump { display: inline-block; animation: cbump .4s steps(5); }
+@keyframes cbump { 0% { transform: scale(1); } 40% { transform: scale(1.8); color: #d0480c; } 100% { transform: scale(1); } }
+#cards .cw { position: relative; }
+#cards .bought { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 26px; color: #d0480c;
+  background: var(--cream); animation: cpop .7s steps(6) forwards; }
+@keyframes cpop { 0% { transform: scale(.6); opacity: 0; } 20% { transform: scale(1.15); opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
 #cards .acts { display: flex; gap: 6px; }
 #cards .acts .btn { margin: 0; text-align: center; }
 #cards .pick { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
@@ -447,13 +461,37 @@ export function openShop(game) {
   const world = game.world, s = cardState(game.state);
   trim(world, s);
   const el = overlay();
-  let tab = 'buy', sel = null;
+  let tab = 'buy', sel = null, locked = false, fxId = null, fxFrom = 0, bad = false;
   return new Promise((done) => {
     const close = () => { el.remove(); audio.se(SE_OK, 70); toast('祝你一路順風'); done(); };
+    // purchase feedback (after render): CAP ticks down, the card flies to the owned area, count bounces, 購入！ window
+    const feedback = (capEl, itemEl, buyBtn, box) => {
+      if (fxId == null && !bad) return;
+      if (bad) { bad = false; [itemEl && itemEl.querySelector('.pr'), buyBtn, capEl].forEach((e) => e && e.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' }, { transform: 'translateX(-4px)' }, { transform: 'translateX(4px)' }, { transform: 'translateX(0)' }], { duration: 300 })); if (buyBtn) buyBtn.classList.add('bad'); return; }
+      const id = fxId, from = fxFrom; fxId = null;
+      const t0 = performance.now(), to = s.zeni;
+      const tick = (now) => { const k = Math.min(1, (now - t0) / 350); capEl.textContent = `信用點 ${Math.round(from + (to - from) * k)} CAP`; if (k < 1) requestAnimationFrame(tick); };
+      capEl.textContent = `信用點 ${from} CAP`; requestAnimationFrame(tick);
+      capEl.classList.add('tick'); setTimeout(() => capEl.classList.remove('tick'), 400);
+      if (itemEl) {
+        itemEl.classList.add('flash');
+        const cnt = itemEl.querySelector('.ct'); if (cnt) cnt.classList.add('bump');
+        const a = itemEl.getBoundingClientRect(), b = (buyBtn || box).getBoundingClientRect(), r = el.getBoundingClientRect();
+        const fly = iconCanvas(world.items[id], 40);
+        fly.style.cssText = `position:absolute;left:${a.left - r.left + 4}px;top:${a.top - r.top + 4}px;z-index:3;pointer-events:none;image-rendering:pixelated`;
+        el.appendChild(fly);
+        const dx = b.left + b.width / 2 - 20 - a.left - 4 + r.left - r.left, dy = b.top - a.top - 4;
+        fly.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(1.5) translateY(-8px)', opacity: 1, offset: .25 }, { transform: `translate(${dx}px,${dy}px) scale(.6)`, opacity: .2 }], { duration: 600, easing: 'ease-in' }).onfinish = () => fly.remove();
+      }
+      const msg = h('div', 'bought', '購入！');
+      box.appendChild(msg); setTimeout(() => msg.remove(), 700);
+    };
     const render = () => {
       el.innerHTML = '';
       const head = h('div', 'cw head', '卡片商店');
-      head.appendChild(h('small', null, `信用點 ${s.zeni} CAP`));
+      const capEl = h('small', null, `信用點 ${s.zeni} CAP`);
+      head.appendChild(capEl);
+      let itemEl = null;
       el.appendChild(head);
       const tabs = h('div', 'tabs');
       for (const [k, label] of [['buy', '買'], ['sell', '賣']]) {
@@ -473,8 +511,13 @@ export function openShop(game) {
         b.appendChild(iconCanvas(it, 40));
         const t = h('div');
         t.appendChild(h('div', 'nm', it.name));
-        t.appendChild(h('div', 'n', `${price} CAP　持有 ${have}/${maxOf(s, it)}`));
+        const n = h('div', 'n');
+        n.appendChild(h('span', 'pr', `${price} CAP`));
+        n.appendChild(document.createTextNode('　持有 '));
+        n.appendChild(h('span', 'ct', `${have}/${maxOf(s, it)}`));
+        t.appendChild(n);
         b.appendChild(t);
+        if (id === sel) itemEl = b;
         b.onclick = () => { sel = id; audio.se('Z3 カーソル移動', 60); render(); };
         list.appendChild(b);
       }
@@ -484,12 +527,15 @@ export function openShop(game) {
         : h('div', 'detail', tab === 'buy' ? '這裡是卡片商店，\n可以用信用點來交換卡片喲。' : '賣出的價錢是買價的一半。'));
       el.appendChild(box);
       const acts = h('div', 'acts');
+      let buyBtn = null;
       if (sel != null) {
         const it = world.items[sel];
-        acts.appendChild(button(tab === 'buy' ? `買（${it.price} CAP）` : `賣（${Math.floor(it.price / 2)} CAP）`, () => {
+        buyBtn = button(tab === 'buy' ? `買（${it.price} CAP）` : `賣（${Math.floor(it.price / 2)} CAP）`, () => {
+          if (locked) return;
           const have = s.cards[sel] || 0;
           if (tab === 'buy') {
-            if (it.price > s.zeni || have >= maxOf(s, it)) { audio.se(SE_ERR, 70); toast(have >= maxOf(s, it) ? '已經到持有上限了' : 'CAP 不夠'); return; }
+            if (it.price > s.zeni || have >= maxOf(s, it)) { audio.se(SE_ERR, 70); toast(have >= maxOf(s, it) ? '已經到持有上限了' : 'CAP 不夠'); bad = it.price > s.zeni; if (bad) { locked = true; setTimeout(() => { locked = false; render(); }, 350); render(); } return; }
+            fxFrom = s.zeni; fxId = sel; locked = true; setTimeout(() => { locked = false; render(); }, 450);
             s.zeni -= it.price;
             gainCard(world, s, sel);
           } else {
@@ -497,12 +543,15 @@ export function openShop(game) {
             lose(s, sel);
             if (!s.cards[sel]) sel = null;
           }
-          audio.se('Z1 アイテム取得', 70);
+          audio.se(tab === 'buy' ? SE_BUY : 'Z1 アイテム取得', 80);
           render();
-        }));
+        });
+        if (locked) buyBtn.classList.add('lock');
+        acts.appendChild(buyBtn);
       }
       acts.appendChild(button('離開', close));
       el.appendChild(acts);
+      feedback(capEl, itemEl, buyBtn, box);
     };
     render();
   });

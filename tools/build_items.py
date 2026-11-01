@@ -40,7 +40,7 @@ KIND = {**{i: 'card' for i in (19, 20, 23, 25, 50, 84, 87, 93, 106)},
         **{i: 'member' for i in (32, 33, 40, 41, 53, 54, 64)},
         **{i: 'foe' for i in (30, 51, 52)},
         **{i: 'other' for i in (27, 28, 29, 34, 42, 43, 44, 45, 70, 80, 89, 205)}}
-UNUSABLE = {1, 2, 3, 4, 5, 6, 7, 8}  # the radar and the dragon balls
+UNUSABLE = {2, 3, 4, 5, 6, 7, 8}  # the dragon balls (1, the dragon radar, is a hook: src/fieldmenu.js openRadar)
 
 
 def add(world, h):

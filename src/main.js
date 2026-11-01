@@ -1,9 +1,9 @@
 // Boot, game state, scene switching, story beats, HUD, menu, save/load.
-import { view, img, loadImages, audio, say, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-1507';
-import { tileSheetPaths } from './tiles.js?v=20261101-1507';
-import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-1507';
-import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-1507';
-import { makeMember, levelUp } from './party.js?v=20261101-1507';
+import { view, img, loadImages, audio, say, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-1511';
+import { tileSheetPaths } from './tiles.js?v=20261101-1511';
+import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-1511';
+import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-1511';
+import { makeMember, levelUp } from './party.js?v=20261101-1511';
 
 const SAVE_KEY = 'dbz-portrait-save-v1';
 const FACES = 'Graphics/Pictures/GBZ1 顔アイコン.PNG'; // 40×56 cells, one row per character
@@ -196,7 +196,7 @@ function showTitle(sub) {
   audio.playBgm(game.world.titleBgm);
   const has = !!localStorage.getItem(SAVE_KEY);
   title.innerHTML = `<img src="${assetUrl('Graphics/System/Title.png')}" alt="">
-    <div class="sub">${sub || '直向重製版・Z1 拉蒂茲篇（試玩）'}</div>
+    <div class="sub">${sub || '重製版・Z1 拉蒂茲篇（試玩）'}</div>
     <div class="actions">
       <button class="btn" data-a="new">新的開始</button>
       ${has ? '<button class="btn" data-a="cont">繼續遊戲</button>' : ''}
@@ -251,7 +251,7 @@ async function boot() {
   if (!(await ensureLatest())) return;
   view.resize();
   window.addEventListener('resize', () => view.resize());
-  game.world = await (await fetch('data/world.json?v=20261101-1507')).json();
+  game.world = await (await fetch('data/world.json?v=20261101-1511')).json();
   await loadImages([...tileSheetPaths, ...fieldImages, ...battleImages(game.world), FACES]);
   showTitle();
   requestAnimationFrame(frame);

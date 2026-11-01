@@ -1,7 +1,7 @@
-# 龍珠Z RPG 直向重製版（試玩：Z1 拉蒂茲篇）
+# 龍珠Z RPG 重製版（試玩：Z1 拉蒂茲篇）
 
 為手機直向重新設計的版本：新的 JavaScript 引擎，沿用原版（RPG Maker VX 同人作品「ドラゴンボールZ RPG」）的素材與數值資料。
-完整移植版在另一個 repo：pokemonida99/dbz-rpg-web（橫向／原腳本執行）。
+原版完整移植的「經典版」在另一個 repo：pokemonida99/dbz-rpg-web（橫向／原腳本執行）。
 
 線上：https://pokemonida99.github.io/dbz-rpg-web-1/
 

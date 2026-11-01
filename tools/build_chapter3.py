@@ -57,8 +57,10 @@ def add(world, h):
         'bubbles': {
             'bgm': 'Z1 界王修行', 'exp': 1000, 'tec': 10, 'wins': 6,
             'face': [FACE_EVENT, 17],
+            # page 1 line 3: the Chinese edition says 古雷格利 here, a slip copied from the Gregory scene; the Japanese
+            # original (commented out next to it) says バブルス, so this version names 巴布鲁斯
             'intro': [[s2t(t) for t in page] for page in (
-                ['抓住巴布鲁斯吧！', '打出6回攻击星数比巴布鲁斯大的牌！', '古雷格利出的牌为7时可以出1　8时可以出2', '※玩家出的牌为上述情况时不会输！'],
+                ['抓住巴布鲁斯吧！', '打出6回攻击星数比巴布鲁斯大的牌！', '巴布鲁斯出的牌为7时可以出1　8时可以出2', '※玩家出的牌为上述情况时不会输！'],
                 ['即便输了也要继续出到用完牌为止！', '中途结束时也可以接着上次的进度开始！'],
                 ['快点抓住他　与界王大人一起修行吧！', '抓紧时间　悟空！'])],
             'caught': s2t('悟空「终于成功了！！　抓到了！！！」'),

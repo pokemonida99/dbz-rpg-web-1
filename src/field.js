@@ -185,7 +185,7 @@ export class Field {
       const bi = img(b.sheet || BOSS); // (b.sheet: another enemy sheet, e.g. enemy5.png for the Willow fortress)
       if (!bi.ok) continue;
       const f = Math.floor(this.anim) % 3, k = b.index || 0; // enemy1.png: 4 characters a row, 3×4 frames each
-      c.drawImage(bi.im, ((k % 4) * 3 + f) * 32, Math.floor(k / 4) * 128, 32, 32, b.x * 32 - cx, b.y * 32 - cy, 32, 32);
+      c.drawImage(bi.im, ((k % 4) * 3 + f) * 32, Math.floor(k / 4) * 128 + (b.row || 0) * 32, 32, 32, b.x * 32 - cx, b.y * 32 - cy, 32, 32); // row: the direction row (enemy6.png: one demon each)
     }
     const fi = img(FLY);
     if (fi.ok) {

@@ -59,7 +59,7 @@ for js in ('battle.js', 'growth.js'):  # their cursor / card sounds too
 files |= {f'Audio/BGS/{n}.ogg' for n in set(re.findall(r'"bgs":"([^"]+)"', json.dumps(world, ensure_ascii=False, separators=(',', ':'))))}
 # the story scenes between chapters (src/cutscene.js): scene pictures (BG('…') and the `bg` / `scroll` entries)
 cutscene = ''.join(open(os.path.join(root, 'src', f), encoding='utf-8').read()  # and the scenes the chapters add (addScenes)
-                   for f in sorted(os.listdir(os.path.join(root, 'src'))) if f == 'cutscene.js' or f.startswith('chapter'))
+                   for f in sorted(os.listdir(os.path.join(root, 'src'))) if f in ('cutscene.js', 'willow.js') or f.startswith('chapter'))
 files |= {f'Graphics/Pictures/Z1_背景_{n}.PNG' for n in re.findall(r"(?:BG\(|bg: |scroll: )'([^']+)'", cutscene)}
 files |= {f'Audio/BGM/{n}.ogg' for n in re.findall(r"bgm: '([^']+)'", cutscene)}
 files |= {f'Graphics/Pictures/Z1_イベント_{n}.PNG' for n in re.findall(r"'([^']+)'\]\.map\(EV\)|EV\('([^']+)'\)", cutscene) for n in n if n}

@@ -174,14 +174,15 @@ export class Field {
     let cx = s.x + this.look.x - view.w / 2, cy = s.y + this.look.y - view.h * 0.45;
     if (this.cam) { cx = this.cam.x - view.w / 2; cy = this.cam.y - view.h / 2; } // 地圖 (src/fieldmenu.js mapView)
     cx = W <= view.w ? (W - view.w) / 2 : Math.max(0, Math.min(W - view.w, cx));
-    cy = H <= view.h ? (H - view.h) / 2 : Math.max(0, Math.min(H - view.h, cy));
+    cy = H <= view.h ? (H - view.h) / 2 : Math.max(-this.hudPad(), Math.min(H - view.h, cy));
     cx = Math.round(cx); cy = Math.round(cy);
     c.fillStyle = '#000';
     c.fillRect(0, 0, view.w, view.h);
     c.drawImage(this.layers.ground, -cx, -cy);
 
-    const bi = img(BOSS);
-    for (const b of bi.ok ? this.bossList() : []) {
+    for (const b of this.bossList()) {
+      const bi = img(b.sheet || BOSS); // (b.sheet: another enemy sheet, e.g. enemy5.png for the Willow fortress)
+      if (!bi.ok) continue;
       const f = Math.floor(this.anim) % 3, k = b.index || 0; // enemy1.png: 4 characters a row, 3×4 frames each
       c.drawImage(bi.im, ((k % 4) * 3 + f) * 32, Math.floor(k / 4) * 128, 32, 32, b.x * 32 - cx, b.y * 32 - cy, 32, 32);
     }
@@ -201,6 +202,16 @@ export class Field {
       c.fillRect(bx - 2, by - 7, 4, 8);
       c.fillRect(bx - 2, by + 3, 4, 3);
     }
+  }
+
+  // how far the HUD's faces reach down the screen (art px): the camera may go that far above the map's top edge, so
+  // the top rows stay in sight under three rows of faces (seven to nine members); measured now and then
+  hudPad() {
+    if (this.padAt && performance.now() - this.padAt < 500) return this.pad;
+    this.padAt = performance.now();
+    const p = document.querySelector('#hud:not([hidden]) .party');
+    this.pad = p ? Math.max(0, Math.round(p.getBoundingClientRect().bottom / view.cssPerPx)) : 0;
+    return this.pad;
   }
 
   // the bosses standing on this map, until beaten (world.bosses, by map: one or a list; flag = the state.flags entry

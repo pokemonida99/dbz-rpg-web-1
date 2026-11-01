@@ -51,6 +51,7 @@ export class Field {
     // nearest interactive spot within reach
     let near = null, nd = 44;
     for (const p of this.pois) {
+      if (p.gone && s.sw[p.gone]) continue; // a beaten Pumpkin / Broccoli
       const d = Math.hypot(s.x - (p.x * 32 + 16), s.y - (p.y * 32 + 16));
       if (d < nd) { nd = d; near = p; }
     }
@@ -66,6 +67,7 @@ export class Field {
     const W = this.map.w * 32, H = this.map.h * 32;
     // camera follows, clamped to the map (centred if the map is smaller than the screen)
     let cx = s.x - view.w / 2, cy = s.y - view.h * 0.45;
+    if (this.cam) { cx = this.cam.x - view.w / 2; cy = this.cam.y - view.h / 2; } // 地圖 (src/fieldmenu.js mapView)
     cx = W <= view.w ? (W - view.w) / 2 : Math.max(0, Math.min(W - view.w, cx));
     cy = H <= view.h ? (H - view.h) / 2 : Math.max(0, Math.min(H - view.h, cy));
     cx = Math.round(cx); cy = Math.round(cy);

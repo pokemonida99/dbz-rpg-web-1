@@ -1,24 +1,24 @@
 // Boot, game state, scene switching, story beats, HUD, menu, save/load.
-import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-1940';
-import { tileSheetPaths } from './tiles.js?v=20261101-1940';
-import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-1940';
-import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-1940';
-import { makeMember, levelUp } from './party.js?v=20261101-1940';
-import { runEvent } from './events.js?v=20261101-1940';
-import { playOpening, playStory } from './opening.js?v=20261101-1940'; // the original's title animation and opening story
-import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapterBoss } from './chapter2.js?v=20261101-1940';
-import { fieldMenuHtml, openEntry } from './partymenu.js?v=20261101-1940'; // 隊伍・卡牌・組合技・作戰
-import { setItemsWorld, bubbles } from './items.js?v=20261101-1940'; // item cards (its 卡牌 menu entry registers itself)
-import { setGrowthWorld } from './growth.js?v=20261101-1940'; // skill cards and the other growth cards
-import { cardSquare, compo } from './cardgames.js?v=20261101-1940'; // card squares (shop / lottery / memory), 合成
-import { fieldExtraHtml, openFieldEntry, setFieldGame, encounterSteps, battleTally, spotTally, storySoFar, hasRecap, options } from './fieldmenu.js?v=20261101-1940'; // 概況・情報・設定・地圖, records, options
-import { training } from './training.js?v=20261101-1940'; // training squares
-import { chapter3Goal, startChapter3, resumeChapter3, chapter3Spot, isChapter3Map, chapter3Boss } from './chapter3.js?v=20261101-1940';
-import { playEvent, setCutsceneWorld, raditzOutcome } from './cutscene.js?v=20261101-1940'; // story scenes staged like the original
+import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-1953';
+import { tileSheetPaths } from './tiles.js?v=20261101-1953';
+import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-1953';
+import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-1953';
+import { makeMember, levelUp } from './party.js?v=20261101-1953';
+import { runEvent } from './events.js?v=20261101-1953';
+import { playOpening, playStory } from './opening.js?v=20261101-1953'; // the original's title animation and opening story
+import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapterBoss } from './chapter2.js?v=20261101-1953';
+import { fieldMenuHtml, openEntry } from './partymenu.js?v=20261101-1953'; // 隊伍・卡牌・組合技・作戰
+import { setItemsWorld, bubbles } from './items.js?v=20261101-1953'; // item cards (its 卡牌 menu entry registers itself)
+import { setGrowthWorld } from './growth.js?v=20261101-1953'; // skill cards and the other growth cards
+import { cardSquare, compo } from './cardgames.js?v=20261101-1953'; // card squares (shop / lottery / memory), 合成
+import { fieldExtraHtml, openFieldEntry, setFieldGame, encounterSteps, battleTally, spotTally, storySoFar, hasRecap, options } from './fieldmenu.js?v=20261101-1953'; // 概況・情報・設定・地圖, records, options
+import { training } from './training.js?v=20261101-1953'; // training squares
+import { chapter3Goal, startChapter3, resumeChapter3, chapter3Spot, isChapter3Map, chapter3Boss } from './chapter3.js?v=20261101-1953';
+import { playEvent, setCutsceneWorld, raditzOutcome } from './cutscene.js?v=20261101-1953'; // story scenes staged like the original
 
 const SAVE_KEY = 'dbz-portrait-save-v1';
 const AUTO_KEY = 'dbz-portrait-autosave-v1'; // the original's Save_Auto.rvdata: after each normal battle won
-const FACES = 'Graphics/Pictures/GBZ1 顔アイコン.PNG'; // 40×56 cells, one row per character
+const FACES = 'Graphics/Pictures/Z1_顔味方.PNG'; // the party screen's 64×64 faces; row = actor id - 3; columns: normal, hurt, KO
 
 const game = {
   world: null,
@@ -71,6 +71,7 @@ const game = {
     const s = this.state;
     if (poi.chapter) { await (chapter3Spot(this, poi) || chapterSpot(this, poi)); renderHud(); this.busy = false; this.field.paused = false; return; }
     spotTally(s, poi);
+    if (['training', 'shop'].includes(poi.effect)) this.field.spent = poi; // once per visit (src/field.js)
     if (poi.effect === 'training') { await training(this); renderHud(); this.busy = false; this.field.paused = false; return; }
     if (poi.fight) { // Pumpkin / Broccoli: their lines, then the fight
       audio.playBgm(poi.bgm);
@@ -145,11 +146,17 @@ window.__game = game;
 // ---------- HUD ----------
 const hud = document.getElementById('hud');
 const actBtn = document.getElementById('act');
-function faceCanvas(row, size = 34) {
+// the same face as the party / battle screens, shown at a whole number of device pixels per art pixel (crisp)
+function faceCanvas(m) {
   const c = document.createElement('canvas');
-  c.width = 40; c.height = 40;
+  c.width = 64; c.height = 64;
+  const dpr = window.devicePixelRatio || 1;
+  const css = (64 * Math.max(1, Math.round((36 * dpr) / 64))) / dpr; // about 36 CSS px
+  c.style.width = c.style.height = `${css}px`;
+  const col = m.hp <= 0 || m.ko ? 2 : m.hp * 4 < m.maxhp ? 1 : 0; // normal / hurt / KO, like the battle screen
   const f = img(FACES);
-  f.p.then(() => { if (f.ok) c.getContext('2d').drawImage(f.im, 0, row * 56 + 4, 40, 40, 0, 0, 40, 40); });
+  const paint = () => { if (f.ok) c.getContext('2d').drawImage(f.im, 64 * col, 64 * (m.id - 3), 64, 64, 0, 0, 64, 64); };
+  if (f.ok) paint(); else f.p.then(paint);
   return c;
 }
 export { faceCanvas };
@@ -160,7 +167,7 @@ function renderHud() {
   for (const m of s.party) {
     const el = document.createElement('div');
     el.className = 'pcard';
-    el.appendChild(faceCanvas(m.face));
+    el.appendChild(faceCanvas(m));
     el.insertAdjacentHTML('beforeend', `<div><div class="nm">${m.name} <span class="lv">Lv${m.level}</span></div>
       <div class="bar"><i style="width:${(100 * m.hp / m.maxhp) | 0}%"></i></div>
       <div class="bar ki"><i style="width:${(100 * m.ki / m.maxki) | 0}%"></i></div></div>`);
@@ -321,7 +328,7 @@ async function boot() {
   if (!(await ensureLatest())) return;
   view.resize();
   window.addEventListener('resize', () => view.resize());
-  game.world = await (await fetch('data/world.json?v=20261101-1940')).json();
+  game.world = await (await fetch('data/world.json?v=20261101-1953')).json();
   setCutsceneWorld(game.world);
   setFaces(game.world.faces);
   setItemsWorld(game.world);

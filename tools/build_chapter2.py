@@ -34,6 +34,7 @@ def add(world, h):
         world['maps'][str(mid)] = build_map(mid, rows=rows)
     # Snake Way: Goku keeps to the road — the passable tiles of layer 2 (src/field.js road mode)
     world['maps']['5']['road'] = 2
+    world['maps']['5']['oneWay'] = [3, 9]  # no walking back towards the start (it would farm the squares)
 
     INN = {'label': '進入旅館', 'event': 11, 'effect': 'rest'}
     CARD = {'label': '卡片商店', 'effect': 'shop'}

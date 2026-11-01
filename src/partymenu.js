@@ -13,8 +13,8 @@
 //   menuEntries.card = async ({ game, battle }) => { … }   // battle is null when opened from the field menu
 // In battle the choosing comes back (picks kept) when the promise resolves, unless it resolves to 'stay'
 // (the entry has moved the battle on by itself, e.g. started the turn).
-import { img, audio, rand } from './core.js?v=20261101-1940';
-import * as growth from './growth.js?v=20261101-1940'; // 技能 page, ZP, KI cost with passive skills
+import { img, audio, rand } from './core.js?v=20261101-1953';
+import * as growth from './growth.js?v=20261101-1953'; // 技能 page, ZP, KI cost with passive skills
 
 const FACES = 'Graphics/Pictures/Z1_顔味方.PNG'; // 64×64; row = actor id - 3; columns: normal, hurt, KO
 const CARDS = 'Graphics/Pictures/カード関係.PNG';

@@ -124,6 +124,9 @@ def cond(p):
 # common events copied into the event where it calls them (code 117, or a jump to a label right before the call):
 # the villagers' explanations of skills, S-combos and proficiency
 INLINE_CE = {264, 265, 266}
+# conversions a chapter turns on for its own pages only (tools/build_willow.py): the BGM changes (241 / 242), the
+# `$partyc = [...]` lines (who is on screen in the scenes) and the shake switches (control switch 21 on / off)
+OPTS = {'bgm': False, 'partyc': False, 'shakeSw': False}
 
 
 def script(lst):
@@ -173,6 +176,16 @@ def script(lst):
                 continue
             if code == 121:
                 out.append({'sw': [p[0], p[1], p[2] == 0]})
+                if OPTS['shakeSw'] and p[0] <= 21 <= p[1]:
+                    out.append({'shake': p[2] == 0})  # 画面揺らすフラグ as a switch command
+            elif code == 241 and OPTS['bgm']:
+                out.append({'bgm': p[0]['name']})
+            elif code == 242 and OPTS['bgm']:
+                out.append({'bgmFade': p[0]})
+            elif code in (355, 655) and OPTS['partyc'] and re.match(r'\s*\$partyc\s*=\s*\[', p[0]):
+                out.append({'partyc': [int(x) for x in re.findall(r'\d+', p[0])]})
+            elif code in (355, 655) and OPTS['partyc'] and re.match(r'\s*\$partyc\s*<<\s*\d+', p[0]):
+                out.append({'partycAdd': int(re.findall(r'\d+', p[0])[0])})  # someone joins (亀仙人: $partyc << 24)
             elif code == 122 and p[3] == 0:
                 out.append({'var': [p[0], p[2], p[4]]})  # op: 0 set, 1 add, 2 sub
             elif code == 250:
@@ -290,5 +303,7 @@ import build_chapter5  # noqa: E402  (chapter 5: the Garlic area and King Kai's 
 build_chapter5.add(world, globals())
 import build_chapter6  # noqa: E402  (chapter 6: King Kai's training, Shenron, the Saiyans, the Z1 ending)
 build_chapter6.add(world, globals())
+import build_willow  # noqa: E402  (after Z1: the Willow chapter, この世で一番強いやつ, up to the hand-over to Z2)
+build_willow.add(world, globals())
 json.dump(world, open(os.path.join(root, 'data', 'world.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 print('world.json written')

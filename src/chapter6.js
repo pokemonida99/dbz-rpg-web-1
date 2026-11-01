@@ -2,7 +2,7 @@
 //   after Garlic Jr. (chapter 5 ends with the 一星球) → King Kai's last training (map 14, Goku alone: the squares are
 //   battles against King Kai, his HP carrying over) → Shenron revives Goku → the Saiyans land → the Z fighters on
 //   map 15 (栽培人・那巴・貝吉塔; Goku arrives before the Saibamen or before Nappa, by how many tries King Kai took;
-//   琪琪 may join) → Vegeta flees → the Z1 ending film (src/ending.js) → 「Z1 完」.
+//   琪琪 may join) → Vegeta flees → the Z1 ending film (src/ending.js) → the Willow chapter (src/willow.js).
 // state.flags.ch6 tracks the step: 'kaio' → 'earth' → 'done'.
 import { input, say, toast, audio } from './core.js?v=20261101-2130';
 import { scenes, setParty, moveTo, enterMap, card } from './chapter2.js?v=20261101-2130';
@@ -171,9 +171,10 @@ export async function chapter6Boss(game, b) {
   s.flags.ch6 = 'done';
   game.save(true);
   await playZ1Ending(game.world);
-  s.var[41] = 901; // z1_ed: on to the Willow chapter in the original
+  s.var[41] = 901; // z1_ed: on to the Willow chapter, like the original
   game.save(true);
   game.busy = false;
+  if (game.startWillow) return game.startWillow(game); // src/willow.js
   await card(c.end, 2400);
   game.showTitle(c.end, c.unlocks);
 }

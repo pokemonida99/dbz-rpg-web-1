@@ -10,7 +10,7 @@
 // A picked card wears its member's face: tap it (or the face above) to pick again for that member; 返回 undoes the
 // last pick. With everyone picked a big 出招！ starts the turn (or right away with 設定「選完直接出招」).
 import { view, img, audio, sleep, rand } from './core.js?v=20261101-2126';
-import { levelUp } from './party.js?v=20261101-2126';
+import { levelUp, EXP_RATE } from './party.js?v=20261101-2126';
 import { Duel, ANIME_IMAGES, SW, SH, BACK_Y } from './anime.js?v=20261101-2126';
 import { commandButtons, autoSkill, autoTarget, tally } from './partymenu.js?v=20261101-2126'; // command row, 作戰, counters
 import * as items from './items.js?v=20261101-2126'; // item cards: effects that touch the battle rules
@@ -19,7 +19,6 @@ import * as growth from './growth.js?v=20261101-2126'; // passive skills, profic
 
 export const SCHOOL = ['必', '龜', '神', '界', '魔', '惑'];
 const HAND = 6;
-const EXP_RATE = 8; // the original's "経験値倍率" option; at 1 the opening chapter takes ~100 fights (Raditz needs about Lv6-7)
 const CARDS = 'Graphics/Pictures/カード関係.PNG';
 const FACES = 'Graphics/Pictures/Z1_顔味方.PNG'; // 64×64; row = actor id - 3; columns: normal, hurt, KO
 const FOE_FACES = 'Graphics/Pictures/Z1_顔敵.PNG'; // 64×64; row = enemy id; columns: normal, hurt

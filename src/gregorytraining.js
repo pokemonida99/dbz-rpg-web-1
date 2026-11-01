@@ -8,7 +8,7 @@
 // the 640-wide scene fits a 440-wide strip), like src/kaiotraining.js.
 import { img, audio, rand } from './core.js?v=20261101-2126';
 import { newCard } from './battle.js?v=20261101-2126';
-import { levelUp } from './party.js?v=20261101-2126';
+import { levelUp, EXP_RATE } from './party.js?v=20261101-2126';
 import { el, overlay, button } from './fieldmenu.js?v=20261101-2126';
 
 const P = (n) => `Graphics/Pictures/${n}.PNG`;
@@ -310,9 +310,10 @@ export async function gregoryTraining(game) {
 
   if (result === 'won') { // 修行終了 (get_exp)
     audio.se('Z1 完了');
-    setMsg([T.caught, '', T.done.replace('{exp}', T.exp)]);
+    const exp = T.exp * EXP_RATE; // the EXP rate, like battles
+    setMsg([T.caught, '', T.done.replace('{exp}', exp)]);
     await wait();
-    goku.exp += T.exp;
+    goku.exp += exp;
     if (levelUp(world, goku)) {
       audio.se('Z1 レベルアップ', 80);
       setMsg([T.level.replace('{name}', goku.name).replace('{level}', goku.level)]);

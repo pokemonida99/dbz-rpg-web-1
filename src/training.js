@@ -6,7 +6,8 @@
 // SP and ZP are kept in state.sp[actor] / state.zp[actor] for the systems that spend them.
 import { img, audio, rand } from './core.js?v=20261101-2126';
 import { newCard } from './battle.js?v=20261101-2126';
-import { levelUp } from './party.js?v=20261101-2126';
+import { levelUp, EXP_RATE } from './party.js?v=20261101-2126';
+import { expFor } from './growth.js?v=20261101-2126';
 import { el, sprite, overlay, button, bumpStat } from './fieldmenu.js?v=20261101-2126';
 
 const CARDS = 'Graphics/Pictures/カード関係.PNG', FACES = 'Graphics/Pictures/Z1_顔味方.PNG';
@@ -155,7 +156,8 @@ export async function training(game) {
   async function rewards() {
     const half = (n) => (success ? n : Math.ceil(n / 2));
     const say1 = async (t) => { setMsg([t]); await wait(); audio.se(SE_OK); };
-    const exp = half(count ? Math.trunc(((m.level * 2.5) / 2) * count) : 0);
+    // × the EXP rate like battles; サイヤ人の血 counts here too (get_exp_add, as in the original)
+    const exp = expFor(world, m, half(count ? Math.trunc(((m.level * 2.5) / 2) * count) : 0) * EXP_RATE);
     await say1(`修行終了！　　獲得${exp}經驗值！`);
     m.exp += exp;
     if (levelUp(world, m)) { audio.se('Z1 レベルアップ', 80); await say1(`${m.name}升到了${m.level}級！`); }

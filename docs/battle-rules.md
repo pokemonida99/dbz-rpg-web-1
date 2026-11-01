@@ -287,7 +287,8 @@ Battle results (`101:1451-1560`): 1 start anime, 2 all enemies dead, 3 all party
 
 Victory (`chk_all_enemy_dead`, `101:4243-4790`):
 - **EXP** = Σ `Enemies.exp` × `$exp_rate` (Game.ini, default 1) ×1.5 while the ブリーフ博士 item is active (`var311`).
-  **Every member of the full party (including reserves, `get_full_party`) gets the whole amount**,
+  **Every member of the full party (including reserves, `get_full_party`) gets the whole amount**
+  (reserves only from Z2 on: `get_sinario_full_party` lists none while `var43` < 90, so in Z1 only `$partyc` earns EXP),
   modified by `get_exp_add` (`010_Share.rb:9822`: favourite ×1.15, passive サイヤ人の血 ×1.1…).
 - **CAP** (shown as "CAP", stored `var25`) = Σ `Enemies.gold` × `$cap_rate` (×1.5 with 亀の甲羅).
 - **SP** (skill points) = Σ `Enemies.maxmp` × `$sp_rate` (×1.5 with 重い道着); each member's equipped passive skills

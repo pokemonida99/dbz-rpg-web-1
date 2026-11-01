@@ -46,6 +46,9 @@ files |= {f[0] for f in world['opening']['faces'].values()}
 files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"se\('([^']+)'\)", opening)}
 files |= {f'Audio/SE/{n["se"]}.ogg' for n in world['opening']['story'] if 'se' in n}
 files |= {f'Audio/BGM/{n}.ogg' for n in re.findall(r"playBgm\('([^']+)'\)", opening)}
+# the party / tactics menus (src/partymenu.js): the original's cursor sounds
+partymenu = open(os.path.join(root, 'src', 'partymenu.js'), encoding='utf-8').read()
+files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"SE_\w+ = '([^']+)'", partymenu)}
 
 total = 0
 for f in sorted(files):

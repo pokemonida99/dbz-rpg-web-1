@@ -12,10 +12,12 @@
 // participant's move counts one use. A combo that fires for the first time is learned (new_flag → get_flag) and
 // announced after the scene: 「恭喜！ ○○ 能使用了！」 (chk_new_scombo, 101:3988).
 //
-// Game state: state.skillLevel = { skillId: uses } (proficiency of moves and combos alike), state.combos = [learned ids].
-import { VERSION, view, img, audio, rand } from './core.js?v=20261101-1711';
-import { SW } from './anime.js?v=20261101-1711';
-import { ComboDuel } from './combo-anime.js?v=20261101-1711';
+// Game state: state.skillLv = { skillId: uses } ($cha_skill_level, shared with src/partymenu.js tally(): moves and
+// combos alike), state.combos = [learned ids]. The battle 菜單's 組合技 entry opens the list (menuEntries.combo).
+import { VERSION, view, img, audio, rand } from './core.js?v=20261101-1835';
+import { SW } from './anime.js?v=20261101-1835';
+import { ComboDuel } from './combo-anime.js?v=20261101-1835';
+import { menuEntries } from './partymenu.js?v=20261101-1835';
 
 let DATA = { combos: [], moves: {}, sync: {} };
 export const comboData = fetch(`data/combos.json?v=${VERSION}`).then((r) => r.json()).then((d) => (DATA = d)).catch(() => DATA);
@@ -24,11 +26,12 @@ const LEVEL_MAX = 99999, DMG_LEVEL_MAX = 999, ATK_RATIO = 5; // 139_Public.rb
 const HINT_ADD = 25; // $all_scombo_skill_level_add_num: the list reveals an unknown combo's partners past this many extra uses
 const FACES = 'Graphics/Pictures/Z1_顔味方.PNG', CARDS = 'Graphics/Pictures/カード関係.PNG';
 
-const levels = (state) => state.skillLevel || (state.skillLevel = {});
+const levels = (state) => state.skillLv || (state.skillLv = {});
 const learned = (state) => state.combos || (state.combos = []);
 const uses = (state, id) => levels(state)[id] || 0;
 
-// one more use of a move (set_skill_level, 102:88126): moves listed together in message2 keep the same count
+// one more use of a move by a combo member (set_skill_level, 102:88126 — a normal action counts through tally() in
+// Battle.playerAct, which a combo skips): moves listed together in message2 keep the same count
 export function noteSkillUse(state, id) {
   const L = levels(state);
   L[id] = Math.min(LEVEL_MAX, (L[id] || 0) + 1);
@@ -115,6 +118,7 @@ export async function tryCombo(b, i) {
   for (const j of who) { const a = b.world.actors[b.party[j].id]; crew[b.party[j].id] = { normal: a.sprite, special: a.special }; }
   b.duel = { m: lead, mc: b.hand[b.plans[i].card], f: foe, fc: foe.card };
   b.say(`${who.map((j) => b.party[j].name).join('＋')}的組合技！`, `「${combo.name}」`);
+  const before = foe.hp;
   b.anim = new ComboDuel({
     party: crew[lead.id], foe: { normal: foe.portrait, special: foe.sprite }, combo: combo.id, crew, lead: lead.id,
     damage: dmg, margin: Math.max(0, (SW - view.w) / 2),
@@ -122,6 +126,7 @@ export async function tryCombo(b, i) {
   });
   await b.anim.finished;
   b.anim = null;
+  if (before > 0 && foe.hp <= 0) { const d = (state.defeats = state.defeats || {}); d[lead.id] = Math.min(99999, (d[lead.id] || 0) + 1); }
   return true;
 }
 
@@ -267,7 +272,7 @@ function injectCss() {
   const st = document.createElement('style');
   st.id = 'combo-css';
   st.textContent = `
-.combo-list { position: absolute; inset: 0; z-index: 30; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center;
+.combo-list { position: absolute; inset: 0; z-index: 48; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center;
   padding: calc(var(--safe-t) + 12px) 10px calc(var(--safe-b) + 12px); }
 .combo-list .cl-panel { width: 100%; max-height: 100%; display: flex; flex-direction: column; }
 .combo-list .cl-head { display: flex; justify-content: space-between; align-items: center; font-size: 20px; color: var(--rust); margin-bottom: 6px; }
@@ -288,3 +293,6 @@ function injectCss() {
 `;
   document.head.appendChild(st);
 }
+
+// the battle 菜單 → 組合技 (src/partymenu.js); from the field menu there is no battle, so it lists the current party
+menuEntries.combo = ({ game, battle }) => openComboList(battle || { game, world: game.world, party: game.state.party, el: document.getElementById('app') }, 0);

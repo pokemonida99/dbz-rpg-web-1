@@ -1,12 +1,13 @@
 // Boot, game state, scene switching, story beats, HUD, menu, save/load.
-import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-1711';
-import { tileSheetPaths } from './tiles.js?v=20261101-1711';
-import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-1711';
-import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-1711';
-import { makeMember, levelUp } from './party.js?v=20261101-1711';
-import { runEvent } from './events.js?v=20261101-1711';
-import { playOpening, playStory } from './opening.js?v=20261101-1711'; // the original's title animation and opening story
-import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapterBoss } from './chapter2.js?v=20261101-1711';
+import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-1835';
+import { tileSheetPaths } from './tiles.js?v=20261101-1835';
+import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-1835';
+import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-1835';
+import { makeMember, levelUp } from './party.js?v=20261101-1835';
+import { runEvent } from './events.js?v=20261101-1835';
+import { playOpening, playStory } from './opening.js?v=20261101-1835'; // the original's title animation and opening story
+import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapterBoss } from './chapter2.js?v=20261101-1835';
+import { fieldMenuHtml, openEntry } from './partymenu.js?v=20261101-1835'; // 隊伍・卡牌・組合技・作戰
 
 const SAVE_KEY = 'dbz-portrait-save-v1';
 const FACES = 'Graphics/Pictures/GBZ1 顔アイコン.PNG'; // 40×56 cells, one row per character
@@ -153,7 +154,7 @@ function openMenu() {
   game.field.paused = true;
   game.field.leave();
   const has = !!localStorage.getItem(SAVE_KEY);
-  menu.innerHTML = `<div class="box"><h2>選單</h2>
+  menu.innerHTML = `<div class="box"><h2>選單</h2>${fieldMenuHtml()}
     <button class="btn" data-a="save">存檔<small>隨時記錄目前的位置與狀態</small></button>
     <button class="btn" data-a="load" ${has ? '' : 'disabled'}>讀檔<small>${has ? '回到上次存檔的地方' : '還沒有存檔'}</small></button>
     <button class="btn" data-a="heal">休息<small>回復全員 HP・KI（測試用）</small></button>
@@ -161,6 +162,12 @@ function openMenu() {
     <div class="ver">版本 ${VERSION}</div></div>`;
   menu.hidden = false;
   menu.onclick = (e) => {
+    const m = e.target.closest('[data-m]');
+    if (m) { // a screen from src/partymenu.js; back to the map when it closes, like the original
+      menu.hidden = true;
+      openEntry(m.dataset.m, { game, battle: null }).then(() => { renderHud(); game.field.paused = false; game.field.enter(); });
+      return;
+    }
     const a = e.target.closest('[data-a]');
     if (!a && e.target !== menu) return;
     const act = a ? a.dataset.a : 'close';
@@ -265,7 +272,7 @@ async function boot() {
   if (!(await ensureLatest())) return;
   view.resize();
   window.addEventListener('resize', () => view.resize());
-  game.world = await (await fetch('data/world.json?v=20261101-1711')).json();
+  game.world = await (await fetch('data/world.json?v=20261101-1835')).json();
   setFaces(game.world.faces);
   const faceSheets = new Set(Object.values(game.world.faces).map((f) => f[0]));
   await loadImages([...tileSheetPaths, ...fieldImages, ...battleImages(game.world), FACES, ...faceSheets]);

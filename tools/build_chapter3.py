@@ -21,8 +21,9 @@ def add(world, h):
     # ---------- maps ----------
     for mid, rows in ((9, 14), (10, 38)):  # below these rows: nothing but the original's control events
         world['maps'][str(mid)] = build_map(mid, rows=rows)
-    # King Kai's planet is a ring of squares (tile 1544) round his house: walk the ring, like the original's board
-    world['maps']['9']['road'] = [1544]
+    # King Kai's planet: walk the ring of squares round his house (src/field.js road mode). The squares are tile 1544
+    # on layer 0 with passage 6; the planet around them has 15.
+    world['maps']['9']['road'] = 0
 
     INN = {'label': '進入旅館', 'event': 11, 'effect': 'rest'}
     CARD = {'label': '卡片商店', 'effect': 'shop'}

@@ -94,7 +94,7 @@ def boxes(lines):
     """One message window → [[speaker, text], ...] ('' = narration). 「」 are dropped, indents trimmed."""
     out, open_ = [], False  # open_: the last speaker's 「 is not closed yet
     for raw in lines:
-        t = s2t(ESC.sub('', raw)).rstrip()
+        t = s2t(ESC.sub('', raw)).rstrip().replace('布爾嗎', '布爾瑪')  # (a typo of the original: 布尔吗, Willow chapter)
         m = SPEAKER.match(t)
         body = t.strip('　 ')
         if m and not re.search('」.', m.group(2)):  # 獲得「…」的卡片 is narration, not a speaker

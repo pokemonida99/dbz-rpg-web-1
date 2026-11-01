@@ -6,11 +6,12 @@
 //   lower area     — message window; choosing: buttons + the six cards; fighting: the original duel bar
 //                    (party face, HP/KI, both cards, enemy face)
 // Choosing a card that allows a special move opens the move window over the stage.
-import { view, img, audio, sleep, rand } from './core.js?v=20261101-1841';
-import { levelUp } from './party.js?v=20261101-1841';
-import { Duel, ANIME_IMAGES, SW, SH, BACK_Y } from './anime.js?v=20261101-1841';
-import { battleCommand, autoSkill, autoTarget, tally } from './partymenu.js?v=20261101-1841'; // command menu, 作戰, counters
-import * as items from './items.js?v=20261101-1841'; // item cards: effects that touch the battle rules
+import { view, img, audio, sleep, rand } from './core.js?v=20261101-1843';
+import { levelUp } from './party.js?v=20261101-1843';
+import { Duel, ANIME_IMAGES, SW, SH, BACK_Y } from './anime.js?v=20261101-1843';
+import { battleCommand, autoSkill, autoTarget, tally } from './partymenu.js?v=20261101-1843'; // command menu, 作戰, counters
+import * as items from './items.js?v=20261101-1843'; // item cards: effects that touch the battle rules
+import { tryCombo, announceCombos, skillPower, comboHints, hasCombos, HINT_TEXT } from './combo.js?v=20261101-1843'; // 組合技
 
 export const SCHOOL = ['必', '龜', '神', '界', '魔', '惑'];
 const HAND = 6;
@@ -315,7 +316,8 @@ export class Battle {
     const { L } = this;
     const m = this.party[this.cur];
     const skills = m.skills.map((sid) => this.world.skills[sid]);
-    const rowH = 30, h = 46 + skills.length * rowH + 50;
+    const hints = skills.map((s) => comboHints(this, this.cur, s.id)); // S-combos (src/combo.js)
+    const rowH = hints.some((x) => x.length) ? 46 : 30, h = 46 + skills.length * rowH + 50;
     const x = 10, w = view.w - 20, y = Math.max(L.stage.y + 4, L.msg.y - 4 - h);
     win(c, x, y, w, h);
     text(c, `${m.name} 的招式`, x + 14, y + 12, RUST, 18);
@@ -325,10 +327,14 @@ export class Battle {
       const ok = m.ki >= items.kiNeed(m, s.ki);
       text(c, s.name + (s.all ? '（全體）' : ''), x + 30, ry + 6, ok ? INK : '#a08060', 18);
       text(c, `KI ${s.ki}`, x + w - 14, ry + 8, ok ? '#7a5230' : '#c0a080', 14, 'right');
+      hints[i].forEach((t, k) => text(c, `組合技 ${t.name}（${t.need}）${this.pending.solo ? '不使用' : HINT_TEXT[t.st]}`,
+        x + 30, ry + 27 + k * 14, t.st === 'ok' && !this.pending.solo ? RUST : '#a08060', 12));
       if (ok) this.hit(x, ry, w, rowH, () => { this.pending.skill = s; this.mode = 'card'; this.chooseTarget(); });
     });
-    const by = y + h - 46, bw = (w - 30) / 2;
-    [['普通攻擊', () => { this.mode = 'card'; this.chooseTarget(); }], ['換一張卡', () => { this.pending = null; this.mode = 'card'; this.promptCard(); }]]
+    const btns = [['普通攻擊', () => { this.mode = 'card'; this.chooseTarget(); }], ['換一張卡', () => { this.pending = null; this.mode = 'card'; this.promptCard(); }]];
+    if (hasCombos(this, this.cur)) btns.push([this.pending.solo ? '組合技：關' : '組合技：開', () => { this.pending.solo = !this.pending.solo; }]);
+    const by = y + h - 46, bw = (w - 10 - 10 * btns.length) / btns.length;
+    btns
       .forEach(([label, fn], i) => {
         const bx = x + 10 + i * (bw + 10);
         win(c, bx, by, bw, 36, '#fff0d0');
@@ -463,6 +469,7 @@ export class Battle {
     this.phase = 'fight';
     this.mode = 'card';
     this.buttons = [];
+    this.acted = new Set(); // members already done this turn (S-combo partners)
     const order = [];
     this.party.forEach((m, i) => { const p = this.plans[i]; if (p) order.push({ kind: 'p', i, key: this.hand[p.card].a + this.hand[p.card].g, r: Math.random() }); });
     for (const f of this.foes) if (f.hp > 0) { order.push({ kind: 'e', f, key: f.card.a + f.card.g, r: Math.random() }); }
@@ -481,6 +488,7 @@ export class Battle {
       if (m.hp > 0) { m.hp = Math.min(m.maxhp, m.hp + Math.ceil((m.maxhp * 3) / 100)); m.ki = Math.min(m.maxki, m.ki + Math.ceil((m.maxki * 2.5) / 100)); }
       else m.hp = Math.min(m.maxhp, m.hp + Math.ceil((m.maxhp * 7.5) / 100));
     }
+    await announceCombos(this);
     await sleep(400);
     this.turn++;
     this.startPlanning();
@@ -508,7 +516,8 @@ export class Battle {
   async playerAct(i) {
     const m = this.party[i];
     const p = this.plans[i];
-    if (m.hp <= 0) return;
+    if (m.hp <= 0 || this.acted.has(i)) return;
+    if (await tryCombo(this, i)) return;
     let foe = this.foes[p.target];
     if (!foe || foe.hp <= 0) foe = this.foes.filter((f) => f.hp > 0).reduce((a, b) => (b.hp < a.hp ? b : a));
     const cd = this.hand[p.card];
@@ -521,7 +530,7 @@ export class Battle {
       t.card = t.card || enemyCard();
       this.duel = { m, mc: cd, f: t, fc: t.card };
       this.say(`${m.name} 的${skill ? skill.name : '攻擊'}！`, cd.s === m.school ? '流派一致，威力 ×1.3！' : '');
-      const dmg = playerDamage(m, skill && { power: skill.power, noDamage: skill.noDamage }, cd, t, t.card);
+      const dmg = playerDamage(m, skill && { power: skillPower(this.game.state, skill.id, skill.power), noDamage: skill.noDamage }, cd, t, t.card);
       await this.play(m, t, true, skill ? skill.id : null, dmg, t);
     }
     tally(this.game.state, m, skill, alive - targets.filter((t) => t.hp > 0).length); // use counts, KOs
@@ -548,6 +557,7 @@ export class Battle {
     this.phase = 'result';
     this.duel = null;
     this.buttons = [];
+    await announceCombos(this);
     const exp = items.expGain(this.game.state, this.foes.reduce((s, f) => s + f.exp, 0)) * EXP_RATE;
     this.game.state.zeni += items.capGain(this.game.state, this.foes.reduce((s, f) => s + f.gold, 0));
     const ups = [];

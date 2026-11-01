@@ -22,6 +22,12 @@ import { willowGoal, startWillow, resumeWillow, willowSpot, isWillowMap, willowB
 import { z2aGoal, startZ2a, resumeZ2a, z2aSpot, storyScenes, z2aBackdrop, devZ2a } from './z2a.js?v=20261101-2330'; // Z2 first half: Namek, Goku's training, the Grand Elder
 import { applyEra } from './era.js?v=20261101-2330'; // the Z2 art while variable 40 is 1
 import { z2bGoal, startZ2Ginyu, startZ2b, resumeZ2b, z2bSpot, isZ2bMap, z2bBoss, devZ2b } from './z2b.js?v=20261101-2330'; // Z2 second half: the Ginyu Force, Frieza
+import { startZ3, resumeZ3, z3Spot, isZ3Map, z3Boss, z3Goal, z3Backdrop, devZ3 } from './z3.js?v=20261101-2330'; // Z3 (the chapters below register themselves there)
+import './z3a.js?v=20261101-2330';
+import './z3b.js?v=20261101-2330';
+import './z3c.js?v=20261101-2330';
+import './z3d.js?v=20261101-2330';
+import './z3e.js?v=20261101-2330';
 
 // testing in a hidden browser pane (no animation frames there): ?timer drives every frame with timers instead
 if (new URLSearchParams(location.search).has('timer')) window.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16);
@@ -79,7 +85,7 @@ const game = {
     this.field.paused = true;
     input.dx = input.dy = 0;
     const s = this.state;
-    if (poi.chapter) { await (z2bSpot(this, poi) || z2aSpot(this, poi) || willowSpot(this, poi) || chapter6Spot(this, poi) || chapter4Spot(this, poi) || chapter3Spot(this, poi) || chapterSpot(this, poi)); renderHud(); this.busy = false; this.field.paused = false; return; }
+    if (poi.chapter) { await (z3Spot(this, poi) || z2bSpot(this, poi) || z2aSpot(this, poi) || willowSpot(this, poi) || chapter6Spot(this, poi) || chapter4Spot(this, poi) || chapter3Spot(this, poi) || chapterSpot(this, poi)); renderHud(); this.busy = false; this.field.paused = false; return; }
     spotTally(s, poi);
     if (['training', 'shop'].includes(poi.effect)) this.field.spent = poi; // once per visit (src/field.js)
     if (poi.effect === 'training') { await training(this); renderHud(); this.busy = false; this.field.paused = false; return; }
@@ -103,6 +109,7 @@ const game = {
   },
 
   async onBoss(b) {
+    if (isZ3Map(this.state)) return z3Boss(this, b);
     if (isZ2bMap(this.state)) return z2bBoss(this, b);
     if (isWillowMap(this.state)) return willowBoss(this, b);
     if (isChapter6Map(this.state)) return chapter6Boss(this, b);
@@ -203,7 +210,7 @@ function renderHud() {
     party.appendChild(el);
   }
   hud.querySelector('.menu-btn').onclick = openMenu;
-  hud.querySelector('.goal').textContent = z2bGoal(game.world, s) ?? z2aGoal(game.world, s) ?? willowGoal(game.world, s) ?? chapter6Goal(game.world, s) ?? chapter5Goal(game.world, s) ?? chapter4Goal(game.world, s) ?? chapter3Goal(game.world, s) ?? chapterGoal(game.world, s) ?? (s.flags.bossDone ? '' : '目標：飛往右上方救回悟飯（建議練到 Lv6 以上）');
+  hud.querySelector('.goal').textContent = z3Goal(game.world, s) ?? z2bGoal(game.world, s) ?? z2aGoal(game.world, s) ?? willowGoal(game.world, s) ?? chapter6Goal(game.world, s) ?? chapter5Goal(game.world, s) ?? chapter4Goal(game.world, s) ?? chapter3Goal(game.world, s) ?? chapterGoal(game.world, s) ?? (s.flags.bossDone ? '' : '目標：飛往右上方救回悟飯（建議練到 Lv6 以上）');
 }
 game.renderHud = renderHud;
 
@@ -267,7 +274,7 @@ function load(key = SAVE_KEY) {
     s.var = s.var || { 42: 3 };
     startField();
     resumeChapter(game);
-    resumeZ2b(game) || resumeChapter3(game) || resumeChapter4(game) || resumeChapter5(game) || resumeChapter6(game) || resumeWillow(game) || resumeZ2a(game);
+    resumeZ3(game) || resumeZ2b(game) || resumeChapter3(game) || resumeChapter4(game) || resumeChapter5(game) || resumeChapter6(game) || resumeWillow(game) || resumeZ2a(game);
     return true;
   } catch (e) { return false; }
 }
@@ -294,7 +301,7 @@ function startField() {
 // the chapter that follows, by name (a later part calls game.nextChapter('ch6') …); false when it isn't there
 const CHAPTERS = { ch4: startChapter4, ch5: startChapter5, ch6: startChapter6, willow: startWillow };
 const nextChapter = (k) => (typeof k !== 'string' ? startChapter3(game) : CHAPTERS[k] ? CHAPTERS[k](game) : false);
-Object.assign(game, { startZ2a, storyScenes, backdrop: () => z2aBackdrop(game) }); // Z2 (src/z2a.js); the Willow chapter calls game.startZ2a
+Object.assign(game, { startZ2a, storyScenes, backdrop: () => z3Backdrop(game) || z2aBackdrop(game), startZ3: () => startZ3(game) }); // Z2 (src/z2a.js); the Willow chapter calls game.startZ2a
 Object.assign(game, { startField, save, renderHud: () => renderHud(), showTitle: (sub, notes) => showTitle(sub, notes), nextChapter, startChapter4, startChapter5, startChapter6, startWillow, devChapter5: () => devChapter5(game), devChapter6: () => devChapter6(game), startZ2Ginyu: () => startZ2Ginyu(game), startZ2b: () => startZ2b(game) }); // for src/chapter*.js
 
 // ---------- title ----------
@@ -377,6 +384,7 @@ async function boot() {
   if (dev && dev.startsWith('ch6')) { title.hidden = true; devChapter6(game, dev); requestAnimationFrame(frame); return; }
   if (dev && ['z2ginyu', 'z2frieza', 'z2last', 'z2turles'].includes(dev)) { title.hidden = true; devZ2b(game, dev); requestAnimationFrame(frame); return; } // Z2 second half
   if (dev && dev.startsWith('willow')) { title.hidden = true; devWillow(game, dev); requestAnimationFrame(frame); return; } // ?dev=willow / willow51 / willowboss
+  if (dev && dev.startsWith('z3')) { title.hidden = true; if (devZ3(game, dev)) { requestAnimationFrame(frame); return; } title.hidden = false; } // Z3 (src/z3*.js)
   if (dev && dev.startsWith('z2')) { title.hidden = true; devZ2a(game, dev); requestAnimationFrame(frame); return; } // ?dev=z2 / z2b / z2c / z2d
   if (!options.skipOp) await playOpening(); // the title animation, like the original plays before its title screen
   showTitle();

@@ -316,6 +316,7 @@ async function ending(game) {
   game.save(true);
   game.busy = false;
   await card(c.end, 2400);
+  if (game.startZ3 && await game.startZ3()) return; // Z3 (src/z3.js), once its first chapter is there
   game.showTitle(c.end, c.unlocks);
 }
 

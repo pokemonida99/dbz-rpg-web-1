@@ -56,9 +56,35 @@ const late = () => ((cardGame && cardGame.state && cardGame.state.var && cardGam
 function z2Schools(foe) {
   const s = cardGame && cardGame.state;
   if (!s || !s.var || !s.var[40]) return null;
+  if (s.var[40] >= 2) return z3Schools(s, foe);
   const no = foe ? [2, 7] : [2, 6, 7];
   if (s.ss && s.ss[1]) no.push(3);
   return Array.from({ length: s.cardiMax || 7 }, (_, i) => i).filter((i) => !no.includes(i));
+}
+// Z3 (variable 40 = 2, $cardi_max = 10, create_card_i all.rb 20768-20830). Party: without 神・ギニュー・悟・造 (造 is
+// back when an android — class 9 — is in the party), without 界 while Goku is a Super Saiyan, without 超 while no one
+// is; a party of one rolls 必, its own school and one more (the original's list trick, kept as it is). Enemies: without
+// 神・界・ギニュー・悟, and 造 too before the androids (variable 43 58-96). (The Z4 / ZG area rules are not here yet.)
+function z3Schools(s, foe) {
+  const max = s.cardiMax || 10;
+  const all = Array.from({ length: max }, (_, i) => i);
+  const v43 = s.var[43] || 0;
+  if (foe) {
+    const no = [2, 3, 6, 7];
+    if (!(v43 >= 58 && v43 <= 96)) no.push(9);
+    return all.filter((i) => !no.includes(i));
+  }
+  const party = s.party || [];
+  let no = party.some((m) => m.school === 9) ? [2, 6, 7] : [2, 6, 7, 9];
+  if (s.ss && s.ss[1]) no.push(3);
+  if (!s.ss || !Object.values(s.ss).some(Boolean)) no.push(8);
+  if (party.length === 1) {
+    no = [2, 6, 7];
+    if (!s.sw[435]) no.push(9);
+    for (let x = 1; x <= max; x++) if (party[0].school !== x) no.push(x);
+    no.splice(rand(no.length - 1 - 2) + 2, 1); // noncardi.delete_at(rand(size-1-2)+2)
+  }
+  return all.filter((i) => !no.includes(i));
 }
 const pick = (a) => a[rand(a.length)];
 export function newCard() { return { a: rand(8), g: rand(8), s: pick(z2Schools(false) || (late() ? [0, 1, 3, 4] : [0, 1, 2, 4])) }; }
@@ -80,7 +106,8 @@ function playerDamage(b, m, skill, card, foe, foeCard, P) {
   d = growth.dealt(b, m, skill, d); // passive skills (set_damage_add)
   if (skill && skill.noDamage) d = 0;
   const avoid = Math.trunc((foe.agi * 1.2 + foeCard.g) / 3 - (m.agi * 1.1 + card.a) / 3);
-  return avoid > 0 && rand(100) + 1 < avoid ? -1 : d;
+  if (avoid > 0 && rand(100) + 1 < avoid) return -1;
+  return b.dmgRate ? Math.trunc(d * b.dmgRate) : d; // variable 81 味方攻撃ダメージn倍 (an event battle: src/z3.js fight)
 }
 function enemyDamage(b, foe, skill, card, m, guardCard) {
   const P = skill ? Math.trunc((foe.atk * skill.power) / 100) - foe.atk : 0;

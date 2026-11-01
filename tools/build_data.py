@@ -315,5 +315,7 @@ import build_z2a  # noqa: E402  (Z2 first half: to Namek, Goku's training, the G
 build_z2a.add(world, globals())
 import build_z2b  # noqa: E402  (Z2 second half: the Ginyu Force, Frieza, the Super Saiyan, the Z2 ending)
 build_z2b.add(world, globals())
+import build_z3  # noqa: E402  (Z3: the shared part — Z3 art, enemies, battles, story pages — and its chapters: src/z3*.js)
+build_z3.add(world, globals())
 json.dump(world, open(os.path.join(root, 'data', 'world.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 print('world.json written')

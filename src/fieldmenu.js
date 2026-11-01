@@ -31,7 +31,11 @@ const BATTLE_BGM = { 8: ['Z1 戦闘1', 'DBZ 強襲！サイヤ人！『サイヤ
   10: ['Z1 戦闘ボス1(中ボス)', 'DBZ 強襲！サイヤ人！『サイヤ人(ボス)』'], 11: ['Z1 戦闘ボス2(ベジータ)', 'DBZ 強襲！サイヤ人！『ラスト』'] };
 const ENC_SE = ['Z1 敵発見', 'Z3 敵発見', 'ZSSD 敵発見(GXSCC音源Ver)', 'GBZ2 戦闘開始']; // set_encount_se
 let game = null;
-export function setFieldGame(g) { game = g; startClock(); }
+export function setFieldGame(g) {
+  game = g;
+  startClock();
+  for (const p of g.world.fieldPictures || []) img(p); // warm the radar / recap / fortune-teller art
+}
 
 // the battle starts its music as 'Z1 戦闘1' (normal fights) and the encounter sound as 'Z1 敵発見': swap in the choice
 const playBgm = audio.playBgm.bind(audio), playSe = audio.se.bind(audio);

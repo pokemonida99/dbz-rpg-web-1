@@ -154,6 +154,17 @@ export const audio = {
     src.start();
     this.bgm = { src, g };
   },
+  fadeBgm(sec = 1) { // the event command 242 (BGM のフェードアウト)
+    const b = this.bgm;
+    this.bgm = null;
+    this.bgmName = '';
+    this.wantBgm = null;
+    if (!b || !this.ctx) return;
+    const t = this.ctx.currentTime;
+    b.g.gain.setValueAtTime(b.g.gain.value, t);
+    b.g.gain.linearRampToValueAtTime(0, t + sec);
+    try { b.src.stop(t + sec); } catch (e) { /* stopped */ }
+  },
   stopBgm() {
     if (this.bgm) { try { this.bgm.src.stop(); } catch (e) { /* stopped */ } }
     this.bgm = null;

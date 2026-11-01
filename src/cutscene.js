@@ -142,10 +142,10 @@ export function addScenes(more, battles = []) {
 export const registerScenes = addScenes; // the same, by the name src/chapter4.js uses
 
 // character_output: the party's faces centred under the scene, three to a row
-// (more than six: four a row, drawn smaller, so the message box still fits on a short phone)
+// (more than six: four a row, drawn smaller, so the message box still fits on a short phone; nine: five a row, smaller still)
 function partyFaces(stage, ids) {
-  const per = ids.length > 6 ? 4 : 3;
-  stage.faceSize = ids.length > 6 ? 48 : 64;
+  const per = ids.length > 8 ? 5 : ids.length > 6 ? 4 : 3;
+  stage.faceSize = ids.length > 8 ? 40 : ids.length > 6 ? 48 : 64;
   ids.forEach((id, k) => {
     const line = Math.floor(k / per), m = Math.min(per, ids.length - per * line), j = k % per;
     stage.party(PARTY, id - 3, -32 * (m - 1) + 64 * j, line);
@@ -185,7 +185,11 @@ async function z1field(stage, ctx, quiet = false) {
   if (d.scroll) stage.add(BG(d.scroll), SCROLL_X, SCENE_Y, [0, 0, 512, 128]);
   if (d.full) stage.add(d.full, 0, 0, [0, 0, 640, 480], false, 0, 'full');
   if (d.foe) stage.add(d.foe[0], ENE[0], ENE[1] + (d.foe[2] || 0), [64 * (d.foe[3] || 0), 64 * d.foe[1], 64, 64]); // [sheet, row, dy, column]
-  for (const [sheet, row, dx, dy, col] of d.adds || []) stage.add(sheet, ENE[0] + dx, ENE[1] + dy, [64 * (col || 0), 64 * row, 64, 64]); // more faces in the scene
+  // more faces in the scene (size: drawn that many px square, its middle at dx / 2 — a row of four that fits the scene)
+  for (const [sheet, row, dx, dy, size] of d.adds || []) {
+    if (size) stage.add(sheet, ENE[0] + 32 - size / 2 + dx / 2, ENE[1] + 32 - size / 2 + dy, [0, 64 * row, 64, 64], false, 0, [size, size]);
+    else stage.add(sheet, ENE[0] + dx, ENE[1] + dy, [0, 64 * row, 64, 64]);
+  }
   if (d.balls) { // z1field 134: the balls one to seven in a diamond round the middle
     [[-128, 0], [-64, -32], [-64, 32], [0, 0], [64, -32], [64, 32], [128, 0]].forEach(([dx, dy], k) => {
       stage.add(EVENT, ENE[0] + 16 + dx / 2, ENE[1] + 16 + dy / 2, [0, 64 * (22 + k), 64, 64], false, 0, [32, 32]);
@@ -193,8 +197,9 @@ async function z1field(stage, ctx, quiet = false) {
   }
   if (d.saibamen) for (let k = 0; k < 6; k++) stage.add(FOE, SCENE_X + 32 * k, ENE[1] + 16, [0, 64 * 3, 64, 64], false, 0, [32, 32]); // six in a row
   if (d.out) partyFaces(stage, ctx.partyc);
+  if (d.faceSize) stage.faceSize = d.faceSize; // more faces under the scene than fit at 64
   // faces under the party's (line 1 = @play_y + 64) go under however many rows the party took here
-  const below = d.out ? Math.ceil(ctx.partyc.length / (ctx.partyc.length > 6 ? 4 : 3)) - 1 : 0;
+  const below = d.out ? Math.ceil(ctx.partyc.length / (ctx.partyc.length > 8 ? 5 : ctx.partyc.length > 6 ? 4 : 3)) - 1 : 0;
   for (const [sheet, row, dx, line, col] of (typeof d.faces === 'function' ? d.faces(ctx.s.sw) : d.faces) || []) {
     const ln = line ? line + below : 0;
     if (col) stage.add(sheet, PLAY_X + dx, 0, [64 * col, 64 * row, 64, 64], true, ln); // (顔カード: the column of the part of the story)
@@ -231,11 +236,14 @@ export async function playScenes(list, s) {
       else if (n.z1field) { ui.dlg.hidden = true; await z1field(quiet ? NO_STAGE : stage, ctx, quiet); }
       else if (n.fadeout) { ui.dlg.hidden = true; if (!quiet) await stage.fadeTo(1, 30); }
       else if (n.bgs) { if (!quiet) audio.playBgs(n.bgs, n.vol); }
+      else if (n.bgm !== undefined) { if (!quiet) { if (n.bgm) audio.playBgm(n.bgm); else audio.stopBgm(); } } // (pages converted with their BGM commands; '' stops it)
+      else if (n.bgmFade != null) { if (!quiet) audio.fadeBgm(n.bgmFade); }
+      else if (n.partyc) ctx.partyc = n.partyc; // `$partyc = [...]`: who the scenes show
+      else if (n.partycAdd) { if (!ctx.partyc.includes(n.partycAdd)) ctx.partyc = [...ctx.partyc, n.partycAdd]; } // `$partyc << id`
       else if (n.bgsFade != null) audio.fadeBgs(n.bgsFade);
       else if (n.shake != null) ui.el.classList.toggle('shake', n.shake && !quiet); // 画面揺らすフラグ
       else if (n.flash) { if (!quiet) await stage.doFlash(n.flash); }
       else if (n.wait) { if (!quiet) await ui.wait(n.wait); }
-      else if (n.bgm != null) { if (!quiet) { if (n.bgm) audio.playBgm(n.bgm); else audio.stopBgm(); } } // BGM changes of the page (Z2 pages)
       else if (n.choice) { const k = quiet ? 0 : await choice(ui, n.choice); if (await run(n.branches[k] || [])) return true; } // skipped: the first answer
       else if (n.end) return true;
     }

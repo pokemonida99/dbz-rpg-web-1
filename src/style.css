@@ -61,6 +61,7 @@ button { font: inherit; color: inherit; -webkit-appearance: none; appearance: no
 #hud .party.many .nm .lv { font-size: 12px; }
 #hud .party.many .bar { width: 100%; }
 #hud.many .goal { top: calc(var(--safe-t) + 106px); }
+#hud.rows3 .goal { top: calc(var(--safe-t) + 152px); }
 
 /* "examine / enter" button next to buildings */
 #act { position: absolute; left: 50%; bottom: calc(var(--safe-b) + 28px); transform: translateX(-50%); width: auto; min-width: 180px; text-align: center; font-size: 20px; z-index: 15; animation: pop .25s ease-out; }

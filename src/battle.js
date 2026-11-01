@@ -9,14 +9,14 @@
 // window over the stage. Tapping outside the window / anything but an enemy while targeting cancels that card.
 // A picked card wears its member's face: tap it (or the face above) to pick again for that member; 返回 undoes the
 // last pick. With everyone picked a big 出招！ starts the turn (or right away with 設定「選完直接出招」).
-import { view, img, audio, sleep, rand } from './core.js?v=20261101-2244';
-import { levelUp, EXP_RATE } from './party.js?v=20261101-2244';
-import { Duel, ANIME_IMAGES, SW, SH, BACK_Y } from './anime.js?v=20261101-2244';
-import { commandButtons, autoSkill, autoTarget, tally } from './partymenu.js?v=20261101-2244'; // command row, 作戰, counters
-import * as items from './items.js?v=20261101-2244'; // item cards: effects that touch the battle rules
-import { tryCombo, announceCombos, comboHints, hasCombos, HINT_TEXT } from './combo.js?v=20261101-2244'; // 組合技
-import * as growth from './growth.js?v=20261101-2244'; // passive skills, proficiency, KO, SP / ZP / EXP pool
-import { superSaiyan, moveTransforms, afterBattle as ssAfterBattle } from './supersaiyan.js?v=20261101-2244'; // 超サイヤ人
+import { view, img, audio, sleep, rand } from './core.js?v=20261101-2256';
+import { levelUp, EXP_RATE } from './party.js?v=20261101-2256';
+import { Duel, ANIME_IMAGES, SW, SH, BACK_Y } from './anime.js?v=20261101-2256';
+import { commandButtons, autoSkill, autoTarget, tally } from './partymenu.js?v=20261101-2256'; // command row, 作戰, counters
+import * as items from './items.js?v=20261101-2256'; // item cards: effects that touch the battle rules
+import { tryCombo, announceCombos, comboHints, hasCombos, HINT_TEXT } from './combo.js?v=20261101-2256'; // 組合技
+import * as growth from './growth.js?v=20261101-2256'; // passive skills, proficiency, KO, SP / ZP / EXP pool
+import { superSaiyan, moveTransforms, afterBattle as ssAfterBattle } from './supersaiyan.js?v=20261101-2256'; // 超サイヤ人
 
 export const SCHOOL = ['必', '龜', '神', '界', '魔', '惑', '基', '悟', '超'];
 const HAND = 6;

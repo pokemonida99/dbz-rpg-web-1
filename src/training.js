@@ -4,10 +4,10 @@
 // card that was played; the one before it is dealt anew. Stop whenever you like; a miss ends it with half rewards.
 //   EXP  level × 2.5 / 2 per hit (Z1), CAP = hits, SP = hits, ZP = ⌈hits / 2⌉, ⌈hits / 5⌉ uses of random moves
 // SP and ZP are kept in state.sp[actor] / state.zp[actor] for the systems that spend them.
-import { img, audio, rand } from './core.js?v=20261101-1953';
-import { newCard } from './battle.js?v=20261101-1953';
-import { levelUp } from './party.js?v=20261101-1953';
-import { el, sprite, overlay, button, bumpStat } from './fieldmenu.js?v=20261101-1953';
+import { img, audio, rand } from './core.js?v=20261101-2006';
+import { newCard } from './battle.js?v=20261101-2006';
+import { levelUp } from './party.js?v=20261101-2006';
+import { el, sprite, overlay, button, bumpStat } from './fieldmenu.js?v=20261101-2006';
 
 const CARDS = 'Graphics/Pictures/カード関係.PNG', FACES = 'Graphics/Pictures/Z1_顔味方.PNG';
 const KI = 16; // the 気 school glyph (column 16 of カード関係.PNG)

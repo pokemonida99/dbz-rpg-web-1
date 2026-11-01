@@ -4,9 +4,9 @@
 // (src/opening.js), with its 略過 button. Events come from tools/build_data.py script(): the usual runEvent nodes plus
 // {v41} (the page, which z1field reads), {z1field}, {fadeout}.
 // Skipping still applies every switch, variable and card of the rest of the event, so the story flags stay right.
-import { audio, loadImages, toast } from './core.js?v=20261101-1953';
-import { eventCard } from './items.js?v=20261101-1953';
-import { overlay, Stage, say, SCENE_Y, SCROLL_X, ENE } from './opening.js?v=20261101-1953';
+import { audio, loadImages, toast } from './core.js?v=20261101-2006';
+import { eventCard } from './items.js?v=20261101-2006';
+import { overlay, Stage, say, SCENE_Y, SCROLL_X, ENE } from './opening.js?v=20261101-2006';
 
 const pic = (n) => `Graphics/Pictures/${n}.PNG`;
 const BG = (n) => pic(`Z1_背景_${n}`);

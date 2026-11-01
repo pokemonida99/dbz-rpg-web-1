@@ -1,20 +1,20 @@
 // Boot, game state, scene switching, story beats, HUD, menu, save/load.
-import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-1953';
-import { tileSheetPaths } from './tiles.js?v=20261101-1953';
-import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-1953';
-import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-1953';
-import { makeMember, levelUp } from './party.js?v=20261101-1953';
-import { runEvent } from './events.js?v=20261101-1953';
-import { playOpening, playStory } from './opening.js?v=20261101-1953'; // the original's title animation and opening story
-import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapterBoss } from './chapter2.js?v=20261101-1953';
-import { fieldMenuHtml, openEntry } from './partymenu.js?v=20261101-1953'; // 隊伍・卡牌・組合技・作戰
-import { setItemsWorld, bubbles } from './items.js?v=20261101-1953'; // item cards (its 卡牌 menu entry registers itself)
-import { setGrowthWorld } from './growth.js?v=20261101-1953'; // skill cards and the other growth cards
-import { cardSquare, compo } from './cardgames.js?v=20261101-1953'; // card squares (shop / lottery / memory), 合成
-import { fieldExtraHtml, openFieldEntry, setFieldGame, encounterSteps, battleTally, spotTally, storySoFar, hasRecap, options } from './fieldmenu.js?v=20261101-1953'; // 概況・情報・設定・地圖, records, options
-import { training } from './training.js?v=20261101-1953'; // training squares
-import { chapter3Goal, startChapter3, resumeChapter3, chapter3Spot, isChapter3Map, chapter3Boss } from './chapter3.js?v=20261101-1953';
-import { playEvent, setCutsceneWorld, raditzOutcome } from './cutscene.js?v=20261101-1953'; // story scenes staged like the original
+import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-2006';
+import { tileSheetPaths } from './tiles.js?v=20261101-2006';
+import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-2006';
+import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-2006';
+import { makeMember, levelUp } from './party.js?v=20261101-2006';
+import { runEvent } from './events.js?v=20261101-2006';
+import { playOpening, playStory } from './opening.js?v=20261101-2006'; // the original's title animation and opening story
+import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapterBoss } from './chapter2.js?v=20261101-2006';
+import { fieldMenuHtml, openEntry } from './partymenu.js?v=20261101-2006'; // 隊伍・卡牌・組合技・作戰
+import { setItemsWorld, bubbles } from './items.js?v=20261101-2006'; // item cards (its 卡牌 menu entry registers itself)
+import { setGrowthWorld } from './growth.js?v=20261101-2006'; // skill cards and the other growth cards
+import { cardSquare, compo } from './cardgames.js?v=20261101-2006'; // card squares (shop / lottery / memory), 合成
+import { fieldExtraHtml, openFieldEntry, setFieldGame, encounterSteps, battleTally, spotTally, storySoFar, hasRecap, options } from './fieldmenu.js?v=20261101-2006'; // 概況・情報・設定・地圖, records, options
+import { training } from './training.js?v=20261101-2006'; // training squares
+import { chapter3Goal, startChapter3, resumeChapter3, chapter3Spot, isChapter3Map, chapter3Boss } from './chapter3.js?v=20261101-2006';
+import { playEvent, setCutsceneWorld, raditzOutcome } from './cutscene.js?v=20261101-2006'; // story scenes staged like the original
 
 const SAVE_KEY = 'dbz-portrait-save-v1';
 const AUTO_KEY = 'dbz-portrait-autosave-v1'; // the original's Save_Auto.rvdata: after each normal battle won
@@ -328,7 +328,7 @@ async function boot() {
   if (!(await ensureLatest())) return;
   view.resize();
   window.addEventListener('resize', () => view.resize());
-  game.world = await (await fetch('data/world.json?v=20261101-1953')).json();
+  game.world = await (await fetch('data/world.json?v=20261101-2006')).json();
   setCutsceneWorld(game.world);
   setFaces(game.world.faces);
   setItemsWorld(game.world);

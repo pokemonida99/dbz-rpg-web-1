@@ -1,9 +1,9 @@
 // Boot, game state, scene switching, story beats, HUD, menu, save/load.
-import { view, img, loadImages, audio, say, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-1534';
-import { tileSheetPaths } from './tiles.js?v=20261101-1534';
-import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-1534';
-import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-1534';
-import { makeMember, levelUp } from './party.js?v=20261101-1534';
+import { view, img, loadImages, audio, say, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-1602';
+import { tileSheetPaths } from './tiles.js?v=20261101-1602';
+import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-1602';
+import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-1602';
+import { makeMember, levelUp } from './party.js?v=20261101-1602';
 
 const SAVE_KEY = 'dbz-portrait-save-v1';
 const FACES = 'Graphics/Pictures/GBZ1 顔アイコン.PNG'; // 40×56 cells, one row per character
@@ -251,7 +251,7 @@ async function boot() {
   if (!(await ensureLatest())) return;
   view.resize();
   window.addEventListener('resize', () => view.resize());
-  game.world = await (await fetch('data/world.json?v=20261101-1534')).json();
+  game.world = await (await fetch('data/world.json?v=20261101-1602')).json();
   await loadImages([...tileSheetPaths, ...fieldImages, ...battleImages(game.world), FACES]);
   showTitle();
   requestAnimationFrame(frame);

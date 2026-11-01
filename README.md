@@ -28,7 +28,8 @@ python3 tools/copy_assets.py game            # 只複製用到的素材到 asset
 | `src/core.js` | 畫布縮放（整數倍像素）、素材載入、搖桿與鍵盤、音效、對話框 |
 | `src/tiles.js` | RPG Maker VX 地圖圖塊繪製 |
 | `src/field.js` | 地圖飛行、遇敵、Boss 位置 |
-| `src/battle.js` | 卡牌戰鬥（規則＋直向介面＋演出） |
+| `src/battle.js` | 卡牌戰鬥（規則＋直向介面） |
+| `src/anime.js` | 戰鬥動畫：照經典版逐格移植的一對一演出（普通攻擊、各必殺技、閃避、爆炸），點畫面可加速 |
 | `src/main.js` | 標題、劇情、HUD、選單、存讀檔（localStorage） |
 
 ## 發佈

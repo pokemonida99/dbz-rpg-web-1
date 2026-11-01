@@ -1,6 +1,6 @@
 // Shared runtime: canvas scaling, assets, input, audio, dialogue, toast.
 
-export const VERSION = '20261101-1534'; // stamped by tools/bump.py on each deploy
+export const VERSION = '20261101-1602'; // stamped by tools/bump.py on each deploy
 export const ASSET_ROOT = 'assets/';
 export const assetUrl = (p) => (ASSET_ROOT + p).split('/').map(encodeURIComponent).join('/');
 
@@ -161,6 +161,13 @@ export const audio = {
     g.gain.value = Math.pow(vol / 100, 2);
     src.connect(g).connect(this.master);
     src.start();
+    this.playing.add(src);
+    src.onended = () => this.playing.delete(src);
+  },
+  playing: new Set(),
+  seStop() { // like the original's Audio.se_stop
+    for (const s of this.playing) { try { s.stop(); } catch (e) { /* already stopped */ } }
+    this.playing.clear();
   },
 };
 

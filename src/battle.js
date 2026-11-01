@@ -1,12 +1,14 @@
 // Card battle, following the original rules (docs/battle-rules.md), drawn on the canvas with the original
 // battle-screen art so it looks like the classic version, stacked for a portrait phone:
 //   status window  — TN, faces, LV / HP / KI in the original digits
-//   stage          — choosing: enemy faces on the ground strip; fighting: the sprites fight in the sky
+//   stage          — choosing: enemy faces on the ground strip; fighting: the classic one-on-one battle film
+//                    for each action (src/anime.js)
 //   lower area     — message window; choosing: buttons + the six cards; fighting: the original duel bar
 //                    (party face, HP/KI, both cards, enemy face)
 // Choosing a card that allows a special move opens the move window over the stage.
-import { view, img, audio, sleep, rand } from './core.js?v=20261101-1534';
-import { levelUp } from './party.js?v=20261101-1534';
+import { view, img, audio, sleep, rand } from './core.js?v=20261101-1602';
+import { levelUp } from './party.js?v=20261101-1602';
+import { Duel, ANIME_IMAGES, SW, SH, renderIdle } from './anime.js?v=20261101-1602';
 
 export const SCHOOL = ['必', '龜', '神', '界', '魔', '惑'];
 const HAND = 6;
@@ -17,16 +19,13 @@ const FACES = 'Graphics/Pictures/Z1_顔味方.PNG'; // 64×64; row = actor id - 
 const FOE_FACES = 'Graphics/Pictures/Z1_顔敵.PNG'; // 64×64; row = enemy id; columns: normal, hurt
 const DIGITS = 'Graphics/Pictures/数字英語.PNG'; // 16×16 cells: row 0 black digits + "/", row 1 HPKILV, row 2 white digits
 const FRAME_IMG = 'ui/frame.png'; // the Z1 window border (8px corners)
-const BEAM_ENEMY = 'Graphics/Pictures/Z1_戦闘_必殺技_エネルギー波_敵_中.PNG';
-const FRAME = 96;
-const POSE = { idle: 0, special: 1, melee: 3, hurt: 5 };
 const PURPLE = '#9040f0', CREAM = '#ffd8a0', INK = '#301808', RUST = '#d0480c';
 const FONT = 'Cubic11, system-ui, sans-serif';
 
 export function battleImages(world) {
-  const sheets = new Set([BG, CARDS, FACES, FOE_FACES, DIGITS, FRAME_IMG, BEAM_ENEMY]);
-  for (const a of Object.values(world.actors)) { sheets.add(a.sprite); sheets.add(a.beam); }
-  for (const e of Object.values(world.enemies)) sheets.add(e.sprite);
+  const sheets = new Set([BG, CARDS, FACES, FOE_FACES, DIGITS, FRAME_IMG, ...ANIME_IMAGES]);
+  for (const a of Object.values(world.actors)) { sheets.add(a.sprite); sheets.add(a.special); }
+  for (const e of Object.values(world.enemies)) { sheets.add(e.sprite); sheets.add(e.portrait); }
   return [...sheets];
 }
 
@@ -137,8 +136,9 @@ export class Battle {
     this.party = game.state.party;
     this.hand = game.state.hand;
     this.foes = enemyIds.map((id, i) => ({ ...world.enemies[id], id, slot: i, hp: world.enemies[id].maxhp }));
-    this.fx = [];
-    this.poses = new Map();
+    this.anim = null; // the Duel being played
+    this.stageCv = document.createElement('canvas');
+    this.stageCv.width = SW; this.stageCv.height = SH;
     this.phase = 'plan'; // plan | fight | result
     this.mode = 'card'; // while planning: card | move | target
     this.turn = 1;
@@ -162,26 +162,27 @@ export class Battle {
     L.msg = { x: 4, y: L.btnY - 64, w: W - 8, h: 62 };
     L.stage = { y: L.status.y + L.status.h + 4, h: 0 };
     L.stage.h = L.msg.y - 4 - L.stage.y;
-    L.ground = L.stage.y + L.stage.h - 100; // top of the 100px ground strip
     this.L = L;
     const n = this.foes.length;
-    // choosing: faces sit on the strip; fighting: sprites in the sky, party left, enemies right
+    // choosing: the enemies' faces sit on the strip drawn mid-stage
     this.foes.forEach((f, i) => {
       f.fx = Math.round(W / 2 - (n * 72 - 8) / 2 + i * 72);
-      f.fy = Math.round(L.stage.y + L.stage.h / 2 - 32); // choosing: on the strip drawn mid-stage
-      f.px = W - 64 - (i % 2) * 26;
-      f.py = L.stage.y + 40 + ((L.ground + 40 - L.stage.y - 80) * (i + 0.5)) / Math.max(n, 2);
-    });
-    this.party.forEach((m, i) => {
-      m.px = 64 + (i % 2) * 22;
-      m.py = L.stage.y + 50 + ((L.ground + 30 - L.stage.y - 100) * (i + 0.5)) / Math.max(this.party.length, 2);
+      f.fy = Math.round(L.stage.y + L.stage.h / 2 - 32);
     });
   }
 
   say(...lines) { this.msg = lines; }
 
   // ---------- canvas ----------
-  update() {}
+  // the battle film runs at the original's 60 frames a second (×3 after a tap)
+  update(dt) {
+    if (!this.anim) { this.acc = 0; return; }
+    this.acc = Math.min(0.25, (this.acc || 0) + dt);
+    while (this.acc >= 1 / 60 && this.anim) {
+      this.acc -= 1 / 60;
+      for (let k = 0; k < (this.fast ? 3 : 1) && this.anim; k++) this.anim.step();
+    }
+  }
 
   draw() {
     if (!this.L) return;
@@ -192,14 +193,16 @@ export class Battle {
     c.fillStyle = PURPLE;
     c.fillRect(0, 0, W, view.h);
     this.drawStatus(c);
-    // stage: black sky, the ground strip at the bottom
+    // stage: choosing → black sky with the ground strip; fighting → the battle film
     c.fillStyle = '#000';
     c.fillRect(0, L.stage.y, W, L.stage.h);
-    const bg = img(BG);
-    const gy = this.phase === 'fight' ? L.ground : Math.round(L.stage.y + L.stage.h / 2 - 50);
-    if (bg.ok) c.drawImage(bg.im, Math.max(0, (640 - W) / 2), 0, Math.min(640, W), 100, Math.max(0, (W - 640) / 2), gy, Math.min(640, W), 100);
-    if (this.phase === 'fight') this.drawFight(c, now);
-    else this.drawLineup(c);
+    if (this.phase === 'fight') this.drawFilm(c);
+    else {
+      const bg = img(BG);
+      const gy = Math.round(L.stage.y + L.stage.h / 2 - 50);
+      if (bg.ok) c.drawImage(bg.im, Math.max(0, (640 - W) / 2), 0, Math.min(640, W), 100, Math.max(0, (W - 640) / 2), gy, Math.min(640, W), 100);
+      this.drawLineup(c);
+    }
     // message window
     win(c, L.msg.x, L.msg.y, L.msg.w, L.msg.h);
     this.msg.slice(0, 2).forEach((s, i) => text(c, s, L.msg.x + 12, L.msg.y + 10 + i * 22, INK, 17));
@@ -213,6 +216,7 @@ export class Battle {
   hit(x, y, w, h, fn) { this.hits.unshift({ x, y, w, h, fn }); } // later = on top
 
   onTap(e) {
+    if (this.phase === 'fight' && this.anim && !this.cont) { this.fast = true; return; } // tap to speed the film up
     const r = view.canvas.getBoundingClientRect();
     const x = (e.clientX - r.left) / view.cssPerPx, y = (e.clientY - r.top) / view.cssPerPx;
     const h = this.hits.find((b) => x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.h);
@@ -348,39 +352,16 @@ export class Battle {
     foeFace(c, f, x, y); tag(c, f.school, x, y + 64);
   }
 
-  drawFight(c, now) {
-    const drawFighter = (o, sheet) => {
-      const im = img(sheet);
-      if (!im.ok || o.hp <= 0) return;
-      const p = this.poses.get(o);
-      const live = p && p.until > now;
-      const pose = live ? p.pose : POSE.idle;
-      const shake = live && p.shake ? (Math.random() - 0.5) * 6 : 0;
-      c.drawImage(im.im, 0, pose * FRAME, FRAME, FRAME, Math.round(o.px + (live ? p.dx || 0 : 0) + shake - FRAME / 2), Math.round(o.py - FRAME / 2), FRAME, FRAME);
-    };
-    for (const m of this.party) drawFighter(m, this.world.actors[m.id].sprite);
-    for (const f of this.foes) drawFighter(f, f.sprite);
-    this.fx = this.fx.filter((e) => e.until > now);
-    for (const e of this.fx) {
-      const t = 1 - (e.until - now) / e.dur;
-      if (e.type === 'beam') {
-        const im = img(e.sheet);
-        if (!im.ok) continue;
-        const len = Math.hypot(e.x2 - e.x1, e.y2 - e.y1) * Math.min(1, t * 1.6);
-        c.save();
-        c.translate(e.x1, e.y1);
-        c.rotate(Math.atan2(e.y2 - e.y1, e.x2 - e.x1));
-        c.drawImage(im.im, 0, 0, im.im.width, im.im.height, 0, -im.im.height / 2, Math.max(1, len), im.im.height);
-        c.restore();
-      } else if (e.type === 'num') {
-        const y = Math.round(e.y - 24 * Math.min(1, t * 2));
-        if (e.miss) text(c, 'MISS', e.x, y, '#fff', 18, 'center');
-        else num(c, e.value, Math.round(e.x + (String(e.value).length * 16) / 2), y, 2);
-      } else if (e.type === 'flash') {
-        c.fillStyle = `rgba(255,255,255,${0.6 * (1 - t)})`;
-        c.fillRect(0, this.L.stage.y, view.w, this.L.stage.h);
-      }
-    }
+  // the 640×356 film stage, cropped to the phone: centred across, and when the stage is short the top of the
+  // sky goes first (the fighters stand at y 120-216, the ground at 256-356)
+  drawFilm(c) {
+    const { stage } = this.L;
+    const W = view.w;
+    const cv = this.anim ? this.anim.render() : renderIdle(this.stageCv);
+    const sw = Math.min(SW, W), sx = Math.round((SW - sw) / 2), dx = Math.round((W - sw) / 2);
+    let sy = 0, sh = SH, dy = stage.y + Math.floor((stage.h - SH) / 2);
+    if (stage.h < SH) { sh = Math.round(stage.h); sy = Math.floor((SH - sh) * 0.6); dy = stage.y; }
+    c.drawImage(cv, sx, sy, sw, sh, dx, dy, sw, sh);
   }
 
   // ---------- planning ----------
@@ -388,6 +369,7 @@ export class Battle {
 
   startPlanning() {
     this.phase = 'plan';
+    this.fast = false;
     this.duel = null;
     this.plans = this.party.map(() => null);
     this.cur = this.party.findIndex((m) => this.able(m));
@@ -488,7 +470,22 @@ export class Battle {
 
   over() { return this.foes.every((f) => f.hp <= 0) || this.party.every((m) => m.hp <= 0); }
 
-  pose(o, pose, ms, extra = {}) { this.poses.set(o, { pose, until: performance.now() + ms, ...extra }); }
+  // play one action as a battle film; the damage lands (HP, duel bar) when the hit shows on screen
+  play(m, f, playerAttacks, skill, dmg, target) {
+    const actor = this.world.actors[m.id];
+    this.anim = new Duel({
+      party: { normal: actor.sprite, special: actor.special },
+      foe: { normal: f.portrait, special: f.sprite },
+      playerAttacks, skill, ray: actor.ray, hit: dmg >= 0, damage: Math.max(0, dmg), margin: Math.max(0, (SW - view.w) / 2),
+      onHit: () => {
+        if (dmg < 0) return;
+        target.hp = Math.max(0, target.hp - dmg);
+        if (!playerAttacks) audio.se('Z1 ダメージ', 70);
+      },
+    });
+    if (!this.fast && !this.msg[1]) this.msg = [this.msg[0], '（點一下畫面可以加速）'];
+    return this.anim.finished.then(() => { this.anim = null; });
+  }
 
   async playerAct(i) {
     const m = this.party[i];
@@ -500,23 +497,14 @@ export class Battle {
     let skill = p.skill;
     if (skill && m.ki < skill.ki) skill = null;
     const targets = skill && skill.all ? this.foes.filter((f) => f.hp > 0) : [foe];
-    foe.card = foe.card || enemyCard();
-    this.duel = { m, mc: cd, f: foe, fc: foe.card };
-    this.say(`${m.name} 的${skill ? skill.name : '攻擊'}！`, cd.s === m.school ? '流派一致，威力 ×1.3！' : '');
-    if (skill) {
-      m.ki -= skill.ki;
-      this.pose(m, POSE.special, 900);
-      audio.se('Z1 エネルギー波', 70);
-      await sleep(250);
-      for (const t of targets) this.fx.push({ type: 'beam', sheet: this.world.actors[m.id].beam, x1: m.px + 30, y1: m.py - 10, x2: t.px - 20, y2: t.py - 10, until: performance.now() + 650, dur: 650 });
-      await sleep(550);
-    } else {
-      this.pose(m, POSE.melee, 600, { dx: 40 });
-      audio.se('Z1 打撃', 70);
-      await sleep(300);
+    if (skill) m.ki -= skill.ki;
+    for (const t of targets) {
+      t.card = t.card || enemyCard();
+      this.duel = { m, mc: cd, f: t, fc: t.card };
+      this.say(`${m.name} 的${skill ? skill.name : '攻擊'}！`, cd.s === m.school ? '流派一致，威力 ×1.3！' : '');
+      const dmg = playerDamage(m, skill && { power: skill.power, noDamage: skill.noDamage }, cd, t, t.card);
+      await this.play(m, t, true, skill ? skill.id : null, dmg, t);
     }
-    for (const t of targets) this.hit2(t, playerDamage(m, skill && { power: skill.power, noDamage: skill.noDamage }, cd, t, t.card || enemyCard()));
-    await sleep(700);
   }
 
   async enemyAct(f) {
@@ -532,32 +520,7 @@ export class Battle {
     const guard = this.hand[this.plans[this.party.indexOf(m)].card];
     this.duel = { m, mc: guard, f, fc: cd };
     this.say(`${f.name} 的${skill ? skill.name : '攻擊'}！`);
-    if (skill) {
-      this.pose(f, 2, 900);
-      audio.se('Z1 エネルギー波2', 70);
-      await sleep(250);
-      this.fx.push({ type: 'beam', sheet: BEAM_ENEMY, x1: f.px - 30, y1: f.py - 10, x2: m.px + 20, y2: m.py - 10, until: performance.now() + 650, dur: 650 });
-      await sleep(550);
-    } else {
-      this.pose(f, 1, 600, { dx: -40 });
-      audio.se('Z1 打撃', 70);
-      await sleep(300);
-    }
-    this.hit2(m, enemyDamage(f, skill && { power: skill.power }, cd, m, guard));
-    await sleep(700);
-  }
-
-  hit2(t, d) {
-    if (d < 0) {
-      audio.se('Z1 避ける', 70);
-      this.fx.push({ type: 'num', miss: true, x: t.px, y: t.py - 56, until: performance.now() + 900, dur: 900 });
-      return;
-    }
-    t.hp = Math.max(0, t.hp - d);
-    if (this.party.includes(t)) audio.se('Z1 ダメージ', 70);
-    this.pose(t, POSE.hurt, 500, { shake: true });
-    this.fx.push({ type: 'num', value: d, x: t.px, y: t.py - 56, until: performance.now() + 900, dur: 900 });
-    this.fx.push({ type: 'flash', until: performance.now() + 120, dur: 120 });
+    await this.play(m, f, false, skill ? skill.id : null, enemyDamage(f, skill && { power: skill.power }, cd, m, guard), m);
   }
 
   // ---------- result ----------

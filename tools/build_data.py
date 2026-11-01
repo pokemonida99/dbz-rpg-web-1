@@ -48,13 +48,15 @@ def exp_curve(basis, infl, final=99):
     return exp
 
 
-def actor(aid, face, name, sprite, beam, skills):
+def actor(aid, face, name, sprite, beam, skills, ray='orange'):
     a = actors[aid]
     t = a['parameters']
     params = [[t['data'][k + lv * t['x']] for k in range(6)] for lv in range(t['y'])]
     return {'name': name, 'face': face, 'school': a['class_id'] - 1, 'level': a['initial_level'],
             'params': params, 'exp': exp_curve(a['exp_basis'], a['exp_inflation']),
-            'sprite': 'Graphics/Pictures/' + sprite, 'beam': 'Graphics/Pictures/' + beam, 'skills': skills}
+            'sprite': 'Graphics/Pictures/' + sprite, 'beam': 'Graphics/Pictures/' + beam, 'skills': skills,
+            # special-move sheet (the original builds it as "戦闘_必殺技_" + name) and the colour of its ki
+            'special': 'Graphics/Pictures/' + sprite.replace('Z1_戦闘_', 'Z1_戦闘_必殺技_'), 'ray': ray}
 
 
 # enemy skill names are Japanese-only in the data
@@ -63,7 +65,7 @@ SKILL_NAMES = {301: '麻痺液', 302: '能量彈', 305: '能量波', 306: '貫�
 
 def skill(sid):
     k = skills_db[sid]
-    return {'name': SKILL_NAMES.get(sid) or s2t(k['description'] or k['name']), 'power': k['base_damage'],
+    return {'id': sid, 'name': SKILL_NAMES.get(sid) or s2t(k['description'] or k['name']), 'power': k['base_damage'],
             'ki': k['mp_cost'], 'all': k['scope'] == 2, 'noDamage': 11 in k['element_set']}
 
 
@@ -124,7 +126,7 @@ world = {
     'titleBgm': 'Z1 オープニング',
     'party': [3, 4],
     'actors': {3: actor(3, 0, '悟空', 'Z1_戦闘_ゴクウ.PNG', 'Z1_戦闘_必殺技_エネルギー波.PNG', PARTY_SKILLS[3]),
-               4: actor(4, 1, '比克', 'Z1_戦闘_ピッコロ.PNG', 'Z1_戦闘_必殺技_エネルギー波(緑).PNG', PARTY_SKILLS[4])},
+               4: actor(4, 1, '比克', 'Z1_戦闘_ピッコロ.PNG', 'Z1_戦闘_必殺技_エネルギー波(緑).PNG', PARTY_SKILLS[4], 'green')},
     'enemies': {eid: enemy(eid) for eid in ENEMIES},
     'skills': {sid: skill(sid) for sid in sorted({x for v in PARTY_SKILLS.values() for x in v} | {301, 302, 305, 306, 310, 311, 384})},
     'encounters': {'1': [1, 2, 4, 5]},

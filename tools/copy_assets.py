@@ -17,13 +17,18 @@ files |= {'Graphics/Characters/chara_fly1.png', 'Graphics/Characters/enemy1.png'
           # the original battle screen: party / enemy faces, digits and HP/KI letters, cursor icons
           'Graphics/Pictures/Z1_顔味方.PNG', 'Graphics/Pictures/Z1_顔敵.PNG', 'Graphics/Pictures/数字英語.PNG', 'Graphics/Pictures/アイコン.PNG'}
 for a in world['actors'].values():
-    files |= {a['sprite'], a['beam']}
+    files |= {a['sprite'], a['beam'], a['special']}
 for e in world['enemies'].values():
     files |= {e['sprite'], e['portrait']}
 bgm = {m['bgm'] for m in world['maps'].values()} | {world['titleBgm'], 'Z1 戦闘1', 'Z1 戦闘ボス1(中ボス)'}
 files |= {f'Audio/BGM/{n}.ogg' for n in bgm}
 se = ['Z1 敵発見', 'Z1 エネルギー波', 'Z1 エネルギー波2', 'Z1 打撃', 'Z1 避ける', 'Z1 ダメージ', 'GBZ1 ファンファーレ1', 'Z1 レベルアップ']
 files |= {f'Audio/SE/{n}.ogg' for n in se}
+# the battle film (src/anime.js): every pic('…') and the ANIME_SOUNDS list
+import re  # noqa: E402
+anime = open(os.path.join(root, 'src', 'anime.js'), encoding='utf-8').read()
+files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", anime)}
+files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", anime.split('export const ANIME_SOUNDS')[1])}
 
 total = 0
 for f in sorted(files):

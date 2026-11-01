@@ -55,22 +55,7 @@ def add(world, h, z3):
     # 140_Field_Main.rb `when 40,77`: 2-5 of 金科人・甜菜人(改)・球根人(改)・栽培人(改)
     world['areas'][MAP] = {'pool': [137, 174, 175, 176], 'n': [2, 5]}
 
-    # ---------- battle backgrounds (set_battle_map, variable 40 >= 2; all.rb 165938) ----------
-    # 1552 / 1555 plain: 1, a tree event on it 2 (animap1 0 facing 2) / 9 (animap1 1 facing 6), the layer-3 tiles 274 /
-    # 275 → 4; the cliffs 1600-1602 → 1 (variable 101 = 0, page 46); anything else → 3
-    m = world['maps'][MAP]
-    bd = {1552: 1, 1555: 1, 1600: 1, 1601: 1, 1602: 1, 'default': 3}
-    raw = D('map040')
-    w, layers = m['w'], m['layers']
-    for i in range(w * m['h']):
-        if layers[0][i] in (1552, 1555) and layers[2][i] in (274, 275):
-            bd['@%d' % i] = 4
-    for e in raw['events'].values():
-        g = e['pages'][0]['graphic']
-        if g['character_name'] == 'animap1' and layers[0][e['x'] + e['y'] * w] in (1552, 1555):
-            row = {(0, 2): 2, (1, 6): 9}.get((g['character_index'], g['direction']), 1)
-            bd['@%d' % (e['x'] + e['y'] * w)] = row
-    world['z3']['backdrops'][MAP] = bd
+    # (the battle backgrounds: src/z3.js z3Backdrop picks them as set_battle_map does)
 
     # ---------- enemies the shared part does not have: 174-176 (Z3 sheets), and the moves' names ----------
     enemies_db, sdb = D('enemies'), D('skills')
@@ -170,21 +155,11 @@ def add(world, h, z3):
     def page(v, lst=None):
         return [{'v41': v}] + z3['nodes_of'](lst if lst is not None else raw[v], faces)
 
-    def loop10(lst):
-        """page 56: the 太陽拳 flash is a loop (112 … 413) of a flash and 5 frames, ten times"""
-        k = next(i for i, c in enumerate(lst) if c['code'] == 112)
-        end = next(i for i, c in enumerate(lst) if c['code'] == 413 and c['indent'] == lst[k]['indent'])
-        ind = lst[k]['indent']
-        body = [{'code': 224, 'indent': ind, 'parameters': [[255.0, 255.0, 255.0, 255.0], 5, False]},
-                {'code': 230, 'indent': ind, 'parameters': [5]}]
-        return lst[:k] + body * 10 + lst[end + 1:]
-
     def passer(lst):
         """page 57: \\N[1] is the passer-by z1field 1421 names; src/z3e.js puts the name in"""
         return [dict(c, parameters=[c['parameters'][0].replace('\\N[1]', '＠')]) if c['code'] == 401 else c for c in lst]
 
-    pages = {str(v): page(v) for v in (1326, 1335, 1341, 1351, 1356, 1361, 1371, 1376, 1381, 1383, 1582)}
-    pages['1401'] = page(1401, loop10(raw[1401]))
+    pages = {str(v): page(v) for v in (1326, 1335, 1341, 1351, 1356, 1361, 1371, 1376, 1381, 1383, 1401, 1582)}
     pages['1421'] = page(1421, passer(raw[1421]))
     EXTRA.clear()
     OPTS.update(bgm=False, shakeSw=False)

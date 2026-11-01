@@ -10,7 +10,7 @@
 // state.flags.z3: the chapter being played ('z3a' … 'z3e', 'done'); state.flags.z3At: { ch, at } a story step to pick
 // up again after loading (saved right before a story battle, as Z2 does). Variable 40 = 2 (the Z3 art, src/era.js).
 import { input, setFaces } from './core.js?v=20261101-2330';
-import { playScenes } from './cutscene.js?v=20261101-2330';
+import { playScenes, addNodes } from './cutscene.js?v=20261101-2330';
 import { setParty, moveTo, enterMap, card } from './chapter2.js?v=20261101-2330';
 import { makeMember, levelUp } from './party.js?v=20261101-2330';
 import { eventCard } from './items.js?v=20261101-2330';
@@ -88,16 +88,35 @@ export function resumeZ3(game) {
   ch.resume(game, at);
   return true;
 }
-// the battle background: the chapter's tile → Z3_戦闘_背景 row table (set_battle_map)
+// the battle background: the strip of Z3_戦闘_背景 for the tile under the player (set_battle_map, all.rb 165998:
+// scenario_progress >= 2 — the ground tile, the tile on layer 3, the map event standing there). A chapter may put its
+// own table in world.z3.backdrops[map] = { tile id: row, default: row }.
 export function z3Backdrop(game) {
   const s = game.state, z = Z3(game);
   if (!z || !isZ3Map(s)) return null;
-  const t = z.backdrops[s.map];
-  if (!t) return null;
   const m = game.world.maps[s.map];
-  const i = Math.floor(s.y / 32) * m.w + Math.floor(s.x / 32);
-  const row = t['@' + i] ?? t[m.layers[0][i]] ?? t.default ?? 0; // '@' + tile index: one square of its own (a tree on it)
+  const tx = Math.floor(s.x / 32), ty = Math.floor(s.y / 32), i = ty * m.w + tx;
+  const t = z.backdrops[s.map];
+  const row = t ? t[m.layers[0][i]] ?? t.default ?? 0 : battleMapId(m.layers[0][i], (m.layers[2] || [])[i] || 0, ((z.tileEvents || {})[s.map] || {})[`${tx},${ty}`], s);
   return `bg/z3_battle_${row}.png`;
+}
+function battleMapId(tile, top, ev, s) {
+  if (tile === 1550) return 29; // セルゲームリング
+  if (tile === 1543 || tile === 1551) return 0; // ナメック星エリア
+  if (tile === 1575) return 32; // ナメック星海エリア
+  if (tile === 1552 || tile === 1555) { // 平原
+    if (top === 274 || top === 275) return 4;
+    if (ev && ev[0] === 'animap1' && ev[1] === 0 && ev[2] === 2) return 2; // 森
+    if (ev && ev[0] === 'animap1' && ev[1] === 1 && ev[2] === 6) return 9; // 林
+    return 1;
+  }
+  if (tile === 1553) return [556, 553, 544, 540, 536, 552, 512, 516, 522, 524, 548].includes(top) ? 29 : 5; // 砂漠
+  if (tile === 1554) return top === 276 ? 7 : 6; // 雪原
+  if (tile >= 1600 && tile <= 1602) { const v = (s.var || {})[101] || 0; return v === 0 ? 1 : v === 1 ? 6 : 5; } // 崖
+  if (tile === 1591) return 33; // ビッグゲテスター内
+  if (tile === 1583) return 28; // 新惑星ベジータエリア
+  if (tile === 1541 || tile === 1549) return 34; // ボージャックエリア(ガーリックエリア)
+  return ((s.var || {})[101] || 0) === 0 ? 3 : 8; // the rest: sea (variable 101)
 }
 // index.html?dev=z3… (&timer in a hidden pane): the chapter whose dev() knows the step
 export function devZ3(game, step) {
@@ -137,6 +156,15 @@ export function leave(game, id) {
 // CE180 時の間新エリア開放: the switch and the 通知！ card
 export function timeRoom(s) { s.sw[483] = true; eventCard(s, 67, 1); }
 
+// CAP: variable 25 in the original (tools/build_z3.py turns its changes into {x: 'cap'}), state.zeni here
+let capGame = null;
+addNodes({
+  cap: async (node) => {
+    const s = capGame && capGame.state;
+    if (s) s.zeni = node.op === 0 ? node.n : Math.max(0, (s.zeni || 0) + (node.op === 1 ? node.n : -node.n));
+  },
+});
+
 // what the converted scenes do to the party (src/z2scenes.js nodes)
 function env(game) {
   const s = game.state, w = game.world;
@@ -168,6 +196,7 @@ function env(game) {
 
 // a story beat starts: the field stops
 export function begin(game) {
+  capGame = game;
   game.busy = true;
   if (game.field) { game.field.paused = true; game.field.leave(); }
   input.dx = input.dy = 0;

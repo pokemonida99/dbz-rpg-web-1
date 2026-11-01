@@ -16,7 +16,7 @@
 | 地圖 40 的格子 | `Event_Check` `when 40`（all.rb 185604） |
 | 遇敵 | `Field_Main` `when 40,77`（all.rb 165627）：金科人・甜菜人(改)・球根人(改)・栽培人(改)，2～5 隻 |
 | 戰鬥 | `battle_process` 1342／1363／1372／1390（all.rb 182986）：敵人、BGM、`$Battle_MapID`（背景列 1／4／4／9） |
-| 戰鬥背景 | `set_battle_map`（all.rb 165938，變數 40 ≥ 2） |
+| 戰鬥背景 | `set_battle_map`（all.rb 165938）：地圖上由共用的 `z3Backdrop` 自動選；劇情戰用 `$Battle_MapID`（`world.z3.z3e.backdrops`） |
 
 ## 流程（照原版）
 

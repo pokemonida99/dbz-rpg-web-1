@@ -13,7 +13,9 @@ world = json.load(open(os.path.join(root, 'data', 'world.json'), encoding='utf-8
 files = {f'Graphics/System/{n}.png' for n in ['TileA1', 'TileA2', 'TileA3', 'TileA4', 'TileA5', 'TileB', 'TileC', 'TileD', 'TileE', 'Title']}
 files |= {'Graphics/Characters/chara_fly1.png', 'Graphics/Characters/enemy1.png', 'Graphics/Pictures/GBZ1 顔アイコン.PNG',
           'Graphics/Pictures/Z1_戦闘_背景.PNG', 'Graphics/Pictures/Z1_戦闘_必殺技_エネルギー波_敵_中.PNG',
-          'Graphics/Pictures/カード関係.PNG', 'Graphics/System/Z1_Window.png'}
+          'Graphics/Pictures/カード関係.PNG', 'Graphics/System/Z1_Window.png',
+          # the original battle screen: party / enemy faces, digits and HP/KI letters, cursor icons
+          'Graphics/Pictures/Z1_顔味方.PNG', 'Graphics/Pictures/Z1_顔敵.PNG', 'Graphics/Pictures/数字英語.PNG', 'Graphics/Pictures/アイコン.PNG'}
 for a in world['actors'].values():
     files |= {a['sprite'], a['beam']}
 for e in world['enemies'].values():

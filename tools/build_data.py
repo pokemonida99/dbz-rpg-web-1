@@ -78,7 +78,7 @@ def enemy(eid):
 
 
 ENEMIES = [1, 2, 4, 5, 10]  # Raditz-area field enemies + Raditz
-PARTY_SKILLS = {3: [1, 2, 5], 4: [31, 33, 34]}  # what Goku / Piccolo know at the start of Z1
+PARTY_SKILLS = {3: [1, 2, 5], 4: [31, 33, 34, 35, 36]}  # what Goku / Piccolo know at the start of Z1
 
 # Interactive spots, found from the building tiles on the map (layer 2). Text is written for this version.
 POI_KINDS = {

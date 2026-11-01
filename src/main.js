@@ -28,6 +28,7 @@ import './z3b.js?v=20261101-2330';
 import './z3c.js?v=20261101-2330';
 import './z3d.js?v=20261101-2330';
 import './z3e.js?v=20261101-2330';
+import './z3train.js?v=20261101-2330'; // the training mini-games (its ?dev=z3pair / z3gravity)
 
 // testing in a hidden browser pane (no animation frames there): ?timer drives every frame with timers instead
 if (new URLSearchParams(location.search).has('timer')) window.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16);

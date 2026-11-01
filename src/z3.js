@@ -120,7 +120,8 @@ function battleMapId(tile, top, ev, s) {
 }
 // index.html?dev=z3… (&timer in a hidden pane): the chapter whose dev() knows the step
 export function devZ3(game, step) {
-  for (const k of ORDER) if (chapters[k] && chapters[k].dev && chapters[k].dev(game, step)) return true;
+  const keys = [...Object.keys(chapters).filter((k) => !ORDER.includes(k)), ...ORDER]; // (z3train's ?dev=z3pair / z3gravity first)
+  for (const k of keys) if (chapters[k] && chapters[k].dev && chapters[k].dev(game, step)) return true;
   return false;
 }
 

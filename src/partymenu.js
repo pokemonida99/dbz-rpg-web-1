@@ -13,7 +13,7 @@
 //   menuEntries.card = async ({ game, battle }) => { … }   // battle is null when opened from the field menu
 // In battle the command menu comes back when the promise resolves, unless it resolves to 'stay'
 // (the entry has moved the battle on by itself, e.g. started the turn).
-import { img, audio, rand } from './core.js?v=20261101-1841';
+import { img, audio, rand } from './core.js?v=20261101-1843';
 
 const FACES = 'Graphics/Pictures/Z1_顔味方.PNG'; // 64×64; row = actor id - 3; columns: normal, hurt, KO
 const CARDS = 'Graphics/Pictures/カード関係.PNG';
@@ -45,25 +45,30 @@ export function tally(state, m, skill, defeated) {
 const SMALL = new Set([1, 2, 5, 31, 33, 34, 35, 46, 47, 61, 62, 63, 71, 72, 81, 82, 83, 91, 92, 93]);
 const BIG = new Set([29, 36, 47, 63, 64, 73, 83, 84, 92, 93]);
 
+// KI a move really costs (get_mp_cost, 008_Share_Sub_skill.rb:4601); other systems replace it,
+// e.g. the 必殺技 item card makes the next move free (src/items.js sets hooks.kiNeed)
+export const hooks = { kiNeed: (m, ki) => ki };
+
 // the special move 自動 picks for a member whose card allows one (null = no move: a normal attack)
 export function autoSkill(world, state, m) {
   const skills = m.skills.map((id) => world.skills[id]).filter(Boolean);
   if (!skills.length) return null;
   const t = tactics(state, m);
+  const cost = (s) => hooks.kiNeed(m, s.ki);
   for (let loop = 1; loop < 2000; loop++) {
     const pick = skills[rand(skills.length)];
-    let min = pick.ki; // the cheapest move this setting could use; below it the KI is short
-    if (t.tec === 3) for (const s of skills) if (BIG.has(s.id)) min = Math.min(min, s.ki);
-    if (t.tec === 4) min = Math.min(min, world.skills[t.tecId].ki);
+    let min = cost(pick); // the cheapest move this setting could use; below it the KI is short
+    if (t.tec === 3) for (const s of skills) if (BIG.has(s.id)) min = Math.min(min, cost(s));
+    if (t.tec === 4) min = Math.min(min, cost(world.skills[t.tecId]));
     let set = t.tec;
     if (m.ki < min || loop > 50) set = t.nonki === 0 ? 1 : 2; // short of KI: 不使用KI or 小技能
     if (t.kiheri === 1 && t.kiPct >= Math.floor((m.ki * 100) / m.maxki)) set = 1;
     let s = pick;
-    if (set === 1 && pick.ki !== 0) continue;
+    if (set === 1 && pick.ki !== 0) continue; // the move's own cost (Skills.mp_cost), like the original
     if (set === 2 && !SMALL.has(pick.id)) continue;
     if (set === 3 && !BIG.has(pick.id)) continue;
     if (set === 4) s = world.skills[t.tecId];
-    if (m.ki < s.ki) continue;
+    if (m.ki < cost(s)) continue;
     return s;
   }
   return null;

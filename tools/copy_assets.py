@@ -31,6 +31,9 @@ import re  # noqa: E402
 anime = open(os.path.join(root, 'src', 'anime.js'), encoding='utf-8').read()
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", anime)}
 files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", anime.split('export const ANIME_SOUNDS')[1])}
+# the S-combo films (src/combo-anime.js) use the same pictures; their extra sounds are in COMBO_SOUNDS
+combo = open(os.path.join(root, 'src', 'combo-anime.js'), encoding='utf-8').read()
+files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", combo.split('export const COMBO_SOUNDS')[1])}
 # the opening (src/opening.js): its pictures and sounds, and the faces / sounds named in world.opening
 opening = open(os.path.join(root, 'src', 'opening.js'), encoding='utf-8').read()
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\(`?'?([^'`$]+\.(?:PNG|png))", opening)}

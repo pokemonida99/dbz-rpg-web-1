@@ -24,6 +24,7 @@ python3 tools/serve.py 8790
 ln -s ../dbz-rpg-web-dist/game game          # 原版素材（不進 git）
 ruby tools/extract.rb game/Data data 1 5 6 7 8   # .rvdata → JSON（系統 Ruby 2.6 即可）
 python3 tools/build_data.py                  # → data/world.json（台詞在這裡轉繁體）
+python3 tools/build_combo.py                 # → data/combos.json（組合技）
 python3 tools/copy_assets.py game            # 只複製用到的素材到 assets/
 ```
 
@@ -40,6 +41,7 @@ python3 tools/copy_assets.py game            # 只複製用到的素材到 asset
 | `src/chapter2.js` | 第二章（蛇道・桑修篇）：拉蒂茲戰後劇情、卡林塔分組畫面、蛇道（悟空單人）→ 界王星 → 北方小隊的桑修區 → 桑修；資料由 `tools/build_chapter2.py` 產生 |
 | `src/partymenu.js` | 原版的選單系統：戰鬥指令（戰鬥〔自動／手動〕・菜單・逃跑）、菜單的隊伍・卡牌・組合技・作戰；隊伍畫面（能力、必殺技 KI 消耗／使用回數、戰績、換順序）；作戰設定與照作戰出牌的自動戰鬥。卡牌、組合技由 `menuEntries` 接上 |
 | `src/items.js` | 特殊卡片（アイテムカード）：持有上限、戰鬥掉落、事件給卡、Z 標記的卡片商店、地圖選單「卡片」與戰鬥「卡牌」的使用效果；資料由 `tools/build_items.py` 產生，規則見 `docs/item-cards.md` |
+| `src/combo.js` / `src/combo-anime.js` | 組合技（Sコンボ）：發動判定、傷害、熟練度、學會通知、招式視窗的提示與「組合技：開／關」、組合技一覽；組合技動畫照經典版逐格移植。資料 `data/combos.json` 由 `tools/build_combo.py` 從原版 `_scombo.csv` 產生 |
 | `src/cardgames.js` | Z 標記（卡片格子）照原版隨機出現：卡片商店、卡片連線抽獎、爺爺的神經衰弱；地圖選單「合成」：卡林大人的卡片合成（自己選擇／配方），規則見 `docs/item-cards.md` |
 
 ## 本版自製素材

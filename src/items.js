@@ -8,8 +8,10 @@
 //   using       field menu「卡片」and the battle menu「卡牌」: heal / KI, change cards in the hand, and battle
 //               effects (power, guard, first strike, dodge, KI-free move, stopping or weakening an enemy, scouter).
 // Data: world.items / cardShop / drops (tools/build_items.py). Battle hooks: the exports under "battle" below.
-import { img, audio, toast, rand } from './core.js?v=20261101-1841';
-import { newCard } from './battle.js?v=20261101-1841';
+// Menus: the 卡牌 slot of src/partymenu.js (battle 菜單 and field menu, battle = null on the field).
+import { img, audio, toast, rand } from './core.js?v=20261101-1843';
+import { newCard } from './battle.js?v=20261101-1843';
+import { menuEntries } from './partymenu.js?v=20261101-1843';
 
 const ICONS = 'ui/item_cards.png'; // 64×64 icons, 10 a row, the Z1 column of the original 顔カード.PNG
 const CARDS = 'Graphics/Pictures/カード関係.PNG';
@@ -436,6 +438,8 @@ export function openCards(game, battle = null) {
     render();
   });
 }
+
+menuEntries.card = ({ game, battle }) => openCards(game, battle);
 
 // ---------- the card shop (Scene_Shop on a Z mark) ----------
 export function openShop(game) {

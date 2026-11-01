@@ -36,10 +36,11 @@ Script references are to the decompressed RGSS2 scripts (`NNN_Name.rb`).
 Enemy cards are now dealt at the start of each turn (§2.1 of battle-rules.md) so the scouter and 藍鬼/紅鬼 can see and change them.
 
 ## Hooks
-- `src/battle.js`: `items.*` calls in the damage formulas, KI cost, attack order, enemy actions, end of turn, rewards;
-  `BATTLE_MENU` registry (entries `{id, label, order, open(battle)}`; 卡牌 = order 1, registered in `src/main.js`).
-  Until the 菜單 shell exists the entries show as buttons next to 自動 / 逃跑.
-- `src/main.js`: field menu「卡片」, Z mark → `openShop`. `src/events.js`: `{item}` → `eventCard`.
+- `src/battle.js`: `items.*` calls in the damage formulas, KI cost, attack order, enemy actions, end of turn, rewards.
+- Menus: `menuEntries.card` of `src/partymenu.js` (battle 菜單 and field menu) is set in `src/items.js`.
+- Field cards for other systems: `items.fieldCards[id] = async ({ game }) => used?` — 71 龜屋 (ZP) and 77 哥美拉
+  (shared EXP) are held from a new game (Map007 event 1 page 1, with 三星球 and 六星球) and show 「功能還沒做好」 until set.
+- `src/main.js`: Z mark → `openShop`. `src/events.js`: `{item}` → `eventCard`.
 
 ## Card squares, lottery, concentration, composition (`src/cardgames.js`)
 - **Z marks** (`chk_card`): each visit picks one of three at random — card shop (BGM DB3 メニュー), card lottery, concentration. The Z mark still saves.

@@ -3,7 +3,7 @@
 //   → Snake Way (map 5, Goku alone) → King Kai → the north pair in the Sansho area (map 8) → 桑修 → end of chapter.
 // state.flags.ch2 tracks the step: 'snake' → 'north' → 'done'. Members not in the party wait in state.bench.
 import { img, audio, rand, input, sleep } from './core.js?v=20261101-1953';
-import { runEvent } from './events.js?v=20261101-1953';
+import { playScenes } from './cutscene.js?v=20261101-1953';
 import { makeMember } from './party.js?v=20261101-1953';
 
 const FACE_PARTY = 'Graphics/Pictures/Z1_顔味方.PNG'; // 64×64, one row per actor (actor id - 3)
@@ -95,12 +95,8 @@ export async function chapterBoss(game) {
 
 // ---------- helpers (also used by src/chapter3.js) ----------
 
-export async function scenes(list, s) {
-  for (const sc of list) {
-    audio.playBgm(sc.bgm);
-    await runEvent(sc.nodes, s);
-  }
-}
+// staged like the original, with the scene pictures and faces (src/cutscene.js)
+export const scenes = (list, s) => playScenes(list, s);
 
 export function setParty(s, ids) {
   for (const m of s.party) s.bench[m.id] = m;

@@ -49,9 +49,9 @@ async function bubbles(game) {
   const east = s.teams[1];
   s.sw[50] = east.includes(4) && east.includes(5); // z1field 86: Piccolo and Gohan get their own scene
   s.var[43] = (s.var[43] || 0) + 1;
+  await scenes(c.afterBubbles, s); // (Goku is still the party here: King Kai talks to him first)
   setParty(s, east);
   for (const m of s.party) { m.hp = m.maxhp; m.ki = m.maxki; m.ko = false; } // $chadead = [false, false]
-  await scenes(c.afterBubbles, s);
   moveTo(s, c.east);
   s.flags.ch3 = 'east';
   enterMap(game);

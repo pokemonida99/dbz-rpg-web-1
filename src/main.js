@@ -10,8 +10,11 @@ import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapter
 import { fieldMenuHtml, openEntry } from './partymenu.js?v=20261101-1854'; // 隊伍・卡牌・組合技・作戰
 import { setItemsWorld, bubbles } from './items.js?v=20261101-1854'; // item cards (its 卡牌 menu entry registers itself)
 import { cardSquare, compo } from './cardgames.js?v=20261101-1854'; // card squares (shop / lottery / memory), 合成
+import { fieldExtraHtml, openFieldEntry, setFieldGame, encounterSteps, battleTally, spotTally, storySoFar, hasRecap, options } from './fieldmenu.js?v=20261101-1854'; // 概況・情報・設定・地圖, records, options
+import { training } from './training.js?v=20261101-1854'; // training squares
 
 const SAVE_KEY = 'dbz-portrait-save-v1';
+const AUTO_KEY = 'dbz-portrait-autosave-v1'; // the original's Save_Auto.rvdata: after each normal battle won
 const FACES = 'Graphics/Pictures/GBZ1 顔アイコン.PNG'; // 40×56 cells, one row per character
 
 const game = {
@@ -39,8 +42,8 @@ const game = {
     const s = this.state;
     s.steps++;
     if (this.busy || bubbles(s) || --s.nextEnc > 0) return; // バブルス card keeps enemies away
-    s.nextEnc = nextEncounterSteps();
-    await this.startBattle(rollArea(this.world, s) || rollEncounter(this.world), false);
+    s.nextEnc = encounterSteps(nextEncounterSteps());
+    if (await this.startBattle(rollArea(this.world, s) || rollEncounter(this.world), false)) save(true, AUTO_KEY); // all.rb:47000
   },
 
   // the "examine / enter" button appears while standing next to a building
@@ -63,6 +66,16 @@ const game = {
     input.dx = input.dy = 0;
     const s = this.state;
     if (poi.chapter) { await chapterSpot(this, poi); renderHud(); this.busy = false; this.field.paused = false; return; }
+    spotTally(s, poi);
+    if (poi.effect === 'training') { await training(this); renderHud(); this.busy = false; this.field.paused = false; return; }
+    if (poi.fight) { // Pumpkin / Broccoli: their lines, then the fight
+      audio.playBgm(poi.bgm);
+      await runEvent(this.world.events[poi.event], s);
+      this.busy = false;
+      await this.startBattle([poi.fight], true, { eventBgm: true }); // an event battle: no escape, the default music
+      this.field.paused = false;
+      return;
+    }
     if (poi.event) await runEvent(this.world.events[poi.event], s);
     else if (poi.lines) await say(poi.lines);
     if (poi.effect === 'rest') for (const m of s.party) { m.hp = m.maxhp; m.ki = m.maxki; }
@@ -91,7 +104,7 @@ const game = {
     }
   },
 
-  async startBattle(enemyIds, boss) {
+  async startBattle(enemyIds, boss, opts) {
     this.busy = true;
     this.field.leave();
     this.field.paused = true;
@@ -104,8 +117,10 @@ const game = {
     flash.style.opacity = '0';
     setTimeout(() => flash.remove(), 400);
     const battle = new Battle(this.world, this, enemyIds, boss);
+    Object.assign(battle, opts); // e.g. eventBgm (src/fieldmenu.js)
     this.scene = battle;
     const result = await battle.run();
+    battleTally(this, battle, result);
     this.scene = this.field;
     hud.hidden = false;
     renderHud();
@@ -114,7 +129,7 @@ const game = {
     this.busy = false;
     if (result === 'lose') {
       await say([['', '悟空們被打倒了……'], ['', '回到最後的存檔。']]);
-      if (!load()) restart();
+      if (!load(newest())) restart();
     }
     return result === 'win';
   },
@@ -157,7 +172,7 @@ function openMenu() {
   game.field.paused = true;
   game.field.leave();
   const has = !!localStorage.getItem(SAVE_KEY);
-  menu.innerHTML = `<div class="box"><h2>選單</h2>${fieldMenuHtml()}
+  menu.innerHTML = `<div class="box"><h2>選單</h2>${fieldMenuHtml()}${fieldExtraHtml()}
     <button class="btn" data-a="compo">合成<small>請卡林大人把兩張卡片合成一張</small></button>
     <button class="btn" data-a="save">存檔<small>隨時記錄目前的位置與狀態</small></button>
     <button class="btn" data-a="load" ${has ? '' : 'disabled'}>讀檔<small>${has ? '回到上次存檔的地方' : '還沒有存檔'}</small></button>
@@ -172,12 +187,19 @@ function openMenu() {
       openEntry(m.dataset.m, { game, battle: null }).then(() => { renderHud(); game.field.paused = false; game.field.enter(); });
       return;
     }
+    const f = e.target.closest('[data-f]');
+    if (f) { // src/fieldmenu.js; back to the map when it closes
+      menu.hidden = true;
+      game.busy = true;
+      Promise.resolve().then(() => openFieldEntry(f.dataset.f, game)).finally(() => { game.busy = false; renderHud(); game.field.paused = false; game.field.enter(); });
+      return;
+    }
     const a = e.target.closest('[data-a]');
     if (!a && e.target !== menu) return;
     const act = a ? a.dataset.a : 'close';
     if (act === 'compo') { menu.hidden = true; game.busy = true; compo(game).then(() => { game.busy = false; game.field.paused = false; renderHud(); }); return; }
     if (act === 'save') { save(); toast('已存檔'); }
-    if (act === 'load') { if (load()) toast('已讀檔'); }
+    if (act === 'load') { if (load()) { toast('已讀檔'); recap(); } }
     if (act === 'heal') { for (const m of game.state.party) { m.hp = m.maxhp; m.ki = m.maxki; } renderHud(); toast('全員回復了'); }
     menu.hidden = true;
     game.field.paused = false;
@@ -185,12 +207,18 @@ function openMenu() {
   };
 }
 
-function save(silent) {
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify(game.state)); } catch (e) { if (!silent) toast('無法存檔'); }
+function save(silent, key = SAVE_KEY) {
+  game.state.savedAt = Date.now();
+  try { localStorage.setItem(key, JSON.stringify(game.state)); } catch (e) { if (!silent) toast('無法存檔'); }
 }
-function load() {
+// the save written last: the manual one or the auto-save
+function newest() {
+  const at = (k) => { try { return (JSON.parse(localStorage.getItem(k)) || {}).savedAt || 0; } catch (e) { return 0; } };
+  return localStorage.getItem(AUTO_KEY) && at(AUTO_KEY) > at(SAVE_KEY) ? AUTO_KEY : SAVE_KEY;
+}
+function load(key = SAVE_KEY) {
   try {
-    const s = JSON.parse(localStorage.getItem(SAVE_KEY));
+    const s = JSON.parse(localStorage.getItem(key));
     if (!s) return false;
     game.state = s;
     s.sw = s.sw || {};
@@ -199,6 +227,14 @@ function load() {
     resumeChapter(game);
     return true;
   } catch (e) { return false; }
+}
+// 概況 when a save is loaded (do_load → Scene_Story_So_Far), unless 跳過概況 is on or the next chapter starts
+function recap() {
+  if (options.skipRecap || game.busy || !hasRecap(game)) return;
+  game.busy = true;
+  game.field.paused = true;
+  game.field.leave();
+  storySoFar(game).then(() => { game.busy = false; game.field.paused = false; });
 }
 function restart() { game.state = game.newState(); startField(); }
 
@@ -225,6 +261,7 @@ function showTitle(sub) {
     <div class="actions">
       <button class="btn" data-a="new">新的開始</button>
       ${has ? '<button class="btn" data-a="cont">繼續遊戲</button>' : ''}
+      ${localStorage.getItem(AUTO_KEY) ? '<button class="btn" data-a="auto">自動存檔</button>' : ''}
     </div>
     <div class="note">拖曳畫面下半部移動・點擊對話框繼續<br>原作：ドラゴンボールZ RPG（同人作品）<br>版本 ${VERSION}</div>`;
   title.hidden = false;
@@ -233,7 +270,7 @@ function showTitle(sub) {
     if (!a) return;
     audio.unlock();
     title.hidden = true;
-    if (a.dataset.a === 'cont') { load(); return; }
+    if (a.dataset.a === 'cont' || a.dataset.a === 'auto') { if (load(a.dataset.a === 'auto' ? AUTO_KEY : SAVE_KEY)) recap(); return; }
     if (a.dataset.a === 'new') await playStory(game.world); // the opening story, then the field
     game.state = game.newState();
     startField();
@@ -282,7 +319,8 @@ async function boot() {
   setItemsWorld(game.world);
   const faceSheets = new Set(Object.values(game.world.faces).map((f) => f[0]));
   await loadImages([...tileSheetPaths, ...fieldImages, ...battleImages(game.world), FACES, ...faceSheets]);
-  await playOpening(); // the title animation, like the original plays before its title screen
+  setFieldGame(game);
+  if (!options.skipOp) await playOpening(); // the title animation, like the original plays before its title screen
   showTitle();
   requestAnimationFrame(frame);
 }

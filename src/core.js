@@ -195,6 +195,7 @@ window.addEventListener('keydown', (e) => {
   if (!dlg.hidden && (e.code === 'Enter' || e.code === 'Space' || e.code === 'KeyZ')) { e.stopImmediatePropagation(); if (dlgAdvance) dlgAdvance(); }
 }, true);
 
+export const textSpeed = { instant: false }; // 消息高速化 (src/fieldmenu.js options)
 // lines: [[who, text], ...] or plain strings (narration); `keep` leaves the last line up (for a choice after it)
 export async function say(lines, keep = false) {
   dlg.hidden = false;
@@ -210,7 +211,7 @@ export async function say(lines, keep = false) {
     dlgAdvance = () => { skip = true; };
     await new Promise((res) => {
       const step = () => {
-        if (skip) i = text.length; else i += 2;
+        if (skip || textSpeed.instant) i = text.length; else i += 2;
         dlgText.textContent = text.slice(0, i);
         if (i >= text.length) res(); else setTimeout(step, 22);
       };

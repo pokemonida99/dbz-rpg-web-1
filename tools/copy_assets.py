@@ -26,6 +26,8 @@ files |= {f'Audio/BGM/{n}.ogg' for n in bgm}
 se = ['Z1 敵発見', 'Z1 エネルギー波', 'Z1 エネルギー波2', 'Z1 打撃', 'Z1 避ける', 'Z1 ダメージ', 'GBZ1 ファンファーレ1', 'Z1 レベルアップ']
 files |= {f'Audio/SE/{n}.ogg' for n in se + world.get('itemSe', [])}
 files |= {f'Audio/BGM/{n}.ogg' for n in world.get('itemBgm', [])} | set(world.get('itemPictures', []))
+# field systems (src/training.js, src/fieldmenu.js): their sounds and pictures
+files |= {f'Audio/SE/{n}.ogg' for n in world.get('fieldSe', [])} | set(world.get('fieldPictures', []))
 # the battle film (src/anime.js): every pic('…') and the ANIME_SOUNDS list
 import re  # noqa: E402
 anime = open(os.path.join(root, 'src', 'anime.js'), encoding='utf-8').read()

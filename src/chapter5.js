@@ -29,8 +29,9 @@ addScenes({
   129: { bg: '界王星_地上', foe: [EVENT, 18], out: true, next: '+' }, // 界王様
   132: { bgm: 'Z1 界王', bg: '界王星_地上', foe: [EVENT, 18], out: true, next: '+' }, // 修行終了
   133: { bgm: 'DB3 カメハウス', bg: 'カメハウス', foe: [EVENT, 1], out: true, fadein: true, next: '+' }, // カメハウス
-  // the seven balls in the scene; 亀仙人・ブルマ・ウーロン・プーアル under it
-  134: { adds: [[EVENT, 22, -128, 0], [EVENT, 23, -64, -32], [EVENT, 24, -64, 32], [EVENT, 25, 0, 0], [EVENT, 26, 64, -32], [EVENT, 27, 64, 32], [EVENT, 28, 128, 0]],
+  // the seven balls in the scene (the original spreads them 384 px wide; here two rows that fit a phone), 亀仙人・ブルマ・
+  // ウーロン・プーアル under it
+  134: { adds: [[EVENT, 22, -96, -32], [EVENT, 23, -32, -32], [EVENT, 24, 32, -32], [EVENT, 25, 96, -32], [EVENT, 26, -64, 32], [EVENT, 27, 0, 32], [EVENT, 28, 64, 32]],
     faces: [[EVENT, 1, -96], [EVENT, 3, -32], [EVENT, 20, 32], [EVENT, 5, 96]], next: '+' },
 }, [120, 122, 126, 130]);
 

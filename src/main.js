@@ -1,27 +1,27 @@
 // Boot, game state, scene switching, story beats, HUD, menu, save/load.
-import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-2256';
-import { tileSheetPaths } from './tiles.js?v=20261101-2256';
-import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-2256';
-import { Battle, battleImages, newHand, rollEncounter, setCardGame } from './battle.js?v=20261101-2256';
-import { makeMember, levelUp } from './party.js?v=20261101-2256';
-import { runEvent } from './events.js?v=20261101-2256';
-import { playOpening, playStory } from './opening.js?v=20261101-2256'; // the original's title animation and opening story
-import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapterBoss } from './chapter2.js?v=20261101-2256';
-import { fieldMenuHtml, openEntry } from './partymenu.js?v=20261101-2256'; // 隊伍・卡牌・組合技・作戰
-import { setItemsWorld, bubbles } from './items.js?v=20261101-2256'; // item cards (its 卡牌 menu entry registers itself)
-import { setGrowthWorld } from './growth.js?v=20261101-2256'; // skill cards and the other growth cards
-import { cardSquare, compo } from './cardgames.js?v=20261101-2256'; // card squares (shop / lottery / memory), 合成
-import { fieldExtraHtml, openFieldEntry, setFieldGame, encounterSteps, battleTally, spotTally, storySoFar, hasRecap, options } from './fieldmenu.js?v=20261101-2256'; // 概況・情報・設定・地圖, records, options
-import { training } from './training.js?v=20261101-2256'; // training squares
-import { chapter3Goal, startChapter3, resumeChapter3, chapter3Spot, isChapter3Map, chapter3Boss } from './chapter3.js?v=20261101-2256';
-import { chapter4Goal, startChapter4, resumeChapter4, chapter4Spot, isChapter4Map, chapter4Boss } from './chapter4.js?v=20261101-2256';
-import { playEvent, setCutsceneWorld, raditzOutcome } from './cutscene.js?v=20261101-2256'; // story scenes staged like the original
-import { chapter5Goal, startChapter5, resumeChapter5, isChapter5Map, chapter5Boss, devChapter5 } from './chapter5.js?v=20261101-2256';
-import { chapter6Goal, startChapter6, resumeChapter6, chapter6Spot, isChapter6Map, chapter6Boss, devChapter6 } from './chapter6.js?v=20261101-2256'; // King Kai, the Saiyans, the end of Z1
-import { willowGoal, startWillow, resumeWillow, willowSpot, isWillowMap, willowBoss, devWillow } from './willow.js?v=20261101-2256'; // after Z1: the Willow chapter, up to the hand-over to Z2
-import { z2aGoal, startZ2a, resumeZ2a, z2aSpot, storyScenes, z2aBackdrop, devZ2a } from './z2a.js?v=20261101-2256'; // Z2 first half: Namek, Goku's training, the Grand Elder
-import { applyEra } from './era.js?v=20261101-2256'; // the Z2 art while variable 40 is 1
-import { z2bGoal, startZ2Ginyu, startZ2b, resumeZ2b, z2bSpot, isZ2bMap, z2bBoss, devZ2b } from './z2b.js?v=20261101-2256'; // Z2 second half: the Ginyu Force, Frieza
+import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-2312';
+import { tileSheetPaths } from './tiles.js?v=20261101-2312';
+import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-2312';
+import { Battle, battleImages, newHand, rollEncounter, setCardGame } from './battle.js?v=20261101-2312';
+import { makeMember, levelUp } from './party.js?v=20261101-2312';
+import { runEvent } from './events.js?v=20261101-2312';
+import { playOpening, playStory } from './opening.js?v=20261101-2312'; // the original's title animation and opening story
+import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapterBoss } from './chapter2.js?v=20261101-2312';
+import { fieldMenuHtml, openEntry } from './partymenu.js?v=20261101-2312'; // 隊伍・卡牌・組合技・作戰
+import { setItemsWorld, bubbles } from './items.js?v=20261101-2312'; // item cards (its 卡牌 menu entry registers itself)
+import { setGrowthWorld } from './growth.js?v=20261101-2312'; // skill cards and the other growth cards
+import { cardSquare, compo } from './cardgames.js?v=20261101-2312'; // card squares (shop / lottery / memory), 合成
+import { fieldExtraHtml, openFieldEntry, setFieldGame, encounterSteps, battleTally, spotTally, storySoFar, hasRecap, options } from './fieldmenu.js?v=20261101-2312'; // 概況・情報・設定・地圖, records, options
+import { training } from './training.js?v=20261101-2312'; // training squares
+import { chapter3Goal, startChapter3, resumeChapter3, chapter3Spot, isChapter3Map, chapter3Boss } from './chapter3.js?v=20261101-2312';
+import { chapter4Goal, startChapter4, resumeChapter4, chapter4Spot, isChapter4Map, chapter4Boss } from './chapter4.js?v=20261101-2312';
+import { playEvent, setCutsceneWorld, raditzOutcome } from './cutscene.js?v=20261101-2312'; // story scenes staged like the original
+import { chapter5Goal, startChapter5, resumeChapter5, isChapter5Map, chapter5Boss, devChapter5 } from './chapter5.js?v=20261101-2312';
+import { chapter6Goal, startChapter6, resumeChapter6, chapter6Spot, isChapter6Map, chapter6Boss, devChapter6 } from './chapter6.js?v=20261101-2312'; // King Kai, the Saiyans, the end of Z1
+import { willowGoal, startWillow, resumeWillow, willowSpot, isWillowMap, willowBoss, devWillow } from './willow.js?v=20261101-2312'; // after Z1: the Willow chapter, up to the hand-over to Z2
+import { z2aGoal, startZ2a, resumeZ2a, z2aSpot, storyScenes, z2aBackdrop, devZ2a } from './z2a.js?v=20261101-2312'; // Z2 first half: Namek, Goku's training, the Grand Elder
+import { applyEra } from './era.js?v=20261101-2312'; // the Z2 art while variable 40 is 1
+import { z2bGoal, startZ2Ginyu, startZ2b, resumeZ2b, z2bSpot, isZ2bMap, z2bBoss, devZ2b } from './z2b.js?v=20261101-2312'; // Z2 second half: the Ginyu Force, Frieza
 
 // testing in a hidden browser pane (no animation frames there): ?timer drives every frame with timers instead
 if (new URLSearchParams(location.search).has('timer')) window.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16);
@@ -364,7 +364,7 @@ async function boot() {
   if (!(await ensureLatest())) return;
   view.resize();
   window.addEventListener('resize', () => view.resize());
-  game.world = await (await fetch('data/world.json?v=20261101-2256')).json();
+  game.world = await (await fetch('data/world.json?v=20261101-2312')).json();
   setCutsceneWorld(game.world);
   setFaces(game.world.faces);
   setItemsWorld(game.world);

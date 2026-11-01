@@ -13,7 +13,7 @@
 //   menuEntries.card = async ({ game, battle }) => { … }   // battle is null when opened from the field menu
 // In battle the command menu comes back when the promise resolves, unless it resolves to 'stay'
 // (the entry has moved the battle on by itself, e.g. started the turn).
-import { img, audio, rand } from './core.js?v=20261101-1853';
+import { img, audio, rand } from './core.js?v=20261101-1854';
 
 const FACES = 'Graphics/Pictures/Z1_顔味方.PNG'; // 64×64; row = actor id - 3; columns: normal, hurt, KO
 const CARDS = 'Graphics/Pictures/カード関係.PNG';

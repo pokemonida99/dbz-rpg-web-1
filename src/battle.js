@@ -6,12 +6,12 @@
 //   lower area     — message window; choosing: buttons + the six cards; fighting: the original duel bar
 //                    (party face, HP/KI, both cards, enemy face)
 // Choosing a card that allows a special move opens the move window over the stage.
-import { view, img, audio, sleep, rand } from './core.js?v=20261101-1853';
-import { levelUp } from './party.js?v=20261101-1853';
-import { Duel, ANIME_IMAGES, SW, SH, BACK_Y } from './anime.js?v=20261101-1853';
-import { battleCommand, autoSkill, autoTarget, tally } from './partymenu.js?v=20261101-1853'; // command menu, 作戰, counters
-import * as items from './items.js?v=20261101-1853'; // item cards: effects that touch the battle rules
-import { tryCombo, announceCombos, skillPower, comboHints, hasCombos, HINT_TEXT } from './combo.js?v=20261101-1853'; // 組合技
+import { view, img, audio, sleep, rand } from './core.js?v=20261101-1854';
+import { levelUp } from './party.js?v=20261101-1854';
+import { Duel, ANIME_IMAGES, SW, SH, BACK_Y } from './anime.js?v=20261101-1854';
+import { battleCommand, autoSkill, autoTarget, tally } from './partymenu.js?v=20261101-1854'; // command menu, 作戰, counters
+import * as items from './items.js?v=20261101-1854'; // item cards: effects that touch the battle rules
+import { tryCombo, announceCombos, skillPower, comboHints, hasCombos, HINT_TEXT } from './combo.js?v=20261101-1854'; // 組合技
 
 export const SCHOOL = ['必', '龜', '神', '界', '魔', '惑'];
 const HAND = 6;

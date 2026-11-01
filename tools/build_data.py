@@ -240,5 +240,7 @@ world = {
     # the original story text (Map007 event 1): the opening, before and after Raditz
     'story': {'intro': INTRO, 'boss': EVENTS['58'], 'ending': ENDING},
 }
+import build_chapter2  # noqa: E402  (chapter 2: Snake Way and the Sansho area)
+build_chapter2.add(world, globals())
 json.dump(world, open(os.path.join(root, 'data', 'world.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 print('world.json written')

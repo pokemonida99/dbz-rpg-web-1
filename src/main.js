@@ -5,6 +5,7 @@ import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-16
 import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-1649';
 import { makeMember, levelUp } from './party.js?v=20261101-1649';
 import { runEvent } from './events.js?v=20261101-1649';
+import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapterBoss } from './chapter2.js?v=20261101-1649';
 
 const SAVE_KEY = 'dbz-portrait-save-v1';
 const FACES = 'Graphics/Pictures/GBZ1 顔アイコン.PNG'; // 40×56 cells, one row per character
@@ -35,7 +36,7 @@ const game = {
     s.steps++;
     if (this.busy || --s.nextEnc > 0) return;
     s.nextEnc = nextEncounterSteps();
-    await this.startBattle(rollEncounter(this.world), false);
+    await this.startBattle(rollArea(this.world, s) || rollEncounter(this.world), false);
   },
 
   // the "examine / enter" button appears while standing next to a building
@@ -57,6 +58,7 @@ const game = {
     this.field.paused = true;
     input.dx = input.dy = 0;
     const s = this.state;
+    if (poi.chapter) { await chapterSpot(this, poi); renderHud(); this.busy = false; this.field.paused = false; return; }
     if (poi.event) await runEvent(this.world.events[poi.event], s);
     else await say(poi.lines);
     if (poi.effect === 'rest') for (const m of s.party) { m.hp = m.maxhp; m.ki = m.maxki; }
@@ -68,6 +70,7 @@ const game = {
   },
 
   async onBoss() {
+    if (this.state.map !== '1') return chapterBoss(this);
     if (this.busy) return;
     this.busy = true;
     this.field.paused = true;
@@ -79,7 +82,7 @@ const game = {
       this.state.flags.bossDone = true;
       await runEvent(this.world.story.ending, this.state);
       save(true);
-      showTitle('第一章　完');
+      await afterRaditz(this); // chapter 2 (src/chapter2.js)
     }
   },
 
@@ -138,7 +141,7 @@ function renderHud() {
     party.appendChild(el);
   }
   hud.querySelector('.menu-btn').onclick = openMenu;
-  hud.querySelector('.goal').textContent = s.flags.bossDone ? '' : '目標：飛往右上方救回悟飯（建議練到 Lv6 以上）';
+  hud.querySelector('.goal').textContent = chapterGoal(game.world, s) ?? (s.flags.bossDone ? '' : '目標：飛往右上方救回悟飯（建議練到 Lv6 以上）');
 }
 game.renderHud = renderHud;
 
@@ -180,6 +183,7 @@ function load() {
     s.sw = s.sw || {};
     s.var = s.var || { 42: 3 };
     startField();
+    resumeChapter(game);
     return true;
   } catch (e) { return false; }
 }
@@ -193,6 +197,8 @@ function startField() {
   hud.hidden = false;
   renderHud();
 }
+
+Object.assign(game, { startField, save, showTitle: (sub) => showTitle(sub) }); // for src/chapter2.js
 
 // ---------- title ----------
 const title = document.getElementById('title');

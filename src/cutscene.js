@@ -74,6 +74,7 @@ export function addScenes(more, battles = []) {
   Object.assign(S, more);
   BATTLES.push(...battles);
 }
+export const registerScenes = addScenes; // the same, by the name src/chapter4.js uses
 
 // character_output: the party's faces centred under the scene, three to a row
 function partyFaces(stage, ids) {

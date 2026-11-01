@@ -16,7 +16,7 @@ import { training } from './training.js?v=20261101-2112'; // training squares
 import { chapter3Goal, startChapter3, resumeChapter3, chapter3Spot, isChapter3Map, chapter3Boss } from './chapter3.js?v=20261101-2112';
 import { chapter4Goal, startChapter4, resumeChapter4, chapter4Spot, isChapter4Map, chapter4Boss } from './chapter4.js?v=20261101-2112';
 import { playEvent, setCutsceneWorld, raditzOutcome } from './cutscene.js?v=20261101-2112'; // story scenes staged like the original
-import { chapter5Goal, startChapter5, resumeChapter5, chapter5Spot, isChapter5Map, chapter5Boss, devChapter5 } from './chapter5.js?v=20261101-2112';
+import { chapter5Goal, startChapter5, resumeChapter5, isChapter5Map, chapter5Boss, devChapter5 } from './chapter5.js?v=20261101-2112';
 
 const SAVE_KEY = 'dbz-portrait-save-v1';
 const AUTO_KEY = 'dbz-portrait-autosave-v1'; // the original's Save_Auto.rvdata: after each normal battle won
@@ -71,7 +71,7 @@ const game = {
     this.field.paused = true;
     input.dx = input.dy = 0;
     const s = this.state;
-    if (poi.chapter) { await (chapter5Spot(this, poi) || chapter4Spot(this, poi) || chapter3Spot(this, poi) || chapterSpot(this, poi)); renderHud(); this.busy = false; this.field.paused = false; return; }
+    if (poi.chapter) { await (chapter4Spot(this, poi) || chapter3Spot(this, poi) || chapterSpot(this, poi)); renderHud(); this.busy = false; this.field.paused = false; return; }
     spotTally(s, poi);
     if (['training', 'shop'].includes(poi.effect)) this.field.spent = poi; // once per visit (src/field.js)
     if (poi.effect === 'training') { await training(this); renderHud(); this.busy = false; this.field.paused = false; return; }
@@ -128,9 +128,7 @@ const game = {
     flash.style.opacity = '0';
     setTimeout(() => flash.remove(), 400);
     const battle = new Battle(this.world, this, enemyIds, boss);
-    Object.assign(battle, opts); // e.g. eventBgm (src/fieldmenu.js), bgm, foeHp, keepOnLose
-    if (opts && opts.foeHp) opts.foeHp.forEach((hp, i) => { if (hp != null && battle.foes[i]) battle.foes[i].hp = hp; }); // King Kai keeps his wounds
-    this.lastBattle = battle;
+    Object.assign(battle, opts); // e.g. eventBgm (src/fieldmenu.js), bgm (an event battle's own music)
     this.scene = battle;
     const result = await battle.run();
     battleTally(this, battle, result);
@@ -140,7 +138,7 @@ const game = {
     this.field.paused = false;
     this.field.enter();
     this.busy = false;
-    if (result === 'lose' && !(opts && opts.keepOnLose)) { // keepOnLose: the chapter goes on (King Kai's training)
+    if (result === 'lose') {
       await say([['', '悟空們被打倒了……'], ['', '回到最後的存檔。']]);
       if (!load(newest())) restart();
     }

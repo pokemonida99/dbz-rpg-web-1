@@ -185,11 +185,13 @@ KI is the actor's MP (`Actors` parameter index 1). Enemies never pay KI.
   (So +1 % per use up to doubled power.) Normal attack uses `base = 3`. Oozaru form doubles skill power.
 - Element 20 skills also get `-floor(level/10)` KI cost (§3.2).
 
-### 3.4 S-combo (Sコンボ, simplified)
+### 3.4 S-combo (Sコンボ) — implemented in `src/combo.js` (rules written out in its header comment)
 If several party members chose the specific skills listed in `data/scombo.json` (`scombo_cha`, `scombo_flag_tec`,
 card star conditions), the first one triggers a combined move (`chk_scombo_flag*`, `101:5593-5933`): all participants
-pay their KI, are marked as having acted, and damage uses the sum formula in §4.2. ひらめき (tecspark.json) can teach
-a new move mid-battle (that use costs no KI). Implement later.
+pay their KI, are marked as having acted, and damage uses the sum formula in §4.2. Conditions per participant: own-school
+card (必 does not count), attack/guard ≥ the combo's minimum, the exact move, move used ≥ `scombo_skill_level_num` times,
+alive, not yet acted, combos not switched off ("Y"). Unlearned combos are checked first and become learned when they first
+fire. ひらめき (tecspark.json) can teach a new move mid-battle (that use costs no KI). Not implemented yet.
 
 ---
 

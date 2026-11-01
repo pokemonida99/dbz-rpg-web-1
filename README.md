@@ -22,6 +22,7 @@ python3 tools/serve.py 8790
 ln -s ../dbz-rpg-web-dist/game game          # 原版素材（不進 git）
 ruby tools/extract.rb game/Data data 1 5 6 7 8   # .rvdata → JSON（系統 Ruby 2.6 即可）
 python3 tools/build_data.py                  # → data/world.json（台詞在這裡轉繁體）
+python3 tools/build_combo.py                 # → data/combos.json（組合技）
 python3 tools/copy_assets.py game            # 只複製用到的素材到 assets/
 ```
 
@@ -36,6 +37,7 @@ python3 tools/copy_assets.py game            # 只複製用到的素材到 asset
 | `src/main.js` | 標題、劇情、HUD、選單、存讀檔（localStorage） |
 | `src/opening.js` | 開場：標題前的原版片頭動畫（`z1_op` 逐格移植）、新遊戲的 Z1 開場劇情（原版 Map007 事件＋`z1opening` 場景，台詞全文，資料由 `tools/opening_data.py` 產生），都有「略過」 |
 | `src/chapter2.js` | 第二章（蛇道・桑修篇）：拉蒂茲戰後劇情、卡林塔分組畫面、蛇道（悟空單人）→ 界王星 → 北方小隊的桑修區 → 桑修；資料由 `tools/build_chapter2.py` 產生 |
+| `src/combo.js` / `src/combo-anime.js` | 組合技（Sコンボ）：發動判定、傷害、熟練度、學會通知、招式視窗的提示與「組合技：開／關」、組合技一覽；組合技動畫照經典版逐格移植。資料 `data/combos.json` 由 `tools/build_combo.py` 從原版 `_scombo.csv` 產生 |
 
 ## 本版自製素材
 `assets/bg/battle_{night,dusk,day}.png`：直向戰鬥背景（400×600），用 ChatGPT 照原版 Z1 戰場地面的風格生成，再縮成像素、減色。每場戰鬥隨機選一張，同一場不會換。

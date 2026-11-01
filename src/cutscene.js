@@ -193,9 +193,9 @@ async function z1field(stage, ctx, quiet = false) {
   if (d.full) stage.add(d.full, 0, 0, [0, 0, 640, 480], false, 0, 'full');
   if (d.foe) stage.add(d.foe[0], ENE[0], ENE[1] + (d.foe[2] || 0), [64 * (d.foe[3] || 0), 64 * d.foe[1], 64, 64]); // [sheet, row, dy, column]
   // more faces in the scene (size: drawn that many px square, its middle at dx / 2 — a row of four that fits the scene)
-  for (const [sheet, row, dx, dy, size] of d.adds || []) {
-    if (size) stage.add(sheet, ENE[0] + 32 - size / 2 + dx / 2, ENE[1] + 32 - size / 2 + dy, [0, 64 * row, 64, 64], false, 0, [size, size]);
-    else stage.add(sheet, ENE[0] + dx, ENE[1] + dy, [0, 64 * row, 64, 64]);
+  for (const [sheet, row, dx, dy, size, col = 0] of d.adds || []) { // (col: 顔カード's column of the part of the story)
+    if (size) stage.add(sheet, ENE[0] + 32 - size / 2 + dx / 2, ENE[1] + 32 - size / 2 + dy, [64 * col, 64 * row, 64, 64], false, 0, [size, size]);
+    else stage.add(sheet, ENE[0] + dx, ENE[1] + dy, [64 * col, 64 * row, 64, 64]);
   }
   if (d.balls) { // z1field 134: the balls one to seven in a diamond round the middle
     [[-128, 0], [-64, -32], [-64, 32], [0, 0], [64, -32], [64, 32], [128, 0]].forEach(([dx, dy], k) => {
@@ -278,11 +278,13 @@ function choice(ui, options) {
   return new Promise((res) => {
     const box = document.createElement('div');
     box.className = 'cs-choices';
-    box.style.cssText = 'position:absolute;left:0;right:0;display:flex;gap:10px;justify-content:center;z-index:5';
-    box.style.top = `${ui.dlg.offsetTop + ui.dlg.offsetHeight + 10}px`; // under the message window
+    box.style.cssText = 'position:absolute;left:0;right:0;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:0 12px;z-index:5';
+    if (ui.dlg.hidden) box.style.bottom = '3%'; // a menu straight after a scene (Z3 town: no line shown) — where the window would be
+    else box.style.top = `${ui.dlg.offsetTop + ui.dlg.offsetHeight + 10}px`; // under the message window
     options.forEach((label, k) => {
       const b = document.createElement('button');
       b.className = 'btn';
+      b.style.whiteSpace = 'nowrap'; // (four answers: the row wraps instead of each word)
       b.textContent = label;
       b.onpointerdown = (e) => { e.stopPropagation(); box.remove(); audio.se('Z3 決定', 80); res(k); };
       box.appendChild(b);

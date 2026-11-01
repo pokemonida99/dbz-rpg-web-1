@@ -40,7 +40,11 @@ export function setFieldGame(g) {
 }
 
 // set_battle_bgm_name 0 (默認): the song of the part of the story (variable 43)
-const storyBattleBgm = (v) => (v >= 21 && v <= 50 ? 'Z2 戦闘1' : v >= 3 ? 'Z1 戦闘2' : 'Z1 戦闘1'); // (Z2: 21-50)
+const storyBattleBgm = (v) => ( // (all.rb 10600: by 概況)
+  (v >= 21 && v <= 50) || (v >= 143 && v <= 145) || (v >= 911 && v <= 920) ? 'Z2 戦闘1'
+    : (v >= 51 && v <= 150) || (v >= 921 && v <= 937) ? 'Z3 戦闘1'
+      : v >= 151 && v <= 200 ? 'ZG 戦闘1'
+        : (v >= 3 && v <= 9) || v === 902 ? 'Z1 戦闘2' : 'Z1 戦闘1');
 
 // the battle starts its music as 'Z1 戦闘1' (normal fights) and the encounter sound as 'Z1 敵発見': swap in the choice
 const playBgm = audio.playBgm.bind(audio), playSe = audio.se.bind(audio);

@@ -314,7 +314,7 @@ function showTitle(sub, notes) {
   audio.playBgm(game.world.titleBgm);
   const has = !!localStorage.getItem(SAVE_KEY);
   title.innerHTML = `<img src="${assetUrl('Graphics/System/Title.png')}" alt="">
-    <div class="sub">${sub || '重製版・Z1 拉蒂茲篇～威洛篇'}</div>
+    <div class="sub">${sub || '重製版・Z1～Z3'}</div>
     ${notes ? `<div class="note unlocks">原版接下來開放：<br>${notes.join('<br>')}<br>（本版尚未製作）</div>` : ''}
     <div class="actions">
       <button class="btn" data-a="new">新的開始</button>

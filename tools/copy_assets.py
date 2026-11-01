@@ -24,7 +24,7 @@ for e in world['enemies'].values():
 bgm = {m['bgm'] for m in world['maps'].values()} | set(world.get('extraBgm', [])) | {world['titleBgm'], 'Z1 戦闘1', 'Z1 戦闘ボス1(中ボス)'}
 files |= {f'Audio/BGM/{n}.ogg' for n in bgm}
 se = ['Z1 敵発見', 'Z1 エネルギー波', 'Z1 エネルギー波2', 'Z1 打撃', 'Z1 避ける', 'Z1 ダメージ', 'GBZ1 ファンファーレ1', 'Z1 レベルアップ']
-files |= {f'Audio/SE/{n}.ogg' for n in se}
+files |= {f'Audio/SE/{n}.ogg' for n in se + world.get('itemSe', [])}
 # the battle film (src/anime.js): every pic('…') and the ANIME_SOUNDS list
 import re  # noqa: E402
 anime = open(os.path.join(root, 'src', 'anime.js'), encoding='utf-8').read()

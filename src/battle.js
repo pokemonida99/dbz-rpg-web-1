@@ -10,6 +10,7 @@ import { view, img, audio, sleep, rand } from './core.js?v=20261101-1835';
 import { levelUp } from './party.js?v=20261101-1835';
 import { Duel, ANIME_IMAGES, SW, SH, BACK_Y } from './anime.js?v=20261101-1835';
 import { battleCommand, autoSkill, autoTarget, tally } from './partymenu.js?v=20261101-1835'; // command menu, 作戰, counters
+import * as items from './items.js?v=20261101-1835'; // item cards: effects that touch the battle rules
 
 export const SCHOOL = ['必', '龜', '神', '界', '魔', '惑'];
 const HAND = 6;
@@ -49,7 +50,7 @@ export function rollEncounter(world) {
 function playerDamage(m, skill, card, foe, foeCard) {
   const P = skill ? skill.power : 3;
   let d = Math.floor(((m.atk + P) * 8 * (card.a + 7 + rand(2) + 1)) / Math.floor((foe.def * (foeCard.g + 7)) / 3));
-  if (card.s === m.school) d = Math.floor(d * 1.3);
+  if (card.s === m.school || items.powerUp(m)) d = Math.floor(d * 1.3);
   if (skill && skill.noDamage) d = 0;
   const avoid = Math.trunc((foe.agi * 1.2 + foeCard.g) / 3 - (m.agi * 1.1 + card.a) / 3);
   return avoid > 0 && rand(100) + 1 < avoid ? -1 : d;
@@ -58,6 +59,8 @@ function enemyDamage(foe, skill, card, m, guardCard) {
   const P = skill ? Math.trunc((foe.atk * skill.power) / 100) - foe.atk : 0;
   let d = Math.floor(((foe.atk + P) * 8 * (card.a + 7 + rand(2) + 1)) / Math.floor((m.def * (guardCard.g + 7)) / 3));
   if (card.s === foe.school) d = Math.floor(d * 1.2);
+  if (items.guardUp(m)) d = Math.floor(d * 0.7);
+  if (items.evades(m)) return -1;
   const avoid = Math.trunc((m.agi * 1.2 + guardCard.g) / 3 - (foe.agi * 1.1 + card.a) / 3);
   return avoid > 0 && rand(100) + 1 < avoid ? -1 : d;
 }
@@ -150,6 +153,7 @@ export class Battle {
     this.duel = null;
     this.hits = [];
     this.el = document.getElementById('battle');
+    items.battleFx(this);
   }
 
   // ---------- layout (art pixels; one art pixel is about one CSS pixel on a phone) ----------
@@ -256,6 +260,11 @@ export class Battle {
       text(c, f.name, f.fx + 32, f.fy + 92, '#fff', 14, 'center');
       c.fillStyle = '#402010'; c.fillRect(f.fx + 4, f.fy + 112, 56, 4);
       c.fillStyle = '#58d858'; c.fillRect(f.fx + 4, f.fy + 112, (56 * f.hp) / f.maxhp, 4);
+      if (items.scouted() && f.card) { // スカウター: this turn's enemy card and HP
+        c.save(); c.translate(f.fx + 16, f.fy + 122); c.scale(0.5, 0.5); card(c, f.card, 0, 0); c.restore();
+        text(c, `HP ${f.hp}`, f.fx + 32, f.fy + 174, '#fff', 12, 'center');
+      }
+      if (items.stopCount(f)) text(c, '停', f.fx + 56, f.fy + 2, '#ff5050', 16, 'center'); // じいちゃん
       if (this.mode === 'target') {
         cursor(c, f.fx + 32, f.fy - 14);
         this.hit(f.fx - 6, f.fy - 20, 76, 90, () => this.commit(f.slot));
@@ -313,7 +322,7 @@ export class Battle {
     word(c, 'KI', x + w - 96, y + 12); num(c, m.ki, x + w - 14, y + 12);
     skills.forEach((s, i) => {
       const ry = y + 40 + i * rowH;
-      const ok = m.ki >= s.ki;
+      const ok = m.ki >= items.kiNeed(m, s.ki);
       text(c, s.name + (s.all ? '（全體）' : ''), x + 30, ry + 6, ok ? INK : '#a08060', 18);
       text(c, `KI ${s.ki}`, x + w - 14, ry + 8, ok ? '#7a5230' : '#c0a080', 14, 'right');
       if (ok) this.hit(x, ry, w, rowH, () => { this.pending.skill = s; this.mode = 'card'; this.chooseTarget(); });
@@ -383,6 +392,7 @@ export class Battle {
     this.fast = false;
     this.duel = null;
     this.plans = this.party.map(() => null);
+    for (const f of this.foes) if (f.hp > 0) f.card = enemyCard(); // §2.1: enemy cards are dealt at turn start
     this.cur = this.party.findIndex((m) => this.able(m));
     battleCommand(this); // 戰鬥・菜單・逃跑 (src/partymenu.js)
   }
@@ -455,15 +465,17 @@ export class Battle {
     this.buttons = [];
     const order = [];
     this.party.forEach((m, i) => { const p = this.plans[i]; if (p) order.push({ kind: 'p', i, key: this.hand[p.card].a + this.hand[p.card].g, r: Math.random() }); });
-    for (const f of this.foes) if (f.hp > 0) { f.card = enemyCard(); order.push({ kind: 'e', f, key: f.card.a + f.card.g, r: Math.random() }); }
+    for (const f of this.foes) if (f.hp > 0) { order.push({ kind: 'e', f, key: f.card.a + f.card.g, r: Math.random() }); }
     order.sort((a, b) => b.key - a.key || a.r - b.r);
+    order.splice(0, order.length, ...items.firstMovers(this, order));
     await sleep(300);
     for (const o of order) {
       if (this.over()) break;
       if (o.kind === 'p') await this.playerAct(o.i);
-      else for (let n = 0; n < o.f.eva && o.f.hp > 0 && !this.over(); n++) { if (n > 0) o.f.card = enemyCard(); await this.enemyAct(o.f); }
+      else if (!items.foeStopped(o.f)) for (let n = 0; n < o.f.eva && o.f.hp > 0 && !this.over(); n++) { if (n > 0) o.f.card = enemyCard(); await this.enemyAct(o.f); }
     }
     for (const p of this.plans) if (p) this.hand[p.card] = newCard(); // used cards are regenerated in place (§1.6)
+    items.endTurn(this);
     if (this.over()) return;
     for (const m of this.party) { // recovery from the second turn on (§4.6)
       if (m.hp > 0) { m.hp = Math.min(m.maxhp, m.hp + Math.ceil((m.maxhp * 3) / 100)); m.ki = Math.min(m.maxki, m.ki + Math.ceil((m.maxki * 2.5) / 100)); }
@@ -501,9 +513,9 @@ export class Battle {
     if (!foe || foe.hp <= 0) foe = this.foes.filter((f) => f.hp > 0).reduce((a, b) => (b.hp < a.hp ? b : a));
     const cd = this.hand[p.card];
     let skill = p.skill;
-    if (skill && m.ki < skill.ki) skill = null;
+    if (skill && m.ki < items.kiNeed(m, skill.ki)) skill = null;
     const targets = skill && skill.all ? this.foes.filter((f) => f.hp > 0) : [foe];
-    if (skill) m.ki -= skill.ki;
+    if (skill) items.payKi(m, skill.ki);
     const alive = targets.filter((t) => t.hp > 0).length;
     for (const t of targets) {
       t.card = t.card || enemyCard();
@@ -536,8 +548,8 @@ export class Battle {
     this.phase = 'result';
     this.duel = null;
     this.buttons = [];
-    const exp = this.foes.reduce((s, f) => s + f.exp, 0) * EXP_RATE;
-    this.game.state.zeni += this.foes.reduce((s, f) => s + f.gold, 0);
+    const exp = items.expGain(this.game.state, this.foes.reduce((s, f) => s + f.exp, 0)) * EXP_RATE;
+    this.game.state.zeni += items.capGain(this.game.state, this.foes.reduce((s, f) => s + f.gold, 0));
     const ups = [];
     for (const m of this.party) {
       m.exp += exp;
@@ -550,6 +562,7 @@ export class Battle {
       this.say(...ups.length > 1 ? [`${ups.join('、')}！`] : [`${ups[0]}！`]);
       await new Promise((res) => { this.cont = res; });
     }
+    await items.afterBattle(this);
     this.cont = null;
   }
 
@@ -580,6 +593,7 @@ export class Battle {
     this.el.removeEventListener('pointerdown', onTap);
     this.el.hidden = true;
     this.el.innerHTML = '';
+    items.battleEnd();
     for (const m of this.party) if (m.hp <= 0 && result !== 'lose') m.hp = 1; // KO'd members get back up after the fight
     return result;
   }

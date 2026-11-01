@@ -7,7 +7,8 @@ import { makeMember, levelUp } from './party.js?v=20261101-1835';
 import { runEvent } from './events.js?v=20261101-1835';
 import { playOpening, playStory } from './opening.js?v=20261101-1835'; // the original's title animation and opening story
 import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapterBoss } from './chapter2.js?v=20261101-1835';
-import { fieldMenuHtml, openEntry } from './partymenu.js?v=20261101-1835'; // 隊伍・卡牌・組合技・作戰
+import { fieldMenuHtml, openEntry, menuEntries } from './partymenu.js?v=20261101-1835'; // 隊伍・卡牌・組合技・作戰
+import { openCards, openShop, setItemsWorld } from './items.js?v=20261101-1835'; // item cards: field menu, battle menu, card shops
 
 const SAVE_KEY = 'dbz-portrait-save-v1';
 const FACES = 'Graphics/Pictures/GBZ1 顔アイコン.PNG'; // 40×56 cells, one row per character
@@ -62,10 +63,11 @@ const game = {
     const s = this.state;
     if (poi.chapter) { await chapterSpot(this, poi); renderHud(); this.busy = false; this.field.paused = false; return; }
     if (poi.event) await runEvent(this.world.events[poi.event], s);
-    else await say(poi.lines);
+    else if (poi.lines) await say(poi.lines);
     if (poi.effect === 'rest') for (const m of s.party) { m.hp = m.maxhp; m.ki = m.maxki; }
     if (poi.effect === 'ki') for (const m of s.party) m.ki = m.maxki;
-    if (poi.effect === 'rest' || poi.effect === 'save') { save(true); toast('已存檔'); }
+    if (poi.effect === 'shop') await openShop(this); // a Z mark: the original's card square (also saves)
+    if (poi.effect === 'rest' || poi.effect === 'save' || poi.effect === 'shop') { save(true); toast('已存檔'); }
     renderHud();
     this.busy = false;
     this.field.paused = false;
@@ -117,6 +119,13 @@ const game = {
   },
 };
 window.__game = game;
+// 卡牌 in the battle and field menus (src/partymenu.js) opens the item cards (src/items.js)
+menuEntries.card = async ({ battle }) => {
+  if (battle) return openCards(game, battle);
+  game.busy = true;
+  await openCards(game);
+  game.busy = false;
+};
 
 // ---------- HUD ----------
 const hud = document.getElementById('hud');
@@ -274,6 +283,7 @@ async function boot() {
   window.addEventListener('resize', () => view.resize());
   game.world = await (await fetch('data/world.json?v=20261101-1835')).json();
   setFaces(game.world.faces);
+  setItemsWorld(game.world);
   const faceSheets = new Set(Object.values(game.world.faces).map((f) => f[0]));
   await loadImages([...tileSheetPaths, ...fieldImages, ...battleImages(game.world), FACES, ...faceSheets]);
   await playOpening(); // the title animation, like the original plays before its title screen

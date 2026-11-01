@@ -186,7 +186,7 @@ ev = lambda v: script(EVENT_PAGES[v])
 # Map 1 spots (145_Event_Check.rb "Z1フィールド1"), with the original event each one runs. `effect` is what this
 # version adds on top: rest = full HP/KI + save, ki = KI only, save = save only.
 INNS = [(13, 21), (30, 15), (2, 11), (19, 5), (44, 11), (53, 20)]
-CARD_SHOPS = [(7, 3), (30, 9), (57, 19), (61, 27)]  # card shops in the original; save points here for now
+CARD_SHOPS = [(7, 3), (30, 9), (57, 19), (61, 27)]  # Z marks = card squares in the original (145_Event_Check.rb chk_card): card shop (+ save)
 TRAINING = [(30, 5), (25, 20), (53, 19)]  # training halls in the original; KI recovery here for now
 MAP1_SPOTS = [
     {'x': 15, 'y': 16, 'label': '進入龜仙屋', 'event': 51, 'effect': 'rest'},
@@ -196,7 +196,7 @@ MAP1_SPOTS = [
     {'x': 50, 'y': 12, 'label': '和村民說話', 'event': 77},
     {'x': 26, 'y': 2, 'label': '和村民說話', 'event': 78},
 ] + [{'x': x, 'y': y, 'label': '進入旅館', 'event': 11, 'effect': 'rest'} for x, y in INNS] \
-  + [{'x': x, 'y': y, 'label': '記錄', 'effect': 'save', 'lines': [['', '這是一個 Z 標記。\n在這裡記錄了冒險的進度。']]} for x, y in CARD_SHOPS] \
+  + [{'x': x, 'y': y, 'label': '卡片商店', 'effect': 'shop'} for x, y in CARD_SHOPS] \
   + [{'x': x, 'y': y, 'label': '在修行場修行', 'effect': 'ki', 'lines': [['', '在修行場靜下心來修行……'], ['', '全員的 KI 恢復了！']]} for x, y in TRAINING]
 # after Raditz (variable 41 = 60): up to the Saiyans setting off for Earth; the rest is the next chapter
 _after = ev(60)
@@ -240,5 +240,7 @@ from opening_data import build as build_opening  # noqa: E402
 world['opening'] = build_opening(D, s2t)
 import build_chapter2  # noqa: E402  (chapter 2: Snake Way and the Sansho area)
 build_chapter2.add(world, globals())
+import build_items  # noqa: E402  (item cards: src/items.js)
+build_items.add(world, globals())
 json.dump(world, open(os.path.join(root, 'data', 'world.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 print('world.json written')

@@ -23,7 +23,8 @@ export class Field {
   walkable(px, py) {
     const tx = Math.floor(px / 32), ty = Math.floor(py / 32);
     if (tx < 0 || ty < 0 || tx >= this.map.w || ty >= this.map.h) return false;
-    return this.map.layers[0][tx + ty * this.map.w] > 0;
+    const id = this.map.layers[0][tx + ty * this.map.w];
+    return id > 0 && (!this.map.road || this.map.road.includes(id)); // road maps: only the path's tiles (world.maps[id].road)
   }
 
   update(dt) {

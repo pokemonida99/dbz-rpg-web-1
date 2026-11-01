@@ -18,6 +18,76 @@ export class Field {
     this.paused = false;
     this.pois = world.pois[game.state.map] || [];
     this.near = null; // the interactive spot the player is next to
+    this.look = { x: 0, y: 0 }; // camera lead on road maps
+    if (this.map.road != null) this.setupRoad(game.state);
+  }
+
+  // ---------- road maps (Snake Way): the player keeps to the road ----------
+  // The road is the passable tiles of one layer (world.maps[id].road = layer index). Movement goes tile centre to tile
+  // centre along the road; at a bend the player turns by itself, at a fork the stick decides.
+  setupRoad(s) {
+    const { w, h, layers } = this.map, L = layers[this.map.road], pas = this.world.passages;
+    this.open = new Uint8Array(w * h);
+    for (let i = 0; i < w * h; i++) if (L[i] && !(pas[L[i]] & 1)) this.open[i] = 1;
+    if (!this.isOpen(Math.floor(s.x / 32), Math.floor(s.y / 32))) { // e.g. an old save made while flying freely
+      let best = null, bd = Infinity;
+      for (let i = 0; i < w * h; i++) {
+        if (!this.open[i]) continue;
+        const d = Math.hypot((i % w) * 32 + 16 - s.x, Math.floor(i / w) * 32 + 16 - s.y);
+        if (d < bd) { bd = d; best = i; }
+      }
+      if (best != null) { s.x = (best % w) * 32 + 16; s.y = Math.floor(best / w) * 32 + 16; }
+    }
+  }
+
+  isOpen(tx, ty) {
+    return tx >= 0 && ty >= 0 && tx < this.map.w && ty < this.map.h && this.open[tx + ty * this.map.w] === 1;
+  }
+
+  // moves up to `step` px along the road; returns the distance moved
+  roadMove(s, dx, dy, step) {
+    let moved = 0;
+    for (let guard = 0; guard < 4 && step - moved > 0.01; guard++) {
+      const tx = Math.floor(s.x / 32), ty = Math.floor(s.y / 32);
+      const cx = tx * 32 + 16, cy = ty * 32 + 16;
+      // candidate directions: the stick's main axis, then its other axis, then the only way on at a bend
+      const want = Math.abs(dx) >= Math.abs(dy) ? [[Math.sign(dx), 0], [0, Math.sign(dy)]] : [[0, Math.sign(dy)], [Math.sign(dx), 0]];
+      let cand = want.filter(([a, b]) => a || b);
+      // where the road only goes on one way (a bend), keep following it unless the stick points back the way we came;
+      // once following, holding the stick the same way keeps following the road (it may wind back towards the stick)
+      const back = this.went || [0, 0];
+      const exits = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([a, b]) => this.isOpen(tx + a, ty + b) && !(a === -back[0] && b === -back[1]));
+      const l = Math.hypot(dx, dy) || 1;
+      const f = this.follow;
+      if (f && f[0] * dx / l + f[1] * dy / l < 0.9) this.follow = null;
+      if (this.follow && (back[0] || back[1])) cand = [back, ...exits.length === 1 ? [exits[0]] : [], ...cand];
+      else if (exits.length === 1 && -(dx * back[0] + dy * back[1]) / l < 0.7) cand.push(exits[0]);
+      let go = null;
+      for (const [a, b] of cand) {
+        const along = a ? (s.x - cx) * a : (s.y - cy) * b; // how far past the centre in that direction
+        if (this.isOpen(tx + a, ty + b) || along < -0.5) { go = [a, b]; break; }
+      }
+      if (!go) break;
+      if (!want.some(([a, b]) => a === go[0] && b === go[1]) && !this.follow) this.follow = [dx / l, dy / l];
+      const [a, b] = go;
+      const rest = step - moved;
+      // first line up with the centre across the way we go, then move along it
+      const off = a ? s.y - cy : s.x - cx;
+      const fix = Math.min(Math.abs(off), rest);
+      if (a) s.y -= Math.sign(off) * fix; else s.x -= Math.sign(off) * fix;
+      moved += fix;
+      let r = step - moved;
+      if (r <= 0.01) break;
+      if (!this.isOpen(tx + a, ty + b)) r = Math.min(r, -(a ? (s.x - cx) * a : (s.y - cy) * b)); // stop at the centre
+      else r = Math.min(r, 32); // one tile at a time, then look again
+      if (r <= 0.01) break;
+      s.x += a * r;
+      s.y += b * r;
+      moved += r;
+      this.dir = a ? (a < 0 ? 1 : 2) : (b < 0 ? 3 : 0);
+      this.went = go;
+    }
+    return moved;
   }
 
   walkable(px, py) {
@@ -32,13 +102,17 @@ export class Field {
     const { dx, dy } = input;
     const mag = Math.min(1, Math.hypot(dx, dy));
     if (mag > 0.05) {
-      const step = SPEED * dt * (0.35 + 0.65 * mag);
-      const l = Math.hypot(dx, dy);
-      const nx = s.x + (dx / l) * step, ny = s.y + (dy / l) * step;
-      // slide along edges instead of stopping dead
-      if (this.walkable(nx, s.y)) s.x = nx;
-      if (this.walkable(s.x, ny)) s.y = ny;
-      this.dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 1 : 2) : (dy < 0 ? 3 : 0);
+      let step = SPEED * dt * (0.35 + 0.65 * mag);
+      if (this.open) {
+        step = this.roadMove(s, dx, dy, step);
+      } else {
+        const l = Math.hypot(dx, dy);
+        const nx = s.x + (dx / l) * step, ny = s.y + (dy / l) * step;
+        // slide along edges instead of stopping dead
+        if (this.walkable(nx, s.y)) s.x = nx;
+        if (this.walkable(s.x, ny)) s.y = ny;
+        this.dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 1 : 2) : (dy < 0 ? 3 : 0);
+      }
       this.anim += dt * 6;
       s.travel += step;
       if (s.travel >= 32) {
@@ -47,6 +121,13 @@ export class Field {
       }
     } else {
       this.anim += dt * 2; // idle hover
+      this.follow = null;
+    }
+    if (this.open) { // road maps: the camera leads a little in the direction of travel
+      const [lx, ly] = [[0, 1], [-1, 0], [1, 0], [0, -1]][this.dir];
+      const k = Math.min(1, dt * 2.5);
+      this.look.x += (lx * 60 - this.look.x) * k;
+      this.look.y += (ly * 90 - this.look.y) * k;
     }
     // nearest interactive spot within reach
     let near = null, nd = 44;
@@ -66,7 +147,7 @@ export class Field {
     const s = this.game.state;
     const W = this.map.w * 32, H = this.map.h * 32;
     // camera follows, clamped to the map (centred if the map is smaller than the screen)
-    let cx = s.x - view.w / 2, cy = s.y - view.h * 0.45;
+    let cx = s.x + this.look.x - view.w / 2, cy = s.y + this.look.y - view.h * 0.45;
     if (this.cam) { cx = this.cam.x - view.w / 2; cy = this.cam.y - view.h / 2; } // 地圖 (src/fieldmenu.js mapView)
     cx = W <= view.w ? (W - view.w) / 2 : Math.max(0, Math.min(W - view.w, cx));
     cy = H <= view.h ? (H - view.h) / 2 : Math.max(0, Math.min(H - view.h, cy));

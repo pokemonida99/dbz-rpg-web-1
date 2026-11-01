@@ -32,6 +32,8 @@ def add(world, h):
     # ---------- maps ----------
     for mid, rows in ((5, 49), (8, 47)):  # the last row holds the original's control events only
         world['maps'][str(mid)] = build_map(mid, rows=rows)
+    # Snake Way: Goku keeps to the road — the passable tiles of layer 2 (src/field.js road mode)
+    world['maps']['5']['road'] = 2
 
     INN = {'label': '進入旅館', 'event': 11, 'effect': 'rest'}
     CARD = {'label': '卡片商店', 'effect': 'shop'}

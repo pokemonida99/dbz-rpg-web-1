@@ -1,6 +1,6 @@
 // Party screens, tactics and the battle command menu, after the original:
-//   battle command (101_Scene_Db_Battle.rb output_menu / window_key_state, $WinState 0 → 8 / 5):
-//     戰鬥 → 自動・手動　　菜單 → 隊伍・卡牌・組合技・作戰　　逃跑
+//   battle command (101_Scene_Db_Battle.rb output_menu / window_key_state, $WinState 0 / 5), for touch:
+//     自動・菜單・逃跑, tap a card for manual input　　菜單 → 隊伍・卡牌・組合技・作戰
 //   隊伍 (100_Scene_Db_Status.rb, from the battle menu and the field menu): each member's face, school, LV / HP / KI,
 //     攻擊力・防禦力・速度・經驗・NEXT (or 擊破數・通常攻擊次數), the special moves with KI cost or use count;
 //     tap a member, then 換順序 and another member to swap places — party[0] leads on the map (var 42)
@@ -11,7 +11,7 @@
 //
 // Other screens plug into the menu through `menuEntries` (卡牌 = remake-cards, 組合技 = remake-combo):
 //   menuEntries.card = async ({ game, battle }) => { … }   // battle is null when opened from the field menu
-// In battle the command menu comes back when the promise resolves, unless it resolves to 'stay'
+// In battle the choosing comes back (picks kept) when the promise resolves, unless it resolves to 'stay'
 // (the entry has moved the battle on by itself, e.g. started the turn).
 import { img, audio, rand } from './core.js?v=20261101-1909';
 import * as growth from './growth.js?v=20261101-1909'; // 技能 page, ZP, KI cost with passive skills
@@ -91,44 +91,28 @@ export const menuEntries = {
 };
 const ENTRY_NAMES = { party: '隊伍', card: '卡牌', combo: '組合技', tactics: '作戰' };
 
-// $WinState 0: 戰鬥・菜單・逃跑 (planning starts over from the first member)
-export function battleCommand(b) {
-  b.mode = 'command';
-  b.pending = null;
-  b.plans = b.party.map(() => null);
-  b.cur = null;
-  b.say('要怎麼做？');
-  b.buttons = [
-    ['戰鬥', () => { audio.se(SE_OK); fightMenu(b); }],
-    ['菜單', () => { audio.se(SE_OK); battleMenu(b); }],
-    ['逃跑', () => {
-      if (b.boss) { audio.se(SE_ERR); b.say('這場戰鬥不能逃跑！'); return; }
-      audio.se(SE_RUN);
-      b.done('escape');
-    }],
-  ];
-}
-
-// $WinState 8: 自動・手動
-function fightMenu(b) {
-  b.say('戰鬥：自動或手動？', '自動會照「作戰」的設定出牌。');
-  b.buttons = [
+// The command row while choosing (touch version of $WinState 0 / 5): 自動・菜單・(返回)・逃跑.
+// The original's 戰鬥 → 手動 step is gone: tapping a hand card is manual input for the highlighted member
+// (src/battle.js planning). 逃跑 is hidden in fights that can't be fled.
+export function commandButtons(b) {
+  return [
     ['自動', () => { audio.se(SE_OK); b.autoPlan(); }],
-    ['手動', () => { audio.se(SE_OK); b.cur = b.party.findIndex((m) => b.able(m)); b.promptCard(); }],
-    ['返回', () => battleCommand(b)],
+    ['菜單', () => { audio.se(SE_OK); battleMenu(b); }],
+    ...(b.history.length ? [['返回', () => b.undo()]] : []),
+    ...(b.boss ? [] : [['逃跑', () => { audio.se(SE_RUN); b.done('escape'); }]]),
   ];
 }
 
-// $WinState 5: 隊伍・卡牌・組合技・作戰
+// $WinState 5: 隊伍・卡牌・組合技・作戰; the picks made so far are kept (by member, so 隊伍's 換順序 is fine)
 function battleMenu(b) {
   b.say('菜單');
   b.buttons = [...Object.keys(ENTRY_NAMES).map((k) => [ENTRY_NAMES[k], async () => {
     if (!menuEntries[k]) { audio.se(SE_ERR); b.say(`${ENTRY_NAMES[k]}：準備中`); return; }
     audio.se(SE_OK);
     b.buttons = [];
-    const r = await menuEntries[k]({ game: b.game, battle: b });
-    if (r !== 'stay') battleCommand(b);
-  }]), ['返回', () => battleCommand(b)]];
+    const r = await b.keepPlans(() => menuEntries[k]({ game: b.game, battle: b }));
+    if (r !== 'stay') b.resume();
+  }]), ['返回', () => b.resume()]];
 }
 
 // ---------- field menu (140_Field_Main.rb: 隊伍・卡牌・記錄・概況・組合技・作戰・…) ----------

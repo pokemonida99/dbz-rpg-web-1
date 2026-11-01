@@ -132,13 +132,19 @@ const ANIM = {
 };
 const pics = () => [PARTY, EVENT, FOE, ...new Set(Object.values(S).flatMap((d) => [d.bg && BG(d.bg), d.scroll && BG(d.scroll), d.full]).filter(Boolean)),
   BG('ピッコロと悟飯'), BG('スクロール_蛇の道'), BG('スクロール_山'), pic('顔カード'),
-  ...['ゴクウ_蛇の道を飛ぶ', '都に落ちる宇宙船', 'ベジータとナッパ', 'ゴクウ', '宇宙船(ベジータ逃走)'].map(EV)];
+  ...['ゴクウ_蛇の道を飛ぶ', '都に落ちる宇宙船', 'ベジータとナッパ', 'ゴクウ', '宇宙船(ベジータ逃走)'].map(EV), ...MORE_PICS];
 
-// later chapters bring their own scenes (src/chapter5.js …): z1field entries as above, and their battle_process numbers
-export function addScenes(more, battles = []) {
+// later chapters bring their own scenes (src/chapter5.js …): z1field entries as above, and their battle_process numbers;
+// an entry may instead draw itself: { draw(stage, ctx, quiet) } (src/z2scenes.js), and `pictures` to load first
+const MORE_PICS = [];
+export function addScenes(more, battles = [], pictures = []) {
   Object.assign(S, more);
   BATTLES.push(...battles);
+  MORE_PICS.push(...pictures);
 }
+// nodes of a later chapter's own kinds ({x: name, …}, e.g. pictures, EXP, the Super Saiyan): name → async fn(node, env)
+const EXT = {};
+export function addNodes(more) { Object.assign(EXT, more); }
 export const registerScenes = addScenes; // the same, by the name src/chapter4.js uses
 
 // character_output: the party's faces centred under the scene, three to a row
@@ -161,6 +167,7 @@ async function z1field(stage, ctx, quiet = false) {
   const d = S[n];
   if (!d) { stage.clear(); return; }
   if (d.fadeout && !quiet) await stage.fadeTo(1, 30); // Graphics.fadeout before the scene is drawn
+  if (d.draw) { if (!quiet) { stage.clear(); stage.faceSize = 64; } await d.draw(stage, ctx, quiet); return; } // (also moves variable 41 on when skipped)
   if (!d.keep) { stage.clear(); stage.faceSize = 64; }
   if (d.bgm && !quiet) audio.playBgm(d.bgm);
   if (d.party) ctx.partyc = typeof d.party === 'function' ? d.party(v, ctx.s.sw || {}, ctx.partyc) : d.party;
@@ -212,15 +219,16 @@ async function z1field(stage, ctx, quiet = false) {
 }
 
 // Plays a list of [{bgm, nodes}] (the chapter scenes, tools/build_chapter2.py scenes()) as one cutscene.
-export async function playScenes(list, s) {
+// faces: speaker → face, on top of world.faces (src/z2b.js: the Z2 sheets)
+export async function playScenes(list, s, more = {}) {
   const ui = overlay();
   await loadImages(pics());
   const stage = new Stage(ui);
-  const faces = { ...(world.opening && world.opening.faces), ...world.faces };
+  const faces = { ...(world.opening && world.opening.faces), ...world.faces, ...more.faces };
   const sw = s.sw || (s.sw = {});
   const v = s.var || (s.var = {});
-  const ctx = { s, partyc: s.party.map((m) => m.id) };
-  const test = (c) => (c[0] === 'sw' ? !!sw[c[1]] === c[2] : c[0] === 'var' ? CMP[c[3]](v[c[1]] || 0, c[2]) : false);
+  const ctx = { s, partyc: s.party.map((m) => m.id), faces };
+  const test = (c) => (c[0] === 'sw' ? !!sw[c[1]] === c[2] : c[0] === 'var' ? CMP[c[3]](v[c[1]] || 0, c[2]) : c[0] === 'party' ? s.party.length > c[1] : false);
   const run = async (nodes) => {
     for (const n of nodes) {
       const quiet = ui.skipped; // skipped: only the story state still changes
@@ -245,6 +253,7 @@ export async function playScenes(list, s) {
       else if (n.flash) { if (!quiet) await stage.doFlash(n.flash); }
       else if (n.wait) { if (!quiet) await ui.wait(n.wait); }
       else if (n.choice) { const k = quiet ? 0 : await choice(ui, n.choice); if (await run(n.branches[k] || [])) return true; } // skipped: the first answer
+      else if (n.x) { if (EXT[n.x]) await EXT[n.x](n, { ui, stage: quiet ? NO_STAGE : stage, ctx, s, quiet }); }
       else if (n.end) return true;
     }
     return false;
@@ -279,7 +288,7 @@ function choice(ui, options) {
 }
 
 // one event (a node list) as a cutscene
-export const playEvent = (nodes, s) => playScenes([{ nodes }], s);
+export const playEvent = (nodes, s, more) => playScenes([{ nodes }], s, more);
 
 // common events 203 / 204: whether Goku / Piccolo were down at the end of the Raditz battle (switches 864 / 865);
 // the story after it (z1field 60, page 60) goes by them

@@ -197,7 +197,7 @@ def add(world, h):
             if f'Z1_{n}{ext}' in have and f'Z2_{n}{ext}' in have:
                 alias[f'Graphics/Pictures/Z1_{n}{ext}'] = f'Graphics/Pictures/Z2_{n}{ext}'
     alias['ui/item_cards.png'] = 'ui/item_cards_z2.png'  # the card icons below
-    world['era'] = {'1': alias}
+    world['era'] = {'1': alias, '2': alias}  # after Z2 (variable 40 = 2, the Z3 hand-over): no Z3 art yet, keep Z2's
     # the card icons of Z2 (005_Icon.rb put_icon: column $game_variables[40] of 顔カード.PNG, e.g. the Namek balls)
     icons1 = Image.open(os.path.join(root, 'assets', 'ui', 'item_cards.png'))
     sheet = Image.open(os.path.join(root, 'game', 'Graphics', 'Pictures', '顔カード.PNG')).convert('RGBA')

@@ -222,6 +222,7 @@ export async function startZ2a(game) {
 export function resumeZ2a(game) {
   const s = game.state;
   if (game.world.z2a && s.flags.willow === 'done' && !s.flags.z2a) { startZ2a(game); return true; }
+  if (s.flags.z2a === 'done' && !s.flags.z2b && game.startZ2b) { game.startZ2b(game); return true; } // saved at page 445, before the second half began
   return false;
 }
 

@@ -21,6 +21,7 @@ import { chapter6Goal, startChapter6, resumeChapter6, chapter6Spot, isChapter6Ma
 import { willowGoal, startWillow, resumeWillow, willowSpot, isWillowMap, willowBoss, devWillow } from './willow.js?v=20261101-2206'; // after Z1: the Willow chapter, up to the hand-over to Z2
 import { z2aGoal, startZ2a, resumeZ2a, z2aSpot, storyScenes, z2aBackdrop, devZ2a } from './z2a.js?v=20261101-2206'; // Z2 first half: Namek, Goku's training, the Grand Elder
 import { applyEra } from './era.js?v=20261101-2206'; // the Z2 art while variable 40 is 1
+import { z2bGoal, startZ2Ginyu, startZ2b, resumeZ2b, z2bSpot, isZ2bMap, z2bBoss, devZ2b } from './z2b.js?v=20261101-2206'; // Z2 second half: the Ginyu Force, Frieza
 
 // testing in a hidden browser pane (no animation frames there): ?timer drives every frame with timers instead
 if (new URLSearchParams(location.search).has('timer')) window.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16);
@@ -78,7 +79,7 @@ const game = {
     this.field.paused = true;
     input.dx = input.dy = 0;
     const s = this.state;
-    if (poi.chapter) { await (z2aSpot(this, poi) || willowSpot(this, poi) || chapter6Spot(this, poi) || chapter4Spot(this, poi) || chapter3Spot(this, poi) || chapterSpot(this, poi)); renderHud(); this.busy = false; this.field.paused = false; return; }
+    if (poi.chapter) { await (z2bSpot(this, poi) || z2aSpot(this, poi) || willowSpot(this, poi) || chapter6Spot(this, poi) || chapter4Spot(this, poi) || chapter3Spot(this, poi) || chapterSpot(this, poi)); renderHud(); this.busy = false; this.field.paused = false; return; }
     spotTally(s, poi);
     if (['training', 'shop'].includes(poi.effect)) this.field.spent = poi; // once per visit (src/field.js)
     if (poi.effect === 'training') { await training(this); renderHud(); this.busy = false; this.field.paused = false; return; }
@@ -102,6 +103,7 @@ const game = {
   },
 
   async onBoss(b) {
+    if (isZ2bMap(this.state)) return z2bBoss(this, b);
     if (isWillowMap(this.state)) return willowBoss(this, b);
     if (isChapter6Map(this.state)) return chapter6Boss(this, b);
     if (isChapter5Map(this.state)) return chapter5Boss(this, b);
@@ -142,6 +144,7 @@ const game = {
     this.scene = battle;
     this.lastBattle = battle;
     const result = await battle.run();
+    this.lastResult = result; // 'win' | 'lose' | 'break' (an event battle stopped: src/z2b.js)
     battleTally(this, battle, result);
     this.scene = this.field;
     hud.hidden = false;
@@ -176,7 +179,7 @@ function faceCanvas(m) {
   const css = (64 * Math.max(1, Math.round((36 * dpr) / 64))) / dpr; // about 36 CSS px
   c.style.width = c.style.height = `${css}px`;
   const col = m.hp <= 0 || m.ko ? 2 : m.hp * 4 < m.maxhp ? 1 : 0; // normal / hurt / KO, like the battle screen
-  const f = img(FACES);
+  const f = img(FACES); // from Z2 on src/era.js aliases it to the Z2 sheet
   const paint = () => { if (f.ok) c.getContext('2d').drawImage(f.im, 64 * col, 64 * (m.id - 3), 64, 64, 0, 0, 64, 64); };
   if (f.ok) paint(); else f.p.then(paint);
   return c;
@@ -200,7 +203,7 @@ function renderHud() {
     party.appendChild(el);
   }
   hud.querySelector('.menu-btn').onclick = openMenu;
-  hud.querySelector('.goal').textContent = z2aGoal(game.world, s) ?? willowGoal(game.world, s) ?? chapter6Goal(game.world, s) ?? chapter5Goal(game.world, s) ?? chapter4Goal(game.world, s) ?? chapter3Goal(game.world, s) ?? chapterGoal(game.world, s) ?? (s.flags.bossDone ? '' : '目標：飛往右上方救回悟飯（建議練到 Lv6 以上）');
+  hud.querySelector('.goal').textContent = z2bGoal(game.world, s) ?? z2aGoal(game.world, s) ?? willowGoal(game.world, s) ?? chapter6Goal(game.world, s) ?? chapter5Goal(game.world, s) ?? chapter4Goal(game.world, s) ?? chapter3Goal(game.world, s) ?? chapterGoal(game.world, s) ?? (s.flags.bossDone ? '' : '目標：飛往右上方救回悟飯（建議練到 Lv6 以上）');
 }
 game.renderHud = renderHud;
 
@@ -264,7 +267,7 @@ function load(key = SAVE_KEY) {
     s.var = s.var || { 42: 3 };
     startField();
     resumeChapter(game);
-    resumeChapter3(game) || resumeChapter4(game) || resumeChapter5(game) || resumeChapter6(game) || resumeWillow(game) || resumeZ2a(game);
+    resumeZ2b(game) || resumeChapter3(game) || resumeChapter4(game) || resumeChapter5(game) || resumeChapter6(game) || resumeWillow(game) || resumeZ2a(game);
     return true;
   } catch (e) { return false; }
 }
@@ -292,7 +295,7 @@ function startField() {
 const CHAPTERS = { ch4: startChapter4, ch5: startChapter5, ch6: startChapter6, willow: startWillow };
 const nextChapter = (k) => (typeof k !== 'string' ? startChapter3(game) : CHAPTERS[k] ? CHAPTERS[k](game) : false);
 Object.assign(game, { startZ2a, storyScenes, backdrop: () => z2aBackdrop(game) }); // Z2 (src/z2a.js); the Willow chapter calls game.startZ2a
-Object.assign(game, { startField, save, renderHud: () => renderHud(), showTitle: (sub, notes) => showTitle(sub, notes), nextChapter, startChapter4, startChapter5, startChapter6, startWillow, devChapter5: () => devChapter5(game), devChapter6: () => devChapter6(game) }); // for src/chapter*.js
+Object.assign(game, { startField, save, renderHud: () => renderHud(), showTitle: (sub, notes) => showTitle(sub, notes), nextChapter, startChapter4, startChapter5, startChapter6, startWillow, devChapter5: () => devChapter5(game), devChapter6: () => devChapter6(game), startZ2Ginyu: () => startZ2Ginyu(game), startZ2b: () => startZ2b(game) }); // for src/chapter*.js
 
 // ---------- title ----------
 const title = document.getElementById('title');
@@ -372,6 +375,7 @@ async function boot() {
   setCardGame(game); // the card schools change from 概況 11 on
   const dev = new URLSearchParams(location.search).get('dev'); // ?dev=ch6 / ch6earth / ch6vegeta: jump to chapter 6
   if (dev && dev.startsWith('ch6')) { title.hidden = true; devChapter6(game, dev); requestAnimationFrame(frame); return; }
+  if (dev && ['z2ginyu', 'z2frieza', 'z2last'].includes(dev)) { title.hidden = true; devZ2b(game, dev); requestAnimationFrame(frame); return; } // Z2 second half
   if (dev && dev.startsWith('willow')) { title.hidden = true; devWillow(game, dev); requestAnimationFrame(frame); return; } // ?dev=willow / willow51 / willowboss
   if (dev && dev.startsWith('z2')) { title.hidden = true; devZ2a(game, dev); requestAnimationFrame(frame); return; } // ?dev=z2 / z2b / z2c / z2d
   if (!options.skipOp) await playOpening(); // the title animation, like the original plays before its title screen

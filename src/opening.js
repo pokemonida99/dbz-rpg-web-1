@@ -283,6 +283,12 @@ export class Stage {
         else { const e = img(s.path); if (e.ok) c.drawImage(e.im, sx, sy, sw, sh, PLAY_X + ((s.x - PLAY_X) * fz) / 64 + ox + (64 - fz) / 2, fy, fz, fz); }
         continue;
       }
+      if (s.size === 'screen') { // a picture placed on the original's 640×480 screen (show picture), scaled to the width
+        const e = img(s.path), k = w / 640;
+        const y0 = this.ui.dlg.hidden ? Math.round((h - 480 * k) / 2) : top + 64 - 240 * k; // mid-screen while the message box is closed
+        if (e.ok) { c.globalAlpha = s.op == null ? 1 : s.op / 255; c.drawImage(e.im, sx, sy, sw, sh, s.x * k, y0 + s.y * k, sw * k, sh * k); c.globalAlpha = 1; }
+        continue;
+      }
       if (s.size === 'full') { // as wide as the screen, its middle on the scene window
         const e = img(s.path), fw = w, fh = Math.round((w * sh) / sw);
         if (e.ok) c.drawImage(e.im, sx, sy, sw, sh, 0, Math.max(0, Math.round(top + 64 - fh / 2)), fw, fh);

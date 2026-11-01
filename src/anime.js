@@ -91,6 +91,8 @@ const MOVES = {
   121: 'vegetaWave', 123: 'vegetaBlast', 124: 'galickGun', // 貝吉塔 (party, CE24)
   141: 'energyWave', 142: 'mouthBeam', 143: 'makouhou', 144: 'kikouhou', // 青年 (the young Namekian)
 };
+// later chapters add the films of their moves (src/z2b.js: Vegeta, the Ginyu Force, Frieza …)
+export function addMoves(more) { Object.assign(MOVES, more); }
 // 拡散エネルギー波 hits every enemy: the battle plays one film per target, and in the original only the first one
 // has the whole charge — the rest are just the beam falling on them. A film started right after the last one
 // ended belongs to the same attack.

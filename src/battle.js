@@ -16,8 +16,9 @@ import { commandButtons, autoSkill, autoTarget, tally } from './partymenu.js?v=2
 import * as items from './items.js?v=20261101-2206'; // item cards: effects that touch the battle rules
 import { tryCombo, announceCombos, comboHints, hasCombos, HINT_TEXT } from './combo.js?v=20261101-2206'; // 組合技
 import * as growth from './growth.js?v=20261101-2206'; // passive skills, proficiency, KO, SP / ZP / EXP pool
+import { superSaiyan, moveTransforms, afterBattle as ssAfterBattle } from './supersaiyan.js?v=20261101-2206'; // 超サイヤ人
 
-export const SCHOOL = ['必', '龜', '神', '界', '魔', '惑'];
+export const SCHOOL = ['必', '龜', '神', '界', '魔', '惑', '基', '悟', '超'];
 const HAND = 6;
 const CARDS = 'Graphics/Pictures/カード関係.PNG';
 const FACES = 'Graphics/Pictures/Z1_顔味方.PNG'; // 64×64; row = actor id - 3; columns: normal, hurt, KO
@@ -48,12 +49,20 @@ export function battleImages(world) {
 // variable 43 ≥ 11) 界 takes the place of 神 (createcardval_chk, all.rb 12325).
 let cardGame = null;
 export function setCardGame(g) { cardGame = g; }
-const late = () => ((cardGame && cardGame.state && cardGame.state.var && cardGame.state.var[43]) || 0) >= 11;
 const era = () => ((cardGame && cardGame.state && cardGame.state.var && cardGame.state.var[40]) || 0); // 1: Z2
-// create_card_i: Z2 ($cardi_max 7) leaves out 神 (2) and 6-7 for the party, 2 and 7 for the enemies (惑 5: Vegeta's school)
-const pick = (l) => l[rand(l.length)];
-export function newCard() { return { a: rand(8), g: rand(8), s: pick(era() === 1 ? [0, 1, 3, 4, 5] : late() ? [0, 1, 3, 4] : [0, 1, 2, 4]) }; }
-const enemyCard = () => ({ a: rand(8), g: rand(8), s: pick(era() === 1 ? [0, 1, 3, 4, 5, 6] : late() ? [0, 1, 3, 4, 5] : [0, 1, 2, 4, 5]) });
+const late = () => ((cardGame && cardGame.state && cardGame.state.var && cardGame.state.var[43]) || 0) >= 11;
+// Z2 (variable 40 = 1, create_card_i all.rb 20730): rand($cardi_max) without 神・基・悟 for the party (without 神・悟
+// for enemies), and without 界 once Goku is a Super Saiyan; $cardi_max is 7, 9 from the Super Saiyan battle on (超)
+function z2Schools(foe) {
+  const s = cardGame && cardGame.state;
+  if (!s || !s.var || !s.var[40]) return null;
+  const no = foe ? [2, 7] : [2, 6, 7];
+  if (s.ss && s.ss[1]) no.push(3);
+  return Array.from({ length: s.cardiMax || 7 }, (_, i) => i).filter((i) => !no.includes(i));
+}
+const pick = (a) => a[rand(a.length)];
+export function newCard() { return { a: rand(8), g: rand(8), s: pick(z2Schools(false) || (late() ? [0, 1, 3, 4] : [0, 1, 2, 4])) }; }
+const enemyCard = () => ({ a: rand(8), g: rand(8), s: pick(z2Schools(true) || (late() ? [0, 1, 3, 4, 5] : [0, 1, 2, 4, 5])) });
 export function newHand() { return Array.from({ length: HAND }, newCard); }
 
 export function rollEncounter(world) {
@@ -66,6 +75,7 @@ export function rollEncounter(world) {
 // P = the move's power with proficiency (growth.power)
 function playerDamage(b, m, skill, card, foe, foeCard, P) {
   let d = Math.floor(((m.atk + P) * 8 * (card.a + 7 + rand(2) + 1)) / Math.floor((foe.def * (foeCard.g + 7)) / 3));
+  if (m.school === 8) d = Math.floor(d * 1.3); // class 9 (超サイヤ人)
   if (card.s === m.school || items.powerUp(m)) d = Math.floor(d * 1.3);
   d = growth.dealt(b, m, skill, d); // passive skills (set_damage_add)
   if (skill && skill.noDamage) d = 0;
@@ -76,6 +86,7 @@ function enemyDamage(b, foe, skill, card, m, guardCard) {
   const P = skill ? Math.trunc((foe.atk * skill.power) / 100) - foe.atk : 0;
   let d = Math.floor(((foe.atk + P) * 8 * (card.a + 7 + rand(2) + 1)) / Math.floor((m.def * (guardCard.g + 7)) / 3));
   if (card.s === foe.school) d = Math.floor(d * 1.2);
+  if (m.school === 8) d = Math.floor(d * 0.85); // the defender is of class 9 (超サイヤ人)
   if (items.guardUp(m)) d = Math.floor(d * 0.7);
   d = growth.taken(b, m, d); // passive skills (set_damage_add)
   if (items.evades(m)) return -1;
@@ -129,6 +140,7 @@ function tag(c, school, x, y) {
   c.drawImage(s.im, 0, 192, 64, 32, x, y, 64, 32);
   c.drawImage(s.im, 32 * school, 64, 32, 32, x + 16, y, 32, 32);
 }
+// from Z2 on the Z2 face sheet is drawn: src/era.js aliases the Z1 picture to it (core.js img)
 function face(c, m, x, y, size = 64) {
   const f = img(FACES);
   if (!f.ok) return;
@@ -725,7 +737,7 @@ export class Battle {
     for (const o of order) {
       if (this.over()) break;
       if (o.kind === 'p') await this.playerAct(o.i);
-      else if (!items.foeStopped(o.f)) for (let n = 0; n < o.f.eva && o.f.hp > 0 && !this.over(); n++) { if (n > 0) o.f.card = enemyCard(); await this.enemyAct(o.f); }
+      else if (!items.foeStopped(o.f)) for (let n = 0; n < this.attacks(o.f) && o.f.hp > 0 && !this.over(); n++) { if (n > 0) o.f.card = enemyCard(); await this.enemyAct(o.f); }
     }
     this.plans.forEach((p, i) => { if (p) this.hand[p.card] = growth.regenCard(this.world, this.party[i], newCard()); }); // used cards are regenerated in place (§1.6), 一か八か
     items.endTurn(this);
@@ -738,13 +750,26 @@ export class Battle {
     this.startPlanning();
   }
 
-  over() { return this.foes.every((f) => f.hp <= 0) || this.party.every((m) => m.ko); }
+  over() { return this.foes.every((f) => f.hp <= 0) || this.party.every((m) => m.ko) || this.stopped(); }
+
+  // an event battle that ends early (stopWhen, src/z2b.js: Frieza's last form when someone first falls → 'break')
+  stopped() { return !!(this.stopWhen && this.stopWhen(this)); }
+
+  // attacks a turn ($data_enemies.eva), plus the event battle's switches (all.rb 140508): alone = one more for the
+  // last one standing (25), hp40 / hp30 = one more at 40 % / 30 % HP or less (27 / 26)
+  attacks(f) {
+    let n = f.eva;
+    if (this.alone && this.foes.filter((x) => x.hp > 0).length === 1) n++;
+    if (this.hp30 && (f.hp * 100) / f.maxhp <= 30) n++;
+    if (this.hp40 && (f.hp * 100) / f.maxhp <= 40) n++;
+    return n;
+  }
 
   // play one action as a battle film; the damage lands (HP, duel bar) when the hit shows on screen
   play(m, f, playerAttacks, skill, dmg, target) {
     const actor = this.world.actors[m.id];
     this.anim = new Duel({
-      party: { normal: actor.sprite, special: actor.special },
+      party: { normal: m.sprite || actor.sprite, special: m.special || actor.special }, // m.sprite: Z2 battle suits
       foe: { normal: f.portrait, special: f.sprite, size: f.size },
       playerAttacks, skill, ray: actor.ray, hit: dmg >= 0, damage: Math.max(0, dmg), margin: Math.max(0, (SW - view.w) / 2),
       onHit: () => {
@@ -771,6 +796,15 @@ export class Battle {
     if (skill && m.ki < items.kiNeed(m, base)) skill = null;
     const targets = skill && skill.all ? this.foes.filter((f) => f.hp > 0) : [foe];
     if (skill) items.payKi(m, base);
+    if (skill && skill.ss && moveTransforms(m)) { // 超サイヤ人變身: no attack; this member becomes a Super Saiyan
+      this.say(`${m.name} 的${skill.name}！`);
+      audio.se('Z3 変身', 80);
+      await sleep(900);
+      const to = superSaiyan(this.world, this.game.state, moveTransforms(m), true);
+      if (to) { audio.se('Z1 パワーアップ', 80); this.say(`${to.name} 變成了超級賽亞人！`); await sleep(1200); }
+      tally(this.game.state, m, skill, 0);
+      return;
+    }
     const alive = targets.filter((t) => t.hp > 0).length;
     for (const t of targets) {
       t.card = t.card || enemyCard();
@@ -896,6 +930,7 @@ export class Battle {
       const watch = () => {
         if (this.foes.every((f) => f.hp <= 0)) res('win');
         else if (this.party.every((m) => m.ko)) res('lose');
+        else if (this.stopped()) res('break');
         else setTimeout(watch, 200);
       };
       watch();
@@ -909,6 +944,7 @@ export class Battle {
     this.el.hidden = true;
     this.el.innerHTML = '';
     items.battleEnd();
+    ssAfterBattle(this.world, this.game.state);
     // KO'd members stay KO'd after the fight (the original's $chadead), until an inn or their HP is full again
     return result;
   }

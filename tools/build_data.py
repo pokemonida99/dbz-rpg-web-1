@@ -121,8 +121,15 @@ def cond(p):
     return ['never']
 
 
+# common events copied into the event where it calls them (code 117, or a jump to a label right before the call):
+# the villagers' explanations of skills, S-combos and proficiency
+INLINE_CE = {264, 265, 266}
+
+
 def script(lst):
     i = 0
+    labels = {c['parameters'][0]: lst[k + 1]['parameters'][0] for k, c in enumerate(lst[:-1])
+              if c['code'] == 118 and lst[k + 1]['code'] == 117 and lst[k + 1]['parameters'][0] in INLINE_CE}
 
     def block(ind):
         nonlocal i
@@ -174,6 +181,10 @@ def script(lst):
                 out.append({'item': [p[0], -p[3] if p[1] else p[3]]})
             elif code == 119 and p[0] == '終了':
                 out.append({'end': True})
+            elif code == 117 and p[0] in INLINE_CE:
+                out.extend(script(D('commonevents')[p[0]]['list']))
+            elif code == 119 and p[0] in labels:
+                out.extend(script(D('commonevents')[labels[p[0]]]['list']))
             i += 1
         return out
 
@@ -240,5 +251,7 @@ from opening_data import build as build_opening  # noqa: E402
 world['opening'] = build_opening(D, s2t)
 import build_chapter2  # noqa: E402  (chapter 2: Snake Way and the Sansho area)
 build_chapter2.add(world, globals())
+import build_growth  # noqa: E402  (passive skills: src/growth.js)
+build_growth.add(world, globals())
 json.dump(world, open(os.path.join(root, 'data', 'world.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 print('world.json written')

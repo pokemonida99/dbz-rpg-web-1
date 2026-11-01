@@ -10,6 +10,7 @@ import { view, img, audio, sleep, rand } from './core.js?v=20261101-1835';
 import { levelUp } from './party.js?v=20261101-1835';
 import { Duel, ANIME_IMAGES, SW, SH, BACK_Y } from './anime.js?v=20261101-1835';
 import { battleCommand, autoSkill, autoTarget, tally } from './partymenu.js?v=20261101-1835'; // command menu, 作戰, counters
+import * as growth from './growth.js?v=20261101-1835'; // passive skills, proficiency, KO, SP / ZP / EXP pool
 
 export const SCHOOL = ['必', '龜', '神', '界', '魔', '惑'];
 const HAND = 6;
@@ -46,18 +47,20 @@ export function rollEncounter(world) {
 }
 
 // ---------- damage (docs/battle-rules.md §4) ----------
-function playerDamage(m, skill, card, foe, foeCard) {
-  const P = skill ? skill.power : 3;
+// P = the move's power with proficiency (growth.power)
+function playerDamage(b, m, skill, card, foe, foeCard, P) {
   let d = Math.floor(((m.atk + P) * 8 * (card.a + 7 + rand(2) + 1)) / Math.floor((foe.def * (foeCard.g + 7)) / 3));
   if (card.s === m.school) d = Math.floor(d * 1.3);
+  d = growth.dealt(b, m, skill, d); // passive skills (set_damage_add)
   if (skill && skill.noDamage) d = 0;
   const avoid = Math.trunc((foe.agi * 1.2 + foeCard.g) / 3 - (m.agi * 1.1 + card.a) / 3);
   return avoid > 0 && rand(100) + 1 < avoid ? -1 : d;
 }
-function enemyDamage(foe, skill, card, m, guardCard) {
+function enemyDamage(b, foe, skill, card, m, guardCard) {
   const P = skill ? Math.trunc((foe.atk * skill.power) / 100) - foe.atk : 0;
   let d = Math.floor(((foe.atk + P) * 8 * (card.a + 7 + rand(2) + 1)) / Math.floor((m.def * (guardCard.g + 7)) / 3));
   if (card.s === foe.school) d = Math.floor(d * 1.2);
+  d = growth.taken(b, m, d); // passive skills (set_damage_add)
   const avoid = Math.trunc((m.agi * 1.2 + guardCard.g) / 3 - (foe.agi * 1.1 + card.a) / 3);
   return avoid > 0 && rand(100) + 1 < avoid ? -1 : d;
 }
@@ -111,7 +114,7 @@ function tag(c, school, x, y) {
 function face(c, m, x, y) {
   const f = img(FACES);
   if (!f.ok) return;
-  const col = m.hp <= 0 ? 2 : m.hp * 4 < m.maxhp ? 1 : 0;
+  const col = m.ko || m.hp <= 0 ? 2 : m.hp * 4 < m.maxhp ? 1 : 0;
   c.drawImage(f.im, 64 * col, 64 * (m.id - 3), 64, 64, x, y, 64, 64);
 }
 function foeFace(c, f, x, y) {
@@ -313,9 +316,10 @@ export class Battle {
     word(c, 'KI', x + w - 96, y + 12); num(c, m.ki, x + w - 14, y + 12);
     skills.forEach((s, i) => {
       const ry = y + 40 + i * rowH;
-      const ok = m.ki >= s.ki;
+      const ki = growth.kiCost(this.world, m, s); // passive skills (get_mp_cost)
+      const ok = m.ki >= ki;
       text(c, s.name + (s.all ? '（全體）' : ''), x + 30, ry + 6, ok ? INK : '#a08060', 18);
-      text(c, `KI ${s.ki}`, x + w - 14, ry + 8, ok ? '#7a5230' : '#c0a080', 14, 'right');
+      text(c, `KI ${ki}`, x + w - 14, ry + 8, ok ? '#7a5230' : '#c0a080', 14, 'right');
       if (ok) this.hit(x, ry, w, rowH, () => { this.pending.skill = s; this.mode = 'card'; this.chooseTarget(); });
     });
     const by = y + h - 46, bw = (w - 30) / 2;
@@ -376,7 +380,7 @@ export class Battle {
   }
 
   // ---------- planning ----------
-  able(m) { return m.hp > 0; }
+  able(m) { return !m.ko; } // KO'd members stay out until healed to full (growth.recover)
 
   startPlanning() {
     this.phase = 'plan';
@@ -384,6 +388,7 @@ export class Battle {
     this.duel = null;
     this.plans = this.party.map(() => null);
     this.cur = this.party.findIndex((m) => this.able(m));
+    growth.turnStart(this);
     battleCommand(this); // 戰鬥・菜單・逃跑 (src/partymenu.js)
   }
 
@@ -454,6 +459,7 @@ export class Battle {
     this.mode = 'card';
     this.buttons = [];
     const order = [];
+    this.party.forEach((m, i) => { const p = this.plans[i]; if (p) this.hand[p.card] = growth.cardFor(this.world, m, this.hand[p.card]); }); // ミラクル全開パワー, ムダのない動き
     this.party.forEach((m, i) => { const p = this.plans[i]; if (p) order.push({ kind: 'p', i, key: this.hand[p.card].a + this.hand[p.card].g, r: Math.random() }); });
     for (const f of this.foes) if (f.hp > 0) { f.card = enemyCard(); order.push({ kind: 'e', f, key: f.card.a + f.card.g, r: Math.random() }); }
     order.sort((a, b) => b.key - a.key || a.r - b.r);
@@ -465,16 +471,13 @@ export class Battle {
     }
     for (const p of this.plans) if (p) this.hand[p.card] = newCard(); // used cards are regenerated in place (§1.6)
     if (this.over()) return;
-    for (const m of this.party) { // recovery from the second turn on (§4.6)
-      if (m.hp > 0) { m.hp = Math.min(m.maxhp, m.hp + Math.ceil((m.maxhp * 3) / 100)); m.ki = Math.min(m.maxki, m.ki + Math.ceil((m.maxki * 2.5) / 100)); }
-      else m.hp = Math.min(m.maxhp, m.hp + Math.ceil((m.maxhp * 7.5) / 100));
-    }
+    growth.recover(this); // recovery from the second turn on, KO'd members back only at full HP (§4.6)
     await sleep(400);
     this.turn++;
     this.startPlanning();
   }
 
-  over() { return this.foes.every((f) => f.hp <= 0) || this.party.every((m) => m.hp <= 0); }
+  over() { return this.foes.every((f) => f.hp <= 0) || this.party.every((m) => m.ko); }
 
   // play one action as a battle film; the damage lands (HP, duel bar) when the hit shows on screen
   play(m, f, playerAttacks, skill, dmg, target) {
@@ -487,6 +490,7 @@ export class Battle {
         if (dmg < 0) return;
         target.hp = Math.max(0, target.hp - dmg);
         if (!playerAttacks) audio.se('Z1 ダメージ', 70);
+        if (!playerAttacks && target.hp <= 0) growth.knockOut(target, this.turn);
       },
     });
     if (!this.fast && !this.msg[1]) this.msg = [this.msg[0], '（點一下畫面可以加速）'];
@@ -496,27 +500,30 @@ export class Battle {
   async playerAct(i) {
     const m = this.party[i];
     const p = this.plans[i];
-    if (m.hp <= 0) return;
+    if (m.ko) return;
     let foe = this.foes[p.target];
     if (!foe || foe.hp <= 0) foe = this.foes.filter((f) => f.hp > 0).reduce((a, b) => (b.hp < a.hp ? b : a));
     const cd = this.hand[p.card];
     let skill = p.skill;
-    if (skill && m.ki < skill.ki) skill = null;
+    const ki = skill ? growth.kiCost(this.world, m, skill) : 0; // passive skills (get_mp_cost)
+    if (skill && m.ki < ki) skill = null;
     const targets = skill && skill.all ? this.foes.filter((f) => f.hp > 0) : [foe];
-    if (skill) m.ki -= skill.ki;
+    if (skill) m.ki -= ki;
     const alive = targets.filter((t) => t.hp > 0).length;
     for (const t of targets) {
       t.card = t.card || enemyCard();
       this.duel = { m, mc: cd, f: t, fc: t.card };
       this.say(`${m.name} 的${skill ? skill.name : '攻擊'}！`, cd.s === m.school ? '流派一致，威力 ×1.3！' : '');
-      const dmg = playerDamage(m, skill && { power: skill.power, noDamage: skill.noDamage }, cd, t, t.card);
+      const dmg = playerDamage(this, m, skill && { noDamage: skill.noDamage }, cd, t, t.card, growth.power(this.game.state, m, skill));
       await this.play(m, t, true, skill ? skill.id : null, dmg, t);
+      if (dmg >= 0) growth.onHit(this, m, t); // かなしばり
     }
     tally(this.game.state, m, skill, alive - targets.filter((t) => t.hp > 0).length); // use counts, KOs
   }
 
   async enemyAct(f) {
-    const targets = this.party.filter((m, i) => m.hp > 0 && this.plans[i]);
+    if (growth.foeStopped(f)) return; // stopped by かなしばり
+    const targets = this.party.filter((m, i) => !m.ko && this.plans[i]);
     if (!targets.length) return;
     const cd = f.card;
     let skill = null;
@@ -528,7 +535,7 @@ export class Battle {
     const guard = this.hand[this.plans[this.party.indexOf(m)].card];
     this.duel = { m, mc: guard, f, fc: cd };
     this.say(`${f.name} 的${skill ? skill.name : '攻擊'}！`);
-    await this.play(m, f, false, skill ? skill.id : null, enemyDamage(f, skill && { power: skill.power }, cd, m, guard), m);
+    await this.play(m, f, false, skill ? skill.id : null, enemyDamage(this, f, skill && { power: skill.power }, cd, m, guard), m);
   }
 
   // ---------- result ----------
@@ -538,9 +545,10 @@ export class Battle {
     this.buttons = [];
     const exp = this.foes.reduce((s, f) => s + f.exp, 0) * EXP_RATE;
     this.game.state.zeni += this.foes.reduce((s, f) => s + f.gold, 0);
+    growth.beforeExp(this, exp); // shared EXP pool, ZP
     const ups = [];
     for (const m of this.party) {
-      m.exp += exp;
+      m.exp += growth.expFor(this.world, m, exp); // サイヤ人の血
       if (levelUp(this.world, m)) ups.push(`${m.name} 升到 LV ${m.level}`);
     }
     this.say('打倒敵人了！', `獲得 ${exp} 點經驗值`);
@@ -548,6 +556,11 @@ export class Battle {
     if (ups.length) {
       audio.se('Z1 レベルアップ', 80);
       this.say(...ups.length > 1 ? [`${ups.join('、')}！`] : [`${ups[0]}！`]);
+      await new Promise((res) => { this.cont = res; });
+    }
+    for (const pg of growth.afterBattle(this)) { // SP, 追加技能 learned, 固有技能 for the new levels
+      if (pg.se) audio.se(pg.se, 80);
+      this.say(...pg.lines);
       await new Promise((res) => { this.cont = res; });
     }
     this.cont = null;
@@ -569,7 +582,7 @@ export class Battle {
       this.done = res;
       const watch = () => {
         if (this.foes.every((f) => f.hp <= 0)) res('win');
-        else if (this.party.every((m) => m.hp <= 0)) res('lose');
+        else if (this.party.every((m) => m.ko)) res('lose');
         else setTimeout(watch, 200);
       };
       watch();
@@ -580,7 +593,7 @@ export class Battle {
     this.el.removeEventListener('pointerdown', onTap);
     this.el.hidden = true;
     this.el.innerHTML = '';
-    for (const m of this.party) if (m.hp <= 0 && result !== 'lose') m.hp = 1; // KO'd members get back up after the fight
+    // KO'd members stay KO'd after the fight (the original's $chadead), until an inn or their HP is full again
     return result;
   }
 }

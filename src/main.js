@@ -63,7 +63,7 @@ const game = {
     if (poi.chapter) { await chapterSpot(this, poi); renderHud(); this.busy = false; this.field.paused = false; return; }
     if (poi.event) await runEvent(this.world.events[poi.event], s);
     else await say(poi.lines);
-    if (poi.effect === 'rest') for (const m of s.party) { m.hp = m.maxhp; m.ki = m.maxki; }
+    if (poi.effect === 'rest') for (const m of s.party) { m.hp = m.maxhp; m.ki = m.maxki; m.ko = false; }
     if (poi.effect === 'ki') for (const m of s.party) m.ki = m.maxki;
     if (poi.effect === 'rest' || poi.effect === 'save') { save(true); toast('已存檔'); }
     renderHud();
@@ -173,7 +173,7 @@ function openMenu() {
     const act = a ? a.dataset.a : 'close';
     if (act === 'save') { save(); toast('已存檔'); }
     if (act === 'load') { if (load()) toast('已讀檔'); }
-    if (act === 'heal') { for (const m of game.state.party) { m.hp = m.maxhp; m.ki = m.maxki; } renderHud(); toast('全員回復了'); }
+    if (act === 'heal') { for (const m of game.state.party) { m.hp = m.maxhp; m.ki = m.maxki; m.ko = false; } renderHud(); toast('全員回復了'); }
     menu.hidden = true;
     game.field.paused = false;
     game.field.enter();

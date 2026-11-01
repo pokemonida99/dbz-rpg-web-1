@@ -14,6 +14,7 @@
 // In battle the command menu comes back when the promise resolves, unless it resolves to 'stay'
 // (the entry has moved the battle on by itself, e.g. started the turn).
 import { img, audio, rand } from './core.js?v=20261101-1835';
+import * as growth from './growth.js?v=20261101-1835'; // 技能 page, ZP, KI cost with passive skills
 
 const FACES = 'Graphics/Pictures/Z1_顔味方.PNG'; // 64×64; row = actor id - 3; columns: normal, hurt, KO
 const CARDS = 'Graphics/Pictures/カード関係.PNG';
@@ -47,7 +48,7 @@ const BIG = new Set([29, 36, 47, 63, 64, 73, 83, 84, 92, 93]);
 
 // the special move 自動 picks for a member whose card allows one (null = no move: a normal attack)
 export function autoSkill(world, state, m) {
-  const skills = m.skills.map((id) => world.skills[id]).filter(Boolean);
+  const skills = m.skills.map((id) => world.skills[id]).filter(Boolean).map((s) => ({ ...s, ki: growth.kiCost(world, m, s) }));
   if (!skills.length) return null;
   const t = tactics(state, m);
   for (let loop = 1; loop < 2000; loop++) {
@@ -62,7 +63,7 @@ export function autoSkill(world, state, m) {
     if (set === 1 && pick.ki !== 0) continue;
     if (set === 2 && !SMALL.has(pick.id)) continue;
     if (set === 3 && !BIG.has(pick.id)) continue;
-    if (set === 4) s = world.skills[t.tecId];
+    if (set === 4) s = skills.find((x) => x.id === t.tecId) || world.skills[t.tecId];
     if (m.ki < s.ki) continue;
     return s;
   }
@@ -143,7 +144,7 @@ function sprite(sheet, sx, sy, w, h, cw = w, ch = h) {
   return c;
 }
 const faceOf = (m, size = 64) => {
-  const col = m.hp <= 0 ? 2 : m.hp * 4 < m.maxhp ? 1 : 0;
+  const col = m.ko || m.hp <= 0 ? 2 : m.hp * 4 < m.maxhp ? 1 : 0;
   const c = sprite(FACES, 64 * col, 64 * (m.id - 3), 64, 64);
   c.style.width = c.style.height = size + 'px';
   c.className = 'pm-face';
@@ -183,7 +184,7 @@ function screen(title, game, battle, body) {
   const root = el('div', 'pm');
   document.getElementById('app').appendChild(root);
   let cur = 0, swapFrom = null;
-  const done = new Promise((res) => { root.close = () => { audio.se(SE_OK); root.remove(); res(); }; });
+  const done = new Promise((res) => { root.close = (v) => { audio.se(SE_OK); root.remove(); res(v); }; });
   const render = () => {
     const party = s.party;
     cur = Math.min(cur, party.length - 1);
@@ -210,7 +211,7 @@ function screen(title, game, battle, body) {
     });
     list.append(row);
     if (swapFrom != null) list.append(el('div', 'pm-hint', `要和誰交換位置？（${party[swapFrom].name}）`));
-    root.append(list, ...body(party[cur], render, { battle }));
+    root.append(list, ...body(party[cur], render, { battle, close: (v) => root.close(v) }));
     const bar = el('div', 'pm-bar');
     if (title === '隊伍' && party.length > 1) {
       const sw = el('button', 'btn', swapFrom == null ? '換順序' : '取消');
@@ -228,25 +229,42 @@ function screen(title, game, battle, body) {
 }
 
 // ---------- 隊伍 (Scene_Db_Status) ----------
-let showUses = false, showRecord = false; // X: KI消耗 ⇄ 使用回數, Y: 能力 ⇄ 記錄 (kept between visits, like the original)
+let showUses = false, showSkills = false; // X: KI消耗 ⇄ 使用回數, Y: 能力 ⇄ 技能 (kept between visits, like the original)
+let skillSel = null; // the chosen skill row on the 技能 page: { kind: 'typ' | 'add', x }
+let skillList = null; // the 追加技能 list is open for this slot ($window_state 3): { x, pick }
+function statWin(world, s, m, skillPage) {
+  const st = el('div', 'win pm-stat');
+  const left = el('div', 'pm-left', faceOf(m), schoolTag(m.school));
+  const curve = world.actors[m.id].exp;
+  const next = m.level >= 99 ? 0 : curve[m.level + 1] - m.exp;
+  const nums = el('div', 'pm-nums',
+    el('div', '', word('LV'), el('i'), digits(m.level)),
+    el('div', '', word('HP'), el('i'), digits(m.hp)), el('div', '', slash(), el('i'), digits(m.maxhp)),
+    el('div', '', word('KI'), el('i'), digits(m.ki)), el('div', '', slash(), el('i'), digits(m.maxki)));
+  growth.ensure(m);
+  const rows = skillPage === 'zp' // the member picker for ZP / 悟飯(C): the stats ZP raises, and the ZP
+    ? [['攻擊力', m.atk], ['防禦力', m.def], ['速度', m.agi], ['ZP', m.zp]]
+    : skillPage
+      ? [['擊破數', (s.defeats || {})[m.id] || 0], ['ZP', m.zp], ['通常攻擊次數', (s.atkLv || {})[m.id] || 0]]
+      : [['攻擊力', m.atk], ['防禦力', m.def], ['速度', m.agi], ['經驗', m.exp], ['NEXT', next]];
+  const tbl = el('div', 'pm-rows');
+  for (const [k, v] of rows) tbl.append(el('div', '', el('span', '', k), digits(v)));
+  st.append(el('div', 'pm-top', left, nums), tbl);
+  return st;
+}
 export function openParty({ game, battle }) {
   const world = game.world, s = game.state;
+  skillSel = skillList = null;
   return screen('隊伍', game, battle, (m, render) => {
-    const st = el('div', 'win pm-stat');
-    const left = el('div', 'pm-left', faceOf(m), schoolTag(m.school));
-    const curve = world.actors[m.id].exp;
-    const next = m.level >= 99 ? 0 : curve[m.level + 1] - m.exp;
-    const nums = el('div', 'pm-nums',
-      el('div', '', word('LV'), el('i'), digits(m.level)),
-      el('div', '', word('HP'), el('i'), digits(m.hp)), el('div', '', slash(), el('i'), digits(m.maxhp)),
-      el('div', '', word('KI'), el('i'), digits(m.ki)), el('div', '', slash(), el('i'), digits(m.maxki)));
-    const rows = showRecord
-      ? [['擊破數', (s.defeats || {})[m.id] || 0], ['通常攻擊次數', (s.atkLv || {})[m.id] || 0]]
-      : [['攻擊力', m.atk], ['防禦力', m.def], ['速度', m.agi], ['經驗', m.exp], ['NEXT', next]];
-    const tbl = el('div', 'pm-rows');
-    for (const [k, v] of rows) tbl.append(el('div', '', el('span', '', k), digits(v)));
-    st.append(el('div', 'pm-top', left, nums), tbl);
-
+    if (skillSel && skillSel.m !== m) skillSel = skillList = null;
+    const st = statWin(world, s, m, showSkills);
+    const tog = el('div', 'pm-tog');
+    if (showSkills) {
+      const t2 = el('button', 'btn', '看能力');
+      t2.onclick = () => { audio.se(SE_MOVE); showSkills = false; skillSel = skillList = null; render(); };
+      tog.append(t2);
+      return [st, ...skillPage(game, m, render, battle), tog];
+    }
     const tec = el('div', 'win pm-tec');
     tec.append(el('div', 'pm-th', el('span', '', '必殺技'), el('span', '', showUses ? '使用回數' : 'KI消耗')));
     for (const id of m.skills) {
@@ -254,15 +272,127 @@ export function openParty({ game, battle }) {
       tec.append(el('div', 'pm-tr', el('span', '', k.name), digits(showUses ? (s.skillLv || {})[id] || 0 : k.ki)));
     }
     if (!m.skills.length) tec.append(el('div', 'pm-tr', el('span', '', '（沒有必殺技）')));
-    const tog = el('div', 'pm-tog');
     const t1 = el('button', 'btn', showUses ? '看 KI 消耗' : '看使用回數');
     t1.onclick = () => { audio.se(SE_MOVE); showUses = !showUses; render(); };
-    const t2 = el('button', 'btn', showRecord ? '看能力' : '看戰績');
-    t2.onclick = () => { audio.se(SE_MOVE); showRecord = !showRecord; render(); };
+    const t2 = el('button', 'btn', '看技能');
+    t2.onclick = () => { audio.se(SE_MOVE); showSkills = true; render(); };
     tog.append(t1, t2);
     return [st, tec, tog];
   });
 }
+
+// the 技能 page: 固有技能 ×3, 追加技能 ×3 (open slots numbered), the chosen one's description; on the map a 固有技能 can
+// be raised a level with CAP and a 追加技能 slot changed from the list (in battle: ※戰鬥中不能變更)
+const FULLWIDTH = ['１', '２', '３'];
+function skillPage(game, m, render, battle) {
+  const world = game.world, s = game.state;
+  if (skillList) return skillListPage(game, m, render);
+  const box = el('div', 'win pm-skl');
+  const row = (kind, x, label, name, dim, prog, progDim) => {
+    const on = skillSel && skillSel.kind === kind && skillSel.x === x;
+    const b = el('button', 'pm-sk' + (on ? ' on' : ''), el('b', '', label), el('span', dim ? 'dim' : '', name));
+    if (prog) b.append(el('small', progDim ? 'dim' : '', prog));
+    b.onclick = () => { audio.se(SE_MOVE); skillSel = { m, kind, x }; render(); };
+    return b;
+  };
+  box.append(el('div', 'pm-th', el('span', '', '固有技能')));
+  m.typ.forEach((id, x) => box.append(row('typ', x, id > 0 ? FULLWIDTH[x] : '', growth.skillName(world, id), false)));
+  box.append(el('div', 'pm-th', el('span', '', '追加技能')));
+  for (let x = 0; x < 3; x++) {
+    const info = growth.addSlotInfo(world, m, x);
+    const r = row('add', x, x < m.addN ? FULLWIDTH[x] : '', info.name, info.dim, info.prog, info.progDim);
+    if (x >= m.addN) r.disabled = true;
+    box.append(r);
+  }
+  const out = [box];
+  if (skillSel) {
+    const id = skillSel.kind === 'typ' ? m.typ[skillSel.x] : m.add[skillSel.x];
+    const memo = el('div', 'win pm-memo', growth.manual(world, id));
+    out.push(memo);
+    const acts = el('div', 'pm-tog');
+    if (battle) memo.append(el('div', 'pm-hint', '※戰鬥中不能變更'));
+    else if (skillSel.kind === 'typ') {
+      const up = growth.typicalUp(world, m, skillSel.x);
+      if (up) {
+        const b = el('button', 'btn', `用 CAP 升級：${up.name}`);
+        b.onclick = () => confirmBox(render, [`剩餘CAP：${s.zeni}`, `技能等級提升需要CAP：${up.cost}`, '使用CAP提升等級嗎？'], ['好的', '不用'], () => {
+          if (!growth.applyTypicalUp(world, s, m, skillSel.x)) { audio.se(SE_ERR); return; }
+          audio.se(SE_OK);
+        });
+        acts.append(b);
+      }
+    } else {
+      const b = el('button', 'btn', '更換技能');
+      b.onclick = () => { audio.se(SE_OK); skillList = { x: skillSel.x, pick: null }; render(); };
+      acts.append(b);
+    }
+    if (acts.children.length) out.push(acts);
+  }
+  return out;
+}
+
+// the 追加技能 list ($window_state 3): 卸下 and the skills that can be set, grey until learned
+function skillListPage(game, m, render) {
+  const world = game.world, s = game.state;
+  const slot = skillList.x;
+  const box = el('div', 'win pm-skl pm-list2');
+  box.append(el('div', 'pm-th', el('span', '', `追加技能 ${FULLWIDTH[slot]}`), el('span', '', `CAP：${s.zeni}`)));
+  for (const it of growth.skillList(world, s, m)) {
+    const b = el('button', 'pm-sk' + (skillList.pick === it.id ? ' on' : ''), el('span', it.dim ? 'dim' : '', it.name));
+    if (it.fresh) b.append(el('small', '', '未設置'));
+    b.onclick = () => { audio.se(SE_MOVE); skillList.pick = it.id; render(); };
+    box.append(b);
+  }
+  const out = [box];
+  const pick = skillList.pick;
+  if (pick != null) out.push(el('div', 'win pm-memo', pick ? growth.manual(world, pick) : '卸下正在裝備的技能！'));
+  const acts = el('div', 'pm-tog');
+  const ok = el('button', 'btn', '決定');
+  ok.onclick = () => {
+    if (pick == null) return;
+    const r = growth.chooseAdd(world, m, pick, slot);
+    if (r.kind === 'no') { audio.se(SE_ERR); return; }
+    const done = () => { skillList = null; skillSel = { m, kind: 'add', x: slot }; };
+    if (r.kind === 'place') { growth.applyAdd(world, s, m, pick, slot); audio.se(SE_OK); done(); render(); return; }
+    const verb = r.kind === 'learn' ? '學會' : '設置';
+    confirmBox(render, [`現有CAP：${s.zeni}`, `${verb}技能消耗CAP：${r.cost}`, `需要${verb}嗎？`], ['是的', '取消'], () => {
+      if (!growth.applyAdd(world, s, m, pick, slot)) { audio.se(SE_ERR); return; }
+      audio.se(SE_OK);
+      done();
+    });
+  };
+  const back = el('button', 'btn', '取消');
+  back.onclick = () => { audio.se(SE_OK); skillList = null; render(); };
+  acts.append(ok, back);
+  out.push(acts);
+  return out;
+}
+
+// the original's small yes / no windows (output_result, output_skillup_result)
+function confirmBox(render, lines, [yes, no], onYes) {
+  audio.se(SE_OK);
+  const box = el('div', 'win pm-ask', ...lines.map((t) => el('div', '', t)));
+  const row = el('div', 'pm-tog');
+  const a = el('button', 'btn', yes), b = el('button', 'btn', no);
+  a.onclick = () => { box.remove(); onYes(); render(); };
+  b.onclick = () => { audio.se(SE_OK); box.remove(); };
+  row.append(a, b);
+  box.append(row);
+  document.querySelector('.pm').append(box);
+}
+
+// Scene_Db_Status as a member picker (call_state 3 / 6 / 7: item cards, ZP, the shared EXP). `zpPage` opens on the
+// page with ZP, like cards whose element set has 31. 決定 on a member `ok` accepts → that member, 返回 → null
+export function pickMember(game, title, ok, zpPage) {
+  return screen(title, game, null, (m, render, { close }) => {
+    const bar = el('div', 'pm-tog');
+    const b = el('button', 'btn', '決定');
+    b.onclick = () => { if (!ok(m)) { audio.se(SE_ERR); return; } close(m); };
+    bar.append(b);
+    return [statWin(game.world, game.state, m, zpPage ? 'zp' : false), bar];
+  }).then((m) => m || null);
+}
+growth.setPicker(pickMember);
 
 // ---------- 作戰 (Scene_Db_Tactics_Menu) ----------
 // option texts from output_status (the Chinese edition), in Traditional characters
@@ -340,6 +470,18 @@ css.textContent = `
 .pm-tog .btn, .pm-bar .btn { margin: 0; text-align: center; flex: 1; }
 .pm-bar { margin-top: auto; }
 .pm-tac { font-size: 17px; }
+.pm-skl { font-size: 17px; display: flex; flex-direction: column; gap: 2px; }
+.pm-sk { min-height: 30px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; text-align: left; padding: 3px 6px; font-size: 17px; color: var(--ink);
+  background: #fff0d0; border: 2px solid transparent; }
+.pm-sk b { width: 1.2em; font-weight: 400; color: #d0480c; }
+.pm-sk span { flex: 1; }
+.pm-sk small { width: 100%; padding-left: 1.6em; font-size: 14px; }
+.pm-sk .dim { color: #a08868; }
+.pm-sk.on { border-color: #f83800; }
+.pm-sk:disabled { opacity: .45; }
+.pm-list2 { max-height: 46vh; overflow-y: auto; }
+.pm-memo { font-size: 15px; white-space: pre-line; line-height: 1.35; }
+.pm-ask { position: absolute; left: 12px; right: 12px; top: 34%; z-index: 2; font-size: 17px; display: flex; flex-direction: column; gap: 4px; }
 .pm-gname { margin-top: 6px; }
 .pm-gname:first-child { margin-top: 0; }
 .pm-line { display: flex; gap: 6px; padding-left: 16px; margin-top: 4px; }

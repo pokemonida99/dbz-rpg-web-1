@@ -39,7 +39,7 @@ export async function afterRaditz(game) {
   s.bench = s.bench || {};
   for (const m of s.party) s.bench[m.id] = m;
   for (const id of c.team.members) if (!s.bench[id]) s.bench[id] = makeMember(game.world, id);
-  for (const m of Object.values(s.bench)) { m.hp = m.maxhp; m.ki = m.maxki; }
+  for (const m of Object.values(s.bench)) { m.hp = m.maxhp; m.ki = m.maxki; m.ko = false; }
   s.teams = teams;
   teams.flat().forEach((id, k) => { s.var[45 + k] = id; }); // variables 45-50, like Scene_Team_Divide
   await scenes(c.karin, s);

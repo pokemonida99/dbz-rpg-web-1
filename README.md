@@ -31,7 +31,7 @@ python3 tools/serve.py 8790
 資料重建（需要原版遊戲資料夾，例如 `../dbz-rpg-web-dist/game`）：
 ```bash
 ln -s ../dbz-rpg-web-dist/game game          # 原版素材（不進 git）
-ruby tools/extract.rb game/Data data 1 5 6 7 8 9 10 11 12 13 14 15   # .rvdata → JSON（系統 Ruby 2.6 即可）
+ruby tools/extract.rb game/Data data 1 5 6 7 8 9 10 11 12 13 14 15 50 51   # .rvdata → JSON（系統 Ruby 2.6 即可）
 python3 tools/build_data.py                  # → data/world.json（台詞在這裡轉繁體）
 python3 tools/build_combo.py                 # → data/combos.json（組合技）
 python3 tools/copy_assets.py game            # 只複製用到的素材到 assets/

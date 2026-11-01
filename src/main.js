@@ -1,9 +1,9 @@
 // Boot, game state, scene switching, story beats, HUD, menu, save/load.
-import { view, img, loadImages, audio, say, toast, sleep, input, assetUrl } from './core.js';
-import { tileSheetPaths } from './tiles.js';
-import { Field, fieldImages, nextEncounterSteps } from './field.js';
-import { Battle, battleImages, newHand, rollEncounter } from './battle.js';
-import { makeMember, levelUp } from './party.js';
+import { view, img, loadImages, audio, say, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-1507';
+import { tileSheetPaths } from './tiles.js?v=20261101-1507';
+import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-1507';
+import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-1507';
+import { makeMember, levelUp } from './party.js?v=20261101-1507';
 
 const SAVE_KEY = 'dbz-portrait-save-v1';
 const FACES = 'Graphics/Pictures/GBZ1 顔アイコン.PNG'; // 40×56 cells, one row per character
@@ -149,7 +149,8 @@ function openMenu() {
     <button class="btn" data-a="save">存檔<small>隨時記錄目前的位置與狀態</small></button>
     <button class="btn" data-a="load" ${has ? '' : 'disabled'}>讀檔<small>${has ? '回到上次存檔的地方' : '還沒有存檔'}</small></button>
     <button class="btn" data-a="heal">休息<small>回復全員 HP・KI（測試用）</small></button>
-    <button class="btn ghost" data-a="close">關閉</button></div>`;
+    <button class="btn ghost" data-a="close">關閉</button>
+    <div class="ver">版本 ${VERSION}</div></div>`;
   menu.hidden = false;
   menu.onclick = (e) => {
     const a = e.target.closest('[data-a]');
@@ -200,7 +201,7 @@ function showTitle(sub) {
       <button class="btn" data-a="new">新的開始</button>
       ${has ? '<button class="btn" data-a="cont">繼續遊戲</button>' : ''}
     </div>
-    <div class="note">拖曳畫面下半部移動・點擊對話框繼續<br>原作：ドラゴンボールZ RPG（同人作品）</div>`;
+    <div class="note">拖曳畫面下半部移動・點擊對話框繼續<br>原作：ドラゴンボールZ RPG（同人作品）<br>版本 ${VERSION}</div>`;
   title.hidden = false;
   title.onclick = async (e) => {
     const a = e.target.closest('[data-a]');
@@ -232,10 +233,25 @@ function frame(t) {
   requestAnimationFrame(frame);
 }
 
+// a phone may still hold an old copy of the page; if the server has a newer version, reload once with
+// a new URL so the browser can't hand back the cached one
+async function ensureLatest() {
+  try {
+    const { v } = await (await fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' })).json();
+    if (v && VERSION !== 'dev' && v !== VERSION && sessionStorage.getItem('dbz-reloaded') !== v) {
+      sessionStorage.setItem('dbz-reloaded', v);
+      location.replace(`${location.pathname}?v=${v}`);
+      return false;
+    }
+  } catch (e) { /* offline: just run what we have */ }
+  return true;
+}
+
 async function boot() {
+  if (!(await ensureLatest())) return;
   view.resize();
   window.addEventListener('resize', () => view.resize());
-  game.world = await (await fetch('data/world.json')).json();
+  game.world = await (await fetch('data/world.json?v=20261101-1507')).json();
   await loadImages([...tileSheetPaths, ...fieldImages, ...battleImages(game.world), FACES]);
   showTitle();
   requestAnimationFrame(frame);

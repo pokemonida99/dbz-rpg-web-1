@@ -2,9 +2,9 @@
 //   top    — while choosing: the enemies' portraits (tap one to target it); while fighting: the battle stage
 //   bottom — message window, the party, the six-card hand (original card art), buttons
 // Choosing a card that allows a special move opens a move picker over the hand.
-import { view, img, audio, sleep, rand } from './core.js';
-import { faceCanvas } from './main.js';
-import { levelUp } from './party.js';
+import { view, img, audio, sleep, rand } from './core.js?v=20261101-1507';
+import { faceCanvas } from './main.js?v=20261101-1507';
+import { levelUp } from './party.js?v=20261101-1507';
 
 export const SCHOOL = ['必', '龜', '神', '界', '魔', '惑'];
 const HAND = 6;

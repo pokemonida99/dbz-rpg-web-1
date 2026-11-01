@@ -30,3 +30,7 @@ python3 tools/copy_assets.py game            # 只複製用到的素材到 asset
 | `src/field.js` | 地圖飛行、遇敵、Boss 位置 |
 | `src/battle.js` | 卡牌戰鬥（規則＋直向介面＋演出） |
 | `src/main.js` | 標題、劇情、HUD、選單、存讀檔（localStorage） |
+
+## 發佈
+
+每次推上去之前先跑 `python3 tools/bump.py`，會更新版本號並讓手機自動抓到新版。

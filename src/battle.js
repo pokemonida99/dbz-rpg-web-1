@@ -25,6 +25,9 @@ const FACES = 'Graphics/Pictures/Z1_顔味方.PNG'; // 64×64; row = actor id - 
 const FOE_FACES = 'Graphics/Pictures/Z1_顔敵.PNG'; // 64×64; row = enemy id; columns: normal, hurt
 const DIGITS = 'Graphics/Pictures/数字英語.PNG'; // 16×16 cells: row 0 black digits + "/", row 1 HPKILV, row 2 white digits
 const FRAME_IMG = 'ui/frame.png'; // the Z1 window border (8px corners)
+const ICONS = 'Graphics/Pictures/アイコン.PNG'; // 16×16 cursors: Z1 ▼ = cell 12, its blink frame = cell 14 (set_tate_cursor_blink)
+// the original's cursor sounds (139_Public.rb $BGM_CursorOn / $BGM_CursorMove / $BGM_Error)
+const SE_OK = 'Z3 決定', SE_MOVE = 'Z3 カーソル移動', SE_ERR = 'Z3 エラー';
 const PURPLE = '#9040f0', CREAM = '#ffd8a0', INK = '#301808', RUST = '#d0480c';
 const FONT = 'Cubic11, system-ui, sans-serif';
 // portrait battle backgrounds made for this version (pixel art in the style of the Z1 field strip), 400×600;
@@ -35,7 +38,7 @@ const BACKDROP_TOP = 205;
 export const battleOpts = { quick: false };
 
 export function battleImages(world) {
-  const sheets = new Set([...BACKDROPS, CARDS, FACES, FOE_FACES, DIGITS, FRAME_IMG, ...ANIME_IMAGES]);
+  const sheets = new Set([...BACKDROPS, CARDS, FACES, FOE_FACES, DIGITS, FRAME_IMG, ICONS, ...ANIME_IMAGES]);
   for (const a of Object.values(world.actors)) { sheets.add(a.sprite); sheets.add(a.special); }
   for (const e of Object.values(world.enemies)) { sheets.add(e.sprite); sheets.add(e.portrait); }
   return [...sheets];
@@ -138,10 +141,23 @@ function text(c, s, x, y, color = INK, size = 16, align = 'left') {
   c.fillStyle = color;
   c.fillText(s, x, y);
 }
-function cursor(c, x, y) { // the original's blinking ▼
-  if (Math.floor(performance.now() / 300) % 2) return;
+function cursor(c, x, y) { // the original's blinking ▼ (アイコン.PNG), centred on x, top at y
+  const blink = Math.floor(performance.now() / 270) % 2;
+  const im = img(ICONS);
+  if (im.ok) { c.drawImage(im.im, 16 * (blink ? 14 : 12), 0, 16, 16, x - 8, y - 4, 16, 16); return; }
+  if (blink) return;
   c.fillStyle = '#f83800';
   c.beginPath(); c.moveTo(x - 7, y); c.lineTo(x + 7, y); c.lineTo(x, y + 9); c.fill();
+}
+// a blinking 2-colour pixel frame (the selected enemy / card)
+function frame(c, x, y, w, h) {
+  const on = Math.floor(performance.now() / 270) % 2;
+  c.fillStyle = on ? '#ffffff' : '#f83800';
+  c.fillRect(x - 4, y - 4, w + 8, 3); c.fillRect(x - 4, y + h + 1, w + 8, 3);
+  c.fillRect(x - 4, y - 4, 3, h + 8); c.fillRect(x + w + 1, y - 4, 3, h + 8);
+  c.fillStyle = on ? '#f83800' : '#ffffff';
+  c.fillRect(x - 1, y - 1, w + 2, 1); c.fillRect(x - 1, y + h, w + 2, 1);
+  c.fillRect(x - 1, y - 1, 1, h + 2); c.fillRect(x + w, y - 1, 1, h + 2);
 }
 
 export class Battle {
@@ -248,6 +264,8 @@ export class Battle {
     if (document.querySelector('.pm, #cards, .combo-list') || this.el.hidden) return; // a menu screen is open
     const ok = ['Enter', 'Space', 'KeyZ'].includes(e.code), back = ['KeyX', 'Escape', 'Backspace'].includes(e.code);
     const n = /^(Digit|Numpad)([1-6])$/.exec(e.code);
+    const lr = { ArrowLeft: -1, ArrowRight: 1 }[e.code];
+    if (lr && this.phase === 'plan' && this.mode === 'target') { e.preventDefault(); this.aimStep(lr); return; }
     if (!ok && !back && !n) return;
     e.preventDefault();
     audio.unlock();
@@ -256,7 +274,8 @@ export class Battle {
     if (this.phase !== 'plan') return;
     if (n) { if (this.mode === 'move' || this.mode === 'target') this.cancelPending(); this.tapCard(Number(n[2]) - 1); return; }
     if (ok && this.mode === 'ready') this.go();
-    else if (ok && this.mode === 'move') this.chooseTarget(); // 普通攻擊
+    else if (ok && this.mode === 'move') { audio.se(SE_OK); this.chooseTarget(); } // 普通攻擊
+    else if (ok && this.mode === 'target') this.aimAt(this.aim);
     else if (back && (this.mode === 'move' || this.mode === 'target')) this.cancelPending();
     else if (back && this.buttons.some((b) => b[0] === '隊伍')) this.resume(); // close the 菜單 row
     else if (back) this.undo();
@@ -304,15 +323,16 @@ export class Battle {
         text(c, `HP ${f.hp}`, f.fx + 32, f.fy + 174, '#fff', 12, 'center');
       }
       if (items.stopCount(f)) text(c, '停', f.fx + 56, f.fy + 2, '#ff5050', 16, 'center'); // じいちゃん
-      if (this.mode === 'target') {
-        cursor(c, f.fx + 32, f.fy - 14);
-        this.hit(f.fx - 6, f.fy - 20, 76, 90, () => this.commit(f.slot), 'modal');
+      if ((this.mode === 'target' || this.mode === 'move') && this.aim === f.slot) { // the current target
+        frame(c, f.fx - 2, f.fy - 2, 68, 68);
+        cursor(c, f.fx + 32, f.fy - 18);
       }
+      if (this.mode === 'target') this.hit(f.fx - 6, f.fy - 20, 76, 130, () => this.aimAt(f.slot), 'modal');
     }
     if (this.mode === 'target') {
       c.fillStyle = 'rgba(0,0,0,.6)';
       c.fillRect(0, this.L.stage.y + 8, view.w, 26);
-      text(c, '點選要攻擊的敵人（點其他地方取消）', view.w / 2, this.L.stage.y + 12, '#ffd8a0', 16, 'center');
+      text(c, '點敵人決定目標（點其他地方取消）', view.w / 2, this.L.stage.y + 12, '#ffd8a0', 16, 'center');
     }
     // everyone has picked: a big 出招！ above the enemies when there's room (the button row has one too)
     const room = (this.foes[0] ? this.foes[0].fy - 20 : this.L.stage.y + this.L.stage.h) - this.L.stage.y;
@@ -357,9 +377,8 @@ export class Battle {
         c.fillStyle = '#fff'; c.fillRect(bx - 2, by - 2, 36, 36);
         c.save(); c.translate(bx, by); c.scale(0.5, 0.5); face(c, this.party[owner], 0, 0); c.restore();
       }
-      if (picked || (special && cd.s === m.school)) {
-        c.strokeStyle = picked ? '#fff' : '#ffd27a'; c.lineWidth = 2; c.strokeRect(x - 1, y - 1, 66, 98);
-      }
+      if (picked) frame(c, x, y, 64, 96);
+      else if (special && cd.s === m.school) { c.strokeStyle = '#ffd27a'; c.lineWidth = 2; c.strokeRect(x - 1, y - 1, 66, 98); }
       if (this.phase === 'plan' && !this.cont) this.hit(x, y, step, 100, () => this.tapCard(k), { card: k });
     });
   }
@@ -375,6 +394,13 @@ export class Battle {
     win(c, x, y, w, h);
     this.hit(x, y, w, h, () => {}, 'modal'); // taps on the window itself don't cancel
     text(c, `${m.name} 的招式`, x + 14, y + 12, RUST, 18);
+    const aimed = this.foes[this.aim];
+    if (aimed && aimed.hp > 0 && this.foes.filter((f) => f.hp > 0).length > 1) { // the target it will go to (framed below too)
+      const fx = x + Math.round(w / 2) - 4, fy = y + 6;
+      text(c, '目標', fx - 6, y + 14, '#7a5230', 13, 'right');
+      c.save(); c.translate(fx, fy); c.scale(0.4375, 0.4375); foeFace(c, aimed, 0, 0); c.restore();
+      frame(c, fx, fy, 28, 28);
+    }
     word(c, 'KI', x + w - 96, y + 12); num(c, m.ki, x + w - 14, y + 12);
     skills.forEach((s, i) => {
       const ry = y + 40 + i * rowH;
@@ -384,10 +410,11 @@ export class Battle {
       text(c, `KI ${ki}`, x + w - 14, ry + 8, ok ? '#7a5230' : '#c0a080', 14, 'right');
       hints[i].forEach((t, k) => text(c, `組合技 ${t.name}（${t.need}）${this.pending.solo ? '不使用' : HINT_TEXT[t.st]}`,
         x + 30, ry + 27 + k * 14, t.st === 'ok' && !this.pending.solo ? RUST : '#a08060', 12));
-      if (ok) this.hit(x, ry, w, rowH, () => { this.pending.skill = s; this.chooseTarget(); }, 'modal');
+      if (ok) this.hit(x, ry, w, rowH, () => { audio.se(SE_OK); this.pending.skill = s; this.chooseTarget(); }, 'modal');
+      else this.hit(x, ry, w, rowH, () => audio.se(SE_ERR), 'modal');
     });
-    const btns = [['普通攻擊', () => this.chooseTarget()], ['取消', () => this.cancelPending()]];
-    if (hasCombos(this, this.cur)) btns.push([this.pending.solo ? '組合技：關' : '組合技：開', () => { this.pending.solo = !this.pending.solo; }]);
+    const btns = [['普通攻擊', () => { audio.se(SE_OK); this.chooseTarget(); }], ['取消', () => this.cancelPending()]];
+    if (hasCombos(this, this.cur)) btns.push([this.pending.solo ? '組合技：關' : '組合技：開', () => { audio.se(SE_MOVE); this.pending.solo = !this.pending.solo; }]);
     const by = y + h - 46, bw = (w - 10 - 10 * btns.length) / btns.length;
     btns
       .forEach(([label, fn], i) => {
@@ -490,7 +517,7 @@ export class Battle {
 
   go() {
     if (this.phase !== 'plan' || this.nextFree() >= 0) return;
-    audio.se('Z3 決定');
+    audio.se(SE_OK);
     this.cur = null;
     this.resolveTurn();
   }
@@ -500,14 +527,16 @@ export class Battle {
     this.plans[i] = null;
     this.history = this.history.filter((j) => j !== i);
     this.cur = i;
-    audio.se('Z3 カーソル移動');
+    audio.se(SE_MOVE);
     this.promptCard();
   }
   undo() { if (this.history.length) this.unpick(this.history[this.history.length - 1]); }
 
   // the move window or targeting is closed without picking: back to cards for the same member
   cancelPending() {
+    audio.se(SE_MOVE);
     this.pending = null;
+    this.aim = null;
     if (this.cur == null) { this.resume(); return; }
     this.promptCard();
   }
@@ -522,7 +551,7 @@ export class Battle {
   tapCard(k) {
     const j = this.owner(k);
     if (j != null) { this.unpick(j); return; }
-    if (this.cur == null) return; // 出招！ is up: tap a picked card or face to change it
+    if (this.cur == null) { audio.se(SE_ERR); return; } // 出招！ is up: tap a picked card or face to change it
     this.onCard(k);
   }
 
@@ -530,6 +559,9 @@ export class Battle {
     const m = this.party[this.cur];
     const cd = this.hand[k];
     this.pending = { card: k, skill: null };
+    audio.se(SE_OK);
+    const alive = this.foes.filter((f) => f.hp > 0);
+    if (this.aim == null || !alive.some((f) => f.slot === this.aim)) this.aim = autoTarget(this.game.state, m, this.foes); // framed already
     if ((cd.s === m.school || cd.s === 0) && m.skills.length) {
       this.mode = 'move';
       this.buttons = [];
@@ -545,15 +577,32 @@ export class Battle {
     this.mode = 'target';
     this.say(`${this.party[this.cur].name}：點選要攻擊的敵人。`);
     this.buttons = [
-      ['打 HP 最少的', () => this.commit(alive.reduce((a, b) => (b.hp < a.hp ? b : a)).slot)],
+      ['打 HP 最少的', () => this.aimAt(alive.reduce((a, b) => (b.hp < a.hp ? b : a)).slot)],
       ['取消', () => this.cancelPending()],
     ];
+  }
+
+  // a tapped enemy: the frame jumps there, then the pick is made (a moment later, so the frame shows)
+  aimAt(slot) {
+    if (this.aiming) return;
+    this.aim = slot;
+    audio.se(SE_OK);
+    this.aiming = true;
+    setTimeout(() => { this.aiming = false; if (this.mode === 'target' && this.pending) this.commit(slot); }, 180);
+  }
+  // keys: move the frame to the next enemy alive
+  aimStep(d) {
+    const alive = this.foes.filter((f) => f.hp > 0).map((f) => f.slot);
+    const i = alive.indexOf(this.aim);
+    this.aim = alive[(i + d + alive.length) % alive.length];
+    audio.se(SE_MOVE);
   }
 
   commit(target) {
     this.plans[this.cur] = { ...this.pending, target };
     this.history.push(this.cur);
     this.pending = null;
+    this.aim = null;
     this.resume();
   }
 

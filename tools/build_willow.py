@@ -64,7 +64,6 @@ def add(world, h):
             'fx': {k: v for c, k in (('cha_skill_hatudouritu', 'rate'), ('cha_skill_a_hoshi', 'ah')) if (v := r[c]) not in (0, '0', '')}}
     world['faces'].update({
         s2t('老人'): [FACE_FOE, 21],  # Kochin, before he gives his name
-        s2t('布尔嗎'): [CARD_FACES, 8],  # (a typo for 布爾瑪 in the original line)
         s2t('龟仙人'): [FACE_EVENT, 1],
     })
     world['drops'].update({eid: [[d['item_id'], d['denominator']] for d in (enemies_db[eid]['drop_item1'], enemies_db[eid]['drop_item2'])

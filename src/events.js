@@ -1,8 +1,8 @@
 // Runs an original event as converted by tools/build_data.py (script()): the text in order, with branches on the
 // original's switches / variables, the switch and variable changes, sounds and choices; cards given go to state.cards.
 // state.sw / state.var hold the original's switches and variables, so the same conditions work as in the classic.
-import { say, choose, audio, toast } from './core.js?v=20261101-1934';
-import { eventCard } from './items.js?v=20261101-1934';
+import { say, choose, audio, toast } from './core.js?v=20261101-1940';
+import { eventCard } from './items.js?v=20261101-1940';
 
 const CMP = [(a, b) => a === b, (a, b) => a >= b, (a, b) => a <= b, (a, b) => a > b, (a, b) => a < b, (a, b) => a !== b];
 

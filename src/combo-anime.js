@@ -4,8 +4,8 @@
 // (output_cutin draws nothing while $btl_progress == 0), so neither does this.
 // A ComboDuel is a Duel whose left side can be any of the participants: `crew` = { actorId: { normal, special } }.
 // Frame numbers in the comments are the original's @battle_anime_frame.
-import { audio } from './core.js?v=20261101-1934';
-import { Duel, draw, spark, BALL, RAY, BACKS, MAKANKO_BALL, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED } from './anime.js?v=20261101-1934';
+import { audio } from './core.js?v=20261101-1940';
+import { Duel, draw, spark, BALL, RAY, BACKS, MAKANKO_BALL, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED } from './anime.js?v=20261101-1940';
 
 // combo skill id → [film, damage pattern]
 const FILMS = {

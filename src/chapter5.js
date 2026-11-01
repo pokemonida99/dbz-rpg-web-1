@@ -1,16 +1,15 @@
 // Chapter 5 (卡里克篇): what follows the Ginger area in the original, driven by world.chapter5 (tools/build_chapter5.py).
 //   end of chapter 4 (page 114: the Z fighters gather at Garlic's castle) → map 13, all six: 卡里克三人眾 (117, battle
-//   120) → 卡里克 (121, battle 122) → he grows and revives the three (123, battle 126) → 一星球 (127) → King Kai's
-//   planet, Goku alone (map 14): the training squares are fights with King Kai himself (130; his HP carries over,
-//   losing only sends Goku back to the map) → 132: the training is over, Shenron is called → end of chapter.
-// state.flags.ch5 tracks the step: 'garlic' → 'kaio' → 'done'.
-import { input, say } from './core.js?v=20261101-2006';
-import { scenes, setParty, moveTo, enterMap, card } from './chapter2.js?v=20261101-2006';
-import { addScenes } from './cutscene.js?v=20261101-2006';
-import { makeMember, levelUp } from './party.js?v=20261101-2006';
-import { eventCard } from './items.js?v=20261101-2006';
+//   120) → 卡里克 (121, battle 122) → he grows and revives the three (123, battle 126) → 一星球 (page 127 up to its
+//   first fade) → end of chapter; King Kai's last training (the rest of 127, map 14) is chapter 6 (game.startChapter6).
+// state.flags.ch5 tracks the step: 'garlic' → 'done'.
+import { input } from './core.js?v=20261101-2059';
+import { scenes, setParty, moveTo, enterMap, card } from './chapter2.js?v=20261101-2059';
+import { addScenes } from './cutscene.js?v=20261101-2059';
+import { makeMember, levelUp } from './party.js?v=20261101-2059';
+import { eventCard } from './items.js?v=20261101-2059';
 
-const MAPS = ['13', '14'];
+const MAPS = ['13'];
 const pic = (n) => `Graphics/Pictures/${n}.PNG`;
 const EVENT = pic('Z1_顔イベント'), FOE = pic('Z1_顔敵');
 
@@ -25,22 +24,14 @@ addScenes({
   // the three revived above him: the original draws them a row above the scene window; here they sit in its top half
   125: { bg: 'ガーリック城_ガーリックの間', foe: [FOE, 17, 32], adds: [[FOE, 13, -64, -32], [FOE, 14, 0, -32], [FOE, 15, 64, -32]], out: true, next: '+' },
   127: { bgm: 'Z1 戦闘前', foe: [EVENT, 22], out: true, next: '+' }, // 一星球
-  128: { bgm: 'Z1 界王', party: [3], fadein: true, next: '+' }, // 界王星そのころ
-  129: { bg: '界王星_地上', foe: [EVENT, 18], out: true, next: '+' }, // 界王様
-  132: { bgm: 'Z1 界王', bg: '界王星_地上', foe: [EVENT, 18], out: true, next: '+' }, // 修行終了
-  133: { bgm: 'DB3 カメハウス', bg: 'カメハウス', foe: [EVENT, 1], out: true, fadein: true, next: '+' }, // カメハウス
-  // the seven balls in the scene (the original spreads them 384 px wide; here two rows that fit a phone), 亀仙人・ブルマ・
-  // ウーロン・プーアル under it
-  134: { adds: [[EVENT, 22, -96, -32], [EVENT, 23, -32, -32], [EVENT, 24, 32, -32], [EVENT, 25, 96, -32], [EVENT, 26, -64, 32], [EVENT, 27, 0, 32], [EVENT, 28, 64, 32]],
-    faces: [[EVENT, 1, -96], [EVENT, 3, -32], [EVENT, 20, 32], [EVENT, 5, 96]], next: '+' },
-}, [120, 122, 126, 130]);
+}, [120, 122, 126]);
 
 export function chapter5Goal(world, s) {
   const c = world.chapter5;
   if (!c || !s.flags.ch5) return undefined;
   if (s.flags.ch5 === 'done') return '';
   const g = c.goals[s.map];
-  return Array.isArray(g) ? g[s.flags.sanninDone ? 1 : 0] : g;
+  return Array.isArray(g) ? g[s.flags.sanninDone ? 1 : 0] : g; // undefined elsewhere: the next chapter's goals
 }
 
 const recover = (s) => { for (const m of s.party) { m.hp = m.maxhp; m.ki = m.maxki; m.ko = false; } };
@@ -69,11 +60,6 @@ export function resumeChapter5(game) {
 }
 
 export const isChapter5Map = (s) => MAPS.includes(s.map);
-
-// field spots with `chapter` set on these maps (King Kai's training squares)
-export function chapter5Spot(game, poi) {
-  return poi.chapter === 'kaioFight' ? kaioFight(game, poi) : null;
-}
 
 // stop everything on the field for a story beat
 function hold(game) {
@@ -106,52 +92,12 @@ export async function chapter5Boss(game, b) {
   if (!(await game.startBattle([17, 13, 14, 15], true, { bgm: c.giantBgm }))) return;
   hold(game);
   s.flags.garlicDone = true;
-  await scenes(c.garlicAfter, s); // 一星球, then King Kai's planet: 概況 +1, Goku alone
-  setParty(s, c.kaio.party);
-  recover(s);
-  moveTo(s, c.kaio);
-  s.flags.ch5 = 'kaio';
-  enterMap(game);
-}
-
-// page 130 / battle_process 130: King Kai himself. His HP is kept between tries (variable 52, switch 61); losing
-// (131) puts Goku back on the map, all recovered, and King Kai says it is not enough (switch 62, map 14 EV005).
-async function kaioFight(game, poi) {
-  const c = game.world.chapter5, s = game.state;
-  game.field.spent = poi; // a square works once per visit, like landing on it
-  s.var[51] = (s.var[51] || 0) + 1; // how many times Goku trained with him
-  if (!s.sw[61]) { s.var[52] = game.world.enemies[18].maxhp; s.sw[61] = true; }
-  game.busy = false;
-  const won = await game.startBattle([18], true, { bgm: c.kaioBgm, foeHp: [s.var[52]], keepOnLose: true });
-  hold(game);
-  if (!won) {
-    s.var[52] = Math.max(1, game.lastBattle.foes[0].hp);
-    recover(s);
-    s.sw[62] = true;
-    await say(c.kaioLose);
-    s.sw[62] = false;
-    game.save(true);
-    game.busy = false;
-    game.field.paused = false;
-    return;
-  }
-  await kaioDone(game);
-}
-
-// page 132: the training is over (CE14: the dragon balls are used; CE12: Goku learns 界王拳, 界王拳・龜派氣功, 元氣彈),
-// the Earth gathers the balls and calls Shenron — the end of this chapter (map 117 is the next one)
-async function kaioDone(game) {
-  const c = game.world.chapter5, s = game.state;
-  recover(s);
-  for (const id of c.dragonBalls) eventCard(s, id, -99);
-  const goku = s.party.find((m) => m.id === 3) || (s.bench || {})[3];
-  if (goku) for (const k of c.kaioSkills) if (!goku.skills.includes(k)) goku.skills.push(k);
-  await scenes(c.kaioWin, s);
+  await scenes(c.garlicAfter, s); // the 一星球 (card 2), then the fade
   s.flags.ch5 = 'done';
   game.save(true);
   game.busy = false;
   await card(c.end, 2000);
-  if (game.nextChapter && game.nextChapter('ch6') !== false) return; // the Shenron scene (map 117), when it exists
+  if (game.startChapter6) return game.startChapter6(game); // King Kai's last training (src/chapter6.js)
   game.showTitle(c.end);
 }
 

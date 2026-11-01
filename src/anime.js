@@ -3,7 +3,7 @@
 // the enemy on the right — played at 60 frames a second with the original sprites, beams and sounds.
 // Positions, speeds and frame numbers follow the original's anime_pattern / effect_pattern / back_anime_pattern
 // (pattern numbers are noted on each piece). The stage is drawn into its own canvas and cropped to the phone.
-import { img, audio, rand } from './core.js?v=20261101-2006';
+import { img, audio, rand } from './core.js?v=20261101-2059';
 
 export const SW = 640, SH = 356;
 const STD_CHAX = -70, STD_ENEX = 602, STD_Y = 120, CENTER_CHAX = 240, CENTER_ENEX = 304, TEC_CENTER = 266;
@@ -62,6 +62,7 @@ const MOVES = {
   310: 'raditzWave', 311: 'raditzBigWave', // 拉蒂茲
   307: 'gingerWave', 321: 'gingerWave', 324: 'sanshoWave', 325: 'sanshoBigWave', // 卡里克的手下
   322: 'nikkiBigWave', 323: 'swordAttack', // 尼奇
+  308: 'nikkiBigWave', 309: 'swordAttack', // 吉加
   326: 'garlicBall', 328: 'garlicBigWave', 329: 'giantWave', 330: 'blackHole', // 卡里克 / 卡里克(巨大化)
 };
 // 拡散エネルギー波 hits every enemy: the battle plays one film per target, and in the original only the first one

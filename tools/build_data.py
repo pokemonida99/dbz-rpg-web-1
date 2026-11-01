@@ -182,7 +182,7 @@ def script(lst):
                 out.append({'z1field': True})
             elif code == 355 and p[0].startswith('Graphics.fadeout'):
                 out.append({'fadeout': 30})
-            elif code == 355 and p[0].replace(' ', '') == '$game_variables[41]+=1':
+            elif code in (355, 655) and p[0].replace(' ', '') == '$game_variables[41]+=1':  # (also a continuation line of a script call)
                 out.append({'var': [41, 1, 1]})
             elif code == 126:
                 out.append({'item': [p[0], -p[3] if p[1] else p[3]]})
@@ -266,6 +266,8 @@ import build_field  # noqa: E402  (training squares, Pumpkin / Broccoli, 情報�
 build_field.add(world, globals())
 import build_chapter3  # noqa: E402  (chapter 3: King Kai's planet and the Nikki area)
 build_chapter3.add(world, globals())
+import build_chapter4  # noqa: E402  (chapter 4: Gregory's training and the Ginger area)
+build_chapter4.add(world, globals())
 import build_chapter5  # noqa: E402  (chapter 5: the Garlic area and King Kai's training)
 build_chapter5.add(world, globals())
 json.dump(world, open(os.path.join(root, 'data', 'world.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))

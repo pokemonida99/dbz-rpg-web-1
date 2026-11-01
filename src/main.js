@@ -1,21 +1,22 @@
 // Boot, game state, scene switching, story beats, HUD, menu, save/load.
-import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-2006';
-import { tileSheetPaths } from './tiles.js?v=20261101-2006';
-import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-2006';
-import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-2006';
-import { makeMember, levelUp } from './party.js?v=20261101-2006';
-import { runEvent } from './events.js?v=20261101-2006';
-import { playOpening, playStory } from './opening.js?v=20261101-2006'; // the original's title animation and opening story
-import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapterBoss } from './chapter2.js?v=20261101-2006';
-import { fieldMenuHtml, openEntry } from './partymenu.js?v=20261101-2006'; // 隊伍・卡牌・組合技・作戰
-import { setItemsWorld, bubbles } from './items.js?v=20261101-2006'; // item cards (its 卡牌 menu entry registers itself)
-import { setGrowthWorld } from './growth.js?v=20261101-2006'; // skill cards and the other growth cards
-import { cardSquare, compo } from './cardgames.js?v=20261101-2006'; // card squares (shop / lottery / memory), 合成
-import { fieldExtraHtml, openFieldEntry, setFieldGame, encounterSteps, battleTally, spotTally, storySoFar, hasRecap, options } from './fieldmenu.js?v=20261101-2006'; // 概況・情報・設定・地圖, records, options
-import { training } from './training.js?v=20261101-2006'; // training squares
-import { chapter3Goal, startChapter3, resumeChapter3, chapter3Spot, isChapter3Map, chapter3Boss } from './chapter3.js?v=20261101-2006';
-import { playEvent, setCutsceneWorld, raditzOutcome } from './cutscene.js?v=20261101-2006'; // story scenes staged like the original
-import { chapter5Goal, startChapter5, resumeChapter5, chapter5Spot, isChapter5Map, chapter5Boss, devChapter5 } from './chapter5.js?v=20261101-2006';
+import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-2059';
+import { tileSheetPaths } from './tiles.js?v=20261101-2059';
+import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-2059';
+import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-2059';
+import { makeMember, levelUp } from './party.js?v=20261101-2059';
+import { runEvent } from './events.js?v=20261101-2059';
+import { playOpening, playStory } from './opening.js?v=20261101-2059'; // the original's title animation and opening story
+import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapterBoss } from './chapter2.js?v=20261101-2059';
+import { fieldMenuHtml, openEntry } from './partymenu.js?v=20261101-2059'; // 隊伍・卡牌・組合技・作戰
+import { setItemsWorld, bubbles } from './items.js?v=20261101-2059'; // item cards (its 卡牌 menu entry registers itself)
+import { setGrowthWorld } from './growth.js?v=20261101-2059'; // skill cards and the other growth cards
+import { cardSquare, compo } from './cardgames.js?v=20261101-2059'; // card squares (shop / lottery / memory), 合成
+import { fieldExtraHtml, openFieldEntry, setFieldGame, encounterSteps, battleTally, spotTally, storySoFar, hasRecap, options } from './fieldmenu.js?v=20261101-2059'; // 概況・情報・設定・地圖, records, options
+import { training } from './training.js?v=20261101-2059'; // training squares
+import { chapter3Goal, startChapter3, resumeChapter3, chapter3Spot, isChapter3Map, chapter3Boss } from './chapter3.js?v=20261101-2059';
+import { chapter4Goal, startChapter4, resumeChapter4, chapter4Spot, isChapter4Map, chapter4Boss } from './chapter4.js?v=20261101-2059';
+import { playEvent, setCutsceneWorld, raditzOutcome } from './cutscene.js?v=20261101-2059'; // story scenes staged like the original
+import { chapter5Goal, startChapter5, resumeChapter5, isChapter5Map, chapter5Boss, devChapter5 } from './chapter5.js?v=20261101-2059';
 
 const SAVE_KEY = 'dbz-portrait-save-v1';
 const AUTO_KEY = 'dbz-portrait-autosave-v1'; // the original's Save_Auto.rvdata: after each normal battle won
@@ -70,7 +71,7 @@ const game = {
     this.field.paused = true;
     input.dx = input.dy = 0;
     const s = this.state;
-    if (poi.chapter) { await (chapter5Spot(this, poi) || chapter3Spot(this, poi) || chapterSpot(this, poi)); renderHud(); this.busy = false; this.field.paused = false; return; }
+    if (poi.chapter) { await (chapter4Spot(this, poi) || chapter3Spot(this, poi) || chapterSpot(this, poi)); renderHud(); this.busy = false; this.field.paused = false; return; }
     spotTally(s, poi);
     if (['training', 'shop'].includes(poi.effect)) this.field.spent = poi; // once per visit (src/field.js)
     if (poi.effect === 'training') { await training(this); renderHud(); this.busy = false; this.field.paused = false; return; }
@@ -95,6 +96,7 @@ const game = {
 
   async onBoss(b) {
     if (isChapter5Map(this.state)) return chapter5Boss(this, b);
+    if (isChapter4Map(this.state)) return chapter4Boss(this);
     if (isChapter3Map(this.state)) return chapter3Boss(this);
     if (this.state.map !== '1') return chapterBoss(this);
     if (this.busy) return;
@@ -126,9 +128,7 @@ const game = {
     flash.style.opacity = '0';
     setTimeout(() => flash.remove(), 400);
     const battle = new Battle(this.world, this, enemyIds, boss);
-    Object.assign(battle, opts); // e.g. eventBgm (src/fieldmenu.js), bgm, foeHp, keepOnLose
-    if (opts && opts.foeHp) opts.foeHp.forEach((hp, i) => { if (hp != null && battle.foes[i]) battle.foes[i].hp = hp; }); // King Kai keeps his wounds
-    this.lastBattle = battle;
+    Object.assign(battle, opts); // e.g. eventBgm (src/fieldmenu.js), bgm (an event battle's own music)
     this.scene = battle;
     const result = await battle.run();
     battleTally(this, battle, result);
@@ -138,7 +138,7 @@ const game = {
     this.field.paused = false;
     this.field.enter();
     this.busy = false;
-    if (result === 'lose' && !(opts && opts.keepOnLose)) { // keepOnLose: the chapter goes on (King Kai's training)
+    if (result === 'lose') {
       await say([['', '悟空們被打倒了……'], ['', '回到最後的存檔。']]);
       if (!load(newest())) restart();
     }
@@ -180,7 +180,7 @@ function renderHud() {
     party.appendChild(el);
   }
   hud.querySelector('.menu-btn').onclick = openMenu;
-  hud.querySelector('.goal').textContent = chapter5Goal(game.world, s) ?? chapter3Goal(game.world, s) ?? chapterGoal(game.world, s) ?? (s.flags.bossDone ? '' : '目標：飛往右上方救回悟飯（建議練到 Lv6 以上）');
+  hud.querySelector('.goal').textContent = chapter5Goal(game.world, s) ?? chapter4Goal(game.world, s) ?? chapter3Goal(game.world, s) ?? chapterGoal(game.world, s) ?? (s.flags.bossDone ? '' : '目標：飛往右上方救回悟飯（建議練到 Lv6 以上）');
 }
 game.renderHud = renderHud;
 
@@ -244,8 +244,7 @@ function load(key = SAVE_KEY) {
     s.var = s.var || { 42: 3 };
     startField();
     resumeChapter(game);
-    resumeChapter3(game);
-    resumeChapter5(game);
+    resumeChapter3(game) || resumeChapter4(game) || resumeChapter5(game);
     return true;
   } catch (e) { return false; }
 }
@@ -268,10 +267,7 @@ function startField() {
   renderHud();
 }
 
-// the chapter that follows, by name (a later part calls game.nextChapter('ch6') …); false when it isn't there
-const CHAPTERS = { ch5: startChapter5 };
-const nextChapter = (k) => (typeof k !== 'string' ? startChapter3(game) : CHAPTERS[k] ? CHAPTERS[k](game) : false);
-Object.assign(game, { startField, save, renderHud: () => renderHud(), showTitle: (sub) => showTitle(sub), nextChapter, startChapter5, devChapter5: () => devChapter5(game) }); // for src/chapter*.js
+Object.assign(game, { startField, save, showTitle: (sub) => showTitle(sub), nextChapter: startChapter3, startChapter4, startChapter5, devChapter5: () => devChapter5(game) }); // for src/chapter*.js
 
 // ---------- title ----------
 const title = document.getElementById('title');
@@ -281,7 +277,7 @@ function showTitle(sub) {
   audio.playBgm(game.world.titleBgm);
   const has = !!localStorage.getItem(SAVE_KEY);
   title.innerHTML = `<img src="${assetUrl('Graphics/System/Title.png')}" alt="">
-    <div class="sub">${sub || '重製版・Z1 拉蒂茲篇～尼奇篇'}</div>
+    <div class="sub">${sub || '重製版・Z1 拉蒂茲篇～吉加篇'}</div>
     <div class="actions">
       <button class="btn" data-a="new">新的開始</button>
       ${has ? '<button class="btn" data-a="cont">繼續遊戲</button>' : ''}
@@ -338,7 +334,7 @@ async function boot() {
   if (!(await ensureLatest())) return;
   view.resize();
   window.addEventListener('resize', () => view.resize());
-  game.world = await (await fetch('data/world.json?v=20261101-2006')).json();
+  game.world = await (await fetch('data/world.json?v=20261101-2059')).json();
   setCutsceneWorld(game.world);
   setFaces(game.world.faces);
   setItemsWorld(game.world);

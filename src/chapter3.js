@@ -3,9 +3,9 @@
 //   (src/kaiotraining.js) → King Kai, the east pair (map 10, the Nikki area) → 尼奇 → Goku's second training is
 //   announced → end of chapter.
 // state.flags.ch3 tracks the step: 'kaio' → 'east' → 'done'.
-import { input } from './core.js?v=20261101-2006';
-import { scenes, setParty, moveTo, enterMap, card } from './chapter2.js?v=20261101-2006';
-import { bubblesTraining } from './kaiotraining.js?v=20261101-2006';
+import { input } from './core.js?v=20261101-2059';
+import { scenes, setParty, moveTo, enterMap, card } from './chapter2.js?v=20261101-2059';
+import { bubblesTraining } from './kaiotraining.js?v=20261101-2059';
 
 const MAPS = ['9', '10'];
 
@@ -78,5 +78,6 @@ export async function chapter3Boss(game) {
   game.save(true);
   game.busy = false;
   await card(c.end, 2000);
+  if (game.startChapter4) return game.startChapter4(game); // Gregory's training and the Ginger area (src/chapter4.js)
   game.showTitle(c.end);
 }

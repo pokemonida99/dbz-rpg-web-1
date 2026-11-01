@@ -114,6 +114,12 @@ export function cardFor(world, m, cd) {
   return c;
 }
 
+// createcardval: a card a member used comes back as 1/1 or Z/Z (both stars) with 一か八か
+export function regenCard(world, m, cd) {
+  if (m && has(world, m, 618)) { const v = rand(2) ? 7 : 0; cd.a = v; cd.g = v; }
+  return cd;
+}
+
 // members who played a card this turn and are still up, other than m (Z戦士の絆, 激怒 look at them)
 const mates = (b, m) => b.party.filter((x, i) => x !== m && !x.ko && b.plans && b.plans[i]);
 const kizunaMates = (b, m) => mates(b, m).filter((x) => F.kizuna.some((id) => has(b.world, x, id))).length;
@@ -186,8 +192,13 @@ export function beforeExp(b, exp) {
 // ({lines, se}) in order.
 export function afterBattle(b) {
   const w = b.world, s = b.game.state;
-  const sp = b.foes.reduce((t, f) => t + (f.sp || 0), 0);
-  const pages = [{ lines: [`獲得　${sp}　SP！`] }];
+  let sp = b.foes.reduce((t, f) => t + (f.sp || 0), 0);
+  s.var = s.var || {};
+  const heavy = s.var[313] || 0; // 加重衣 (card 82): SP ×1.5 for the next won battles
+  if (heavy > 0) sp = Math.trunc(sp * 1.5);
+  const pages = [{ lines: heavy > 1 ? [`獲得　${sp}　SP！`, `(加重衣的效果剩餘　${heavy - 1}回)`] : [`獲得　${sp}　SP！`] }];
+  if (heavy === 1) pages.push({ lines: ['加重衣的效果結束了！'] });
+  if (heavy > 0) s.var[313] = heavy - 1;
   for (const m of b.party) {
     ensure(m);
     const got = spRun(w, s, m, spFor(w, m, sp));
@@ -297,6 +308,35 @@ export function skillList(world, state, m) {
     id, name: id ? skillName(world, id) : '卸下',
     dim: id && (m.sp[id] || 0) < need(world, id), fresh: id && !m.set[id],
   }));
+}
+
+// the 自由 slot (仮面男, card 110): skills this member has learned, not already in a 固有 slot (get_output_skill_list
+// with setfreeskill_flag)
+export function freeSlot(m) { return ensure(m).typ.indexOf(34); }
+export function freeList(world, state, m) {
+  const sn = state.skillSeen || {};
+  const same01 = [m.typ[0], m.typ[1]].flatMap((x) => sk(world, x).same);
+  return Object.keys(world.growth.skills).map(Number).filter((id) => {
+    const k = sk(world, id);
+    return sn[id] > 0 && (!k.old.length || k.old.some((o) => sn[o] > 0)) && id !== 34 && m.got[id] && !m.typ.includes(id)
+      && !same01.includes(id);
+  }).sort((a, b) => sk(world, a).ord - sk(world, b).ord).map((id) => ({ id, name: skillName(world, id), dim: (m.sp[id] || 0) < need(world, id) }));
+}
+// window 12: allowed when learned and not doubled by a 固有技能 (a 追加 slot holding it is emptied)
+export function freeOk(world, m, id) {
+  const hit = (x) => x && (x === id || sk(world, x).same.includes(id));
+  return id > 0 && (m.sp[id] || 0) >= need(world, id) && !m.typ.some(hit);
+}
+export function applyFree(world, state, m, id) {
+  const slot = freeSlot(m);
+  if (slot < 0 || !freeOk(world, m, id)) return false;
+  const hit = (x) => x && (x === id || sk(world, x).same.includes(id));
+  m.add = m.add.map((x) => (hit(x) ? 0 : x));
+  m.set[id] = m.got[id] = 1;
+  m.typ[slot] = id;
+  seen(state, id, 1);
+  m.freeSet = true; // $cha_set_free_skill
+  return true;
 }
 
 // chk_same_skill: the skill (or one with the same effect) is already in a 固有 slot or another 追加 slot
@@ -489,12 +529,66 @@ export async function useAddSlot(game) {
   return true;
 }
 
-import(`./items.js?v=${VERSION}`).then((it) => {
-  if (!it.fieldCards) return;
-  it.fieldCards[71] = ({ game }) => useZp(game);
-  it.fieldCards[77] = ({ game }) => usePool(game);
-  it.fieldCards[72] = ({ game }) => useAddSlot(game);
-}).catch(() => {}); // the item cards are another branch; until it is merged these run from the console only
+// card 88 超聖水: +15 ZP to one member
+export async function useZpWater(game) {
+  const m = await pickMember(game, '超聖水', () => true, true);
+  if (!m) return false;
+  audio.se('Z1 パワーアップ');
+  ensure(m).zp += 15;
+  return true;
+}
+// card 121 妖怪: a KO'd member with some HP back is on its feet again (not in a one-member party)
+export async function useGhost(game) {
+  if (game.state.party.length < 2) { audio.se('Z3 エラー'); return false; }
+  const m = await pickMember(game, '妖怪', (x) => !!x.ko && x.hp > 0, false);
+  if (!m) return false;
+  audio.se('Z3 回復');
+  revive(m);
+  return true;
+}
+// card 82 加重衣: SP ×1.5 for 5 more won battles (variable 313, up to 999)
+export function useHeavyGi(game) {
+  const s = game.state;
+  s.var = s.var || {};
+  if ((s.var[313] || 0) >= 999) { audio.se('Z3 エラー'); return false; }
+  s.var[313] = Math.min(999, (s.var[313] || 0) + 5);
+  audio.se('Z3 回復');
+  return true;
+}
+// skill cards (other_card_run): the skill joins the 追加技能 list once
+export function useSkillCard(game, skill) {
+  const s = game.state;
+  s.skillSeen = s.skillSeen || {};
+  if (s.skillSeen[skill] > 0) { audio.se('Z3 エラー'); return false; }
+  seen(s, skill);
+  audio.se(SE_GET);
+  return true;
+}
+let freeSkillScreen = null; // set by partymenu.js: (game, member) → Promise<bool>
+export function setFreeSkillScreen(fn) { freeSkillScreen = fn; }
+// card 110 仮面男: set a learned skill into a member's 自由 slot
+export async function useMask(game) {
+  const m = await pickMember(game, '假面男', (x) => freeSlot(x) >= 0, true);
+  return m ? freeSkillScreen(game, m) : false;
+}
+
+// the cards this module runs, registered in src/items.js fieldCards (skill cards need world.growth.cards)
+const wrap = (fn) => async (ctx) => !!(await fn(ctx.game));
+let cardsMod = null, cardsWorld = null;
+function registerCards() {
+  if (!cardsMod || !cardsWorld) return;
+  const fc = cardsMod.fieldCards;
+  fc[71] = ({ game }) => useZp(game);
+  fc[77] = ({ game }) => usePool(game);
+  fc[72] = ({ game }) => useAddSlot(game);
+  fc[82] = wrap(useHeavyGi);
+  fc[88] = wrap(useZpWater);
+  fc[110] = wrap(useMask);
+  fc[121] = wrap(useGhost);
+  for (const [id, skill] of Object.entries(cardsWorld.growth.cards || {})) fc[id] = wrap((game) => useSkillCard(game, skill));
+}
+export function setGrowthWorld(w) { cardsWorld = w; registerCards(); }
+import(`./items.js?v=${VERSION}`).then((it) => { if (it.fieldCards) { cardsMod = it; registerCards(); } }).catch(() => {});
 
 const css = document.createElement('style');
 css.textContent = `

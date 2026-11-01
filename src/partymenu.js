@@ -399,6 +399,47 @@ export function pickMember(game, title, ok, zpPage) {
 }
 growth.setPicker(pickMember);
 
+// card 110 仮面男 (Scene_Db_Status, Freeskill_set_card_no): pick a learned skill for the member's 自由 slot
+function freeSkillScreen(game, m) {
+  const world = game.world, s = game.state;
+  return new Promise((res) => {
+    let pick = null;
+    const root = el('div', 'pm');
+    document.getElementById('app').appendChild(root);
+    root.addEventListener('pointerdown', (e) => { e.stopPropagation(); audio.unlock(); });
+    const end = (v) => { root.remove(); res(v); };
+    const render = () => {
+      root.innerHTML = '';
+      const box = el('div', 'win pm-skl pm-list2', el('div', 'pm-th', el('span', '', `${m.name}　自由技能`)));
+      const list = growth.freeList(world, s, m);
+      for (const it of list) {
+        const b = el('button', 'pm-sk' + (pick === it.id ? ' on' : ''), el('span', it.dim ? 'dim' : '', it.name));
+        b.onclick = () => { audio.se(SE_MOVE); pick = it.id; render(); };
+        box.append(b);
+      }
+      if (!list.length) box.append(el('div', 'pm-hint', '（沒有可以設定的技能）'));
+      root.append(box);
+      if (pick != null) root.append(el('div', 'win pm-memo', growth.manual(world, pick)));
+      const acts = el('div', 'pm-tog');
+      const ok = el('button', 'btn', '決定');
+      ok.onclick = () => {
+        if (pick == null || !growth.freeOk(world, m, pick)) { audio.se(SE_ERR); return; }
+        confirmBox(render, [`設定技能：${growth.skillName(world, pick)}`, '在「自由」技能欄設定這個技能嗎？'], ['確定', '取消'], () => {
+          growth.applyFree(world, s, m, pick);
+          audio.se(SE_OK);
+          end(true);
+        });
+      };
+      const back = el('button', 'btn', '取消');
+      back.onclick = () => { audio.se(SE_OK); end(false); };
+      acts.append(ok, back);
+      root.append(acts);
+    };
+    render();
+  });
+}
+growth.setFreeSkillScreen(freeSkillScreen);
+
 // ---------- 作戰 (Scene_Db_Tactics_Menu) ----------
 // option texts from output_status (the Chinese edition), in Traditional characters
 export function openTactics({ game, battle }) {

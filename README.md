@@ -32,6 +32,9 @@ python3 tools/copy_assets.py game            # 只複製用到的素材到 asset
 | `src/anime.js` | 戰鬥動畫：照經典版逐格移植的一對一演出（普通攻擊、各必殺技、閃避、爆炸），點畫面可加速 |
 | `src/main.js` | 標題、劇情、HUD、選單、存讀檔（localStorage） |
 
+## 本版自製素材
+`assets/bg/battle_{night,dusk,day}.png`：直向戰鬥背景（400×600），用 ChatGPT 照原版 Z1 戰場地面的風格生成，再縮成像素、減色。每場戰鬥隨機選一張，同一場不會換。
+
 ## 發佈
 
 每次推上去之前先跑 `python3 tools/bump.py`，會更新版本號並讓手機自動抓到新版。

@@ -3,15 +3,15 @@
 // the enemy on the right — played at 60 frames a second with the original sprites, beams and sounds.
 // Positions, speeds and frame numbers follow the original's anime_pattern / effect_pattern / back_anime_pattern
 // (pattern numbers are noted on each piece). The stage is drawn into its own canvas and cropped to the phone.
-import { img, audio, rand } from './core.js?v=20261101-1602';
+import { img, audio, rand } from './core.js?v=20261101-1618';
 
 export const SW = 640, SH = 356;
 const STD_CHAX = -70, STD_ENEX = 602, STD_Y = 120, CENTER_CHAX = 240, CENTER_ENEX = 304, TEC_CENTER = 266;
-const RAY_SPEED = 14, BACK_Y = 256, FADE = 10;
+const RAY_SPEED = 14, FADE = 10;
+export const BACK_Y = 256; // where the ground strip starts; it sinks while a special move rises
 
 // every picture used here goes through pic(); tools/copy_assets.py collects them (and ANIME_SOUNDS) from this file
 const pic = (n) => `Graphics/Pictures/${n}`;
-const BG = pic('Z1_戦闘_背景.PNG'); // 640×100 strips; strip 0 = Z1 field
 const SPARK = pic('戦闘アニメ.PNG'); // hit sparks (y 0-48) and the dodge after-image (0,48 64×64)
 const BOOM = pic('戦闘アニメ_爆発1.PNG'); // 2 frames of 96×96
 const DIGITS = pic('数字英語.PNG');
@@ -35,7 +35,7 @@ const BACKS = {
   handTwo: pic('Z1_戦闘_必殺技_手に気を溜める_両手.PNG'),
 };
 
-export const ANIME_IMAGES = [BG, SPARK, BOOM, DIGITS, MAKANKO_BALL, PIERCE_FRONT, ...Object.values(BALL),
+export const ANIME_IMAGES = [SPARK, BOOM, DIGITS, MAKANKO_BALL, PIERCE_FRONT, ...Object.values(BALL),
   ...Object.values(RAY).map((r) => r[0]), ...Object.values(BACKS)];
 
 // special moves by skill id → the original's animation (attack pattern = skill id + 10)
@@ -448,15 +448,10 @@ export class Duel {
   }
 
   // ---------- drawing ----------
+  // the fighters and effects on a transparent stage; the battle draws the background and the fade around it
   render() {
     const c = this.c;
-    c.fillStyle = '#000';
-    c.fillRect(0, 0, SW, SH);
-    const bg = img(BG);
-    if (bg.ok && this.back.y < SH) {
-      c.drawImage(bg.im, 0, 0, 640, 100, this.back.x - 320, this.back.y, 640, 100);
-      c.drawImage(bg.im, 0, 0, 640, 100, this.back.x + 320, this.back.y, 640, 100);
-    }
+    c.clearRect(0, 0, SW, SH);
     if (this.bfx) this.bfx.draw(c, this.bfx.f);
     for (const o of [this.R, this.L]) {
       if (o.y < -96 || o.y > SH) continue;
@@ -468,7 +463,6 @@ export class Duel {
       const s = String(this.damage), rx = this.p ? CENTER_ENEX + 72 : CENTER_CHAX + 40;
       if (d.ok) for (let i = 0; i < s.length; i++) c.drawImage(d.im, 16 * Number(s[s.length - 1 - i]), 32, 16, 16, rx - i * 16, 100, 16, 16);
     }
-    if (this.fade > 0) { c.fillStyle = `rgba(0,0,0,${this.fade})`; c.fillRect(0, 0, SW, SH); }
     return this.cv;
   }
 }
@@ -478,16 +472,6 @@ function draw(c, sheet, sx, sy, w, h, x, y) {
   if (im.ok) c.drawImage(im.im, sx, sy, w, h, Math.round(x), Math.round(y), w, h);
 }
 function spark(c, sx, sy, w, h, x, y) { draw(c, SPARK, sx, sy, w, h, x, y); }
-
-// the empty stage between actions (ground strip at its usual place)
-export function renderIdle(cv) {
-  const c = cv.getContext('2d');
-  c.fillStyle = '#000';
-  c.fillRect(0, 0, SW, SH);
-  const bg = img(BG);
-  if (bg.ok) c.drawImage(bg.im, 0, 0, 640, 100, 0, BACK_Y, 640, 100);
-  return cv;
-}
 
 // sounds this file plays, for tools/copy_assets.py
 export const ANIME_SOUNDS = ['Z1 打撃', 'Z3 打撃', 'Z3 避ける', 'Z1 必殺技', 'Z3 光線系ヒット', 'Z3 跳ね返し', 'Z1 高速移動', 'Z1 衝撃波',

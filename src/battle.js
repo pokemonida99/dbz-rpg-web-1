@@ -6,14 +6,13 @@
 //   lower area     — message window; choosing: buttons + the six cards; fighting: the original duel bar
 //                    (party face, HP/KI, both cards, enemy face)
 // Choosing a card that allows a special move opens the move window over the stage.
-import { view, img, audio, sleep, rand } from './core.js?v=20261101-1602';
-import { levelUp } from './party.js?v=20261101-1602';
-import { Duel, ANIME_IMAGES, SW, SH, renderIdle } from './anime.js?v=20261101-1602';
+import { view, img, audio, sleep, rand } from './core.js?v=20261101-1618';
+import { levelUp } from './party.js?v=20261101-1618';
+import { Duel, ANIME_IMAGES, SW, SH, BACK_Y } from './anime.js?v=20261101-1618';
 
 export const SCHOOL = ['必', '龜', '神', '界', '魔', '惑'];
 const HAND = 6;
 const EXP_RATE = 8; // the original's "経験値倍率" option; at 1 the opening chapter takes ~100 fights (Raditz needs about Lv6-7)
-const BG = 'Graphics/Pictures/Z1_戦闘_背景.PNG'; // 640×100 strips; strip 0 = Z1 field
 const CARDS = 'Graphics/Pictures/カード関係.PNG';
 const FACES = 'Graphics/Pictures/Z1_顔味方.PNG'; // 64×64; row = actor id - 3; columns: normal, hurt, KO
 const FOE_FACES = 'Graphics/Pictures/Z1_顔敵.PNG'; // 64×64; row = enemy id; columns: normal, hurt
@@ -21,9 +20,13 @@ const DIGITS = 'Graphics/Pictures/数字英語.PNG'; // 16×16 cells: row 0 blac
 const FRAME_IMG = 'ui/frame.png'; // the Z1 window border (8px corners)
 const PURPLE = '#9040f0', CREAM = '#ffd8a0', INK = '#301808', RUST = '#d0480c';
 const FONT = 'Cubic11, system-ui, sans-serif';
+// portrait battle backgrounds made for this version (pixel art in the style of the Z1 field strip), 400×600;
+// one is picked per battle and kept for the whole fight. Film row 0 sits on image row BACKDROP_TOP.
+const BACKDROPS = ['bg/battle_night.png', 'bg/battle_dusk.png', 'bg/battle_day.png'];
+const BACKDROP_TOP = 205;
 
 export function battleImages(world) {
-  const sheets = new Set([BG, CARDS, FACES, FOE_FACES, DIGITS, FRAME_IMG, ...ANIME_IMAGES]);
+  const sheets = new Set([...BACKDROPS, CARDS, FACES, FOE_FACES, DIGITS, FRAME_IMG, ...ANIME_IMAGES]);
   for (const a of Object.values(world.actors)) { sheets.add(a.sprite); sheets.add(a.special); }
   for (const e of Object.values(world.enemies)) { sheets.add(e.sprite); sheets.add(e.portrait); }
   return [...sheets];
@@ -137,8 +140,7 @@ export class Battle {
     this.hand = game.state.hand;
     this.foes = enemyIds.map((id, i) => ({ ...world.enemies[id], id, slot: i, hp: world.enemies[id].maxhp }));
     this.anim = null; // the Duel being played
-    this.stageCv = document.createElement('canvas');
-    this.stageCv.width = SW; this.stageCv.height = SH;
+    this.backdrop = BACKDROPS[rand(BACKDROPS.length)];
     this.phase = 'plan'; // plan | fight | result
     this.mode = 'card'; // while planning: card | move | target
     this.turn = 1;
@@ -193,16 +195,9 @@ export class Battle {
     c.fillStyle = PURPLE;
     c.fillRect(0, 0, W, view.h);
     this.drawStatus(c);
-    // stage: choosing → black sky with the ground strip; fighting → the battle film
-    c.fillStyle = '#000';
-    c.fillRect(0, L.stage.y, W, L.stage.h);
-    if (this.phase === 'fight') this.drawFilm(c);
-    else {
-      const bg = img(BG);
-      const gy = Math.round(L.stage.y + L.stage.h / 2 - 50);
-      if (bg.ok) c.drawImage(bg.im, Math.max(0, (640 - W) / 2), 0, Math.min(640, W), 100, Math.max(0, (W - 640) / 2), gy, Math.min(640, W), 100);
-      this.drawLineup(c);
-    }
+    // stage: this battle's background; choosing → the enemies' faces, fighting → the battle film
+    this.drawFilm(c);
+    if (this.phase !== 'fight') this.drawLineup(c);
     // message window
     win(c, L.msg.x, L.msg.y, L.msg.w, L.msg.h);
     this.msg.slice(0, 2).forEach((s, i) => text(c, s, L.msg.x + 12, L.msg.y + 10 + i * 22, INK, 17));
@@ -354,14 +349,29 @@ export class Battle {
 
   // the 640×356 film stage, cropped to the phone: centred across, and when the stage is short the top of the
   // sky goes first (the fighters stand at y 120-216, the ground at 256-356)
+  // The background is drawn on the main canvas behind it, lined up with the film (its ground under the fighters)
+  // and sinking with the film's ground while a special move rises.
   drawFilm(c) {
     const { stage } = this.L;
     const W = view.w;
-    const cv = this.anim ? this.anim.render() : renderIdle(this.stageCv);
     const sw = Math.min(SW, W), sx = Math.round((SW - sw) / 2), dx = Math.round((W - sw) / 2);
     let sy = 0, sh = SH, dy = stage.y + Math.floor((stage.h - SH) / 2);
     if (stage.h < SH) { sh = Math.round(stage.h); sy = Math.floor((SH - sh) * 0.6); dy = stage.y; }
-    c.drawImage(cv, sx, sy, sw, sh, dx, dy, sw, sh);
+    c.save();
+    c.beginPath(); c.rect(0, stage.y, W, stage.h); c.clip();
+    const bd = img(this.backdrop);
+    if (bd.ok) {
+      const bx = Math.round((W - bd.im.width) / 2);
+      const lift = Math.max(0, Math.min(50, Math.round((SH - stage.h) / 3))); // short screens: ground nearer the feet
+      const by = dy - sy - BACKDROP_TOP - lift + (this.anim ? this.anim.back.y - BACK_Y : 0);
+      if (by > stage.y) c.drawImage(bd.im, 0, 0, bd.im.width, 1, bx, stage.y, bd.im.width, by - stage.y + 1); // sky above the picture
+      c.drawImage(bd.im, bx, by);
+    }
+    if (this.anim) {
+      c.drawImage(this.anim.render(), sx, sy, sw, sh, dx, dy, sw, sh);
+      if (this.anim.fade > 0) { c.fillStyle = `rgba(0,0,0,${this.anim.fade})`; c.fillRect(0, stage.y, W, stage.h); }
+    }
+    c.restore();
   }
 
   // ---------- planning ----------

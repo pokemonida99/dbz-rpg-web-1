@@ -1,15 +1,15 @@
 // Boot, game state, scene switching, story beats, HUD, menu, save/load.
-import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-1854';
-import { tileSheetPaths } from './tiles.js?v=20261101-1854';
-import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-1854';
-import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-1854';
-import { makeMember, levelUp } from './party.js?v=20261101-1854';
-import { runEvent } from './events.js?v=20261101-1854';
-import { playOpening, playStory } from './opening.js?v=20261101-1854'; // the original's title animation and opening story
-import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapterBoss } from './chapter2.js?v=20261101-1854';
-import { fieldMenuHtml, openEntry } from './partymenu.js?v=20261101-1854'; // 隊伍・卡牌・組合技・作戰
-import { setItemsWorld, bubbles } from './items.js?v=20261101-1854'; // item cards (its 卡牌 menu entry registers itself)
-import { cardSquare, compo } from './cardgames.js?v=20261101-1854'; // card squares (shop / lottery / memory), 合成
+import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-1900';
+import { tileSheetPaths } from './tiles.js?v=20261101-1900';
+import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-1900';
+import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-1900';
+import { makeMember, levelUp } from './party.js?v=20261101-1900';
+import { runEvent } from './events.js?v=20261101-1900';
+import { playOpening, playStory } from './opening.js?v=20261101-1900'; // the original's title animation and opening story
+import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapterBoss } from './chapter2.js?v=20261101-1900';
+import { fieldMenuHtml, openEntry } from './partymenu.js?v=20261101-1900'; // 隊伍・卡牌・組合技・作戰
+import { setItemsWorld, bubbles } from './items.js?v=20261101-1900'; // item cards (its 卡牌 menu entry registers itself)
+import { cardSquare, compo } from './cardgames.js?v=20261101-1900'; // card squares (shop / lottery / memory), 合成
 
 const SAVE_KEY = 'dbz-portrait-save-v1';
 const FACES = 'Graphics/Pictures/GBZ1 顔アイコン.PNG'; // 40×56 cells, one row per character
@@ -277,7 +277,7 @@ async function boot() {
   if (!(await ensureLatest())) return;
   view.resize();
   window.addEventListener('resize', () => view.resize());
-  game.world = await (await fetch('data/world.json?v=20261101-1854')).json();
+  game.world = await (await fetch('data/world.json?v=20261101-1900')).json();
   setFaces(game.world.faces);
   setItemsWorld(game.world);
   const faceSheets = new Set(Object.values(game.world.faces).map((f) => f[0]));

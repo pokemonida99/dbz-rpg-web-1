@@ -6,13 +6,13 @@
 //   lower area     — message window; choosing: buttons + the six cards; fighting: the original duel bar
 //                    (party face, HP/KI, both cards, enemy face)
 // Choosing a card that allows a special move opens the move window over the stage.
-import { view, img, audio, sleep, rand } from './core.js?v=20261101-1854';
-import { levelUp } from './party.js?v=20261101-1854';
-import { Duel, ANIME_IMAGES, SW, SH, BACK_Y } from './anime.js?v=20261101-1854';
-import { battleCommand, autoSkill, autoTarget, tally } from './partymenu.js?v=20261101-1854'; // command menu, 作戰, counters
-import * as items from './items.js?v=20261101-1854'; // item cards: effects that touch the battle rules
-import { tryCombo, announceCombos, comboHints, hasCombos, HINT_TEXT } from './combo.js?v=20261101-1854'; // 組合技
-import * as growth from './growth.js?v=20261101-1854'; // passive skills, proficiency, KO, SP / ZP / EXP pool
+import { view, img, audio, sleep, rand } from './core.js?v=20261101-1900';
+import { levelUp } from './party.js?v=20261101-1900';
+import { Duel, ANIME_IMAGES, SW, SH, BACK_Y } from './anime.js?v=20261101-1900';
+import { battleCommand, autoSkill, autoTarget, tally } from './partymenu.js?v=20261101-1900'; // command menu, 作戰, counters
+import * as items from './items.js?v=20261101-1900'; // item cards: effects that touch the battle rules
+import { tryCombo, announceCombos, comboHints, hasCombos, HINT_TEXT } from './combo.js?v=20261101-1900'; // 組合技
+import * as growth from './growth.js?v=20261101-1900'; // passive skills, proficiency, KO, SP / ZP / EXP pool
 
 export const SCHOOL = ['必', '龜', '神', '界', '魔', '惑'];
 const HAND = 6;

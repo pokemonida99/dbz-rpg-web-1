@@ -233,7 +233,10 @@ export class Stage {
 
   // add_chr: a picture (or the part `src` of it) at the original screen position; `face` = a party face, shown
   // under the scene here since the message box sits at the bottom
-  add(path, x, y, src = [0, 0, 512, 128], face = false, line = 0) { this.sprites.push({ path, x, y, src, face, line }); }
+  // size: [w, h] to draw it at (src/cutscene.js: the dragon balls at half size), or 'full' for a 640×480 picture that
+  // fills the width above the message box (z1field 135, Shenron)
+  add(path, x, y, src = [0, 0, 512, 128], face = false, line = 0, size = null) { this.sprites.push({ path, x, y, src, face, line, size }); }
+  se(name) { audio.se(name, 80); }
   clear() { this.sprites = []; }
   scrollBg(name, x) { this.add(BG(name), SCROLL_X, SCENE_Y, [x, 0, 512, 128]); }
   bg(name) { this.add(BG(name), SCENE_X, SCENE_Y, [0, 0, 192, 128]); }
@@ -241,6 +244,9 @@ export class Stage {
   enemyFace(sheet, row) { this.add(sheet, ENE[0], ENE[1], [0, 64 * row, 64, 64]); }
   // line: a second row of faces (src/cutscene.js, when more than three are on screen)
   party(sheet, row, dx, line = 0) { this.add(sheet, PLAY_X + dx, 0, [0, 64 * row, 64, 64], true, line); }
+  // the faces under the scene are drawn faceSize big (src/cutscene.js: 48 when more than six, four a row)
+  get faceSize() { return this.fs || 64; }
+  set faceSize(v) { this.fs = v; }
 
   layout() {
     const ui = this.ui;
@@ -252,7 +258,8 @@ export class Stage {
     this.dlgH = Math.max(this.dlgH || 190, ui.dlg.offsetHeight); // css px; kept so the scene doesn't jump
     const dlgH = this.dlgH / px;
     // scene, the party's faces, then the message box, centred as one block
-    const rows = 64 + 68 * Math.max(0, ...this.sprites.map((s) => s.line || 0)); // the faces under the scene
+    const fz = this.faceSize;
+    const rows = fz + (fz + 4) * Math.max(0, ...this.sprites.map((s) => s.line || 0)); // the faces under the scene
     const block = 128 + 10 + rows + 12 + dlgH;
     const top = Math.max(44 / px + 10, Math.round((h - block) / 2));
     ui.dlg.style.top = `${(top + 128 + 10 + rows + 12) * px}px`;
@@ -268,12 +275,23 @@ export class Stage {
     const oy = top - SCENE_Y;
     for (const s of this.sprites) {
       const [sx, sy, sw, sh] = s.src;
-      if (s.face) { blt(c, s.path, s.x + ox, top + 128 + 10 + 68 * s.line, sw, sh, sx, sy); continue; }
+      if (s.face) {
+        const fz = this.faceSize, fy = top + 128 + 10 + (fz + 4) * s.line;
+        if (fz === 64) blt(c, s.path, s.x + ox, fy, sw, sh, sx, sy);
+        else { const e = img(s.path); if (e.ok) c.drawImage(e.im, sx, sy, sw, sh, PLAY_X + ((s.x - PLAY_X) * fz) / 64 + ox + (64 - fz) / 2, fy, fz, fz); }
+        continue;
+      }
+      if (s.size === 'full') { // as wide as the screen, its middle on the scene window
+        const e = img(s.path), fw = w, fh = Math.round((w * sh) / sw);
+        if (e.ok) c.drawImage(e.im, sx, sy, sw, sh, 0, Math.max(0, Math.round(top + 64 - fh / 2)), fw, fh);
+        continue;
+      }
       c.save();
       c.beginPath();
       c.rect(SCROLL_X + ox, top, 512, 128); // nothing shows outside the scene window
       c.clip();
-      blt(c, s.path, s.x + ox, s.y + oy, sw, sh, sx, sy);
+      if (s.size) { const e = img(s.path); if (e.ok) c.drawImage(e.im, sx, sy, sw, sh, s.x + ox, s.y + oy, s.size[0], s.size[1]); }
+      else blt(c, s.path, s.x + ox, s.y + oy, sw, sh, sx, sy);
       c.restore();
     }
     if (this.flash > 0) { c.fillStyle = `rgba(255,255,255,${this.flash})`; c.fillRect(0, 0, w, h); }

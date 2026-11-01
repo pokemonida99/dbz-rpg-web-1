@@ -15,7 +15,8 @@ from PIL import Image
 # Every card that can be had in chapters 1-2: drops, events, the new-game cards (4 7 71 77), the Z1 card shop, the card
 # lottery / concentration pool (010_Share.rb create_get_card, Z1) and everything a card-composition recipe uses or makes
 # (_card_compo.rvdata), plus the battle cards whose effects are as simple (33 40 41 51 52 53 54 64).
-BASE = list(range(1, 27)) + [28, 29, 30, 32, 33, 34, 40, 41, 45, 49, 50, 51, 52, 53, 54, 64, 70, 71, 72, 75, 77, 80, 84, 87]
+BASE = list(range(1, 27)) + [28, 29, 30, 32, 33, 34, 40, 41, 45, 49, 50, 51, 52, 53, 54, 64, 70, 71, 72, 75, 77, 80, 84, 87,
+        67, 141]  # chapter 6 gifts: 通知！ (時の間, CE180), 喜歡角色變更 (King Kai, page 135)
 # create_get_card: card_id_z1[rand(size - 1)] — the last entry (197) can never come up
 LOTTERY = [9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 32, 34, 49, 50, 51, 52, 64, 70,
            75, 80, 82, 83, 84, 87, 88, 106, 121]

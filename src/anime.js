@@ -34,6 +34,7 @@ const RAY = {
 const RAY_DOWN = pic('Z1_戦闘_必殺技_エネルギー波_中_縦.PNG'); // 120×400, the right half falls from the sky
 const KIENZAN = pic('Z1_戦闘_必殺技_気円斬.PNG'); // 4 frames of 128×28, the disc growing
 const SOKIDAN = pic('Z1_戦闘_必殺技_繰気弾.PNG'); // 128×128 frames
+const POWER_BALL = pic('Z1_戦闘_必殺技_繰気弾.PNG'); // 128×128 frames: the 元気玉 and Vegeta's power ball
 const BACKS = {
   shock: pic('Z1_戦闘_必殺技_背景_衝撃波系.png'), demonV: pic('Z1_戦闘_必殺技_背景_魔族系(縦).png'),
   demonH: pic('Z1_戦闘_必殺技_背景_魔族系(横).png'), auraGreen: pic('Z1_戦闘_必殺技_気を溜める(緑).PNG'),
@@ -42,9 +43,11 @@ const BACKS = {
   aura: pic('Z1_戦闘_必殺技_気を溜める.PNG'), flame3: pic('Z1_戦闘_必殺技_気を溜める3.png'),
   gather4: pic('Z1_戦闘_必殺技_気を溜める4.png'), gatherFour: pic('Z1_戦闘_必殺技_気を溜める(四身の拳気功砲).PNG'),
   kikou: pic('Z1_戦闘_必殺技_背景_気功砲系.png'), psychic: pic('Z1_戦闘_必殺技_超能力.PNG'),
+  nappa: pic('Z1_戦闘_必殺技_気を溜める6.PNG'), nappaMouth: pic('Z1_戦闘_必殺技_気を溜める7.PNG'),
+  galick: pic('Z1_戦闘_必殺技_気を溜める8.png'), kaioken: pic('Z1_戦闘_必殺技_気を溜める9.PNG'),
 };
 
-export const ANIME_IMAGES = [SPARK, BOOM, DIGITS, MAKANKO_BALL, PIERCE_FRONT, RAY_DOWN, KIENZAN, SOKIDAN, ...Object.values(BALL),
+export const ANIME_IMAGES = [SPARK, BOOM, DIGITS, POWER_BALL, MAKANKO_BALL, PIERCE_FRONT, RAY_DOWN, KIENZAN, SOKIDAN, ...Object.values(BALL),
   ...Object.values(RAY).map((r) => r[0]), ...Object.values(BACKS)];
 
 // special moves by skill id → the original's animation (attack pattern = skill id + 10)
@@ -60,12 +63,18 @@ const MOVES = {
   310: 'raditzWave', 311: 'raditzBigWave', // 拉蒂茲
   307: 'gingerWave', 321: 'gingerWave', 324: 'sanshoWave', 325: 'sanshoBigWave', // 卡里克的手下
   322: 'nikkiBigWave', 323: 'swordAttack', // 尼奇
+  6: 'kaioken', 7: 'kaiokenKamehameha', 18: 'genkidama', // 悟空 after King Kai's training (CE12)
+  101: 'shockwave', 102: 'energyWave', 103: 'kienzan', 104: 'kienzan', // 琪琪
+  303: 'paralysis', 304: 'selfDestruct', // 栽培人
+  312: 'nappaWave', 313: 'nappaBlast', 314: 'nappaMouth', // 那巴
+  316: 'vegetaWave', 319: 'vegetaBlast', 320: 'galickGun', 373: 'vegetaApe', 585: 'apeWave', // 貝吉塔
 };
 // 拡散エネルギー波 hits every enemy: the battle plays one film per target, and in the original only the first one
 // has the whole charge — the rest are just the beam falling on them. A film started right after the last one
 // ended belongs to the same attack.
 const SCATTER = 63;
 let scatterEnd = -1e9;
+let blastEnd = -1e9; // 爆発波 (313 / 319) hits everyone the same way: only the first film has the charge
 
 // one action: attacker vs defender. `party` / `foe` = { normal, special } sprite sheets (96×96 frames, one column)
 export class Duel {
@@ -109,12 +118,16 @@ export class Duel {
       this.done = true;
       audio.seStop();
       if (this.skill === SCATTER) scatterEnd = performance.now();
+      if (this.skill === 313 || this.skill === 319) blastEnd = performance.now();
       this.resolve();
     }
   }
 
   * run() {
-    if (this.skill != null && MOVES[this.skill]) {
+    if (this.skill != null && MOVES[this.skill] === 'selfDestruct') { // 404: no swoop, it rushes straight in
+      yield* this.selfDestruct();
+      yield* this.explode(17, 50);
+    } else if (this.skill != null && MOVES[this.skill]) {
       let kind;
       if (this.skill === SCATTER && performance.now() - scatterEnd < 500) { // a further target of the same attack
         this.back.y = BACK_Y + 79 * 4;
@@ -125,7 +138,7 @@ export class Duel {
         kind = yield* this[MOVES[this.skill]]();
       }
       audio.seStop();
-      if (!this.hit) yield* this.dodge();
+      if (kind === 'none') { /* 大猿変身: no hit */ } else if (!this.hit) yield* this.dodge();
       else if (kind === 'shock') yield* this.blownAway(); // 22
       else if (kind === 'small') yield* this.explode(11, 60); // 26
       else if (kind === 'down') yield* this.explode(17, 45, true); // 24
@@ -777,6 +790,211 @@ export class Duel {
     return 'small';
   }
 
+  // ---- 悟空 after King Kai's training ----
+  // back 17 (気を溜める9): the red aura of 界王拳, 3 frames of 640×356 every 5
+  kaiokenAura() { return (c, t) => draw(c, BACKS.kaioken, 0, (Math.floor(t / 5) % 3) * 378, 640, 356, 0, 0); }
+
+  * kaioken() { // 106 界王拳: the aura, he vanishes, then a flurry on the defender (effect 49)
+    this.se('Z1 気を溜める7');
+    this.pose(this.A, 6, true);
+    this.behind(this.kaiokenAura());
+    yield* this.wait(89);
+    this.behind(null);
+    this.se('Z1 高速移動');
+    this.A.y = -200;
+    yield* this.wait(41);
+    this.se('Z1 逃げる');
+    this.aim();
+    const sheet = this.A.sheets.normal, P = [[10, 14], [20, 13], [30, 12], [35, 0], [39, 1], [43, 2], [46, 1], [50, 2], [53, 3],
+      [56, 4], [60, 3], [63, 1], [66, 2], [70, 1], [999, 2]];
+    this.behind(this.shockBack());
+    this.effect((c, t) => {
+      const row = P.find(([end]) => t <= end)[1];
+      if (t >= 36 && t % 4 === 0 && t < 85) audio.se('Z1 打撃', 80);
+      const x = t >= 61 && t <= 80 ? CENTER_CHAX - (t - 60) * 8 : t >= 81 && t <= 84 ? 80 + (t - 80) * 16 : CENTER_CHAX;
+      if (this.p) draw(c, sheet, 0, row * 96, 96, 96, x, STD_Y);
+      else { c.save(); c.translate(SW, 0); c.scale(-1, 1); draw(c, sheet, 0, row * 96, 96, 96, x, STD_Y); c.restore(); }
+    });
+    yield* this.wait(63);
+    this.effect(null); this.behind(null);
+    return 'shock';
+  }
+
+  * kaiokenKamehameha() { // 107 界王拳・カメハメ波
+    this.se('Z1 気を溜める7');
+    this.pose(this.A, 6, true);
+    this.behind(this.kaiokenAura());
+    yield* this.wait(89);
+    this.se('Z1 気を溜める');
+    this.pose(this.A, 3, true);
+    yield* this.wait(71);
+    this.se('Z1 エネルギー波2');
+    this.pose(this.A, 4, true);
+    this.effect(this.ball(BALL.orange, 230, 100));
+    yield* this.wait(59);
+    this.behind(null);
+    yield* this.cut(RAY.huge, 27, -30);
+  }
+
+  * genkidama() { // 118 元気弾: the hands go up, the ball grows overhead, then it comes down on the defender
+    this.se('Z1 気を溜める(元気弾)');
+    this.pose(this.A, 7, true);
+    this.behind((c, t) => draw(c, BACKS.demonV, 0, (Math.floor(t / 5) % 3) * 480, 640, 356, 0, 0));
+    yield* this.wait(119);
+    this.se('Z1 ザー');
+    this.behind(this.cycler(BACKS.gather4, 640, 356, 0, 0, 3, 360));
+    yield* this.wait(100);
+    this.pose(this.A, 8, true);
+    this.behind(null);
+    yield* this.wait(90);
+    this.se('Z1 エネルギー波');
+    this.pose(this.A, 9, true);
+    this.effect((c, t) => { const k = Math.min(5, Math.floor(t / 10)); draw(c, POWER_BALL, k * 128, 0, 128, 128, 230, 76); });
+    yield* this.wait(48);
+    this.aim();
+    yield;
+    this.behind(this.shockBack());
+    this.effect((c, t) => {
+      if (this.p) draw(c, POWER_BALL, 256, 0, 128, 128, -400 + t * RAY_SPEED + 270, 120);
+      else draw(c, POWER_BALL, 256, 0, 128, 128, SW - t * RAY_SPEED - 270, 120);
+    });
+    yield* this.wait(50);
+    this.effect(null); this.behind(null);
+  }
+
+  // ---- the Saiyans and the Saibamen ----
+  * selfDestruct() { // 404 自爆: it vanishes (after-images), then clings to its target and blows up
+    this.pose(this.A, 0, true);
+    this.A.x = this.p ? STD_CHAX : STD_ENEX; this.A.y = STD_Y;
+    this.G.x = this.p ? CENTER_ENEX : CENTER_CHAX; this.G.y = STD_Y;
+    this.pose(this.G, 0, false);
+    yield* this.wait(30);
+    this.se('Z1 高速移動');
+    const ax = this.A.x;
+    this.A.y = -200;
+    this.effect((c, t) => { if (t <= 68 && t % 4 === 0) spark(c, 0, 48, 64, 64, ax + 16, 150); });
+    yield* this.wait(70);
+    this.effect(null);
+    this.se('Z1 飛ぶ');
+    const G = this.G;
+    this.A.y = G.y - 48; this.A.x = this.p ? G.x - 64 : G.x + 64;
+    for (const [n, fr] of [[7, 14], [8, 13], [8, 12]]) {
+      this.pose(this.A, fr, true);
+      yield* this.wait(n);
+      this.A.y += 16; this.A.x += this.p ? 24 : -24;
+    }
+    this.A.y = -200;
+  }
+
+  * nappaWave() { // 412 エネルギー波(ナッパ)
+    this.se('Z1 ゴー');
+    this.pose(this.A, 1, true);
+    this.behind(this.cycler(BACKS.nappa, 190, 178, 220, 100));
+    yield* this.wait(30);
+    this.pose(this.A, 2, true);
+    yield* this.wait(29);
+    this.se('Z1 エネルギー波');
+    this.pose(this.A, 3, true);
+    this.effect(this.ball(BALL.foe, 238, 122));
+    yield* this.wait(61);
+    this.behind(null);
+    yield* this.cut(RAY.foeMid);
+  }
+
+  * nappaBlast() { yield* this.blast(4, 5, 'Z1 ゴー', 50, 50); } // 413 爆発波(ナッパ)
+  * vegetaBlast() { yield* this.blast(5, 6, 'Z1 気を溜める3', 100, 80, 'Z1 エネルギー波'); } // 419 爆発波(ベジータ)
+  // the blast that hits everyone: the charge, then the shock streaks on each defender (only those for the next ones)
+  * blast(f1, f2, se, n1, n2, se2) {
+    if (performance.now() - blastEnd > 500) {
+      this.se(se); this.se('Z1 ザー');
+      this.pose(this.A, f1, true);
+      this.behind(this.cycler(BACKS.flame, 128, 192, 250, 56));
+      yield* this.wait(n1);
+      if (se2) { audio.seStop(); this.se(se2); }
+      this.pose(this.A, f2, true);
+      if (se2) this.behind((c, t) => draw(c, BACKS.demonV, 0, (Math.floor(t / 5) % 3) * 480, 640, 356, 0, 0));
+      yield* this.wait(n2);
+    }
+    this.aim();
+    this.behind(this.shockBack());
+    yield* this.wait(61);
+    this.behind(null);
+  }
+
+  * nappaMouth() { // 414 口からエネルギー波
+    this.se('Z1 気を溜める3');
+    this.pose(this.A, 6, true);
+    this.behind(this.cycler(BACKS.nappa, 190, 178, 220, 100));
+    yield* this.wait(60);
+    this.se('Z1 エネルギー波2');
+    this.pose(this.A, 7, true);
+    this.behind(this.cycler(BACKS.nappaMouth, 256, 256, 190, 60));
+    this.effect(this.ball(BALL.orange, 236, 92));
+    yield* this.wait(61);
+    this.behind(null);
+    yield* this.cut(RAY.mid);
+  }
+
+  * vegetaWave() { // 416 エネルギー波(ベジータ)
+    this.se('Z1 エネルギー波');
+    this.pose(this.A, 2, true);
+    this.effect(this.ball(BALL.foe, 238, 122));
+    yield* this.wait(44);
+    yield* this.cut(RAY.foeBig);
+  }
+
+  * galickGun() { // 420 ギャリック砲
+    this.se('Z1 気を溜める6'); this.se('Z1 ゴー');
+    this.pose(this.A, 7, true);
+    this.behind((c, t) => draw(c, BACKS.galick, 0, (Math.floor(t / 5) % 3) * 380, 640, 356, 0, 0));
+    yield* this.wait(40);
+    this.pose(this.A, 8, true);
+    yield* this.wait(40);
+    this.se('Z1 エネルギー波2');
+    this.effect(this.ball(BALL.purple, 250, 130));
+    yield* this.wait(64);
+    this.behind(null);
+    yield* this.cut(RAY.huge, 27, -30);
+  }
+
+  * vegetaApe() { // 473 大猿変身: the power ball goes up, he looks at it — then the great ape (no damage)
+    this.se('Z1 気を溜める6');
+    this.pose(this.A, 9, true);
+    this.behind(this.cycler(BACKS.aura, 160, 222, 234, 70));
+    yield* this.wait(80);
+    this.se('Z1 高速移動');
+    this.behind(this.cycler(BACKS.flame, 128, 192, 250, 56));
+    this.effect((c, t) => draw(c, POWER_BALL, 0, 0, 128, 128, 234, t <= 21 ? 100 - t : 80));
+    yield* this.wait(104);
+    this.behind(null);
+    this.pose(this.A, 10, true);
+    yield* this.wait(25);
+    this.se('Z1 繰気弾');
+    this.pose(this.A, 11, true);
+    this.effect((c, t) => draw(c, POWER_BALL, 0, 0, 128, 128, 226 - t * 4, 88 - t * 4));
+    yield* this.wait(55);
+    this.pose(this.A, 12, true);
+    this.behind((c, t) => draw(c, BACKS.handOne, 0, (Math.floor(t / 5) % 10) * 48, 40, 48, 266, 116));
+    yield* this.wait(41);
+    audio.seStop();
+    this.effect(null); this.behind(null);
+    this.se('Z1 大猿');
+    for (let f = 0; f < 60; f++) { this.A.y = Math.floor(f / 6) % 2 ? -200 : STD_Y; yield; }
+    this.A.y = STD_Y;
+    return 'none';
+  }
+
+  * apeWave() { // 685 エネルギー波(大猿ベジータ): from the mouth
+    this.se('Z1 気を溜める3');
+    this.pose(this.A, 1, true);
+    yield* this.wait(40);
+    this.se('Z1 エネルギー波2');
+    this.pose(this.A, 2, true);
+    this.effect(this.ball(BALL.foe, 236, 110));
+    yield* this.wait(50);
+    yield* this.cut(RAY.foeBig);
+  }
+
   // the Garlic Jr. henchmen and their men
   * gingerWave() { yield* this.simpleWave(1, BALL.orange, 240, 110, RAY.small); } // 407 エネルギー波(ジンジャー・ニッキー系)
   * sanshoWave() { yield* this.simpleWave(1, BALL.orange, 230, 104, RAY.small); } // 424 エネルギー波(サンショ系)
@@ -841,7 +1059,8 @@ export class Duel {
     if (this.bfx) this.bfx.draw(c, this.bfx.f);
     for (const o of [this.R, this.L]) {
       if (o.y < -96 || o.y > SH) continue;
-      draw(c, o.sp ? o.sheets.special : o.sheets.normal, 0, o.frame * 96, 96, 96, Math.round(o.x), Math.round(o.y));
+      const z = o.sheets.size || 96; // the Great Ape: 192×192 frames, standing on the same ground
+      draw(c, o.sp ? o.sheets.special : o.sheets.normal, 0, o.frame * z, z, z, Math.round(o.x - (z - 96) / 2), Math.round(o.y - (z - 96)));
     }
     if (this.fx) this.fx.draw(c, this.fx.f);
     if (this.dmg && this.hit) { // the damage above the defender, in the original white digits
@@ -863,6 +1082,7 @@ function spark(c, sx, sy, w, h, x, y) { draw(c, SPARK, sx, sy, w, h, x, y); }
 export const ANIME_SOUNDS = ['Z1 打撃', 'Z3 打撃', 'Z3 避ける', 'Z1 必殺技', 'Z3 光線系ヒット', 'Z3 跳ね返し', 'Z1 高速移動', 'Z1 衝撃波',
   'Z1 エネルギー波', 'Z1 エネルギー波2', 'Z1 エネルギー波3', 'Z1 気を溜める', 'Z1 気を溜める2', 'Z1 気を溜める3', 'Z1 気を溜める5',
   'Z1 怪光線', 'Z1 ザー', 'Z1 貫光線', 'Z1 パワーアップ', 'Z1 大猿', 'Z1 ブン', 'Z1 気円斬', 'Z1 逃げる', 'Z1 分身', 'Z1 気を溜める4',
-  'Z1 強打', 'Z3 超能力', 'Z1 刀', 'Z1 刀攻撃'];
+  'Z1 強打', 'Z3 超能力', 'Z1 刀', 'Z1 刀攻撃', 'Z1 気を溜める7', 'Z1 気を溜める(元気弾)', 'Z1 ゴー', 'Z1 気を溜める6', 'Z1 繰気弾',
+  'Z1 飛ぶ'];
 // for the S-combo films (src/combo-anime.js)
 export { draw, spark, BALL, RAY, BACKS, MAKANKO_BALL, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED };

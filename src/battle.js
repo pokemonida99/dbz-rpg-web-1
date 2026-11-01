@@ -45,9 +45,13 @@ export function battleImages(world) {
 }
 
 // ---------- cards ----------
-// Early Z1 player cards: school 必/龜/神/魔 at 1/4 each; enemies also roll 惑 (1/5 each).
-export function newCard() { return { a: rand(8), g: rand(8), s: [0, 1, 2, 4][rand(4)] }; }
-const enemyCard = () => ({ a: rand(8), g: rand(8), s: [0, 1, 2, 4, 5][rand(5)] });
+// Early Z1 player cards: school 必/龜/神/魔 at 1/4 each; enemies also roll 惑 (1/5 each). From 概況 11 on (the Saiyans,
+// variable 43 ≥ 11) 界 takes the place of 神 (createcardval_chk, all.rb 12325).
+let cardGame = null;
+export function setCardGame(g) { cardGame = g; }
+const late = () => ((cardGame && cardGame.state && cardGame.state.var && cardGame.state.var[43]) || 0) >= 11;
+export function newCard() { return { a: rand(8), g: rand(8), s: (late() ? [0, 1, 3, 4] : [0, 1, 2, 4])[rand(4)] }; }
+const enemyCard = () => ({ a: rand(8), g: rand(8), s: (late() ? [0, 1, 3, 4, 5] : [0, 1, 2, 4, 5])[rand(5)] });
 export function newHand() { return Array.from({ length: HAND }, newCard); }
 
 export function rollEncounter(world) {
@@ -160,13 +164,14 @@ function glow(c, paint) {
 }
 
 export class Battle {
-  constructor(world, game, enemyIds, boss) {
+  constructor(world, game, enemyIds, boss, opts = {}) {
     this.world = world;
     this.game = game;
     this.boss = boss;
     this.party = game.state.party;
     this.hand = game.state.hand;
-    this.foes = enemyIds.map((id, i) => ({ ...world.enemies[id], id, slot: i, hp: world.enemies[id].maxhp }));
+    // foeHp: HP to start with (King Kai's, kept between tries in variable 52)
+    this.foes = enemyIds.map((id, i) => ({ ...world.enemies[id], id, slot: i, hp: (opts.foeHp && opts.foeHp[i]) || world.enemies[id].maxhp }));
     this.plans = []; // filled by startPlanning; drawn (card owners) from the first frame, before planning starts
     this.anim = null; // the Duel being played
     this.backdrop = BACKDROPS[rand(BACKDROPS.length)];
@@ -197,10 +202,12 @@ export class Battle {
     L.stage.h = L.msg.y - 4 - L.stage.y;
     this.L = L;
     const n = this.foes.length;
-    // choosing: the enemies' faces sit on the strip drawn mid-stage
+    // choosing: the enemies' faces sit on the strip drawn mid-stage (two rows when they don't fit in one)
+    const per = n * 72 - 8 > W - 8 ? Math.ceil(n / 2) : n, rows = Math.ceil(n / per);
     this.foes.forEach((f, i) => {
-      f.fx = Math.round(W / 2 - (n * 72 - 8) / 2 + i * 72);
-      f.fy = Math.round(L.stage.y + L.stage.h / 2 - 32);
+      const r = Math.floor(i / per), k = i % per, m = Math.min(per, n - r * per);
+      f.fx = Math.round(W / 2 - (m * 72 - 8) / 2 + k * 72);
+      f.fy = Math.round(L.stage.y + L.stage.h / 2 - 32 - (rows - 1) * 66 + r * 132);
     });
   }
 
@@ -282,6 +289,7 @@ export class Battle {
   }
 
   drawStatus(c) {
+    if (this.party.length > 3) { this.drawStatusMany(c); return; }
     const { x, y, w, h } = this.L.status;
     win(c, x, y, w, h);
     // TN (turn) column and the HP / KI labels, like the original
@@ -305,6 +313,33 @@ export class Battle {
       num(c, m.hp, cx + 64, y + 116); slash(c, cx, y + 132); num(c, m.maxhp, cx + 64, y + 132);
       num(c, m.ki, cx + 64, y + 152); slash(c, cx, y + 168); num(c, m.maxki, cx + 64, y + 168);
       this.hit(cx, y + 20, colW, h - 20, () => this.onFighterTap(i));
+    });
+  }
+
+  // four or more members (the Z fighters on Earth): two rows of small cells — name, face, LV, HP / KI with bars
+  drawStatusMany(c) {
+    const { x, y, w, h } = this.L.status;
+    win(c, x, y, w, h);
+    text(c, 'TN', x + 8, y + 10, INK, 14);
+    num(c, this.turn, x + 40, y + 28);
+    const n = this.party.length, per = Math.ceil(n / 2), colW = (w - 48) / per, rowH = (h - 12) / 2;
+    this.party.forEach((m, i) => {
+      const cx = Math.round(x + 44 + (i % per) * colW), cy = Math.round(y + 6 + Math.floor(i / per) * rowH);
+      text(c, m.name, cx + colW / 2, cy, INK, 13, 'center');
+      c.save(); c.translate(cx + 2, cy + 18); c.scale(0.625, 0.625); face(c, m, 0, 0); c.restore();
+      if (this.phase === 'plan' && this.cur === i) { c.strokeStyle = '#f83800'; c.lineWidth = 2; c.strokeRect(cx + 1, cy + 17, 42, 42); }
+      const tx = cx + 46, tw = Math.max(20, colW - 50);
+      text(c, `Lv${m.level}`, tx, cy + 18, INK, 11);
+      text(c, `${m.hp}`, tx, cy + 31, INK, 11);
+      c.fillStyle = '#3a2a1a'; c.fillRect(tx, cy + 45, tw, 3); c.fillRect(tx, cy + 51, tw, 3);
+      c.fillStyle = '#58d858'; c.fillRect(tx, cy + 45, (tw * m.hp) / m.maxhp, 3);
+      c.fillStyle = '#58a8f8'; c.fillRect(tx, cy + 51, (tw * m.ki) / m.maxki, 3);
+      const plan = this.plans && this.plans[i];
+      if (this.phase === 'plan' && plan) {
+        c.fillStyle = 'rgba(0,0,0,.7)'; c.fillRect(cx + 2, cy + 60, colW - 6, 15);
+        text(c, plan.skill ? plan.skill.name : '攻擊', cx + colW / 2, cy + 61, '#fff', 11, 'center');
+      } else text(c, `KI ${m.ki}`, cx + 2, cy + 62, INK, 11);
+      this.hit(cx, cy, colW, rowH, () => this.onFighterTap(i));
     });
   }
 
@@ -491,7 +526,12 @@ export class Battle {
 
   // the member a hand card is picked by (index), or null
   owner(k) { const i = this.plans.findIndex((p) => p && p.card === k); return i < 0 ? null : i; }
-  nextFree() { return this.party.findIndex((m, i) => this.able(m) && !this.plans[i]); }
+  // (a party bigger than the hand: once every card is picked, the others sit this turn out, like the original's
+  // $cardset_cha_no — each card is one member's)
+  nextFree() {
+    if (this.plans.filter(Boolean).length >= this.hand.length) return -1;
+    return this.party.findIndex((m, i) => this.able(m) && !this.plans[i]);
+  }
 
   // back to choosing: the current member if still free, else the next one, else 出招！
   resume() {
@@ -627,6 +667,7 @@ export class Battle {
     this.party.forEach((m, i) => {
       if (!this.able(m) || this.plans[i]) return;
       const free = this.hand.map((c, k) => k).filter((k) => !usedCards.has(k));
+      if (!free.length) return; // more members than cards: the rest sit out
       let k = free.find((x) => this.hand[x].s === m.school);
       if (k == null) k = free.find((x) => this.hand[x].s === 0);
       let skill = null;
@@ -660,6 +701,7 @@ export class Battle {
     this.plans.forEach((p, i) => { if (p) this.hand[p.card] = growth.regenCard(this.world, this.party[i], newCard()); }); // used cards are regenerated in place (§1.6), 一か八か
     items.endTurn(this);
     if (this.over()) return;
+    for (const f of this.foes) if (f.regen && f.hp > 0 && f.hp < f.maxhp) f.hp = Math.min(f.maxhp, f.hp + Math.floor((f.regen / 100) * f.maxhp)); // *PARAM_HPRECOVER
     growth.recover(this); // recovery from the second turn on, KO'd members back only at full HP (§4.6)
     await announceCombos(this);
     await sleep(400);
@@ -674,7 +716,7 @@ export class Battle {
     const actor = this.world.actors[m.id];
     this.anim = new Duel({
       party: { normal: actor.sprite, special: actor.special },
-      foe: { normal: f.portrait, special: f.sprite },
+      foe: { normal: f.portrait, special: f.sprite, size: f.size },
       playerAttacks, skill, ray: actor.ray, hit: dmg >= 0, damage: Math.max(0, dmg), margin: Math.max(0, (SW - view.w) / 2),
       onHit: () => {
         if (dmg < 0) return;
@@ -708,6 +750,11 @@ export class Battle {
       const dmg = playerDamage(this, m, skill && { noDamage: skill.noDamage }, cd, t, t.card, growth.power(this.game.state, m, skill));
       await this.play(m, t, true, skill ? skill.id : null, dmg, t);
       if (dmg >= 0) growth.onHit(this, m, t); // かなしばり
+      if (dmg >= 0 && skill && skill.tail && t.hp > 0 && t.apeOf) { // 尻尾切る: the Great Ape is himself again (all.rb 68895)
+        this.transform(t, t.apeOf);
+        this.say(`${t.name} 的尾巴被切斷，變回原狀了！`);
+        await sleep(900);
+      }
     }
     tally(this.game.state, m, skill, alive - targets.filter((t) => t.hp > 0).length); // use counts, KOs
   }
@@ -718,15 +765,41 @@ export class Battle {
     if (!targets.length) return;
     const cd = f.card;
     let skill = null;
+    const yamcha = targets.find((m) => m.id === 7);
     if ((cd.s === 0 || cd.s === f.school) && f.actions.length) {
-      const ok = f.actions.filter((a) => a.cond === 0 || (a.cond === 2 && (f.hp * 100) / f.maxhp <= a.param));
+      const ok = f.actions.filter((a) => (a.cond === 0 || (a.cond === 2 && (f.hp * 100) / f.maxhp <= a.param))
+        && (a.skill !== 304 || yamcha) // 自爆: only at Yamcha, while he is in the fight (chk_scombo_flag 304)
+        && (a.skill !== 373 || !this.apeDone)); // 大猿変身: once a battle ($battle_begi_oozaru_run)
       if (ok.length) skill = this.world.skills[ok[rand(ok.length)].skill];
     }
-    const m = targets[rand(targets.length)];
+    const m = skill && skill.selfDestruct ? yamcha : targets[rand(targets.length)];
     const guard = this.hand[this.plans[this.party.indexOf(m)].card];
     this.duel = { m, mc: guard, f, fc: cd };
     this.say(`${f.name} 的${skill ? skill.name : '攻擊'}！`);
+    if (skill && skill.id === 373) { // 大猿変身: no damage; Vegeta (12) becomes the Great Ape (26), HP as it is
+      this.apeDone = true;
+      await this.play(m, f, false, skill.id, -1, m);
+      this.transform(f, 26);
+      f.apeOf = 12;
+      this.say(`${this.world.enemies[12].name} 變成了大猿！`);
+      await sleep(1200);
+      return;
+    }
     await this.play(m, f, false, skill ? skill.id : null, enemyDamage(this, f, skill && { power: skill.power }, cd, m, guard), m);
+    if (skill && skill.selfDestruct) { // the Saibaman is gone too (all.rb 68975)
+      f.hp = 0;
+      this.say(`${f.name} 自爆了！`);
+      await sleep(900);
+    }
+  }
+
+  // an enemy becomes another (the Great Ape and back), keeping its HP, slot and card
+  transform(f, id) {
+    const e = this.world.enemies[id];
+    const keep = { hp: f.hp, slot: f.slot, card: f.card, fx: f.fx, fy: f.fy, apeOf: f.apeOf };
+    for (const k of ['regen', 'size']) delete f[k];
+    Object.assign(f, e, { id }, keep);
+    if (id !== 26) delete f.apeOf;
   }
 
   // ---------- result ----------
@@ -770,7 +843,7 @@ export class Battle {
     const onKey = (e) => this.onKey(e);
     window.addEventListener('keydown', onKey);
     await document.fonts.load(`16px ${FONT}`).catch(() => {});
-    audio.playBgm(this.boss ? 'Z1 戦闘ボス1(中ボス)' : 'Z1 戦闘1');
+    audio.playBgm(this.bgm || (this.boss ? 'Z1 戦闘ボス1(中ボス)' : 'Z1 戦闘1'));
     this.say(`${this.foes.map((f) => f.name).join('、')} 出現了！`);
     await sleep(700);
     const result = await new Promise((res) => {

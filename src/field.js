@@ -160,9 +160,9 @@ export class Field {
       if (d < nd) { nd = d; near = p; }
     }
     if (near !== this.near) { this.near = near; this.game.onNear(near); }
-    // boss marker
-    const b = this.boss();
-    if (b && Math.hypot(s.x - (b.x * 32 + 16), s.y - (b.y * 32 + 16)) < 44) this.game.onBoss();
+    // boss markers
+    const b = this.bosses().find((o) => Math.hypot(s.x - (o.x * 32 + 16), s.y - (o.y * 32 + 16)) < 44);
+    if (b) this.game.onBoss(b);
   }
 
   draw() {
@@ -179,9 +179,8 @@ export class Field {
     c.fillRect(0, 0, view.w, view.h);
     c.drawImage(this.layers.ground, -cx, -cy);
 
-    const b = this.boss();
     const bi = img(BOSS);
-    if (b && bi.ok) {
+    for (const b of bi.ok ? this.bosses() : []) {
       const f = Math.floor(this.anim) % 3, k = b.index || 0; // enemy1.png: 4 characters a row, 3×4 frames each
       c.drawImage(bi.im, ((k % 4) * 3 + f) * 32, Math.floor(k / 4) * 128, 32, 32, b.x * 32 - cx, b.y * 32 - cy, 32, 32);
     }
@@ -204,11 +203,13 @@ export class Field {
   }
 
   // the boss standing on this map, until beaten (world.bosses, by map; flag = the state.flags entry set on a win)
-  boss() {
+  // (a map may have several: world.bosses[map] is then a list, each with its own flag)
+  bosses() {
     const s = this.game.state;
     const b = (this.world.bosses || { 1: { ...this.world.boss, flag: 'bossDone' } })[s.map];
-    return b && !s.flags[b.flag] ? b : null;
+    return (Array.isArray(b) ? b : b ? [b] : []).filter((o) => !s.flags[o.flag]);
   }
+  boss() { return this.bosses()[0] || null; }
 
   enter() {
     input.stickEnabled = true;

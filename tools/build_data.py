@@ -266,5 +266,7 @@ import build_field  # noqa: E402  (training squares, Pumpkin / Broccoli, 情報�
 build_field.add(world, globals())
 import build_chapter3  # noqa: E402  (chapter 3: King Kai's planet and the Nikki area)
 build_chapter3.add(world, globals())
+import build_chapter6  # noqa: E402  (chapter 6: King Kai's training, Shenron, the Saiyans, the Z1 ending)
+build_chapter6.add(world, globals())
 json.dump(world, open(os.path.join(root, 'data', 'world.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 print('world.json written')

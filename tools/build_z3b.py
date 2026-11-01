@@ -57,41 +57,8 @@ CARD_FACES = {'天神': 10, '波波先生': 12, '波波': 12, '布爾瑪': 8, '�
 FOE_FACES = {'吉加': 86, '尼奇': 87, '桑修': 88}
 
 
-def backdrop_table(world, mid, D):
-    """set_battle_map for variable 40 >= 2 (all.rb 165937): the bottom tile picks the row; on the plains (1552 / 1555)
-    the top tile 274 / 275 is 4 and the map events' trees (animap1 0 facing down / 1 facing right) 2 / 9; cliffs
-    (1600-1602) by variable 101 (1 on map 81, set by page 1521: 6). Positions that differ from their tile go in `at`."""
-    m = world['maps'][str(mid)]
-    w, n = m['w'], m['w'] * m['h']
-    t = {'1552': 1, '1555': 1, '1553': 5, '1554': 6, '1543': 0, '1551': 0, '1575': 32, '1550': 29,
-         '1600': 1, '1601': 1, '1602': 1, 'default': 1}
-    if mid == 81:
-        t.update({'1600': 6, '1601': 6, '1602': 6})
-    trees = {}
-    for e in D('map%03d' % mid)['events'].values():
-        g = e['pages'][0]['graphic']
-        if g.get('character_name') == 'animap1':
-            trees[e['x'] + e['y'] * w] = 2 if (g['character_index'], g['direction']) == (0, 2) else \
-                9 if (g['character_index'], g['direction']) == (1, 6) else 1
-    raw = D('map%03d' % mid)['data']
-    top = lambda i: raw['data'][i % w + (i // w) * raw['x'] + 2 * raw['x'] * raw['y']]
-    over = {}
-    for i in range(n):
-        tile = m['layers'][0][i]
-        if tile in (1552, 1555):
-            row = 4 if top(i) in (274, 275) else trees.get(i, 1)
-        elif tile == 1554:
-            row = 7 if top(i) == 276 else 6
-        else:
-            continue
-        if row != t[str(tile)]:
-            over[str(i)] = row
-    t['at'] = over
-    return t
-
-
 def add(world, h, z3):
-    build_map, D, s2t, script = (h[k] for k in ('build_map', 'D', 's2t', 'script'))
+    build_map, D, s2t = (h[k] for k in ('build_map', 'D', 's2t'))
     nodes_of, raw, file = z3['nodes_of'], z3['raw'], z3['file']
     ce = D('commonevents')
 
@@ -111,8 +78,7 @@ def add(world, h, z3):
     for mid in ('78', '79', '80', '81'):
         world['areas'][mid] = {'pool': [183, 184, 185], 'n': [2, 3], 'size': {'2': [1, 2]}}
     world['areas']['82'] = {'pool': [183, 184, 185], 'n': [4, 6]}
-    for mid in range(78, 83):
-        world['z3']['backdrops'][str(mid)] = backdrop_table(world, mid, D)
+    # (battle backgrounds: src/z3.js z3Backdrop follows set_battle_map itself; page 1521 sets variable 101 = 1 for the north)
 
     # ---------- faces ----------
     for k, r in CARD_FACES.items():
@@ -127,7 +93,7 @@ def add(world, h, z3):
     extra.update({
         221: lambda p: [{'fadeout': 30}], 222: lambda p: [{'x': 'fadein'}],
         # 117: CE180 時の間新エリア開放 (and its notice card); CE276 the 「自由」 skill (Yajirobe's explanation)
-        117: lambda p: [{'sw': [483, 483, True]}, {'item': [67, 1]}] if p[0] == 180 else script(ce[276]['list']) if p[0] == 276 else [],
+        117: lambda p: [{'sw': [483, 483, True]}, {'item': [67, 1]}] if p[0] == 180 else nodes_of(ce[276]['list']) if p[0] == 276 else [],
     })
     opts.update(bgm=True, shakeSw=True)
     pg = {}

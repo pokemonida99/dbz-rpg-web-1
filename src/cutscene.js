@@ -6,7 +6,7 @@
 // Skipping still applies every switch, variable and card of the rest of the event, so the story flags stay right.
 import { audio, loadImages, toast } from './core.js?v=20261101-2206';
 import { eventCard } from './items.js?v=20261101-2206';
-import { overlay, Stage, say, SCENE_X, SCENE_Y, SCROLL_X, ENE } from './opening.js?v=20261101-2206';
+import { overlay, Stage, say, SCENE_X, SCENE_Y, SCROLL_X, ENE, PLAY_X } from './opening.js?v=20261101-2206';
 
 const pic = (n) => `Graphics/Pictures/${n}.PNG`;
 const BG = (n) => pic(`Z1_背景_${n}`);
@@ -160,9 +160,10 @@ async function z1field(stage, ctx, quiet = false) {
   if (BATTLES.includes(n)) return;
   const d = S[n];
   if (!d) { stage.clear(); return; }
+  if (d.fadeout && !quiet) await stage.fadeTo(1, 30); // Graphics.fadeout before the scene is drawn
   if (!d.keep) { stage.clear(); stage.faceSize = 64; }
   if (d.bgm && !quiet) audio.playBgm(d.bgm);
-  if (d.party) ctx.partyc = typeof d.party === 'function' ? d.party(v) : d.party;
+  if (d.party) ctx.partyc = typeof d.party === 'function' ? d.party(v, ctx.s.sw || {}, ctx.partyc) : d.party;
   if (d.piccoloGohan) {
     const p = ctx.partyc;
     if (p.length === 2 && p.includes(4) && p.includes(5)) {
@@ -179,9 +180,11 @@ async function z1field(stage, ctx, quiet = false) {
     stage.clear();
   }
   if (d.bg) stage.bg(d.bg);
+  if (d.pic) stage.add(d.pic, SCENE_X, SCENE_Y, [0, 0, 192, 128]); // a picture by its path (the Z2 scenes)
+  if (d.big) stage.add(d.big[0], d.big[1], d.big[2], d.big[3]); // [path, x, y, src]: a picture of another size
   if (d.scroll) stage.add(BG(d.scroll), SCROLL_X, SCENE_Y, [0, 0, 512, 128]);
   if (d.full) stage.add(d.full, 0, 0, [0, 0, 640, 480], false, 0, 'full');
-  if (d.foe) stage.add(d.foe[0], ENE[0], ENE[1] + (d.foe[2] || 0), [0, 64 * d.foe[1], 64, 64]);
+  if (d.foe) stage.add(d.foe[0], ENE[0], ENE[1] + (d.foe[2] || 0), [64 * (d.foe[3] || 0), 64 * d.foe[1], 64, 64]); // [sheet, row, dy, column]
   // more faces in the scene (size: drawn that many px square, its middle at dx / 2 — a row of four that fits the scene)
   for (const [sheet, row, dx, dy, size] of d.adds || []) {
     if (size) stage.add(sheet, ENE[0] + 32 - size / 2 + dx / 2, ENE[1] + 32 - size / 2 + dy, [0, 64 * row, 64, 64], false, 0, [size, size]);
@@ -193,9 +196,15 @@ async function z1field(stage, ctx, quiet = false) {
     });
   }
   if (d.saibamen) for (let k = 0; k < 6; k++) stage.add(FOE, SCENE_X + 32 * k, ENE[1] + 16, [0, 64 * 3, 64, 64], false, 0, [32, 32]); // six in a row
-  for (const [sheet, row, dx, line] of (typeof d.faces === 'function' ? d.faces(ctx.s.sw) : d.faces) || []) stage.party(sheet, row, dx, line);
   if (d.out) partyFaces(stage, ctx.partyc);
   if (d.faceSize) stage.faceSize = d.faceSize; // more faces under the scene than fit at 64
+  // faces under the party's (line 1 = @play_y + 64) go under however many rows the party took here
+  const below = d.out ? Math.ceil(ctx.partyc.length / (ctx.partyc.length > 8 ? 5 : ctx.partyc.length > 6 ? 4 : 3)) - 1 : 0;
+  for (const [sheet, row, dx, line, col] of (typeof d.faces === 'function' ? d.faces(ctx.s.sw) : d.faces) || []) {
+    const ln = line ? line + below : 0;
+    if (col) stage.add(sheet, PLAY_X + dx, 0, [64 * col, 64 * row, 64, 64], true, ln); // (顔カード: the column of the part of the story)
+    else stage.party(sheet, row, dx, ln);
+  }
   if (d.next === '+') v[41] = n + 1;
   else if (d.next) v[41] = d.next;
   if (d.wait && !quiet) await stage.ui.wait(d.wait);
@@ -227,7 +236,7 @@ export async function playScenes(list, s) {
       else if (n.z1field) { ui.dlg.hidden = true; await z1field(quiet ? NO_STAGE : stage, ctx, quiet); }
       else if (n.fadeout) { ui.dlg.hidden = true; if (!quiet) await stage.fadeTo(1, 30); }
       else if (n.bgs) { if (!quiet) audio.playBgs(n.bgs, n.vol); }
-      else if (n.bgm !== undefined) { if (!quiet && n.bgm) audio.playBgm(n.bgm); } // (pages converted with their BGM commands)
+      else if (n.bgm !== undefined) { if (!quiet) { if (n.bgm) audio.playBgm(n.bgm); else audio.stopBgm(); } } // (pages converted with their BGM commands; '' stops it)
       else if (n.bgmFade != null) { if (!quiet) audio.fadeBgm(n.bgmFade); }
       else if (n.partyc) ctx.partyc = n.partyc; // `$partyc = [...]`: who the scenes show
       else if (n.partycAdd) { if (!ctx.partyc.includes(n.partycAdd)) ctx.partyc = [...ctx.partyc, n.partycAdd]; } // `$partyc << id`
@@ -235,7 +244,7 @@ export async function playScenes(list, s) {
       else if (n.shake != null) ui.el.classList.toggle('shake', n.shake && !quiet); // 画面揺らすフラグ
       else if (n.flash) { if (!quiet) await stage.doFlash(n.flash); }
       else if (n.wait) { if (!quiet) await ui.wait(n.wait); }
-      else if (n.choice) { if (await run(n.branches[0] || [])) return true; } // (none in these pages)
+      else if (n.choice) { const k = quiet ? 0 : await choice(ui, n.choice); if (await run(n.branches[k] || [])) return true; } // skipped: the first answer
       else if (n.end) return true;
     }
     return false;
@@ -248,6 +257,25 @@ export async function playScenes(list, s) {
   audio.stopBgs();
   stage.running = false;
   ui.close();
+}
+
+// the choice window over the last line (page 301: 是 / 否); resolves with the index
+function choice(ui, options) {
+  return new Promise((res) => {
+    const box = document.createElement('div');
+    box.className = 'cs-choices';
+    box.style.cssText = 'position:absolute;left:0;right:0;display:flex;gap:10px;justify-content:center;z-index:5';
+    box.style.top = `${ui.dlg.offsetTop + ui.dlg.offsetHeight + 10}px`; // under the message window
+    options.forEach((label, k) => {
+      const b = document.createElement('button');
+      b.className = 'btn';
+      b.textContent = label;
+      b.onpointerdown = (e) => { e.stopPropagation(); box.remove(); audio.se('Z3 決定', 80); res(k); };
+      box.appendChild(b);
+    });
+    ui.el.appendChild(box);
+    ui.onSkip.push(() => { box.remove(); res(0); });
+  });
 }
 
 // one event (a node list) as a cutscene

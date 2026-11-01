@@ -13,6 +13,7 @@
 import { view, img, audio, say, choose, textSpeed } from './core.js?v=20261101-2206';
 import { Battle, battleOpts } from './battle.js?v=20261101-2206';
 import { fieldCards } from './items.js?v=20261101-2206';
+import { holds } from './field.js?v=20261101-2206';
 
 const SE_OK = 'Z3 決定', SE_MOVE = 'Z3 カーソル移動', SE_ERR = 'Z3 エラー';
 const FOE_FACES = 'Graphics/Pictures/Z1_顔敵.PNG', FACES = 'Graphics/Pictures/Z1_顔味方.PNG', CARDS = 'Graphics/Pictures/カード関係.PNG';
@@ -38,6 +39,9 @@ export function setFieldGame(g) {
   for (const p of g.world.fieldPictures || []) img(p); // warm the radar / recap / fortune-teller art
 }
 
+// set_battle_bgm_name 0 (默認): the song of the part of the story (variable 43)
+const storyBattleBgm = (v) => (v >= 21 && v <= 50 ? 'Z2 戦闘1' : v >= 3 ? 'Z1 戦闘2' : 'Z1 戦闘1'); // (Z2: 21-50)
+
 // the battle starts its music as 'Z1 戦闘1' (normal fights) and the encounter sound as 'Z1 敵発見': swap in the choice
 const playBgm = audio.playBgm.bind(audio), playSe = audio.se.bind(audio);
 audio.playBgm = (name, vol) => {
@@ -45,7 +49,7 @@ audio.playBgm = (name, vol) => {
   if (b && (name === 'Z1 戦闘1' || b.eventBgm)) { // an event battle without music of its own plays the story's default
     let no = b.eventBgm ? 0 : options.bgm;
     if (no === 1) no = 8 + Math.floor(Math.random() * 4);
-    name = no ? BATTLE_BGM[no][0] : ((game.state.var || {})[43] || 0) >= 3 ? 'Z1 戦闘2' : 'Z1 戦闘1';
+    name = no ? BATTLE_BGM[no][0] : storyBattleBgm(((game.state.var || {})[43]) || 0);
   }
   return playBgm(name, vol);
 };
@@ -132,8 +136,11 @@ export function openFieldEntry(key, g) {
 }
 
 // ---------- 概況 (Scene_Story_So_Far) ----------
-export function hasRecap(g) { return !!g.world.story.soFar[(g.state.var || {})[43] || 0]; }
+// Z2 on: the 概況 is a story scene of its own (game.storyScenes, src/z2a.js) for the numbers in world.story.soFarScenes
+const recapScene = (g) => g.storyScenes && (g.world.story.soFarScenes || []).includes((g.state.var || {})[43] || 0);
+export function hasRecap(g) { return !!g.world.story.soFar[(g.state.var || {})[43] || 0] || recapScene(g); }
 export function storySoFar(g) {
+  if (recapScene(g)) return g.storyScenes(g).then(() => { if (g.field) g.field.enter(); });
   const text = g.world.story.soFar[(g.state.var || {})[43] || 0];
   if (!text) { audio.se(SE_ERR); return Promise.resolve(); }
   audio.playBgm('Z1 あらすじ');
@@ -354,7 +361,9 @@ export function openRadar(g) {
     c.clearRect(0, 0, 116, 116);
     if (r.ok) c.drawImage(r.im, 0, mode * 116, 116, 116, 0, 0, 116, 116);
     const px = Math.floor(s.x / 32), py = Math.floor(s.y / 32);
-    for (const [x, y] of targets) { // output_ball: within 25 squares × the zoom (Manhattan distance); Ruby's / floors
+    for (const t of targets) { // output_ball: within 25 squares × the zoom (Manhattan distance); Ruby's / floors
+      if (t.when && !holds(s, t.when)) continue; // {x, y, when}: shown on some pages only (the Z2 maps)
+      const [x, y] = Array.isArray(t) ? t : [t.x, t.y];
       if (Math.abs(x - px) + Math.abs(y - py) < 25 * rate && b.ok)
         c.drawImage(b.im, 0, 0, 8, 8, 51 + Math.floor(((x - px) * 2) / rate), 55 + Math.floor(((y - py) * 2) / rate), 8, 8);
     }

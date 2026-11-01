@@ -106,14 +106,20 @@ async function fight(game, key, opts = {}) {
 }
 
 // ---------- 第四章 ----------
-// from the first half (map 26, the pond at 57,25): page 445 onward
+// page 445 onward (the dev jump; the first half plays 445 itself and calls startZ2b)
 export async function startZ2Ginyu(game) {
+  return ginyuArrive(game, true);
+}
+// from the first half (src/z2a.js), right after page 445 at the map 26 pond: variable 41 = 446, on to map 27
+export async function startZ2b(game) {
+  return ginyuArrive(game, false);
+}
+async function ginyuArrive(game, with445) {
   const c = game.world.z2b, s = game.state;
   begin(game);
   s.flags.z2b = 'ginyu';
   await card(c.titles.ginyu, 2200);
-  s.var[41] = 445;
-  await play(game, '445');
+  if (with445) { s.var[41] = 445; await play(game, '445'); }
   await play(game, 'ginyuPose'); // map 27
   s.var[41] = 447;
   await play(game, '447');

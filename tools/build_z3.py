@@ -233,6 +233,8 @@ def add(world, h):
             for n in ns:
                 if isinstance(n.get('se'), str) and n['se'].startswith('\0BGM'):
                     n = {'bgm': n['se'][4:]}
+                if n.get('var') and n['var'][0] == 25:  # CAP is variable 25 in the original, state.zeni here
+                    n = {'x': 'cap', 'op': n['var'][1], 'n': n['var'][2]}
                 if 'say' in n:
                     who, text = n['say'][0], n['say'][1]
                     if who in NARRATION:

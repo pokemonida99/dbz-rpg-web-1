@@ -228,7 +228,8 @@ export async function playScenes(list, s, more = {}) {
   const sw = s.sw || (s.sw = {});
   const v = s.var || (s.var = {});
   const ctx = { s, partyc: s.party.map((m) => m.id), faces };
-  const test = (c) => (c[0] === 'sw' ? !!sw[c[1]] === c[2] : c[0] === 'var' ? CMP[c[3]](v[c[1]] || 0, c[2]) : c[0] === 'party' ? s.party.length > c[1] : false);
+  const test = (c) => (c[0] === 'sw' ? !!sw[c[1]] === c[2] : c[0] === 'var' ? CMP[c[3]](v[c[1]] || 0, c[2])
+    : c[0] === 'vv' ? CMP[c[3]](v[c[1]] || 0, v[c[2]] || 0) : c[0] === 'party' ? s.party.length > c[1] : false);
   const run = async (nodes) => {
     for (const n of nodes) {
       const quiet = ui.skipped; // skipped: only the story state still changes

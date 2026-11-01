@@ -10,7 +10,7 @@
 // state.flags.z3: the chapter being played ('z3a' … 'z3e', 'done'); state.flags.z3At: { ch, at } a story step to pick
 // up again after loading (saved right before a story battle, as Z2 does). Variable 40 = 2 (the Z3 art, src/era.js).
 import { input, setFaces } from './core.js?v=20261101-2330';
-import { playScenes } from './cutscene.js?v=20261101-2330';
+import { playScenes, addNodes } from './cutscene.js?v=20261101-2330';
 import { setParty, moveTo, enterMap, card } from './chapter2.js?v=20261101-2330';
 import { makeMember, levelUp } from './party.js?v=20261101-2330';
 import { eventCard } from './items.js?v=20261101-2330';
@@ -156,6 +156,15 @@ export function leave(game, id) {
 // CE180 時の間新エリア開放: the switch and the 通知！ card
 export function timeRoom(s) { s.sw[483] = true; eventCard(s, 67, 1); }
 
+// CAP: variable 25 in the original (tools/build_z3.py turns its changes into {x: 'cap'}), state.zeni here
+let capGame = null;
+addNodes({
+  cap: async (node) => {
+    const s = capGame && capGame.state;
+    if (s) s.zeni = node.op === 0 ? node.n : Math.max(0, (s.zeni || 0) + (node.op === 1 ? node.n : -node.n));
+  },
+});
+
 // what the converted scenes do to the party (src/z2scenes.js nodes)
 function env(game) {
   const s = game.state, w = game.world;
@@ -187,6 +196,7 @@ function env(game) {
 
 // a story beat starts: the field stops
 export function begin(game) {
+  capGame = game;
   game.busy = true;
   if (game.field) { game.field.paused = true; game.field.leave(); }
   input.dx = input.dy = 0;

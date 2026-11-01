@@ -49,7 +49,7 @@
 - 每章的 `start(game)` 從上表的第一頁開始播；結束時呼叫 `nextZ3(game, '自己的鍵')`（下一章還沒做好時會顯示「待續」）。z3e 自己做 Z3 結尾。
 - 每章自己的 `dev(game, step)` 做出合理的開始狀態（等級、隊伍、變數 40 = 2、`s.cardiMax = 10`、`s.flags.z3 = '自己的鍵'`、`applyEra`），
   跳關名稱：z3a → `z3`、`z3a2`…；z3b → `z3b`…；z3c → `z3c`…；z3d → `z3d`…；z3e → `z3e`…（自己再細分）。
-- 頁面一律用 `z3["nodes_of"]`／`z3["page"]` 轉（原版的 112 迴圈＋113 中斷會變成 `{loop}`／`{brk}`，選單才能重複問；直接用 `script()` 會把迴圈裡選項的其他分支吃掉）。
+- 頁面一律用 `z3["nodes_of"]`／`z3["page"]` 轉（原版的 112 迴圈＋113 中斷會變成 `{loop}`／`{brk}`，選單才能重複問；直接用 `script()` 會把迴圈裡選項的其他分支吃掉）。變數比變數的條件是 `["vv", a, b, op]`；原版的 CAP（變數 25）會轉成 `{x: "cap"}`，加減的是 `state.zeni`。
 - 場景（z1field）用 `addScenes`（`src/cutscene.js`）照 Z2 的寫法（`src/z2a.js` SCENES），編號在自己的章節範圍內，不會互相衝突。
 - 小遊戲：`src/z3train.js` 的 `ryuhaPairTraining(game, opts)`、`z3GravityTraining(game, opts)`，回傳 `{ cleared }`。參數由小遊戲分支照原版定，z3d 照著呼叫。
 

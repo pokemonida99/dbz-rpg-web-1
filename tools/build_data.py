@@ -238,5 +238,7 @@ world = {
 # the title animation and opening story (src/opening.js)
 from opening_data import build as build_opening  # noqa: E402
 world['opening'] = build_opening(D, s2t)
+import build_chapter2  # noqa: E402  (chapter 2: Snake Way and the Sansho area)
+build_chapter2.add(world, globals())
 json.dump(world, open(os.path.join(root, 'data', 'world.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 print('world.json written')

@@ -1,6 +1,6 @@
 // Field: free flight over the map, random encounters, the boss marker.
-import { view, img, input, audio, rand } from './core.js?v=20261101-1700';
-import { renderMap } from './tiles.js?v=20261101-1700';
+import { view, img, input, audio, rand } from './core.js?v=20261101-1710';
+import { renderMap } from './tiles.js?v=20261101-1710';
 
 const SPEED = 150; // art pixels per second (~4.7 tiles/s)
 const FLY = 'Graphics/Characters/chara_fly1.png'; // 48×48 frames, Goku = character 0
@@ -56,8 +56,8 @@ export class Field {
     }
     if (near !== this.near) { this.near = near; this.game.onNear(near); }
     // boss marker
-    const b = this.world.boss;
-    if (b && !s.flags.bossDone && Math.hypot(s.x - (b.x * 32 + 16), s.y - (b.y * 32 + 16)) < 44) this.game.onBoss();
+    const b = this.boss();
+    if (b && Math.hypot(s.x - (b.x * 32 + 16), s.y - (b.y * 32 + 16)) < 44) this.game.onBoss();
   }
 
   draw() {
@@ -73,17 +73,18 @@ export class Field {
     c.fillRect(0, 0, view.w, view.h);
     c.drawImage(this.layers.ground, -cx, -cy);
 
-    const b = this.world.boss;
+    const b = this.boss();
     const bi = img(BOSS);
-    if (b && !s.flags.bossDone && bi.ok) {
-      const f = Math.floor(this.anim) % 3;
-      c.drawImage(bi.im, f * 32, 0, 32, 32, b.x * 32 - cx, b.y * 32 - cy, 32, 32);
+    if (b && bi.ok) {
+      const f = Math.floor(this.anim) % 3, k = b.index || 0; // enemy1.png: 4 characters a row, 3×4 frames each
+      c.drawImage(bi.im, ((k % 4) * 3 + f) * 32, Math.floor(k / 4) * 128, 32, 32, b.x * 32 - cx, b.y * 32 - cy, 32, 32);
     }
     const fi = img(FLY);
     if (fi.ok) {
       const pat = [0, 1, 2, 1][Math.floor(this.anim) % 4];
       const bob = Math.round(Math.sin(this.anim * 1.3) * 1.5);
-      c.drawImage(fi.im, pat * 48, this.dir * 48, 48, 48, Math.round(s.x - 24 - cx), Math.round(s.y - 36 - cy + bob), 48, 48);
+      const k = ((s.var && s.var[42]) || 3) - 3; // the leading character (actor id - 3), 4 a row like the VX sheets
+      c.drawImage(fi.im, ((k % 4) * 3 + pat) * 48, (Math.floor(k / 4) * 4 + this.dir) * 48, 48, 48, Math.round(s.x - 24 - cx), Math.round(s.y - 36 - cy + bob), 48, 48);
     }
     c.drawImage(this.layers.upper, -cx, -cy);
     if (this.near) { // "!" over the player's head
@@ -94,6 +95,13 @@ export class Field {
       c.fillRect(bx - 2, by - 7, 4, 8);
       c.fillRect(bx - 2, by + 3, 4, 3);
     }
+  }
+
+  // the boss standing on this map, until beaten (world.bosses, by map; flag = the state.flags entry set on a win)
+  boss() {
+    const s = this.game.state;
+    const b = (this.world.bosses || { 1: { ...this.world.boss, flag: 'bossDone' } })[s.map];
+    return b && !s.flags[b.flag] ? b : null;
   }
 
   enter() {

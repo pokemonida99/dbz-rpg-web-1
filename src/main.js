@@ -1,11 +1,12 @@
 // Boot, game state, scene switching, story beats, HUD, menu, save/load.
-import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-1700';
-import { tileSheetPaths } from './tiles.js?v=20261101-1700';
-import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-1700';
-import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-1700';
-import { makeMember, levelUp } from './party.js?v=20261101-1700';
-import { runEvent } from './events.js?v=20261101-1700';
-import { playOpening, playStory } from './opening.js?v=20261101-1700'; // the original's title animation and opening story
+import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-1710';
+import { tileSheetPaths } from './tiles.js?v=20261101-1710';
+import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-1710';
+import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-1710';
+import { makeMember, levelUp } from './party.js?v=20261101-1710';
+import { runEvent } from './events.js?v=20261101-1710';
+import { playOpening, playStory } from './opening.js?v=20261101-1710'; // the original's title animation and opening story
+import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapterBoss } from './chapter2.js?v=20261101-1710';
 
 const SAVE_KEY = 'dbz-portrait-save-v1';
 const FACES = 'Graphics/Pictures/GBZ1 顔アイコン.PNG'; // 40×56 cells, one row per character
@@ -36,7 +37,7 @@ const game = {
     s.steps++;
     if (this.busy || --s.nextEnc > 0) return;
     s.nextEnc = nextEncounterSteps();
-    await this.startBattle(rollEncounter(this.world), false);
+    await this.startBattle(rollArea(this.world, s) || rollEncounter(this.world), false);
   },
 
   // the "examine / enter" button appears while standing next to a building
@@ -58,6 +59,7 @@ const game = {
     this.field.paused = true;
     input.dx = input.dy = 0;
     const s = this.state;
+    if (poi.chapter) { await chapterSpot(this, poi); renderHud(); this.busy = false; this.field.paused = false; return; }
     if (poi.event) await runEvent(this.world.events[poi.event], s);
     else await say(poi.lines);
     if (poi.effect === 'rest') for (const m of s.party) { m.hp = m.maxhp; m.ki = m.maxki; }
@@ -69,6 +71,7 @@ const game = {
   },
 
   async onBoss() {
+    if (this.state.map !== '1') return chapterBoss(this);
     if (this.busy) return;
     this.busy = true;
     this.field.paused = true;
@@ -80,7 +83,7 @@ const game = {
       this.state.flags.bossDone = true;
       await runEvent(this.world.story.ending, this.state);
       save(true);
-      showTitle('第一章　完');
+      await afterRaditz(this); // chapter 2 (src/chapter2.js)
     }
   },
 
@@ -139,7 +142,7 @@ function renderHud() {
     party.appendChild(el);
   }
   hud.querySelector('.menu-btn').onclick = openMenu;
-  hud.querySelector('.goal').textContent = s.flags.bossDone ? '' : '目標：飛往右上方救回悟飯（建議練到 Lv6 以上）';
+  hud.querySelector('.goal').textContent = chapterGoal(game.world, s) ?? (s.flags.bossDone ? '' : '目標：飛往右上方救回悟飯（建議練到 Lv6 以上）');
 }
 game.renderHud = renderHud;
 
@@ -181,6 +184,7 @@ function load() {
     s.sw = s.sw || {};
     s.var = s.var || { 42: 3 };
     startField();
+    resumeChapter(game);
     return true;
   } catch (e) { return false; }
 }
@@ -195,6 +199,8 @@ function startField() {
   renderHud();
 }
 
+Object.assign(game, { startField, save, showTitle: (sub) => showTitle(sub) }); // for src/chapter2.js
+
 // ---------- title ----------
 const title = document.getElementById('title');
 function showTitle(sub) {
@@ -203,7 +209,7 @@ function showTitle(sub) {
   audio.playBgm(game.world.titleBgm);
   const has = !!localStorage.getItem(SAVE_KEY);
   title.innerHTML = `<img src="${assetUrl('Graphics/System/Title.png')}" alt="">
-    <div class="sub">${sub || '重製版・Z1 拉蒂茲篇（試玩）'}</div>
+    <div class="sub">${sub || '重製版・Z1 拉蒂茲篇～桑修篇'}</div>
     <div class="actions">
       <button class="btn" data-a="new">新的開始</button>
       ${has ? '<button class="btn" data-a="cont">繼續遊戲</button>' : ''}
@@ -259,7 +265,7 @@ async function boot() {
   if (!(await ensureLatest())) return;
   view.resize();
   window.addEventListener('resize', () => view.resize());
-  game.world = await (await fetch('data/world.json?v=20261101-1700')).json();
+  game.world = await (await fetch('data/world.json?v=20261101-1710')).json();
   setFaces(game.world.faces);
   const faceSheets = new Set(Object.values(game.world.faces).map((f) => f[0]));
   await loadImages([...tileSheetPaths, ...fieldImages, ...battleImages(game.world), FACES, ...faceSheets]);

@@ -236,7 +236,23 @@ def add(world, h):
         k = max(i for i, n in enumerate(ns) if n.get('z1field'))
         return [ns[:k], ns[k + 1:]]
 
+    # the map events' graphics by tile (get_event_id_and_graphic: the highest event id there, its first page), for the
+    # Z3 battle backgrounds of set_battle_map (src/z3.js z3Backdrop)
+    tile_events = {}
+    for mid in (33, 34, 36, 37, 38, 39, 40, 78, 79, 80, 81, 82):
+        ev = D('map%03d' % mid)['events']
+        best = {}
+        for k, e in ev.items():
+            g = e['pages'][0]['graphic']
+            if int(k) == 2 or not g.get('character_name'):
+                continue
+            key = f"{e['x']},{e['y']}"
+            if key not in best or int(k) > best[key][0]:
+                best[key] = (int(k), [g['character_name'], g['character_index'], g['direction']])
+        tile_events[str(mid)] = {k: v[1] for k, v in best.items()}
+
     world['z3'] = {
+        'tileEvents': tile_events,
         'battles': battles,
         'pages': {},  # the chapters put the pages they play here (page(v) / split_battle(page(v)))
         'faces': {},  # 'z3:' faces are in world.faces; this is for the chapters' own tables

@@ -36,8 +36,9 @@
 
 - `tools/build_z3.py`：Z3 的圖（`world.era['2']`：Z1_／Z2_ → Z3_）、Z3 卡片圖示、敵人 101～140・177～188（Z3 戰鬥圖、`Z3_顔敵` 頭像列 = 編號 − 100、技能、掉落）、
   `world.z3.battles`（上表全部的敵人與戰鬥曲）、Z3 戰鬥背景 `assets/bg/z3_battle_<列>.png`、頁面轉換工具 `z3['page'](v)`／`z3['split_battle']`／`z3['nodes_of']`（說話者用 `z3:` 頭像）。
-  各章在自己的 `tools/build_z3?.py` 的 `add(world, h, z3)` 裡加地圖、地點、`world.z3.pages[...]`、`world.z3.backdrops[地圖]`、`world.z3.goals`、`world.z3.titles['z3?']`、`world['faces']`（`z3:` 開頭）、`world['areas']`（遇敵）等。
+  各章在自己的 `tools/build_z3?.py` 的 `add(world, h, z3)` 裡加地圖、地點、`world.z3.pages[...]`、`world.z3.goals`、`world.z3.titles['z3?']`、`world['faces']`（`z3:` 開頭）、`world['areas']`（遇敵）等。
 - `src/battle.js`：Z3 卡片流派（`z3Schools`，照 create_card_i）；`dmgRate`（變數 81）。
+- 戰鬥背景：`src/z3.js` 的 `z3Backdrop` 已照原版 set_battle_map（地面圖塊、第 3 層圖塊、地圖事件圖）自動選，各章不用另外寫（真的需要才用 `world.z3.backdrops[地圖]` 覆蓋）。
 - `src/z3.js`：各章 `registerZ3('z3?', { maps, start, spot, boss, resume, dev, goal })`；共用 `begin／play／fight／toField／party／addMember／leave／member／heal／timeRoom／card／nextZ3`。
   `fight(game, 編號, 續玩鍵, { turns, dmgRate, stopWhen, foeHp })`：戰前自動存檔，讀檔／輸了從那場重來（`resume(game, at)` 收到 `{ ch, at }`）。
 - `src/main.js`、`src/z2b.js`：Z2 結局後呼叫 `game.startZ3()`（有 z3a 才接手）；`?dev=z3…` 交給各章的 `dev(game, step)`（回傳 true 表示認得）。

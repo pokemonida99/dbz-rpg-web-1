@@ -16,6 +16,8 @@ export class Field {
     this.anim = 0;
     this.dir = 0; // 0 down 1 left 2 right 3 up (VX sheet row order)
     this.paused = false;
+    this.pois = world.pois[game.state.map] || [];
+    this.near = null; // the interactive spot the player is next to
   }
 
   walkable(px, py) {
@@ -46,6 +48,13 @@ export class Field {
     } else {
       this.anim += dt * 2; // idle hover
     }
+    // nearest interactive spot within reach
+    let near = null, nd = 44;
+    for (const p of this.pois) {
+      const d = Math.hypot(s.x - (p.x * 32 + 16), s.y - (p.y * 32 + 16));
+      if (d < nd) { nd = d; near = p; }
+    }
+    if (near !== this.near) { this.near = near; this.game.onNear(near); }
     // boss marker
     const b = this.world.boss;
     if (b && !s.flags.bossDone && Math.hypot(s.x - (b.x * 32 + 16), s.y - (b.y * 32 + 16)) < 44) this.game.onBoss();
@@ -77,6 +86,14 @@ export class Field {
       c.drawImage(fi.im, pat * 48, this.dir * 48, 48, 48, Math.round(s.x - 24 - cx), Math.round(s.y - 36 - cy + bob), 48, 48);
     }
     c.drawImage(this.layers.upper, -cx, -cy);
+    if (this.near) { // "!" over the player's head
+      const bx = Math.round(s.x - cx), by = Math.round(s.y - 46 - cy + Math.sin(this.anim * 3) * 2);
+      c.fillStyle = '#fff';
+      c.fillRect(bx - 8, by - 10, 16, 18);
+      c.fillStyle = '#d0480c';
+      c.fillRect(bx - 2, by - 7, 4, 8);
+      c.fillRect(bx - 2, by + 3, 4, 3);
+    }
   }
 
   enter() {
@@ -85,6 +102,8 @@ export class Field {
   }
 
   leave() {
+    this.near = null;
+    this.game.onNear(null);
     input.stickEnabled = false;
     input.dx = input.dy = 0;
   }

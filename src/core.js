@@ -102,6 +102,8 @@ appEl.addEventListener('pointerup', endStick);
 appEl.addEventListener('pointercancel', endStick);
 document.addEventListener('contextmenu', (e) => e.preventDefault());
 document.addEventListener('gesturestart', (e) => e.preventDefault());
+// iOS Safari still rubber-bands the page despite overflow:hidden; the game never scrolls, so stop it
+document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
 
 // ---------- audio (Web Audio; iOS needs a gesture before it will play) ----------
 export const audio = {

@@ -12,11 +12,12 @@ world = json.load(open(os.path.join(root, 'data', 'world.json'), encoding='utf-8
 
 files = {f'Graphics/System/{n}.png' for n in ['TileA1', 'TileA2', 'TileA3', 'TileA4', 'TileA5', 'TileB', 'TileC', 'TileD', 'TileE', 'Title']}
 files |= {'Graphics/Characters/chara_fly1.png', 'Graphics/Characters/enemy1.png', 'Graphics/Pictures/GBZ1 顔アイコン.PNG',
-          'Graphics/Pictures/Z1_戦闘_背景.PNG', 'Graphics/Pictures/Z1_戦闘_必殺技_エネルギー波_敵_中.PNG'}
+          'Graphics/Pictures/Z1_戦闘_背景.PNG', 'Graphics/Pictures/Z1_戦闘_必殺技_エネルギー波_敵_中.PNG',
+          'Graphics/Pictures/カード関係.PNG', 'Graphics/System/Z1_Window.png'}
 for a in world['actors'].values():
     files |= {a['sprite'], a['beam']}
 for e in world['enemies'].values():
-    files.add(e['sprite'])
+    files |= {e['sprite'], e['portrait']}
 bgm = {m['bgm'] for m in world['maps'].values()} | {world['titleBgm'], 'Z1 戦闘1', 'Z1 戦闘ボス1(中ボス)'}
 files |= {f'Audio/BGM/{n}.ogg' for n in bgm}
 se = ['Z1 敵発見', 'Z1 エネルギー波', 'Z1 エネルギー波2', 'Z1 打撃', 'Z1 避ける', 'Z1 ダメージ', 'GBZ1 ファンファーレ1', 'Z1 レベルアップ']
@@ -31,4 +32,9 @@ for f in sorted(files):
     os.makedirs(os.path.dirname(d), exist_ok=True)
     shutil.copyfile(s, d)
     total += os.path.getsize(d)
+# UI frame for CSS border-image: the window border part (64,0,64,64) of the Z1 window skin
+from PIL import Image  # noqa: E402
+skin = Image.open(os.path.join(src, 'Graphics/System/Z1_Window.png')).convert('RGBA')
+os.makedirs(os.path.join(root, 'assets', 'ui'), exist_ok=True)
+skin.crop((64, 0, 128, 64)).save(os.path.join(root, 'assets', 'ui', 'frame.png'))
 print(len(files), 'files,', total // 1024, 'KB')

@@ -35,6 +35,34 @@ const game = {
     await this.startBattle(rollEncounter(this.world), false);
   },
 
+  // the "examine / enter" button appears while standing next to a building
+  onNear(poi) {
+    if (poi) actBtn.textContent = poi.label;
+    actBtn.onclick = () => poi && this.interact(poi);
+  },
+  // shown whenever the player stands by a building and nothing else is going on
+  syncAct() {
+    const near = this.scene === this.field && this.field && !this.field.paused && this.field.near;
+    const hide = !near || this.busy;
+    if (actBtn.hidden !== hide) actBtn.hidden = hide;
+  },
+
+  async interact(poi) {
+    if (this.busy) return;
+    this.busy = true;
+    actBtn.hidden = true;
+    this.field.paused = true;
+    input.dx = input.dy = 0;
+    await say(poi.lines);
+    const s = this.state;
+    if (poi.effect === 'rest') for (const m of s.party) { m.hp = m.maxhp; m.ki = m.maxki; }
+    if (poi.effect === 'ki') for (const m of s.party) m.ki = m.maxki;
+    if (poi.effect === 'rest' || poi.effect === 'save') { save(true); toast('已存檔'); }
+    renderHud();
+    this.busy = false;
+    this.field.paused = false;
+  },
+
   async onBoss() {
     if (this.busy) return;
     this.busy = true;
@@ -83,6 +111,7 @@ window.__game = game;
 
 // ---------- HUD ----------
 const hud = document.getElementById('hud');
+const actBtn = document.getElementById('act');
 function faceCanvas(row, size = 34) {
   const c = document.createElement('canvas');
   c.width = 40; c.height = 40;
@@ -198,6 +227,7 @@ function frame(t) {
   if (game.scene) {
     game.scene.update(dt);
     game.scene.draw();
+    game.syncAct();
   }
   requestAnimationFrame(frame);
 }

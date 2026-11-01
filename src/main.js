@@ -65,7 +65,7 @@ const game = {
     if (poi.chapter) { await chapterSpot(this, poi); renderHud(); this.busy = false; this.field.paused = false; return; }
     if (poi.event) await runEvent(this.world.events[poi.event], s);
     else if (poi.lines) await say(poi.lines);
-    if (poi.effect === 'rest') for (const m of s.party) { m.hp = m.maxhp; m.ki = m.maxki; }
+    if (poi.effect === 'rest') for (const m of s.party) { m.hp = m.maxhp; m.ki = m.maxki; m.ko = false; }
     if (poi.effect === 'ki') for (const m of s.party) m.ki = m.maxki;
     if (poi.effect === 'shop') await cardSquare(this); // a Z mark: the original's card square (also saves)
     if (poi.effect === 'rest' || poi.effect === 'save' || poi.effect === 'shop') { save(true); toast('已存檔'); }
@@ -178,7 +178,7 @@ function openMenu() {
     if (act === 'compo') { menu.hidden = true; game.busy = true; compo(game).then(() => { game.busy = false; game.field.paused = false; renderHud(); }); return; }
     if (act === 'save') { save(); toast('已存檔'); }
     if (act === 'load') { if (load()) toast('已讀檔'); }
-    if (act === 'heal') { for (const m of game.state.party) { m.hp = m.maxhp; m.ki = m.maxki; } renderHud(); toast('全員回復了'); }
+    if (act === 'heal') { for (const m of game.state.party) { m.hp = m.maxhp; m.ki = m.maxki; m.ko = false; } renderHud(); toast('全員回復了'); }
     menu.hidden = true;
     game.field.paused = false;
     game.field.enter();

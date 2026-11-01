@@ -11,7 +11,9 @@ Conventions used in the code and in this doc:
 - `rand(n)` = integer in `0..n-1`.
 - Scenario chapter: `$game_variables[40]` (0 = Z1 Vegeta saga, 1 = Z2 Freeza, 2 = Z3+). Fine-grained progress: `$game_variables[43]`.
 - Many hundreds of passive "スキル" (SP-learned abilities, e.g. 気のコントロール, 湧き出る力) tweak the numbers below.
-  They are listed as **(passive hooks)** and are *simplified* (omitted) unless noted. Base rules work without them.
+  They are listed as **(passive hooks)**. The remake implements the families the Z1 cast can get (src/growth.js):
+  サイヤ人の血, 鋼鉄の拳, Z戦士の絆, 気のコントロール, 湧き出る力, ミラクル全開パワー, ムダのない動き, かなしばり,
+  魔族の力/再生, 激怒, 必殺の一撃; the rest are omitted.
 
 ---
 

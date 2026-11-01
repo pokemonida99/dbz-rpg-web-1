@@ -7,7 +7,7 @@
 // Used by the story (CE46 / CE66 → on, the Z2 pages' on_super_saiyazin 1), by the 超サイヤ人變身 move (skill 29,
 // element 26: in battle, src/battle.js), and syncSuperSaiyan (CE155 / CE157: put every form as a list says, e.g.
 // when moving between the 時之間 and the story).
-import { applyLevel } from './party.js?v=20261101-2312';
+import { applyLevel } from './party.js?v=20261101-2323';
 
 // no → [base actor, Super Saiyan actor, 固有技能 slot of サイヤ人の血 (null: none)]
 export const FORMS = { 1: [3, 14, 0], 2: [5, 18, 1], 3: [12, 19, 1], 4: [17, 20, 1], 5: [18, 18, null], 6: [25, 26, 1], 7: [16, 32, null] };

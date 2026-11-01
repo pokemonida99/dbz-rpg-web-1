@@ -271,7 +271,7 @@ function startField() {
 // the chapter that follows, by name (a later part calls game.nextChapter('ch6') …); false when it isn't there
 const CHAPTERS = { ch5: startChapter5 };
 const nextChapter = (k) => (typeof k !== 'string' ? startChapter3(game) : CHAPTERS[k] ? CHAPTERS[k](game) : false);
-Object.assign(game, { startField, save, renderHud: () => renderHud(), showTitle: (sub) => showTitle(sub), nextChapter, devChapter5: () => devChapter5(game) }); // for src/chapter*.js
+Object.assign(game, { startField, save, renderHud: () => renderHud(), showTitle: (sub) => showTitle(sub), nextChapter, startChapter5, devChapter5: () => devChapter5(game) }); // for src/chapter*.js
 
 // ---------- title ----------
 const title = document.getElementById('title');

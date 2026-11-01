@@ -11,7 +11,7 @@ export async function runEvent(nodes, state) {
   const v = state.var || (state.var = {});
   let lines = [];
   const flush = async (keep) => { if (lines.length) { await say(lines, keep); lines = []; } };
-  const test = (c) => (c[0] === 'sw' ? !!sw[c[1]] === c[2] : c[0] === 'var' ? CMP[c[3]](v[c[1]] || 0, c[2]) : false);
+  const test = (c) => (c[0] === 'sw' ? !!sw[c[1]] === c[2] : c[0] === 'var' ? CMP[c[3]](v[c[1]] || 0, c[2]) : c[0] === 'party' ? state.party.length > c[1] : false);
   // returns true when the event ends early
   const run = async (list) => {
     for (const n of list) {

@@ -155,6 +155,7 @@ export class Field {
     if (this.spent && Math.hypot(s.x - (this.spent.x * 32 + 16), s.y - (this.spent.y * 32 + 16)) >= 44) this.spent = null;
     for (const p of this.pois) {
       if (p.gone && s.sw[p.gone]) continue; // a beaten Pumpkin / Broccoli
+      if (!meets(s, p.need)) continue; // there only at some point of the story (src/z2b.js)
       if (p === this.spent) continue; // a card / training square works once per visit, like landing on it
       const d = Math.hypot(s.x - (p.x * 32 + 16), s.y - (p.y * 32 + 16));
       if (d < nd) { nd = d; near = p; }
@@ -208,7 +209,7 @@ export class Field {
   bossList() {
     const s = this.game.state;
     const b = (this.world.bosses || { 1: { ...this.world.boss, flag: 'bossDone' } })[s.map];
-    return (Array.isArray(b) ? b : b ? [b] : []).filter((x) => !s.flags[x.flag]);
+    return (Array.isArray(b) ? b : b ? [b] : []).filter((x) => !s.flags[x.flag] && meets(s, x.need));
   }
   boss() { return this.bossList()[0] || null; }
   bosses() { return this.bossList(); } // (the name chapter 6 uses)
@@ -227,3 +228,11 @@ export class Field {
 }
 
 export const nextEncounterSteps = () => 12 + rand(14);
+
+// need: the original's spot conditions (145_Event_Check.rb) — { sw: {id: on/off}, var: {id: value} }
+function meets(s, need) {
+  if (!need) return true;
+  for (const [k, v] of Object.entries(need.sw || {})) if (!!(s.sw && s.sw[k]) !== v) return false;
+  for (const [k, v] of Object.entries(need.var || {})) if (((s.var && s.var[k]) || 0) !== v) return false;
+  return true;
+}

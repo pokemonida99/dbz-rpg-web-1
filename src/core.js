@@ -222,7 +222,7 @@ function showFace(who) {
   const im = img(f[0]);
   const c = dlgFace.getContext('2d');
   c.clearRect(0, 0, 64, 64);
-  const paint = () => { if (im.ok && faces[who] === f) c.drawImage(im.im, 0, f[1] * 64, 64, 64, 0, 0, 64, 64); };
+  const paint = () => { if (im.ok && faces[who] === f) c.drawImage(im.im, (f[2] || 0) * 64, f[1] * 64, 64, 64, 0, 0, 64, 64); }; // [2]: column
   if (im.ok) paint(); else im.p.then(paint);
 }
 window.addEventListener('keydown', (e) => {

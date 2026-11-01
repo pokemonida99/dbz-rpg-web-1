@@ -118,12 +118,16 @@ def cond(p):
         return ['sw', p[1], p[2] == 0]
     if p[0] == 1 and p[2] == 0:  # variable vs constant: == >= <= > < !=
         return ['var', p[1], p[3], p[4]]
+    if p[0] == 12 and p[1].replace(' ', '') == '$partyc.size>1':  # a script condition: more than one in the party
+        return ['party', 1]
     return ['never']
 
 
 # common events copied into the event where it calls them (code 117, or a jump to a label right before the call):
 # the villagers' explanations of skills, S-combos and proficiency
 INLINE_CE = {264, 265, 266}
+# code → function(parameters) → nodes, for commands script() otherwise drops; filled while a chapter builds its pages
+EXTRA = {}
 
 
 def script(lst):
@@ -210,6 +214,8 @@ def script(lst):
                 out.extend(script(D('commonevents')[p[0]]['list']))
             elif code == 119 and p[0] in labels:
                 out.extend(script(D('commonevents')[labels[p[0]]]['list']))
+            elif code in EXTRA:  # commands a later chapter converts itself (tools/build_z2b.py: pictures, EXP, …)
+                out.extend(EXTRA[code](p))
             i += 1
         return out
 
@@ -290,5 +296,7 @@ import build_chapter5  # noqa: E402  (chapter 5: the Garlic area and King Kai's 
 build_chapter5.add(world, globals())
 import build_chapter6  # noqa: E402  (chapter 6: King Kai's training, Shenron, the Saiyans, the Z1 ending)
 build_chapter6.add(world, globals())
+import build_z2b  # noqa: E402  (Z2 second half: the Ginyu Force, Frieza, the Super Saiyan, the Z2 ending)
+build_z2b.add(world, globals())
 json.dump(world, open(os.path.join(root, 'data', 'world.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 print('world.json written')

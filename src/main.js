@@ -2,7 +2,7 @@
 import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-2130';
 import { tileSheetPaths } from './tiles.js?v=20261101-2130';
 import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-2130';
-import { Battle, battleImages, newHand, rollEncounter, setCardGame } from './battle.js?v=20261101-2130';
+import { Battle, battleImages, newHand, rollEncounter, setCardGame, Z2_FACES } from './battle.js?v=20261101-2130';
 import { makeMember, levelUp } from './party.js?v=20261101-2130';
 import { runEvent } from './events.js?v=20261101-2130';
 import { playOpening, playStory } from './opening.js?v=20261101-2130'; // the original's title animation and opening story
@@ -18,6 +18,7 @@ import { chapter4Goal, startChapter4, resumeChapter4, chapter4Spot, isChapter4Ma
 import { playEvent, setCutsceneWorld, raditzOutcome } from './cutscene.js?v=20261101-2130'; // story scenes staged like the original
 import { chapter5Goal, startChapter5, resumeChapter5, isChapter5Map, chapter5Boss, devChapter5 } from './chapter5.js?v=20261101-2130';
 import { chapter6Goal, startChapter6, resumeChapter6, chapter6Spot, isChapter6Map, chapter6Boss, devChapter6 } from './chapter6.js?v=20261101-2130'; // King Kai, the Saiyans, the end of Z1
+import { z2bGoal, startZ2Ginyu, resumeZ2b, z2bSpot, isZ2bMap, z2bBoss, devZ2b } from './z2b.js?v=20261101-2130'; // Z2 second half: the Ginyu Force, Frieza
 
 // testing in a hidden browser pane (no animation frames there): ?timer drives every frame with timers instead
 if (new URLSearchParams(location.search).has('timer')) window.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16);
@@ -75,7 +76,7 @@ const game = {
     this.field.paused = true;
     input.dx = input.dy = 0;
     const s = this.state;
-    if (poi.chapter) { await (chapter6Spot(this, poi) || chapter4Spot(this, poi) || chapter3Spot(this, poi) || chapterSpot(this, poi)); renderHud(); this.busy = false; this.field.paused = false; return; }
+    if (poi.chapter) { await (z2bSpot(this, poi) || chapter6Spot(this, poi) || chapter4Spot(this, poi) || chapter3Spot(this, poi) || chapterSpot(this, poi)); renderHud(); this.busy = false; this.field.paused = false; return; }
     spotTally(s, poi);
     if (['training', 'shop'].includes(poi.effect)) this.field.spent = poi; // once per visit (src/field.js)
     if (poi.effect === 'training') { await training(this); renderHud(); this.busy = false; this.field.paused = false; return; }
@@ -99,6 +100,7 @@ const game = {
   },
 
   async onBoss(b) {
+    if (isZ2bMap(this.state)) return z2bBoss(this, b);
     if (isChapter6Map(this.state)) return chapter6Boss(this, b);
     if (isChapter5Map(this.state)) return chapter5Boss(this, b);
     if (isChapter4Map(this.state)) return chapter4Boss(this);
@@ -137,6 +139,7 @@ const game = {
     this.scene = battle;
     this.lastBattle = battle;
     const result = await battle.run();
+    this.lastResult = result; // 'win' | 'lose' | 'break' (an event battle stopped: src/z2b.js)
     battleTally(this, battle, result);
     this.scene = this.field;
     hud.hidden = false;
@@ -164,7 +167,7 @@ function faceCanvas(m) {
   const css = (64 * Math.max(1, Math.round((36 * dpr) / 64))) / dpr; // about 36 CSS px
   c.style.width = c.style.height = `${css}px`;
   const col = m.hp <= 0 || m.ko ? 2 : m.hp * 4 < m.maxhp ? 1 : 0; // normal / hurt / KO, like the battle screen
-  const f = img(FACES);
+  const f = img(game.state && game.state.var && game.state.var[40] >= 1 ? Z2_FACES : FACES); // the Z2 sheet from Z2 on
   const paint = () => { if (f.ok) c.getContext('2d').drawImage(f.im, 64 * col, 64 * (m.id - 3), 64, 64, 0, 0, 64, 64); };
   if (f.ok) paint(); else f.p.then(paint);
   return c;
@@ -173,6 +176,7 @@ export { faceCanvas };
 function renderHud() {
   const s = game.state;
   hud.classList.toggle('many', s.party.length > 3);
+  hud.classList.toggle('rows3', s.party.length > 6);
   hud.innerHTML = '<div class="party"></div><button class="menu-btn" aria-label="選單">☰</button><div class="goal"></div>';
   const party = hud.querySelector('.party');
   party.classList.toggle('many', s.party.length > 3); // all six (src/style.css)
@@ -187,7 +191,7 @@ function renderHud() {
     party.appendChild(el);
   }
   hud.querySelector('.menu-btn').onclick = openMenu;
-  hud.querySelector('.goal').textContent = chapter6Goal(game.world, s) ?? chapter5Goal(game.world, s) ?? chapter4Goal(game.world, s) ?? chapter3Goal(game.world, s) ?? chapterGoal(game.world, s) ?? (s.flags.bossDone ? '' : '目標：飛往右上方救回悟飯（建議練到 Lv6 以上）');
+  hud.querySelector('.goal').textContent = z2bGoal(game.world, s) ?? chapter6Goal(game.world, s) ?? chapter5Goal(game.world, s) ?? chapter4Goal(game.world, s) ?? chapter3Goal(game.world, s) ?? chapterGoal(game.world, s) ?? (s.flags.bossDone ? '' : '目標：飛往右上方救回悟飯（建議練到 Lv6 以上）');
 }
 game.renderHud = renderHud;
 
@@ -251,7 +255,7 @@ function load(key = SAVE_KEY) {
     s.var = s.var || { 42: 3 };
     startField();
     resumeChapter(game);
-    resumeChapter3(game) || resumeChapter4(game) || resumeChapter5(game) || resumeChapter6(game);
+    resumeZ2b(game) || resumeChapter3(game) || resumeChapter4(game) || resumeChapter5(game) || resumeChapter6(game);
     return true;
   } catch (e) { return false; }
 }
@@ -277,7 +281,7 @@ function startField() {
 // the chapter that follows, by name (a later part calls game.nextChapter('ch6') …); false when it isn't there
 const CHAPTERS = { ch4: startChapter4, ch5: startChapter5, ch6: startChapter6 };
 const nextChapter = (k) => (typeof k !== 'string' ? startChapter3(game) : CHAPTERS[k] ? CHAPTERS[k](game) : false);
-Object.assign(game, { startField, save, renderHud: () => renderHud(), showTitle: (sub, notes) => showTitle(sub, notes), nextChapter, startChapter4, startChapter5, startChapter6, devChapter5: () => devChapter5(game), devChapter6: () => devChapter6(game) }); // for src/chapter*.js
+Object.assign(game, { startField, save, renderHud: () => renderHud(), showTitle: (sub, notes) => showTitle(sub, notes), nextChapter, startChapter4, startChapter5, startChapter6, devChapter5: () => devChapter5(game), devChapter6: () => devChapter6(game), startZ2Ginyu: () => startZ2Ginyu(game) }); // for src/chapter*.js (the Z2 first half calls startZ2Ginyu at the pond on map 26)
 
 // ---------- title ----------
 const title = document.getElementById('title');
@@ -357,6 +361,7 @@ async function boot() {
   setCardGame(game); // the card schools change from 概況 11 on
   const dev = new URLSearchParams(location.search).get('dev'); // ?dev=ch6 / ch6earth / ch6vegeta: jump to chapter 6
   if (dev && dev.startsWith('ch6')) { title.hidden = true; devChapter6(game, dev); requestAnimationFrame(frame); return; }
+  if (dev && ['z2ginyu', 'z2frieza', 'z2last'].includes(dev)) { title.hidden = true; devZ2b(game, dev); requestAnimationFrame(frame); return; } // Z2 second half
   if (!options.skipOp) await playOpening(); // the title animation, like the original plays before its title screen
   showTitle();
   if (new URLSearchParams(location.search).get('dev') === 'ch5') { title.hidden = true; devChapter5(game); } // testing: start at the Garlic area

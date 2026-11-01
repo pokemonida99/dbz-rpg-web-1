@@ -300,8 +300,7 @@ async function spot(game, p) {
       await play(game, 341);
       timeRoom(s);
       s.var[324] = 15;
-      s.var[41] = 401;
-      game.save(true);
+      s.var[41] = 401; // (no save here: a save between the battle and Goku's departure would load back on map 18 with Goku not yet sent off)
       await card(z.titles[1], 2200);
       await play(game, 401);
       party(game, [3]); // z1field 405

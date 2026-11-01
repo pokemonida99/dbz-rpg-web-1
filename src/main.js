@@ -15,6 +15,7 @@ import { fieldExtraHtml, openFieldEntry, setFieldGame, encounterSteps, battleTal
 import { training } from './training.js?v=20261101-2006'; // training squares
 import { chapter3Goal, startChapter3, resumeChapter3, chapter3Spot, isChapter3Map, chapter3Boss } from './chapter3.js?v=20261101-2006';
 import { playEvent, setCutsceneWorld, raditzOutcome } from './cutscene.js?v=20261101-2006'; // story scenes staged like the original
+import { chapter5Goal, startChapter5, resumeChapter5, chapter5Spot, isChapter5Map, chapter5Boss, devChapter5 } from './chapter5.js?v=20261101-2006';
 
 const SAVE_KEY = 'dbz-portrait-save-v1';
 const AUTO_KEY = 'dbz-portrait-autosave-v1'; // the original's Save_Auto.rvdata: after each normal battle won
@@ -69,7 +70,7 @@ const game = {
     this.field.paused = true;
     input.dx = input.dy = 0;
     const s = this.state;
-    if (poi.chapter) { await (chapter3Spot(this, poi) || chapterSpot(this, poi)); renderHud(); this.busy = false; this.field.paused = false; return; }
+    if (poi.chapter) { await (chapter5Spot(this, poi) || chapter3Spot(this, poi) || chapterSpot(this, poi)); renderHud(); this.busy = false; this.field.paused = false; return; }
     spotTally(s, poi);
     if (['training', 'shop'].includes(poi.effect)) this.field.spent = poi; // once per visit (src/field.js)
     if (poi.effect === 'training') { await training(this); renderHud(); this.busy = false; this.field.paused = false; return; }
@@ -92,7 +93,8 @@ const game = {
     this.field.paused = false;
   },
 
-  async onBoss() {
+  async onBoss(b) {
+    if (isChapter5Map(this.state)) return chapter5Boss(this, b);
     if (isChapter3Map(this.state)) return chapter3Boss(this);
     if (this.state.map !== '1') return chapterBoss(this);
     if (this.busy) return;
@@ -124,7 +126,9 @@ const game = {
     flash.style.opacity = '0';
     setTimeout(() => flash.remove(), 400);
     const battle = new Battle(this.world, this, enemyIds, boss);
-    Object.assign(battle, opts); // e.g. eventBgm (src/fieldmenu.js)
+    Object.assign(battle, opts); // e.g. eventBgm (src/fieldmenu.js), bgm, foeHp, keepOnLose
+    if (opts && opts.foeHp) opts.foeHp.forEach((hp, i) => { if (hp != null && battle.foes[i]) battle.foes[i].hp = hp; }); // King Kai keeps his wounds
+    this.lastBattle = battle;
     this.scene = battle;
     const result = await battle.run();
     battleTally(this, battle, result);
@@ -134,7 +138,7 @@ const game = {
     this.field.paused = false;
     this.field.enter();
     this.busy = false;
-    if (result === 'lose') {
+    if (result === 'lose' && !(opts && opts.keepOnLose)) { // keepOnLose: the chapter goes on (King Kai's training)
       await say([['', '悟空們被打倒了……'], ['', '回到最後的存檔。']]);
       if (!load(newest())) restart();
     }
@@ -164,6 +168,8 @@ function renderHud() {
   const s = game.state;
   hud.innerHTML = '<div class="party"></div><button class="menu-btn" aria-label="選單">☰</button><div class="goal"></div>';
   const party = hud.querySelector('.party');
+  party.classList.toggle('many', s.party.length > 3); // all six (src/style.css)
+  hud.classList.toggle('many', s.party.length > 3);
   for (const m of s.party) {
     const el = document.createElement('div');
     el.className = 'pcard';
@@ -174,7 +180,7 @@ function renderHud() {
     party.appendChild(el);
   }
   hud.querySelector('.menu-btn').onclick = openMenu;
-  hud.querySelector('.goal').textContent = chapter3Goal(game.world, s) ?? chapterGoal(game.world, s) ?? (s.flags.bossDone ? '' : '目標：飛往右上方救回悟飯（建議練到 Lv6 以上）');
+  hud.querySelector('.goal').textContent = chapter5Goal(game.world, s) ?? chapter3Goal(game.world, s) ?? chapterGoal(game.world, s) ?? (s.flags.bossDone ? '' : '目標：飛往右上方救回悟飯（建議練到 Lv6 以上）');
 }
 game.renderHud = renderHud;
 
@@ -239,6 +245,7 @@ function load(key = SAVE_KEY) {
     startField();
     resumeChapter(game);
     resumeChapter3(game);
+    resumeChapter5(game);
     return true;
   } catch (e) { return false; }
 }
@@ -261,7 +268,10 @@ function startField() {
   renderHud();
 }
 
-Object.assign(game, { startField, save, showTitle: (sub) => showTitle(sub), nextChapter: startChapter3 }); // for src/chapter2.js, src/chapter3.js
+// the chapter that follows, by name (a later part calls game.nextChapter('ch6') …); false when it isn't there
+const CHAPTERS = { ch5: startChapter5 };
+const nextChapter = (k) => (typeof k !== 'string' ? startChapter3(game) : CHAPTERS[k] ? CHAPTERS[k](game) : false);
+Object.assign(game, { startField, save, renderHud: () => renderHud(), showTitle: (sub) => showTitle(sub), nextChapter, devChapter5: () => devChapter5(game) }); // for src/chapter*.js
 
 // ---------- title ----------
 const title = document.getElementById('title');
@@ -338,6 +348,7 @@ async function boot() {
   setFieldGame(game);
   if (!options.skipOp) await playOpening(); // the title animation, like the original plays before its title screen
   showTitle();
+  if (new URLSearchParams(location.search).get('dev') === 'ch5') { title.hidden = true; devChapter5(game); } // testing: start at the Garlic area
   requestAnimationFrame(frame);
 }
 boot();

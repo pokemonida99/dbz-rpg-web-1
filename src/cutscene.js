@@ -17,9 +17,9 @@ let world = null;
 export function setCutsceneWorld(w) { world = w; }
 
 // ---------- z1field n: what each scene shows (143_Event_Main.rb, the Z1 story part) ----------
-// bgm, bg (192×128 scene picture, or `scroll` 512×128), foe (the face in the scene: [sheet, row]), faces (faces under
+// bgm, bg (192×128 scene picture, or `scroll` 512×128), foe (the face in the scene: [sheet, row, dy]), faces (faces under
 // the scene: [sheet, row, x offset]), out (character_output: the party's faces), party ($partyc becomes this),
-// fadein, next (variable 41 afterwards: '+' adds one, a number sets it; none leaves it)
+// adds (more faces in the scene: [sheet, row, dx, dy] from the foe's place), fadein, next (variable 41 afterwards: '+' adds one, a number sets it; none leaves it)
 const S = {
   58: { bgm: 'Z1 戦闘前', out: true, bg: '山', foe: [FOE, 10], next: '+' }, // ラディッツ
   60: { bgm: 'Z1 戦闘前', bg: '山', foe: [FOE, 10], next: '+', // ラディッツ撃墜: who is still standing
@@ -59,8 +59,14 @@ const S = {
   108: { bg: '界王星_地上', foe: [EVENT, 13], out: true }, // グレゴリー
 };
 const BATTLES = [59, 93, 103]; // battle_process: the battle itself is run by the chapter code
-const PICS = [PARTY, EVENT, FOE, ...new Set(Object.values(S).flatMap((d) => [d.bg && BG(d.bg), d.scroll && BG(d.scroll)]).filter(Boolean)),
+const pics = () => [PARTY, EVENT, FOE, ...new Set(Object.values(S).flatMap((d) => [d.bg && BG(d.bg), d.scroll && BG(d.scroll)]).filter(Boolean)),
   BG('ピッコロと悟飯')];
+
+// later chapters bring their own scenes (src/chapter5.js …): z1field entries as above, and their battle_process numbers
+export function addScenes(more, battles = []) {
+  Object.assign(S, more);
+  BATTLES.push(...battles);
+}
 
 // character_output: the party's faces centred under the scene, three to a row
 function partyFaces(stage, ids) {
@@ -93,7 +99,8 @@ async function z1field(stage, ctx, quiet = false) {
   }
   if (d.bg) stage.bg(d.bg);
   if (d.scroll) stage.add(BG(d.scroll), SCROLL_X, SCENE_Y, [0, 0, 512, 128]);
-  if (d.foe) stage.add(d.foe[0], ENE[0], ENE[1], [0, 64 * d.foe[1], 64, 64]);
+  if (d.foe) stage.add(d.foe[0], ENE[0], ENE[1] + (d.foe[2] || 0), [0, 64 * d.foe[1], 64, 64]);
+  for (const [sheet, row, dx, dy] of d.adds || []) stage.add(sheet, ENE[0] + dx, ENE[1] + dy, [0, 64 * row, 64, 64]); // more faces in the scene
   for (const [sheet, row, dx] of (typeof d.faces === 'function' ? d.faces(ctx.s.sw) : d.faces) || []) stage.party(sheet, row, dx);
   if (d.out) partyFaces(stage, ctx.partyc);
   if (d.next === '+') v[41] = n + 1;
@@ -104,7 +111,7 @@ async function z1field(stage, ctx, quiet = false) {
 // Plays a list of [{bgm, nodes}] (the chapter scenes, tools/build_chapter2.py scenes()) as one cutscene.
 export async function playScenes(list, s) {
   const ui = overlay();
-  await loadImages(PICS);
+  await loadImages(pics());
   const stage = new Stage(ui);
   const faces = { ...(world.opening && world.opening.faces), ...world.faces };
   const sw = s.sw || (s.sw = {});

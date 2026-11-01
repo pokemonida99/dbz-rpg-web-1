@@ -55,7 +55,8 @@ files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"SE_\w+ = '([^']+)'", partyme
 battle = open(os.path.join(root, 'src', 'battle.js'), encoding='utf-8').read()  # its cursor sounds too
 files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"SE_\w+ = '([^']+)'", battle)}
 # the story scenes between chapters (src/cutscene.js): scene pictures (BG('…') and the `bg` / `scroll` entries)
-cutscene = open(os.path.join(root, 'src', 'cutscene.js'), encoding='utf-8').read()
+cutscene = ''.join(open(os.path.join(root, 'src', f), encoding='utf-8').read()  # and the scenes the chapters add (addScenes)
+                   for f in sorted(os.listdir(os.path.join(root, 'src'))) if f == 'cutscene.js' or f.startswith('chapter'))
 files |= {f'Graphics/Pictures/Z1_背景_{n}.PNG' for n in re.findall(r"(?:BG\(|bg: |scroll: )'([^']+)'", cutscene)}
 files |= {f'Audio/BGM/{n}.ogg' for n in re.findall(r"bgm: '([^']+)'", cutscene)}
 

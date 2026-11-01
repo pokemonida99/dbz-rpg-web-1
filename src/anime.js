@@ -34,6 +34,7 @@ const RAY = {
 const RAY_DOWN = pic('Z1_戦闘_必殺技_エネルギー波_中_縦.PNG'); // 120×400, the right half falls from the sky
 const KIENZAN = pic('Z1_戦闘_必殺技_気円斬.PNG'); // 4 frames of 128×28, the disc growing
 const SOKIDAN = pic('Z1_戦闘_必殺技_繰気弾.PNG'); // 128×128 frames
+const SOKIDAN_PINK = pic('Z1_戦闘_必殺技_繰気弾(桃).PNG');
 const BACKS = {
   shock: pic('Z1_戦闘_必殺技_背景_衝撃波系.png'), demonV: pic('Z1_戦闘_必殺技_背景_魔族系(縦).png'),
   demonH: pic('Z1_戦闘_必殺技_背景_魔族系(横).png'), auraGreen: pic('Z1_戦闘_必殺技_気を溜める(緑).PNG'),
@@ -42,9 +43,10 @@ const BACKS = {
   aura: pic('Z1_戦闘_必殺技_気を溜める.PNG'), flame3: pic('Z1_戦闘_必殺技_気を溜める3.png'),
   gather4: pic('Z1_戦闘_必殺技_気を溜める4.png'), gatherFour: pic('Z1_戦闘_必殺技_気を溜める(四身の拳気功砲).PNG'),
   kikou: pic('Z1_戦闘_必殺技_背景_気功砲系.png'), psychic: pic('Z1_戦闘_必殺技_超能力.PNG'),
+  blackHole: pic('Z1_戦闘_必殺技_気を溜める5.PNG'),
 };
 
-export const ANIME_IMAGES = [SPARK, BOOM, DIGITS, MAKANKO_BALL, PIERCE_FRONT, RAY_DOWN, KIENZAN, SOKIDAN, ...Object.values(BALL),
+export const ANIME_IMAGES = [SPARK, BOOM, DIGITS, MAKANKO_BALL, PIERCE_FRONT, RAY_DOWN, KIENZAN, SOKIDAN, SOKIDAN_PINK, ...Object.values(BALL),
   ...Object.values(RAY).map((r) => r[0]), ...Object.values(BACKS)];
 
 // special moves by skill id → the original's animation (attack pattern = skill id + 10)
@@ -61,11 +63,12 @@ const MOVES = {
   307: 'gingerWave', 321: 'gingerWave', 324: 'sanshoWave', 325: 'sanshoBigWave', // 卡里克的手下
   322: 'nikkiBigWave', 323: 'swordAttack', // 尼奇
   308: 'nikkiBigWave', 309: 'swordAttack', // 吉加
+  326: 'garlicBall', 328: 'garlicBigWave', 329: 'giantWave', 330: 'blackHole', // 卡里克 / 卡里克(巨大化)
 };
 // 拡散エネルギー波 hits every enemy: the battle plays one film per target, and in the original only the first one
 // has the whole charge — the rest are just the beam falling on them. A film started right after the last one
 // ended belongs to the same attack.
-const SCATTER = 63;
+const SCATTER = 63, BLACK_HOLE = 330; // moves on everyone: the targets after the first get a shorter film
 let scatterEnd = -1e9;
 
 // one action: attacker vs defender. `party` / `foe` = { normal, special } sprite sheets (96×96 frames, one column)
@@ -109,7 +112,7 @@ export class Duel {
     if (r.done) {
       this.done = true;
       audio.seStop();
-      if (this.skill === SCATTER) scatterEnd = performance.now();
+      if (this.skill === SCATTER || this.skill === BLACK_HOLE) scatterEnd = performance.now();
       this.resolve();
     }
   }
@@ -120,6 +123,8 @@ export class Duel {
       if (this.skill === SCATTER && performance.now() - scatterEnd < 500) { // a further target of the same attack
         this.back.y = BACK_Y + 79 * 4;
         kind = yield* this.rainDown(27);
+      } else if (this.skill === BLACK_HOLE && performance.now() - scatterEnd < 500) {
+        kind = yield* this.blackHoleAgain();
       } else {
         yield* this.swoopIn(); // 31
         yield* this.launch(); // 32
@@ -834,6 +839,60 @@ export class Duel {
     return 'shock';
   }
 
+  // 卡里克 and 卡里克(巨大化)
+  * garlicBall() { // 426 エネルギー弾(ガーリック): a pink ball rises from his hand (effect 10), then flies in (effect 40)
+    this.se('Z1 高速移動');
+    this.pose(this.A, 1, true);
+    this.effect((c, t) => draw(c, SOKIDAN_PINK, (t < 51 ? 0 : 1) * 128, 0, 128, 128, 230, 66));
+    yield* this.wait(29);
+    this.se('Z1 エネルギー波');
+    yield;
+    this.pose(this.A, 2, true);
+    yield* this.wait(31);
+    yield* this.cut((c, t) => draw(c, SOKIDAN_PINK, 256, 0, 128, 128, this.p ? -400 + t * RAY_SPEED : SW - t * RAY_SPEED, 120));
+  }
+
+  * garlicBigWave() { // 428 強力エネルギー波(ガーリック): charges (back 4), a pink ball (effect 8), the pink beam (effect 32)
+    this.se('Z1 気を溜める2');
+    this.pose(this.A, 3, true);
+    this.behind(this.cycler(BACKS.aura, 160, 222, 234, 70));
+    yield* this.wait(60);
+    this.se('Z1 エネルギー波2');
+    this.pose(this.A, 4, true);
+    this.effect(this.ball(BALL.pink, 252, 130));
+    yield* this.wait(65);
+    yield* this.cut(RAY.midPink);
+  }
+
+  * giantWave() { // 429 エネルギー波(ガーリック巨大化): the demon backdrop (back 2), a ball (effect 15), the big beam (effect 43)
+    this.se('Z1 ゴー');
+    this.pose(this.A, 0, true);
+    this.behind(this.cycler(BACKS.demonV, 640, 356, 0, 0, 3, 480));
+    yield* this.wait(30);
+    audio.seStop();
+    this.se('Z1 エネルギー波2');
+    this.pose(this.A, 1, true);
+    this.effect(this.ball(BALL.foe, 248, 112));
+    yield* this.wait(55);
+    yield* this.cut(RAY.foeBig);
+  }
+
+  * blackHole() { // 430 ブラックホール波: the black hole gathers (back 13) while he strains, then the shock behind the target (back 1)
+    this.se('Z1 ゴー');
+    this.se('Z1 ザー');
+    this.pose(this.A, 2, true);
+    this.behind(this.cycler(BACKS.blackHole, 640, 356, 0, 0, 3, 378));
+    for (let f = 1; f <= 100; f++) { this.pose(this.A, f > 70 ? 4 : 2 + (Math.floor((f - 1) / 10) % 2), true); yield; }
+    yield* this.blackHoleAgain(false);
+  }
+  * blackHoleAgain(sound = true) { // the targets after the first: only the shock behind each one
+    if (sound) { this.se('Z1 ゴー'); this.se('Z1 ザー'); }
+    this.aim();
+    this.behind(this.shockBack());
+    yield* this.wait(61);
+    this.behind(null);
+  }
+
   // ---------- drawing ----------
   // the fighters and effects on a transparent stage; the battle draws the background and the fade around it
   render() {
@@ -864,6 +923,6 @@ function spark(c, sx, sy, w, h, x, y) { draw(c, SPARK, sx, sy, w, h, x, y); }
 export const ANIME_SOUNDS = ['Z1 打撃', 'Z3 打撃', 'Z3 避ける', 'Z1 必殺技', 'Z3 光線系ヒット', 'Z3 跳ね返し', 'Z1 高速移動', 'Z1 衝撃波',
   'Z1 エネルギー波', 'Z1 エネルギー波2', 'Z1 エネルギー波3', 'Z1 気を溜める', 'Z1 気を溜める2', 'Z1 気を溜める3', 'Z1 気を溜める5',
   'Z1 怪光線', 'Z1 ザー', 'Z1 貫光線', 'Z1 パワーアップ', 'Z1 大猿', 'Z1 ブン', 'Z1 気円斬', 'Z1 逃げる', 'Z1 分身', 'Z1 気を溜める4',
-  'Z1 強打', 'Z3 超能力', 'Z1 刀', 'Z1 刀攻撃'];
+  'Z1 強打', 'Z3 超能力', 'Z1 刀', 'Z1 刀攻撃', 'Z1 ゴー'];
 // for the S-combo films (src/combo-anime.js)
 export { draw, spark, BALL, RAY, BACKS, MAKANKO_BALL, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED };

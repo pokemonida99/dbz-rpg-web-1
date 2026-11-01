@@ -268,5 +268,7 @@ import build_chapter3  # noqa: E402  (chapter 3: King Kai's planet and the Nikki
 build_chapter3.add(world, globals())
 import build_chapter4  # noqa: E402  (chapter 4: Gregory's training and the Ginger area)
 build_chapter4.add(world, globals())
+import build_chapter5  # noqa: E402  (chapter 5: the Garlic area and King Kai's training)
+build_chapter5.add(world, globals())
 json.dump(world, open(os.path.join(root, 'data', 'world.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 print('world.json written')

@@ -160,9 +160,10 @@ export class Field {
       if (d < nd) { nd = d; near = p; }
     }
     if (near !== this.near) { this.near = near; this.game.onNear(near); }
-    // boss marker
-    const b = this.boss();
-    if (b && Math.hypot(s.x - (b.x * 32 + 16), s.y - (b.y * 32 + 16)) < 44) this.game.onBoss();
+    // boss markers
+    for (const b of this.bossList()) {
+      if (Math.hypot(s.x - (b.x * 32 + 16), s.y - (b.y * 32 + 16)) < 44 && (!b.after || s.flags[b.after])) { this.game.onBoss(b); break; }
+    }
   }
 
   draw() {
@@ -179,9 +180,8 @@ export class Field {
     c.fillRect(0, 0, view.w, view.h);
     c.drawImage(this.layers.ground, -cx, -cy);
 
-    const b = this.boss();
     const bi = img(BOSS);
-    if (b && bi.ok) {
+    for (const b of bi.ok ? this.bossList() : []) {
       const f = Math.floor(this.anim) % 3, k = b.index || 0; // enemy1.png: 4 characters a row, 3×4 frames each
       c.drawImage(bi.im, ((k % 4) * 3 + f) * 32, Math.floor(k / 4) * 128, 32, 32, b.x * 32 - cx, b.y * 32 - cy, 32, 32);
     }
@@ -203,12 +203,14 @@ export class Field {
     }
   }
 
-  // the boss standing on this map, until beaten (world.bosses, by map; flag = the state.flags entry set on a win)
-  boss() {
+  // the bosses standing on this map, until beaten (world.bosses, by map: one or a list; flag = the state.flags entry
+  // set on a win; after = a flag needed before this one can be fought)
+  bossList() {
     const s = this.game.state;
     const b = (this.world.bosses || { 1: { ...this.world.boss, flag: 'bossDone' } })[s.map];
-    return b && !s.flags[b.flag] ? b : null;
+    return (Array.isArray(b) ? b : b ? [b] : []).filter((x) => !s.flags[x.flag]);
   }
+  boss() { return this.bossList()[0] || null; }
 
   enter() {
     input.stickEnabled = true;

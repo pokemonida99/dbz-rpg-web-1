@@ -123,11 +123,11 @@ function tag(c, school, x, y) {
   c.drawImage(s.im, 0, 192, 64, 32, x, y, 64, 32);
   c.drawImage(s.im, 32 * school, 64, 32, 32, x + 16, y, 32, 32);
 }
-function face(c, m, x, y) {
+function face(c, m, x, y, size = 64) {
   const f = img(FACES);
   if (!f.ok) return;
   const col = m.ko || m.hp <= 0 ? 2 : m.hp * 4 < m.maxhp ? 1 : 0;
-  c.drawImage(f.im, 64 * col, 64 * (m.id - 3), 64, 64, x, y, 64, 64);
+  c.drawImage(f.im, 64 * col, 64 * (m.id - 3), 64, 64, x, y, size, size);
 }
 function foeFace(c, f, x, y) {
   const im = img(FOE_FACES);
@@ -289,6 +289,7 @@ export class Battle {
     text(c, 'TN', x + 12, y + 10, INK, 16);
     num(c, this.turn, x + 44, y + 30);
     const colW = Math.min(124, (w - 64) / Math.max(2, this.party.length));
+    if (colW < 66) { this.drawStatusNarrow(c, colW); return; }
     this.party.forEach((m, i) => {
       const cx = x + 56 + i * colW;
       text(c, m.name, cx + 32, y + 8, INK, 18, 'center');
@@ -308,6 +309,32 @@ export class Battle {
     });
   }
 
+  // five or six in the party (the Garlic area): columns narrower than a face — smaller faces, the level as text,
+  // the numbers right-aligned in each column
+  drawStatusNarrow(c, colW) {
+    const { x, y, h } = this.L.status;
+    colW = (this.L.status.w - 48) / this.party.length; // the columns start right after the HP / KI labels
+    const fs = Math.min(48, Math.floor(colW) - 6);
+    this.party.forEach((m, i) => {
+      const cx = Math.round(x + 44 + i * colW), mid = cx + colW / 2, fx = Math.round(mid - fs / 2), rx = Math.round(cx + colW - 2);
+      text(c, m.name, mid, y + 10, INK, Math.min(15, Math.floor(colW / 3.6)), 'center');
+      face(c, m, fx, y + 30, fs);
+      if (this.phase === 'plan' && this.cur === i) {
+        c.strokeStyle = '#f83800'; c.lineWidth = 3; c.strokeRect(fx - 1.5, y + 28.5, fs + 3, fs + 3);
+      }
+      const plan = this.plans && this.plans[i];
+      if (this.phase === 'plan' && plan) {
+        c.fillStyle = 'rgba(0,0,0,.7)'; c.fillRect(fx, y + 30 + fs - 14, fs, 14);
+        text(c, plan.skill ? plan.skill.name : '攻擊', mid, y + 30 + fs - 13, '#fff', 10, 'center');
+      }
+      text(c, `Lv${m.level}`, mid, y + 82, '#7a5230', 14, 'center');
+      const sl = (n, yy) => { if (rx - 16 * String(n).length - cx >= 16) slash(c, cx, yy); }; // the slash only where it fits
+      num(c, m.hp, rx, y + 116); sl(m.maxhp, y + 132); num(c, m.maxhp, rx, y + 132);
+      num(c, m.ki, rx, y + 152); sl(m.maxki, y + 168); num(c, m.maxki, rx, y + 168);
+      this.hit(cx, y + 20, colW, h - 20, () => this.onFighterTap(i));
+    });
+  }
+
   // choosing: the enemies' faces on the ground strip (tap one to target it while targeting)
   drawLineup(c) {
     for (const f of this.foes) {
@@ -315,7 +342,7 @@ export class Battle {
       c.fillStyle = '#000';
       c.fillRect(f.fx - 2, f.fy - 2, 68, 68);
       foeFace(c, f, f.fx, f.fy);
-      text(c, f.name, f.fx + 32, f.fy + 92, '#fff', 14, 'center');
+      text(c, f.name, f.fx + 32, f.fy + 92, '#fff', f.name.length > 5 ? 11 : 14, 'center'); // 卡里克(巨大化) fits its 72 px column
       c.fillStyle = '#402010'; c.fillRect(f.fx + 4, f.fy + 112, 56, 4);
       c.fillStyle = '#58d858'; c.fillRect(f.fx + 4, f.fy + 112, (56 * f.hp) / f.maxhp, 4);
       if (items.scouted() && f.card) { // スカウター: this turn's enemy card and HP
@@ -722,11 +749,14 @@ export class Battle {
       const ok = f.actions.filter((a) => a.cond === 0 || (a.cond === 2 && (f.hp * 100) / f.maxhp <= a.param));
       if (ok.length) skill = this.world.skills[ok[rand(ok.length)].skill];
     }
-    const m = targets[rand(targets.length)];
-    const guard = this.hand[this.plans[this.party.indexOf(m)].card];
-    this.duel = { m, mc: guard, f, fc: cd };
-    this.say(`${f.name} 的${skill ? skill.name : '攻擊'}！`);
-    await this.play(m, f, false, skill ? skill.id : null, enemyDamage(this, f, skill && { power: skill.power }, cd, m, guard), m);
+    // a move on the whole party (卡里克's 黑洞波) hits everyone standing, one film each
+    for (const m of skill && skill.all ? targets : [targets[rand(targets.length)]]) {
+      if (m.ko) continue;
+      const guard = this.hand[this.plans[this.party.indexOf(m)].card];
+      this.duel = { m, mc: guard, f, fc: cd };
+      this.say(`${f.name} 的${skill ? skill.name : '攻擊'}！`);
+      await this.play(m, f, false, skill ? skill.id : null, enemyDamage(this, f, skill && { power: skill.power }, cd, m, guard), m);
+    }
   }
 
   // ---------- result ----------
@@ -770,7 +800,7 @@ export class Battle {
     const onKey = (e) => this.onKey(e);
     window.addEventListener('keydown', onKey);
     await document.fonts.load(`16px ${FONT}`).catch(() => {});
-    audio.playBgm(this.boss ? 'Z1 戦闘ボス1(中ボス)' : 'Z1 戦闘1');
+    audio.playBgm(this.bgm || (this.boss ? 'Z1 戦闘ボス1(中ボス)' : 'Z1 戦闘1')); // bgm: an event battle's own music
     this.say(`${this.foes.map((f) => f.name).join('、')} 出現了！`);
     await sleep(700);
     const result = await new Promise((res) => {

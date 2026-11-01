@@ -43,6 +43,15 @@ button { font: inherit; color: inherit; -webkit-appearance: none; appearance: no
 .bar.ki > i { background: var(--ki); }
 #hud .menu-btn { pointer-events: auto; width: 46px; height: 46px; font-size: 16px; color: var(--ink); border: 8px solid transparent; border-image: url("../assets/ui/frame.png") 8 / 8px stretch; background: var(--cream) padding-box; }
 #hud .goal { position: absolute; left: 10px; right: 10px; top: calc(var(--safe-t) + 60px); text-align: center; font-size: 13px; color: var(--gold); text-shadow: 0 1px 2px #000; }
+/* more than three in the party (the Garlic area: all six): two rows of small cards, level only */
+#hud .party.many { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+#hud .party.many .pcard { gap: 4px; padding: 0 2px 0 0; }
+#hud .party.many .pcard canvas { width: 30px !important; height: 30px !important; }
+#hud .party.many .pcard > div { flex: 1; min-width: 0; }
+#hud .party.many .nm { font-size: 0; white-space: nowrap; } /* the face says who; the level stays */
+#hud .party.many .nm .lv { font-size: 12px; }
+#hud .party.many .bar { width: 100%; }
+#hud.many .goal { top: calc(var(--safe-t) + 106px); }
 
 /* "examine / enter" button next to buildings */
 #act { position: absolute; left: 50%; bottom: calc(var(--safe-b) + 28px); transform: translateX(-50%); width: auto; min-width: 180px; text-align: center; font-size: 20px; z-index: 15; animation: pop .25s ease-out; }

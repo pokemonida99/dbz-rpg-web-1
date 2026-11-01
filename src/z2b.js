@@ -8,15 +8,15 @@
 //   → 「Z2 完」; variable 40 = 2, 41 = 1100 hands over to Z3 (not in this version yet).
 // state.flags.z2b: 'ginyu' (map 29 before Porunga) → 'frieza' → 'done'; state.flags.z2bAt: a story step to pick up
 // again after loading (a save made right before a story battle).
-import { input, toast, audio, setFaces } from './core.js?v=20261101-2242';
-import { playScenes } from './cutscene.js?v=20261101-2242';
-import { setParty, moveTo, enterMap, card } from './chapter2.js?v=20261101-2242';
-import { makeMember, applyLevel, levelUp } from './party.js?v=20261101-2242';
-import { runEvent } from './events.js?v=20261101-2242';
-import { eventCard } from './items.js?v=20261101-2242';
-import { addMoves } from './anime.js?v=20261101-2242';
-import { setZ2Env } from './z2scenes.js?v=20261101-2242';
-import { FORMS, isSuper } from './supersaiyan.js?v=20261101-2242';
+import { input, toast, audio, setFaces } from './core.js?v=20261101-2244';
+import { playScenes } from './cutscene.js?v=20261101-2244';
+import { setParty, moveTo, enterMap, card } from './chapter2.js?v=20261101-2244';
+import { makeMember, applyLevel, levelUp } from './party.js?v=20261101-2244';
+import { runEvent } from './events.js?v=20261101-2244';
+import { eventCard } from './items.js?v=20261101-2244';
+import { addMoves } from './anime.js?v=20261101-2244';
+import { setZ2Env } from './z2scenes.js?v=20261101-2244';
+import { FORMS, isSuper } from './supersaiyan.js?v=20261101-2244';
 
 export const isZ2bMap = (s) => s.map === '29' || (s.flags && s.flags.z2b && ['27', '28', '30'].includes(s.map));
 

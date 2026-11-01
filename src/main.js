@@ -1,10 +1,11 @@
 // Boot, game state, scene switching, story beats, HUD, menu, save/load.
-import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-1649';
-import { tileSheetPaths } from './tiles.js?v=20261101-1649';
-import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-1649';
-import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-1649';
-import { makeMember, levelUp } from './party.js?v=20261101-1649';
-import { runEvent } from './events.js?v=20261101-1649';
+import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261101-1700';
+import { tileSheetPaths } from './tiles.js?v=20261101-1700';
+import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261101-1700';
+import { Battle, battleImages, newHand, rollEncounter } from './battle.js?v=20261101-1700';
+import { makeMember, levelUp } from './party.js?v=20261101-1700';
+import { runEvent } from './events.js?v=20261101-1700';
+import { playOpening, playStory } from './opening.js?v=20261101-1700'; // the original's title animation and opening story
 
 const SAVE_KEY = 'dbz-portrait-save-v1';
 const FACES = 'Graphics/Pictures/GBZ1 顔アイコン.PNG'; // 40×56 cells, one row per character
@@ -215,6 +216,7 @@ function showTitle(sub) {
     audio.unlock();
     title.hidden = true;
     if (a.dataset.a === 'cont') { load(); return; }
+    if (a.dataset.a === 'new') await playStory(game.world); // the opening story, then the field
     game.state = game.newState();
     startField();
     game.field.paused = true;
@@ -257,10 +259,11 @@ async function boot() {
   if (!(await ensureLatest())) return;
   view.resize();
   window.addEventListener('resize', () => view.resize());
-  game.world = await (await fetch('data/world.json?v=20261101-1649')).json();
+  game.world = await (await fetch('data/world.json?v=20261101-1700')).json();
   setFaces(game.world.faces);
   const faceSheets = new Set(Object.values(game.world.faces).map((f) => f[0]));
   await loadImages([...tileSheetPaths, ...fieldImages, ...battleImages(game.world), FACES, ...faceSheets]);
+  await playOpening(); // the title animation, like the original plays before its title screen
   showTitle();
   requestAnimationFrame(frame);
 }

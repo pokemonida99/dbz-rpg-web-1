@@ -30,6 +30,19 @@ import re  # noqa: E402
 anime = open(os.path.join(root, 'src', 'anime.js'), encoding='utf-8').read()
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", anime)}
 files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", anime.split('export const ANIME_SOUNDS')[1])}
+# the opening (src/opening.js): its pictures and sounds, and the faces / sounds named in world.opening
+opening = open(os.path.join(root, 'src', 'opening.js'), encoding='utf-8').read()
+files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\(`?'?([^'`$]+\.(?:PNG|png))", opening)}
+files |= {f'Graphics/Pictures/z1_{k}{i}.{"png" if (k in ("opnami",) or (k, i) == ("opdb", 7)) else "PNG"}'
+          for k, n in [('opnami', 3), ('ophikaru', 4), ('opdb', 7), ('oputyuu', 18), ('utyuusen', 10)] for i in range(1, n + 1)}
+files |= {'Graphics/Pictures/z1_opkumo.png'}
+files |= {f'Graphics/Pictures/Z1_背景_{n}.PNG' for n in re.findall(r"BG\('([^']+)'\)", opening)}
+files |= {f'Graphics/Pictures/Z1_背景_{w}_スカウター{i}.PNG' for w in ['山', '平野'] for i in (1, 2)}
+files |= {f'Graphics/Pictures/Z1_イベント_{n}.PNG' for n in re.findall(r"EV\('([^']+)'\)", opening)}
+files |= {f[0] for f in world['opening']['faces'].values()}
+files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"se\('([^']+)'\)", opening)}
+files |= {f'Audio/SE/{n["se"]}.ogg' for n in world['opening']['story'] if 'se' in n}
+files |= {f'Audio/BGM/{n}.ogg' for n in re.findall(r"playBgm\('([^']+)'\)", opening)}
 
 total = 0
 for f in sorted(files):

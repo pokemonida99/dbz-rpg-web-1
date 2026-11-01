@@ -198,12 +198,6 @@ MAP1_SPOTS = [
 ] + [{'x': x, 'y': y, 'label': '進入旅館', 'event': 11, 'effect': 'rest'} for x, y in INNS] \
   + [{'x': x, 'y': y, 'label': '記錄', 'effect': 'save', 'lines': [['', '這是一個 Z 標記。\n在這裡記錄了冒險的進度。']]} for x, y in CARD_SHOPS] \
   + [{'x': x, 'y': y, 'label': '在修行場修行', 'effect': 'ki', 'lines': [['', '在修行場靜下心來修行……'], ['', '全員的 KI 恢復了！']]} for x, y in TRAINING]
-# the opening (page for variable 41 = 1), without the Chinese fan-translation notice at its start
-INTRO = [n for n in ev(1) if not ('say' in n and re.search('漢化|交流群|翻譯|付費', n['say'][1]))]
-for _n in INTRO:  # the stranger is Raditz: the original shows his face in these scenes; [who, text, face]
-    if 'say' in _n and _n['say'][0] == '？':
-        _n['say'].append('拉蒂茲')
-INTRO.append({'say': ['', '拖曳畫面任何地方就能飛行。\n拉蒂茲在地圖的右上方！']})  # this version's controls
 # after Raditz (variable 41 = 60): up to the Saiyans setting off for Earth; the rest is the next chapter
 _after = ev(60)
 _cut = next(k for k, n in enumerate(_after) if 'say' in n and '開始向地球移動' in n['say'][1])
@@ -237,8 +231,12 @@ world = {
     'skills': {sid: skill(sid) for sid in sorted({x for v in PARTY_SKILLS.values() for x in v} | {301, 302, 305, 306, 310, 311, 384})},
     'encounters': {'1': [1, 2, 4, 5]},
     'boss': {'x': 58, 'y': 5, 'enemy': 10},
-    # the original story text (Map007 event 1): the opening, before and after Raditz
-    'story': {'intro': INTRO, 'boss': EVENTS['58'], 'ending': ENDING},
+    # the original story text (Map007 event 1). The opening itself is played by src/opening.js (world.opening) with
+    # its scenes; after it only this version's controls hint is shown.
+    'story': {'intro': [{'say': ['', '拖曳畫面任何地方就能飛行。\n拉蒂茲在地圖的右上方！']}], 'boss': EVENTS['58'], 'ending': ENDING},
 }
+# the title animation and opening story (src/opening.js)
+from opening_data import build as build_opening  # noqa: E402
+world['opening'] = build_opening(D, s2t)
 json.dump(world, open(os.path.join(root, 'data', 'world.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 print('world.json written')

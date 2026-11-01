@@ -33,6 +33,7 @@ python3 tools/copy_assets.py game            # 只複製用到的素材到 asset
 | `src/anime.js` | 戰鬥動畫：照經典版逐格移植的一對一演出（普通攻擊、各必殺技、閃避、爆炸），點畫面可加速 |
 | `src/events.js` | 執行原版事件（`tools/build_data.py` 的 `script()` 從 Map007 事件 1 轉出來）：台詞、開關／變數分支、選項、音效 |
 | `src/main.js` | 標題、劇情、HUD、選單、存讀檔（localStorage） |
+| `src/opening.js` | 開場：標題前的原版片頭動畫（`z1_op` 逐格移植）、新遊戲的 Z1 開場劇情（原版 Map007 事件＋`z1opening` 場景，台詞全文，資料由 `tools/opening_data.py` 產生），都有「略過」 |
 
 ## 本版自製素材
 `assets/bg/battle_{night,dusk,day}.png`：直向戰鬥背景（400×600），用 ChatGPT 照原版 Z1 戰場地面的風格生成，再縮成像素、減色。每場戰鬥隨機選一張，同一場不會換。

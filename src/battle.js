@@ -149,15 +149,14 @@ function cursor(c, x, y) { // the original's blinking ▼ (アイコン.PNG), ce
   c.fillStyle = '#f83800';
   c.beginPath(); c.moveTo(x - 7, y); c.lineTo(x + 7, y); c.lineTo(x, y + 9); c.fill();
 }
-// a blinking 2-colour pixel frame (the selected enemy / card)
-function frame(c, x, y, w, h) {
-  const on = Math.floor(performance.now() / 270) % 2;
-  c.fillStyle = on ? '#ffffff' : '#f83800';
-  c.fillRect(x - 4, y - 4, w + 8, 3); c.fillRect(x - 4, y + h + 1, w + 8, 3);
-  c.fillRect(x - 4, y - 4, 3, h + 8); c.fillRect(x + w + 1, y - 4, 3, h + 8);
-  c.fillStyle = on ? '#f83800' : '#ffffff';
-  c.fillRect(x - 1, y - 1, w + 2, 1); c.fillRect(x - 1, y + h, w + 2, 1);
-  c.fillRect(x - 1, y - 1, 1, h + 2); c.fillRect(x + w, y - 1, 1, h + 2);
+// the chosen one glows: `paint` is drawn again on top, added (lighter), with a slow pulse — no frame, like the
+// original, whose only marker is the blinking ▼ (set_tate_cursor_blink)
+function glow(c, paint) {
+  c.save();
+  c.globalCompositeOperation = 'lighter';
+  c.globalAlpha = 0.12 + 0.16 * (0.5 + 0.5 * Math.sin(performance.now() / 160));
+  paint();
+  c.restore();
 }
 
 export class Battle {
@@ -325,7 +324,7 @@ export class Battle {
       }
       if (items.stopCount(f)) text(c, '停', f.fx + 56, f.fy + 2, '#ff5050', 16, 'center'); // じいちゃん
       if ((this.mode === 'target' || this.mode === 'move') && this.aim === f.slot) { // the current target
-        frame(c, f.fx - 2, f.fy - 2, 68, 68);
+        glow(c, () => foeFace(c, f, f.fx, f.fy));
         cursor(c, f.fx + 32, f.fy - 18);
       }
       if (this.mode === 'target') this.hit(f.fx - 6, f.fy - 20, 76, 130, () => this.aimAt(f.slot), 'modal');
@@ -378,7 +377,7 @@ export class Battle {
         c.fillStyle = '#fff'; c.fillRect(bx - 2, by - 2, 36, 36);
         c.save(); c.translate(bx, by); c.scale(0.5, 0.5); face(c, this.party[owner], 0, 0); c.restore();
       }
-      if (picked) frame(c, x, y, 64, 96);
+      if (picked) glow(c, () => card(c, cd, x, y)); // raised and glowing (a ▼ above would sit on the buttons)
       else if (special && cd.s === m.school) { c.strokeStyle = '#ffd27a'; c.lineWidth = 2; c.strokeRect(x - 1, y - 1, 66, 98); }
       if (this.phase === 'plan' && !this.cont) this.hit(x, y, step, 100, () => this.tapCard(k), { card: k });
     });
@@ -400,7 +399,7 @@ export class Battle {
       const fx = x + Math.round(w / 2) - 4, fy = y + 6;
       text(c, '目標', fx - 6, y + 14, '#7a5230', 13, 'right');
       c.save(); c.translate(fx, fy); c.scale(0.4375, 0.4375); foeFace(c, aimed, 0, 0); c.restore();
-      frame(c, fx, fy, 28, 28);
+      glow(c, () => { c.translate(fx, fy); c.scale(0.4375, 0.4375); foeFace(c, aimed, 0, 0); });
     }
     word(c, 'KI', x + w - 96, y + 12); num(c, m.ki, x + w - 14, y + 12);
     skills.forEach((s, i) => {
@@ -460,11 +459,13 @@ export class Battle {
     c.beginPath(); c.rect(0, stage.y, W, stage.h); c.clip();
     const bd = img(this.backdrop);
     if (bd.ok) {
-      const bx = Math.round((W - bd.im.width) / 2);
+      // wider than the picture (e.g. a 430-wide phone): scale it up to cover the whole width, nearest-neighbour
+      const k = Math.max(1, W / bd.im.width), bw = Math.ceil(bd.im.width * k), bh = Math.ceil(bd.im.height * k);
+      const bx = Math.round((W - bw) / 2);
       const lift = Math.max(0, Math.min(50, Math.round((SH - stage.h) / 3))); // short screens: ground nearer the feet
-      const by = dy - sy - BACKDROP_TOP - lift + (this.anim ? this.anim.back.y - BACK_Y : 0);
-      if (by > stage.y) c.drawImage(bd.im, 0, 0, bd.im.width, 1, bx, stage.y, bd.im.width, by - stage.y + 1); // sky above the picture
-      c.drawImage(bd.im, bx, by);
+      const by = Math.round(dy - sy - BACKDROP_TOP * k - lift + (this.anim ? this.anim.back.y - BACK_Y : 0));
+      if (by > stage.y) c.drawImage(bd.im, 0, 0, bd.im.width, 1, bx, stage.y, bw, by - stage.y + 1); // sky above the picture
+      c.drawImage(bd.im, 0, 0, bd.im.width, bd.im.height, bx, by, bw, bh);
     }
     if (this.anim) {
       c.drawImage(this.anim.render(), sx, sy, sw, sh, dx, dy, sw, sh);

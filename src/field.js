@@ -31,6 +31,20 @@ export class Field {
     this.open = new Uint8Array(w * h);
     if (this.map.path) { for (let i = 0; i < w * h; i++) if (this.map.path.includes(layers[0][i])) this.open[i] = 1; }
     else { const L = layers[this.map.road]; for (let i = 0; i < w * h; i++) if (L[i] && !(pas[L[i]] & 1)) this.open[i] = 1; }
+    if (this.map.oneWay) { // one-way roads (Snake Way): tiles closer to the start than the furthest reached are shut
+      const [sx, sy] = this.map.oneWay;
+      this.dist = new Int32Array(w * h).fill(-1);
+      const q = [sx + sy * w];
+      this.dist[q[0]] = 0;
+      for (let k = 0; k < q.length; k++) {
+        const i = q[k], x = i % w, y = Math.floor(i / w);
+        for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const j = x + a + (y + b) * w;
+          if (x + a >= 0 && x + a < w && y + b >= 0 && y + b < h && this.open[j] && this.dist[j] < 0) { this.dist[j] = this.dist[i] + 1; q.push(j); }
+        }
+      }
+      this.far = 0;
+    }
     if (!this.isOpen(Math.floor(s.x / 32), Math.floor(s.y / 32))) { // e.g. an old save made while flying freely
       let best = null, bd = Infinity;
       for (let i = 0; i < w * h; i++) {
@@ -40,10 +54,13 @@ export class Field {
       }
       if (best != null) { s.x = (best % w) * 32 + 16; s.y = Math.floor(best / w) * 32 + 16; }
     }
+    if (this.dist) this.far = Math.max(0, this.dist[Math.floor(s.x / 32) + Math.floor(s.y / 32) * w]); // the position is the progress
   }
 
   isOpen(tx, ty) {
-    return tx >= 0 && ty >= 0 && tx < this.map.w && ty < this.map.h && this.open[tx + ty * this.map.w] === 1;
+    if (tx < 0 || ty < 0 || tx >= this.map.w || ty >= this.map.h) return false;
+    const i = tx + ty * this.map.w;
+    return this.open[i] === 1 && (!this.dist || this.dist[i] >= this.far);
   }
 
   // moves up to `step` px along the road; returns the distance moved
@@ -108,6 +125,7 @@ export class Field {
       let step = SPEED * dt * (0.35 + 0.65 * mag);
       if (this.open) {
         step = this.roadMove(s, dx, dy, step);
+        if (this.dist) this.far = Math.max(this.far, this.dist[Math.floor(s.x / 32) + Math.floor(s.y / 32) * this.map.w]);
       } else {
         const l = Math.hypot(dx, dy);
         const nx = s.x + (dx / l) * step, ny = s.y + (dy / l) * step;
@@ -134,8 +152,10 @@ export class Field {
     }
     // nearest interactive spot within reach
     let near = null, nd = 44;
+    if (this.spent && Math.hypot(s.x - (this.spent.x * 32 + 16), s.y - (this.spent.y * 32 + 16)) >= 44) this.spent = null;
     for (const p of this.pois) {
       if (p.gone && s.sw[p.gone]) continue; // a beaten Pumpkin / Broccoli
+      if (p === this.spent) continue; // a card / training square works once per visit, like landing on it
       const d = Math.hypot(s.x - (p.x * 32 + 16), s.y - (p.y * 32 + 16));
       if (d < nd) { nd = d; near = p; }
     }

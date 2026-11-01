@@ -35,7 +35,7 @@ button { font: inherit; color: inherit; -webkit-appearance: none; appearance: no
 #hud { position: absolute; left: 0; right: 0; top: 0; padding: calc(var(--safe-t) + 8px) 10px 0; display: flex; gap: 8px; align-items: flex-start; pointer-events: none; }
 #hud .party { display: flex; gap: 6px; flex: 1; }
 .pcard { pointer-events: auto; display: flex; gap: 6px; align-items: center; padding: 0 4px 0 0; min-width: 0; border: 8px solid transparent; border-image: url("../assets/ui/frame.png") 8 / 8px stretch; background: var(--cream) padding-box; color: var(--ink); }
-.pcard canvas { width: 34px; height: 34px; border-radius: 6px; image-rendering: pixelated; background: #000; }
+.pcard canvas { width: 36px; height: 36px; image-rendering: pixelated; background: #000; flex: none; }
 .pcard .nm { font-size: 14px; line-height: 1.1; }
 .pcard .lv { font-size: 12px; color: #7a5230; }
 .bar { height: 5px; width: 64px; background: #3a2a1a; overflow: hidden; margin-top: 2px; }

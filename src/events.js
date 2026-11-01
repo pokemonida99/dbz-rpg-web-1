@@ -1,7 +1,7 @@
 // Runs an original event as converted by tools/build_data.py (script()): the text in order, with branches on the
 // original's switches / variables, the switch and variable changes, sounds and choices. Items are not kept yet.
 // state.sw / state.var hold the original's switches and variables, so the same conditions work as in the classic.
-import { say, choose, audio } from './core.js?v=20261101-1710';
+import { say, choose, audio } from './core.js?v=20261101-1711';
 
 const CMP = [(a, b) => a === b, (a, b) => a >= b, (a, b) => a <= b, (a, b) => a > b, (a, b) => a < b, (a, b) => a !== b];
 

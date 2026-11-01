@@ -8,8 +8,10 @@
 //   using       field menu「卡片」and the battle menu「卡牌」: heal / KI, change cards in the hand, and battle
 //               effects (power, guard, first strike, dodge, KI-free move, stopping or weakening an enemy, scouter).
 // Data: world.items / cardShop / drops (tools/build_items.py). Battle hooks: the exports under "battle" below.
+// Menus: the 卡牌 slot of src/partymenu.js (battle 菜單 and field menu, battle = null on the field).
 import { img, audio, toast, rand } from './core.js?v=20261101-1841';
 import { newCard } from './battle.js?v=20261101-1841';
+import { menuEntries } from './partymenu.js?v=20261101-1841';
 
 const ICONS = 'ui/item_cards.png'; // 64×64 icons, 10 a row, the Z1 column of the original 顔カード.PNG
 const CARDS = 'Graphics/Pictures/カード関係.PNG';
@@ -22,7 +24,7 @@ const OCC = ['戰鬥・地圖', '只能在戰鬥中', '只能在地圖上', '不
 
 // ---------- inventory ----------
 export function cardState(s) {
-  s.cards = s.cards || {};
+  s.cards = s.cards || { 4: 1, 7: 1, 71: 1, 77: 1 }; // Map007 event 1 page 1 (new game): 三星球, 六星球, 龜屋, 哥美拉
   s.cardMax = s.cardMax || { S: 1, A: 1, B: 2, C: 3 }; // 010_Share.rb: card holding limits start at 1/1/2/3
   s.var = s.var || {};
   s.zeni = s.zeni || 0;
@@ -66,6 +68,9 @@ function desc(world, s, it) {
 // Flags that last one battle ($cha_power_up, $cha_defense_up, $cha_sente_card_flag, $cha_kaihi_card_flag,
 // $cha_ki_zero …) or one turn ($one_turn_cha_defense_up, $run_stop_card, $run_alow_card, $run_glow_card).
 let fx = null;
+// field cards run by other systems (71 龜屋 = ZP, 77 哥美拉 = shared EXP): fieldCards[id] = async ({ game }) => used?
+// (a truthy result spends one copy unless the card is never used up)
+export const fieldCards = {};
 export function battleFx(b) { fx = { b, m: new Map(), oneTurnDef: false, stopUsed: false, gozu: false, mezu: false, scouter: false, stop: new Map() }; }
 export function battleEnd() { fx = null; }
 const mf = (m) => { let f = fx.m.get(m); if (!f) fx.m.set(m, (f = {})); return f; };
@@ -177,6 +182,7 @@ function target(id, it) {
 
 // can this card be used here at all (chk_card_run), before picking a target
 function usable(x, id, it) {
+  if (it.kind === 'hook') return !x.battle && !!fieldCards[id];
   if (it.kind === 'none' || it.occ === 3) return false;
   if (it.occ === 1 && !x.battle) return false;
   if (it.occ === 2 && x.battle) return false;
@@ -356,8 +362,9 @@ export function openCards(game, battle = null) {
     };
     const tryUse = (id) => {
       const it = world.items[id];
-      if (!usable(x, id, it)) { audio.se(SE_ERR, 70); toast(it.kind === 'none' || it.occ === 3 ? '這張卡片不能使用' : it.occ === 1 && !battle ? '這張卡片只能在戰鬥中使用' : it.occ === 2 && battle ? '這張卡片只能在地圖上使用' : '現在使用也沒有效果'); return; }
+      if (!usable(x, id, it)) { audio.se(SE_ERR, 70); toast(it.kind === 'hook' && !battle ? '這張卡片的功能還沒做好' : it.kind === 'none' || it.occ === 3 ? '這張卡片不能使用' : it.occ === 1 && !battle ? '這張卡片只能在戰鬥中使用' : it.occ === 2 && battle ? '這張卡片只能在地圖上使用' : '現在使用也沒有效果'); return; }
       audio.se(SE_OK, 70);
+      if (it.kind === 'hook') { el.hidden = true; fieldCards[id]({ game }).then((r) => { if (r && it.spent) lose(s, id); el.hidden = false; render(); }); return; }
       mode = target(id, it);
       if (mode === 'none') mode = 'confirm';
       render();
@@ -412,6 +419,8 @@ export function openCards(game, battle = null) {
     render();
   });
 }
+
+menuEntries.card = ({ game, battle }) => openCards(game, battle);
 
 // ---------- the card shop (Scene_Shop on a Z mark) ----------
 export function openShop(game) {

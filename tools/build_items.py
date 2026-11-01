@@ -13,7 +13,7 @@ from PIL import Image
 
 # Every card that can be had in chapters 1-2 (drops, events, the Z1 card shop) plus the battle cards whose effects
 # are as simple (33 最長老, 40 超神水, 41 戰鬥服, 51 藍鬼, 52 紅鬼, 53 少年, 54 卡納薩星人, 64 必殺技).
-IDS = list(range(1, 27)) + [28, 29, 30, 32, 33, 34, 40, 41, 45, 49, 50, 51, 52, 53, 54, 64, 70, 72, 75, 80, 84, 87]
+IDS = list(range(1, 27)) + [28, 29, 30, 32, 33, 34, 40, 41, 45, 49, 50, 51, 52, 53, 54, 64, 70, 71, 72, 75, 77, 80, 84, 87]
 # z1_cardlist (040_Game_Interpreter.rb) without the cards for systems this version doesn't have yet
 # (skill / SP / ZP cards 72 82 83 88 90 96 100 103 211 212, synthesis 35 36, map-square cards 198-200,
 #  airplane 76, ghost 121 — the remake has no "KO'd but HP > 0" state)
@@ -29,7 +29,8 @@ SE = ['Z3 回復', 'Z2 カードアップ', 'Z1 パワーアップ', 'Z1 アイ�
 # effects with no target (Scene_Db_Card other_card_run / change_card_run on the whole hand)
 OTHER = {21: 'cardAll', 22: 'cardAll', 24: 'cardAll', 26: 'cardAll', 28: 'other', 29: 'other', 34: 'other',
          45: 'other', 70: 'other', 80: 'other'}
-UNUSABLE = {1, 2, 3, 4, 5, 6, 7, 8, 72}  # the radar, the dragon balls, 悟飯(C) (skill slots)
+UNUSABLE = {1, 2, 3, 4, 5, 6, 7, 8, 72}
+HOOK = {71, 77}  # 龜屋 (ZP), 哥美拉 (shared EXP): run by other systems through items.fieldCards  # the radar, the dragon balls, 悟飯(C) (skill slots)
 
 
 def add(world, h):
@@ -40,7 +41,9 @@ def add(world, h):
         it = items[i]
         el = it['element_set']
         rank = next((r for e, r in ((5, 'S'), (6, 'A'), (7, 'B'), (8, 'C')) if e in el), None)
-        if i in UNUSABLE:
+        if i in HOOK:
+            kind = 'hook'
+        elif i in UNUSABLE:
             kind = 'none'
         elif it['hp_recovery_rate'] or it['mp_recovery_rate']:
             kind = 'heal'
@@ -56,7 +59,7 @@ def add(world, h):
             kind = 'other'
         out[i] = {'name': s2t(it['name']), 'desc': s2t(it['note'].replace('\r', '')), 'price': it['price'], 'rank': rank,
                   'occ': it['occasion'], 'all': it['scope'] == 8, 'hp': it['hp_recovery_rate'], 'mp': it['mp_recovery_rate'],
-                  'kind': kind, 'icon': k, 'order': it['speed']}
+                  'kind': kind, 'icon': k, 'order': it['speed'], 'spent': it['consumable']}
     world['items'] = out
     world['cardShop'] = sorted(SHOP, key=lambda i: items[i]['speed'])
     enemies = D('enemies')

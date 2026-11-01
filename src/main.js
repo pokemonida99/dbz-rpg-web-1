@@ -7,8 +7,8 @@ import { makeMember, levelUp } from './party.js?v=20261101-1841';
 import { runEvent } from './events.js?v=20261101-1841';
 import { playOpening, playStory } from './opening.js?v=20261101-1841'; // the original's title animation and opening story
 import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapterBoss } from './chapter2.js?v=20261101-1841';
-import { fieldMenuHtml, openEntry, menuEntries } from './partymenu.js?v=20261101-1841'; // 隊伍・卡牌・組合技・作戰
-import { openCards, openShop, setItemsWorld } from './items.js?v=20261101-1841'; // item cards: field menu, battle menu, card shops
+import { fieldMenuHtml, openEntry } from './partymenu.js?v=20261101-1841'; // 隊伍・卡牌・組合技・作戰
+import { openShop, setItemsWorld } from './items.js?v=20261101-1841'; // item cards (its 卡牌 menu entry registers itself), card shops
 
 const SAVE_KEY = 'dbz-portrait-save-v1';
 const FACES = 'Graphics/Pictures/GBZ1 顔アイコン.PNG'; // 40×56 cells, one row per character
@@ -119,13 +119,6 @@ const game = {
   },
 };
 window.__game = game;
-// 卡牌 in the battle and field menus (src/partymenu.js) opens the item cards (src/items.js)
-menuEntries.card = async ({ battle }) => {
-  if (battle) return openCards(game, battle);
-  game.busy = true;
-  await openCards(game);
-  game.busy = false;
-};
 
 // ---------- HUD ----------
 const hud = document.getElementById('hud');

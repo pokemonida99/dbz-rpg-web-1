@@ -30,7 +30,7 @@ export function cardState(s) {
   s.zeni = s.zeni || 0;
   return s;
 }
-const maxOf = (s, it) => (it.rank ? s.cardMax[it.rank] : 1);
+export const maxOf = (s, it) => (it.rank ? s.cardMax[it.rank] : 1);
 
 export function gainCard(world, s, id, n = 1) {
   cardState(s);
@@ -43,10 +43,10 @@ export function gainCard(world, s, id, n = 1) {
 let WORLD = null;
 export function setItemsWorld(w) { WORLD = w; }
 export const eventCard = (s, id, n) => (WORLD ? gainCard(WORLD, s, id, n) : null);
-function lose(s, id) { if (!--s.cards[id]) delete s.cards[id]; }
+export function lose(s, id) { if (!--s.cards[id]) delete s.cards[id]; }
 
 // set_max_item_card: copies over the limit are sold for half their price
-function trim(world, s) {
+export function trim(world, s) {
   let cap = 0;
   for (const [id, n] of Object.entries(s.cards)) {
     const it = world.items[id];
@@ -60,7 +60,7 @@ function trim(world, s) {
 
 // the note text, with the original's \V[n] filled in
 function desc(world, s, it) {
-  const v = { 224: s.cardMax.S, 225: s.cardMax.A, 226: s.cardMax.B, 227: s.cardMax.C, 384: RINGANA_CAP };
+  const v = { 224: s.cardMax.S, 225: s.cardMax.A, 226: s.cardMax.B, 227: s.cardMax.C, 384: RINGANA_CAP, 383: s.cardMax.A - (s.cards[17] || 0) };
   return it.desc.replace(/\\V\[(\d+)\]/g, (_, n) => String(v[n] ?? s.var[n] ?? 0));
 }
 
@@ -68,9 +68,17 @@ function desc(world, s, it) {
 // Flags that last one battle ($cha_power_up, $cha_defense_up, $cha_sente_card_flag, $cha_kaihi_card_flag,
 // $cha_ki_zero …) or one turn ($one_turn_cha_defense_up, $run_stop_card, $run_alow_card, $run_glow_card).
 let fx = null;
-// field cards run by other systems (71 龜屋 = ZP, 77 哥美拉 = shared EXP): fieldCards[id] = async ({ game }) => used?
-// (a truthy result spends one copy unless the card is never used up)
+// cards other systems run (71 龜屋 = ZP, 77 哥美拉 = shared EXP, skill cards …): fieldCards[id] = async ({ game, battle }) => used?
+// (a truthy result spends one copy unless the original never uses the card up)
 export const fieldCards = {};
+// バブルス (variable 39): no encounters for the next 5 card moves (140_Field_Main.rb encounter); this version has no
+// card moves, so one move = 4 tiles flown. Returns true while it keeps enemies away.
+export function bubbles(s) {
+  if (!(s.var && s.var[39] > 0)) return false;
+  s.bubbleTiles = (s.bubbleTiles || 0) + 1;
+  if (s.bubbleTiles >= 4) { s.bubbleTiles = 0; s.var[39]--; if (!s.var[39]) toast('巴布魯斯的效果結束了'); }
+  return true;
+}
 export function battleFx(b) { fx = { b, m: new Map(), oneTurnDef: false, stopUsed: false, gozu: false, mezu: false, scouter: false, stop: new Map() }; }
 export function battleEnd() { fx = null; }
 const mf = (m) => { let f = fx.m.get(m); if (!f) fx.m.set(m, (f = {})); return f; };
@@ -139,12 +147,17 @@ const CARD = { // one card of the hand (output_card_change_effect)
   50: [() => true, (c, s) => { const p = schoolPool(s).filter((x) => x !== c.s); c.s = p[rand(p.length)]; }],
   84: [(c) => c.a !== 7, (c) => { c.a = bump(c.a, rand(2) + 1); }],
   87: [(c) => c.g !== 7, (c) => { c.g = bump(c.g, rand(2) + 1); }],
+  93: [(c) => c.a !== 7 || c.g !== 7, (c) => { const n = rand(2) + 3; c.a = bump(c.a, n); c.g = bump(c.g, n); }],
+  106: [(c) => c.a !== 7 || c.g !== 7, (c) => { const n = rand(2) + 1; c.a = bump(c.a, n); c.g = bump(c.g, n); }],
 };
 const HAND = { // the whole hand
   21: [(h) => ALL_HAND(h, (c) => c.a !== 7), (h) => { const n = rand(2) + 1; h.forEach((c) => { c.a = bump(c.a, n); }); }],
   22: [(h) => ALL_HAND(h, (c) => c.g !== 7), (h) => { const n = rand(2) + 1; h.forEach((c) => { c.g = bump(c.g, n); }); }],
   24: [() => true, (h) => { h.forEach((c, k) => { h[k] = newCard(); }); }],
   26: [(h) => ALL_HAND(h, (c) => c.a !== c.g), (h) => { h.forEach((c) => { [c.a, c.g] = [c.g, c.a]; }); }],
+  98: [(h) => ALL_HAND(h, (c) => c.g !== 7), (h) => { const n = rand(2) + 3; h.forEach((c) => { c.g = bump(c.g, n); }); }],
+  104: [(h) => ALL_HAND(h, (c) => c.s !== 0), (h) => { h.forEach((c) => { c.s = 0; }); }],
+  105: [(h) => ALL_HAND(h, (c) => c.a !== 7), (h) => { const n = rand(2) + 3; h.forEach((c) => { c.a = bump(c.a, n); }); }],
 };
 const OTHER = { // no target
   28: [(x) => (x.s.var[311] || 0) < 999, (x) => { x.s.var[311] = Math.min(999, (x.s.var[311] || 0) + 5); return SE_HEAL; }],
@@ -152,6 +165,12 @@ const OTHER = { // no target
   29: [() => !fx.oneTurnDef, () => { fx.oneTurnDef = true; return 'Z1 刀'; }],
   33: [(x) => x.party.some((m) => !mf(m).pow), (x) => { x.party.forEach((m) => { mf(m).pow = true; }); return SE_POWER; }],
   34: [() => !fx.scouter, () => { fx.scouter = true; return SE_OK; }],
+  205: [() => !fx.scouter, () => { fx.scouter = true; return SE_OK; }],
+  27: [(x) => (x.s.var[39] || 0) < 999, (x) => { x.s.var[39] = Math.min(999, (x.s.var[39] || 0) + 5); return 'Z1 飛ぶ'; }], // バブルス
+  42: [(x) => x.s.cardMax.S < MAX_RANK_UP, (x) => { x.s.cardMax.S++; return 'Z3 レベルアップ'; }],
+  43: [(x) => x.s.cardMax.A < MAX_RANK_UP, (x) => { x.s.cardMax.A++; return 'Z3 レベルアップ'; }],
+  44: [(x) => x.s.cardMax.B < MAX_RANK_UP, (x) => { x.s.cardMax.B++; return 'Z3 レベルアップ'; }],
+  89: [(x) => (x.s.cards[17] || 0) < x.s.cardMax.A, (x) => { gainCard(x.world, x.s, 17); return 'Z3 アイテム取得'; }], // 仙豆の壺
   45: [(x) => x.s.cardMax.C < MAX_RANK_UP, (x) => { x.s.cardMax.C++; return 'Z3 レベルアップ'; }],
   70: [() => true, (x) => { x.s.zeni += RINGANA_CAP; return SE_HEAL; }],
 };
@@ -182,7 +201,7 @@ function target(id, it) {
 
 // can this card be used here at all (chk_card_run), before picking a target
 function usable(x, id, it) {
-  if (it.kind === 'hook') return !x.battle && !!fieldCards[id];
+  if (it.kind === 'hook') return !!fieldCards[id];
   if (it.kind === 'none' || it.occ === 3) return false;
   if (it.occ === 1 && !x.battle) return false;
   if (it.occ === 2 && x.battle) return false;
@@ -205,7 +224,7 @@ function apply(x, id, it, t) {
     }
     for (const m of x.party) {
       if (id === 18) { if (m.hp > 0) { m.hp = m.maxhp; m.ki = m.maxki; } else heal(it, m, true); } // 神龍: KO'd members get half
-      else heal(it, m);
+      else heal(it, m, id === 61 && m.hp <= 0); // 急救箱: KO'd members get half
     }
     return SE_HEAL;
   }
@@ -217,7 +236,7 @@ function apply(x, id, it, t) {
 }
 
 // ---------- drawing ----------
-function iconCanvas(it, size = 40) {
+export function iconCanvas(it, size = 40) {
   const c = document.createElement('canvas');
   c.width = c.height = 64;
   c.style.width = c.style.height = `${size}px`;
@@ -226,7 +245,7 @@ function iconCanvas(it, size = 40) {
   if (s.ok) paint(); else s.p.then(paint);
   return c;
 }
-function handCanvas(cd) { // the original Z1 card (64×96)
+export function handCanvas(cd) { // the original Z1 card (64×96)
   const c = document.createElement('canvas');
   c.width = 64; c.height = 96;
   const s = img(CARDS), x = c.getContext('2d');
@@ -282,7 +301,7 @@ const CSS = `
 #cards .pick .flash { animation: cardflash .5s 2; }
 @keyframes cardflash { 50% { filter: brightness(2.4); } }
 `;
-function overlay() {
+export function overlay() {
   if (!document.getElementById('cards-css')) {
     const st = document.createElement('style');
     st.id = 'cards-css';
@@ -295,8 +314,8 @@ function overlay() {
   document.getElementById('app').appendChild(el);
   return el;
 }
-const h = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
-function button(label, fn, cls = 'btn') { const b = h('button', cls, label); b.onclick = fn; return b; }
+export const h = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+export function button(label, fn, cls = 'btn') { const b = h('button', cls, label); b.onclick = fn; return b; }
 function detail(world, s, it, extra) {
   const d = h('div', 'detail');
   d.appendChild(iconCanvas(it, 64));
@@ -362,9 +381,9 @@ export function openCards(game, battle = null) {
     };
     const tryUse = (id) => {
       const it = world.items[id];
-      if (!usable(x, id, it)) { audio.se(SE_ERR, 70); toast(it.kind === 'hook' && !battle ? '這張卡片的功能還沒做好' : it.kind === 'none' || it.occ === 3 ? '這張卡片不能使用' : it.occ === 1 && !battle ? '這張卡片只能在戰鬥中使用' : it.occ === 2 && battle ? '這張卡片只能在地圖上使用' : '現在使用也沒有效果'); return; }
+      if (!usable(x, id, it)) { audio.se(SE_ERR, 70); toast(it.kind === 'hook' ? '這張卡片的功能還沒做好' : it.kind === 'none' || it.occ === 3 ? '這張卡片不能使用' : it.occ === 1 && !battle ? '這張卡片只能在戰鬥中使用' : it.occ === 2 && battle ? '這張卡片只能在地圖上使用' : '現在使用也沒有效果'); return; }
       audio.se(SE_OK, 70);
-      if (it.kind === 'hook') { el.hidden = true; fieldCards[id]({ game }).then((r) => { if (r && it.spent) lose(s, id); el.hidden = false; render(); }); return; }
+      if (it.kind === 'hook') { el.hidden = true; fieldCards[id]({ game, battle }).then((r) => { if (r && it.spent) lose(s, id); el.hidden = false; render(); }); return; }
       mode = target(id, it);
       if (mode === 'none') mode = 'confirm';
       render();

@@ -177,6 +177,24 @@ def script(lst):
                 out.append({'var': [p[0], p[2], p[4]]})  # op: 0 set, 1 add, 2 sub
             elif code == 250:
                 out.append({'se': p[0]['name']})
+            elif code == 245:  # play BGS (the ground rumbling while Nappa / Vegeta power up)
+                out.append({'bgs': p[0]['name'], 'vol': p[0]['volume']})
+            elif code == 246:  # fade the BGS out (seconds)
+                out.append({'bgsFade': p[0]})
+            elif code == 224:  # flash the screen (white, frames)
+                out.append({'flash': p[1]})
+            elif code == 230:  # wait (frames)
+                out.append({'wait': p[0]})
+            elif code in (355, 655) and p[0].replace(' ', '') == '$game_switches[21]=true':
+                out.append({'shake': True})  # 画面揺らすフラグ: the message window shakes
+            elif code == 355 and p[0].startswith('$eve.window_shake_off'):
+                out.append({'shake': False})
+            elif code == 655 and p[0].startswith('for x in 0..'):  # a sound repeated in a loop (スカウター音 ×12)
+                loop = [c['parameters'][0] for c in lst[i + 1:i + 4] if c['code'] == 655]
+                se = next((re.search(r'"([^"]+)"\)', t) for t in loop if 'se_play' in t), None)
+                wait = next((re.search(r'wait\((\d+)\)', t) for t in loop if 'wait' in t), None)
+                if se:
+                    out.append({'se': se.group(1), 'repeat': int(p[0].split('..')[1]) + 1, 'every': int(wait.group(1)) if wait else 0})
             # the scene drawing of 143_Event_Main.rb (src/cutscene.js): z1field for the current variable 41, fades
             elif code == 355 and p[0].startswith('$eve.z1field'):
                 out.append({'z1field': True})

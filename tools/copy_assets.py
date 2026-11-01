@@ -52,8 +52,11 @@ files |= {f'Audio/BGM/{n}.ogg' for n in re.findall(r"playBgm\('([^']+)'\)", open
 # the party / tactics menus (src/partymenu.js): the original's cursor sounds
 partymenu = open(os.path.join(root, 'src', 'partymenu.js'), encoding='utf-8').read()
 files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"SE_\w+ = '([^']+)'", partymenu)}
-battle = open(os.path.join(root, 'src', 'battle.js'), encoding='utf-8').read()  # its cursor sounds too
-files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"SE_\w+ = '([^']+)'", battle)}
+for js in ('battle.js', 'growth.js'):  # their cursor / card sounds too
+    t = open(os.path.join(root, 'src', js), encoding='utf-8').read()
+    files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"SE_\w+ = '([^']+)'", t)}
+# the background sounds (BGS) of the story pages (tools/build_data.py script(): {bgs})
+files |= {f'Audio/BGS/{n}.ogg' for n in set(re.findall(r'"bgs":"([^"]+)"', json.dumps(world, ensure_ascii=False, separators=(',', ':'))))}
 # the story scenes between chapters (src/cutscene.js): scene pictures (BG('…') and the `bg` / `scroll` entries)
 cutscene = ''.join(open(os.path.join(root, 'src', f), encoding='utf-8').read()  # and the scenes the chapters add (addScenes)
                    for f in sorted(os.listdir(os.path.join(root, 'src'))) if f == 'cutscene.js' or f.startswith('chapter'))

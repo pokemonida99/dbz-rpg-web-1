@@ -171,6 +171,34 @@ export const audio = {
     src.onended = () => this.playing.delete(src);
   },
   playing: new Set(),
+  // BGS (a looping background sound, Audio/BGS): the ground rumbling; fadeBgs(seconds) like the event command 246
+  async playBgs(name, vol = 80) {
+    this.stopBgs();
+    if (!this.ctx) return;
+    const b = await this.buf(`Audio/BGS/${name}.ogg`);
+    if (!b || this.bgs) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = b;
+    src.loop = true;
+    const g = this.ctx.createGain();
+    g.gain.value = Math.pow(vol / 100, 2);
+    src.connect(g).connect(this.master);
+    src.start();
+    this.bgs = { src, g };
+  },
+  fadeBgs(sec = 1) {
+    const b = this.bgs;
+    if (!b) return;
+    this.bgs = null;
+    const t = this.ctx.currentTime;
+    b.g.gain.setValueAtTime(b.g.gain.value, t);
+    b.g.gain.linearRampToValueAtTime(0, t + sec);
+    try { b.src.stop(t + sec); } catch (e) { /* stopped */ }
+  },
+  stopBgs() {
+    if (this.bgs) { try { this.bgs.src.stop(); } catch (e) { /* stopped */ } }
+    this.bgs = null;
+  },
   seStop() { // like the original's Audio.se_stop
     for (const s of this.playing) { try { s.stop(); } catch (e) { /* already stopped */ } }
     this.playing.clear();

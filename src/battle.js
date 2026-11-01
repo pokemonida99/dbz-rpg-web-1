@@ -487,7 +487,7 @@ export class Battle {
       if (o.kind === 'p') await this.playerAct(o.i);
       else if (!items.foeStopped(o.f)) for (let n = 0; n < o.f.eva && o.f.hp > 0 && !this.over(); n++) { if (n > 0) o.f.card = enemyCard(); await this.enemyAct(o.f); }
     }
-    for (const p of this.plans) if (p) this.hand[p.card] = newCard(); // used cards are regenerated in place (§1.6)
+    this.plans.forEach((p, i) => { if (p) this.hand[p.card] = growth.regenCard(this.world, this.party[i], newCard()); }); // used cards are regenerated in place (§1.6), 一か八か
     items.endTurn(this);
     if (this.over()) return;
     growth.recover(this); // recovery from the second turn on, KO'd members back only at full HP (§4.6)

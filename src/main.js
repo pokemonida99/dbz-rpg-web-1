@@ -9,6 +9,7 @@ import { playOpening, playStory } from './opening.js?v=20261101-1903'; // the or
 import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapterBoss } from './chapter2.js?v=20261101-1903';
 import { fieldMenuHtml, openEntry } from './partymenu.js?v=20261101-1903'; // 隊伍・卡牌・組合技・作戰
 import { setItemsWorld, bubbles } from './items.js?v=20261101-1903'; // item cards (its 卡牌 menu entry registers itself)
+import { setGrowthWorld } from './growth.js?v=20261101-1903'; // skill cards and the other growth cards
 import { cardSquare, compo } from './cardgames.js?v=20261101-1903'; // card squares (shop / lottery / memory), 合成
 import { fieldExtraHtml, openFieldEntry, setFieldGame, encounterSteps, battleTally, spotTally, storySoFar, hasRecap, options } from './fieldmenu.js?v=20261101-1903'; // 概況・情報・設定・地圖, records, options
 import { training } from './training.js?v=20261101-1903'; // training squares
@@ -317,6 +318,7 @@ async function boot() {
   game.world = await (await fetch('data/world.json?v=20261101-1903')).json();
   setFaces(game.world.faces);
   setItemsWorld(game.world);
+  setGrowthWorld(game.world);
   const faceSheets = new Set(Object.values(game.world.faces).map((f) => f[0]));
   await loadImages([...tileSheetPaths, ...fieldImages, ...battleImages(game.world), FACES, ...faceSheets]);
   setFieldGame(game);

@@ -13,7 +13,7 @@ Conventions used in the code and in this doc:
 - Many hundreds of passive "スキル" (SP-learned abilities, e.g. 気のコントロール, 湧き出る力) tweak the numbers below.
   They are listed as **(passive hooks)**. The remake implements the families the Z1 cast can get (src/growth.js):
   サイヤ人の血, 鋼鉄の拳, Z戦士の絆, 気のコントロール, 湧き出る力, ミラクル全開パワー, ムダのない動き, かなしばり,
-  魔族の力/再生, 激怒, 必殺の一撃; the rest are omitted.
+  魔族の力/再生, 激怒, 必殺の一撃, 一か八か (card 83); the rest are omitted (none of them can be obtained in Z1 chapters 1–2).
 
 ---
 

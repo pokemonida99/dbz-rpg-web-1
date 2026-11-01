@@ -3,9 +3,9 @@
 //   (src/kaiotraining.js) → King Kai, the east pair (map 10, the Nikki area) → 尼奇 → Goku's second training is
 //   announced → end of chapter.
 // state.flags.ch3 tracks the step: 'kaio' → 'east' → 'done'.
-import { input } from './core.js?v=20261101-2204';
-import { scenes, setParty, moveTo, enterMap, card } from './chapter2.js?v=20261101-2204';
-import { bubblesTraining } from './kaiotraining.js?v=20261101-2204';
+import { input } from './core.js?v=20261101-2206';
+import { scenes, setParty, moveTo, enterMap, card } from './chapter2.js?v=20261101-2206';
+import { bubblesTraining } from './kaiotraining.js?v=20261101-2206';
 
 const MAPS = ['9', '10'];
 

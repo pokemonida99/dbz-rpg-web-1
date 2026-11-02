@@ -7,7 +7,7 @@
 //                  9346 go straight on to 9324 / 9347 after a win (switch 128)
 //          z2warp  map 71's squares between its parts (9353-9362)
 // The card squares, inns and training squares are the ordinary ones (world.pois effect shop / rest / training).
-import { registerArea, registerTrSpot, enterArea, leaveArea, trBattle, goTo } from './timeroom.js?v=20261102-1141';
+import { registerArea, registerTrSpot, registerBackdrop, enterArea, leaveArea, trBattle, goTo } from './timeroom.js?v=20261102-1141';
 import { registerZ3, begin, party } from './z3.js?v=20261102-1141';
 import { moveTo } from './chapter2.js?v=20261102-1141';
 
@@ -35,14 +35,15 @@ async function boss(game, page) {
 }
 
 // the battle background of these maps: set_battle_map with variable 301 = 1 (the Z2 hall), the row of Z2_戦闘_背景 by
-// the ground tile; and map 71's late encounters (140_Field_Main.rb: variable 43 = 915 and switch 119, Frieza beaten).
-// src/main.js has no hook for an area yet, so these wrap game.backdrop / game.onStep once the game object is there.
+// the ground tile
 function z2Backdrop(game) {
-  const s = game.state, c = C(game);
-  if (!c || !c.maps.includes(s.map)) return null;
-  const m = game.world.maps[s.map], i = Math.floor(s.x / 32) + Math.floor(s.y / 32) * m.w;
-  return `bg/z2_battle_${c.backdrops[m.layers[0][i]] ?? 0}.png`;
+  const s = game.state, m = game.world.maps[s.map], i = Math.floor(s.x / 32) + Math.floor(s.y / 32) * m.w;
+  return `bg/z2_battle_${C(game).backdrops[m.layers[0][i]] ?? 0}.png`;
 }
+for (const map of ['67', '68', '69', '70', '71']) registerBackdrop(map, z2Backdrop);
+
+// map 71's late encounters (140_Field_Main.rb: variable 43 = 915 and switch 119, Frieza beaten): src/main.js has no
+// hook for an area's encounters, so this wraps game.onStep once the game object is there
 function lateEncounters(game) {
   const a = game.world.areas && game.world.areas['71'];
   if (a && a.late) a.late.var43 = game.state.sw[119] ? 915 : -1;
@@ -51,8 +52,7 @@ setTimeout(() => {
   const game = window.__game;
   if (!game || game.trz2Hooked) return;
   game.trz2Hooked = true;
-  const bd = game.backdrop, step = game.onStep;
-  game.backdrop = () => z2Backdrop(game) || (bd ? bd() : null);
+  const step = game.onStep;
   game.onStep = function () {
     if (this.state.map === '71') lateEncounters(this);
     return step.call(this);

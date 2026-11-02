@@ -138,8 +138,13 @@ const ALL_HAND = (h, f) => h.some(f);
 const bump = (v, n) => (v === 7 ? 7 : Math.min(7, v + n));
 const schoolPool = (s) => ((s.var[43] || 0) >= 11 ? [0, 1, 3, 4] : [0, 1, 2, 4]); // create_card_i, Z1
 const healOk = (it, m) => (it.hp && m.hp < m.maxhp) || (it.mp && m.ki < m.maxki);
+// the recovery cards' bonus % (get_recovery_hpki_skill_par, all.rb 19395): each f(m) → [HP %, KI %] (src/cards_square.js:
+// the 効果UP skills); added only to what the card itself recovers
+export const healBonus = [];
 function heal(it, m, half) {
-  const h = Math.ceil((m.maxhp * it.hp) / 100), k = Math.ceil((m.maxki * it.mp) / 100);
+  let bh = 0, bk = 0;
+  for (const f of healBonus) { const [x, y] = f(m) || [0, 0]; bh += x; bk += y; }
+  const h = Math.ceil((m.maxhp * (it.hp + bh)) / 100), k = Math.ceil((m.maxki * (it.mp + bk)) / 100);
   if (it.hp) m.hp = Math.min(m.maxhp, m.hp + (half ? Math.floor(h / 2) : h));
   if (it.mp) m.ki = Math.min(m.maxki, m.ki + (half ? Math.floor(k / 2) : k));
 }

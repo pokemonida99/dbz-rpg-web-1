@@ -1,6 +1,6 @@
 // Shared runtime: canvas scaling, assets, input, audio, dialogue, toast.
 
-export const VERSION = '20261102-2217'; // stamped by tools/bump.py on each deploy
+export const VERSION = '20261102-2225'; // stamped by tools/bump.py on each deploy
 export const ASSET_ROOT = 'assets/';
 export const assetUrl = (p) => (ASSET_ROOT + p).split('/').map(encodeURIComponent).join('/');
 

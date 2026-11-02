@@ -7,15 +7,15 @@
 //   概況          Z3 / Z4 (variable 43 = 51-96: Map007 event 2 page 201 → CE101-137; 65-69: world.z3.recap with the
 //                scenes of src/z3b.js), played like src/zg_recap.js
 //   ?dev=sys…    sysrecap<variable 43>, syswish, sysbgm (&timer)
-import { audio } from './core.js?v=20261102-2217';
-import { addScenes, playScenes } from './cutscene.js?v=20261102-2217';
-import { addRecap, storySoFar } from './fieldmenu.js?v=20261102-2217';
-import { drawZgScene } from './zg_a.js?v=20261102-2217';
-import { registerZ3, devZ3 } from './z3.js?v=20261102-2217';
-import { fieldCards } from './items.js?v=20261102-2217';
-import { extra, ensure } from './growth.js?v=20261102-2217';
-import { pickMember } from './partymenu.js?v=20261102-2217';
-import { zpRate } from './training.js?v=20261102-2217';
+import { audio } from './core.js?v=20261102-2225';
+import { addScenes, playScenes } from './cutscene.js?v=20261102-2225';
+import { addRecap, storySoFar } from './fieldmenu.js?v=20261102-2225';
+import { drawZgScene } from './zg_a.js?v=20261102-2225';
+import { registerZ3, devZ3 } from './z3.js?v=20261102-2225';
+import { fieldCards } from './items.js?v=20261102-2225';
+import { extra, ensure } from './growth.js?v=20261102-2225';
+import { pickMember } from './partymenu.js?v=20261102-2225';
+import { zpRate } from './training.js?v=20261102-2225';
 
 const SE_ERR = 'Z3 エラー';
 

@@ -1,5 +1,7 @@
 # 大工程第一批：技能卡＋被動技能、組合技、換裝（照原版）
 
+> **2026-11-02 三個分工都已完成並合併上線**（skc：`docs/skc.md`；cmb2：`docs/combos.md`，160 個組合技的專屬動畫清單留給招式動畫工程；cos：`docs/costume.md`）。以下是開工時的說明。
+
 原則同前：**總之參照原版**（`research/all.rb`、`game/Data`、`data/*.json`），台詞全文保留（`tools/s2t.py`），不確定先查原版再決定手機版怎麼做；跟使用者說話用繁體中文。
 先讀 `docs/HANDOFF.md`、`docs/battle-rules.md`、`docs/batch2-plan.md`（上一批做了什麼）。從 `main` 開自己的 worktree 分支，**不要合併 main、不要 push**；做完在自己分支提交，回報分支名與測試結果。
 `data/world.json` 衝突由主 session 合併時重建；worktree 裡的 `game`、`research` 要從主資料夾重新連結（`game` → `../dbz-rpg-web/game`）；`data/*.json` 是從原版抽出的（gitignore），缺的話從主資料夾複製；不要用不帶名字的 `git stash`。

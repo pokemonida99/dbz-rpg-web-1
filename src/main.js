@@ -69,6 +69,7 @@ import './cos.js?v=20261103-0338'; // ?dev=cos…: 換裝 and the DB3 staff roll
 import './anime_goku_gohan.js?v=20261103-0338'; // 悟空・悟飯's move films, ?dev=anga… (docs/anim-ab-plan.md anga)
 import './anime_piccolo_vegeta.js?v=20261103-0338'; // 比克・貝吉塔's Z3 move films (docs/anim-ab-plan.md anpv; after the chapters' addMoves)
 import './anime_zfighters.js?v=20261103-0338'; // the Z fighters' Z3 move films (docs/anim-ab-plan.md anzb; ?dev=anzb…)
+import './anime_androids.js?v=20261103-0338'; // 人造人 18・17・16號's Z3 move films (docs/anim-cd-plan.md anda; ?dev=anda)
 
 // testing in a hidden browser pane (no animation frames there): ?timer drives every frame with timers instead
 if (new URLSearchParams(location.search).has('timer')) window.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16);

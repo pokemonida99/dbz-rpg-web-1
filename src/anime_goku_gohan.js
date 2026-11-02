@@ -159,6 +159,8 @@ function cutIn(c, d, st) {
 
 // ---------- the Duel side ----------
 const MINE = new Set(Object.keys(FILM_PICTURES));
+// other files' films on this stage (src/anime_androids.js): film → its pictures, film → its pattern 32 settings
+export function agFilms(pictures, launch) { Object.assign(FILM_PICTURES, pictures); Object.assign(LAUNCH, launch); for (const k in pictures) MINE.add(k); }
 const baseLaunch = Duel.prototype.launch, baseRender = Duel.prototype.render;
 Object.assign(Duel.prototype, {
   // what these films draw besides the fighters: the strips and pictures behind them, effects in front, the cut-in on top

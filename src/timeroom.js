@@ -8,12 +8,13 @@
 //   area      a door to an era's area (area = the page the original runs, 9102 …): phase 2 registers them here
 // state.flags.tr = what page 15 kept for the way back (variables 231-235, $story_partyc, $story_sp_saiya); variable 43 is
 // 999 inside, the story's value comes back on leaving.
-import { audio, say, choose, sleep } from './core.js?v=20261102-0958';
-import { registerZ3, begin, play, heal, member, party } from './z3.js?v=20261102-0958';
-import { moveTo, enterMap } from './chapter2.js?v=20261102-0958';
-import { syncSuperSaiyan, FORMS } from './supersaiyan.js?v=20261102-0958';
-import { eventCard } from './items.js?v=20261102-0958';
-import { memberChange } from './partymenu.js?v=20261102-0958';
+import { audio, say, choose, sleep } from './core.js?v=20261102-1141';
+import { registerZ3, begin, play, heal, member, party } from './z3.js?v=20261102-1141';
+import { moveTo, enterMap } from './chapter2.js?v=20261102-1141';
+import { syncSuperSaiyan, FORMS } from './supersaiyan.js?v=20261102-1141';
+import { eventCard } from './items.js?v=20261102-1141';
+import { memberChange } from './partymenu.js?v=20261102-1141';
+import { holds } from './field.js?v=20261102-1141';
 
 const TR = (game) => game.world.timeroom;
 const TX = (game) => TR(game).text;
@@ -125,7 +126,6 @@ async function info(game) {
   if (!s.sw[1301]) { s.sw[1301] = true; await say([['', t.infoFirst]]); }
   await say1(t.infoAsk);
   if (await choose([t.infoYes, t.infoNo]) === 0) {
-    const { holds } = await import('./field.js?v=20261102-0958');
     for (;;) {
       const list = TR(game).info.filter((x) => !x.when || holds(s, x.when));
       const k = await infoList(t.infoTitle, [...list.map((x) => x.name), t.infoEnd]);

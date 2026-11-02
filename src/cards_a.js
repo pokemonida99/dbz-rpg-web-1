@@ -56,14 +56,15 @@ fieldCards[76] = async ({ game }) => {
   audio.se('DB3 エネルギー波2', 80);
   return true;
 };
-// while variable 420 lasts, the field flies twice as far; each card move's worth of flying uses one
+// while variable 420 lasts (飛機 +5, cards-b's 173 スカイカー +15), the field flies twice as far; each card move's worth
+// of flying uses one
 fieldHooks.step = (s, plain) => {
   if (!(s.var && s.var[420] > 0)) return plain;
   s.cdaAir = (s.cdaAir || 0) + plain;
   if (s.cdaAir >= AIR_MOVE) {
     s.cdaAir -= AIR_MOVE;
     s.var[420]--;
-    if (!s.var[420]) toast('飛機的效果結束了');
+    if (!s.var[420]) toast('移動量加倍的效果結束了');
   }
   return plain * 2;
 };

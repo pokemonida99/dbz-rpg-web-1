@@ -25,6 +25,7 @@
 - `trBattle(game, [敵人], { shared, cap, sp, drops: [[機率%, 卡片], …], heal, bgm, backdrop, … })`：區域頭目戰（頁 9104 等）：
   不給經驗值（開關 124），給頁上寫的共有經驗值（變數 306）、CAP（317）、SP（318），掉卡照頁上的 241～245（機率%）／246～250（卡片），
   開關 141 開著就 `heal: true`（戰後全員回復）。其他欄位直接傳給 `game.startBattle`（`bgm`、`backdrop`、`hp30` 等）。
+- `registerBackdrop('73', (game) => 'bg/….png')`：區域地圖的雜兵戰背景（原版 `set_battle_map`）。Z3／Z4 的區域可以直接用 `src/z3.js` 的 `z3BackdropAt(game)`（Z3 的地形規則，不檢查主線章節）。
 - `goTo(game, {map, x, y})`、`healAll(game)`、`inTimeRoom(s)`。
 - 建資料：`add(world, h, z3, tr)` 的 `tr['map_events'](D, 地圖, 列數, tr['sheets'])` 轉出地圖事件（頭目的站姿、門），放進
   `world.maps[id].ev`，`src/field.js` 會照開關畫、照原版擋路；`h['build_map']`、`h['enemy']`、`z3['nodes_of']`、`z3['file']` 同 Z3。

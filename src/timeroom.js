@@ -27,6 +27,14 @@ export const inTimeRoom = (s) => !!(s.flags && s.flags.tr);
 const areas = {}, spots = {};
 export function registerArea(no, fn) { areas[no] = fn; }
 export function registerTrSpot(page, fn) { spots[page] = fn; }
+// the battle background of an area map (set_battle_map in the 時之間): registerBackdrop('73', (game) => 'bg/…png');
+// src/main.js asks trBackdrop first
+const backdrops = {};
+export function registerBackdrop(map, fn) { backdrops[map] = fn; }
+export function trBackdrop(game) {
+  const s = game.state, fn = inTimeRoom(s) && backdrops[s.map];
+  return fn ? fn(game) || null : null;
+}
 
 // into an area (9102 …): CE181 (舞空術 37 and 帶路人 124 cards), variable 43 = the area's number (901 …: battle
 // backgrounds and rules key on it), then the map

@@ -73,16 +73,23 @@ def add(world, h, z3, tr):
     cdb = D('commonevents')
     ev7 = D('map007')['events']
 
-    # ---------- 未来悟飯 (25) / 超未来悟飯 (26): CE9's moves, the Z3 battle sheets ----------
+    # ---------- 未来悟飯 (25) / 超未来悟飯 (26): only if they are not there yet (tools/build_zg_a.py defines them; as
+    # tools/build_z4f.py does for 18 / 21 / 23): CE9's moves, the Z3 battle sheets ----------
+    have = lambda d, k: k in d or str(k) in d
     for aid, jp in ((25, 'ゴハン(未来)'), (26, 'ゴハン(未来超)')):
+        if have(world['actors'], aid):
+            continue
         a = actor(aid, aid - 3, '未來悟飯', f'Z3_戦闘_{jp}.png', 'Z1_戦闘_必殺技_エネルギー波.PNG', GOHAN[aid], ray='green')
         a['special'] = file(f'Z3_戦闘_必殺技_{jp}')
         assert a['special'] and file(f'Z3_戦闘_{jp}') == a['sprite'], jp
+        if aid == 26:
+            a['ss'] = 25
         world['actors'][aid] = a
-    world['actors'][26]['ss'] = 25
     for sid in sorted(set(GOHAN[25] + GOHAN[26]) | {178, 181}):
-        world['skills'][sid] = skill(sid)
-    world['skills'][245].update(name='超賽變身', ss=True)  # (like 29 / 133: no damage, the user turns)
+        if not have(world['skills'], sid):
+            world['skills'][sid] = skill(sid)
+            if sid == 245:
+                world['skills'][sid].update(name='超賽變身', ss=True)  # (like 29 / 133: no damage, the user turns)
 
     # ---------- map 55 Z4未来悟飯編: the field after page 3601 (no encounters, only 17号 and 18号 at the top) ----------
     m = build_map(55, rows=59)  # (row 59: the original's control events)
@@ -202,7 +209,7 @@ def add(world, h, z3, tr):
     pics = {file(n) for n in names_} | {z3['P3'], z3['E3'], z3['F3'], z3['CARD']}
     assert None not in pics, [n for n in names_ if not file(n)]
     pics |= {p for v in battlers.values() for p in v} | {p for x in transform.values() for p in x['auras'] + x['bodies']}
-    pics |= {world['actors'][a][k] for a in (25, 26) for k in ('sprite', 'special')} | {'Graphics/Characters/enemy1.png'}
+    pics |= {(world['actors'].get(a) or world['actors'][str(a)])[k] for a in (25, 26) for k in ('sprite', 'special')} | {'Graphics/Characters/enemy1.png'}
     pics |= {world['enemies'][e][k] for e in (124, 125, 127) for k in ('sprite', 'portrait')}
     se, bgm = {'Z1 敵発見', 'Z3 変身', 'Z1 入る'}, {m['bgm'], 'DB3 イベント06'} | ({b['bgm']} if 'bgm' in b else set())
 

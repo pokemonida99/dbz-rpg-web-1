@@ -58,6 +58,7 @@ const F = {
   koutetsu: [154, 153, 152, 151, 150, 149, 50, 49, 48], // 鋼鉄の拳
   kanashi: [39, 40, 41, 131, 132, 133, 134, 135, 136], // かなしばり
   regen: [10, 12, 35], // 再生能力 / 魔族の力: +5 % HP a turn
+  seifuku: [546, 545, 544, 543, 542, 541, 540, 539, 538], // 征服
 };
 const BLOOD_SP = { 2: 1.1, 3: 1.15, 4: 1.2, 89: 1.25, 90: 1.3, 91: 1.35, 92: 1.4, 93: 1.45, 94: 1.5 }; // get_sp_add
 const num = (v) => Number(v) || 0;
@@ -94,7 +95,38 @@ export function power(state, m, skill) {
 // ---------- battle ----------
 // turn start: the per-turn rolls for 湧き出る力 and ミラクル全開パワー (101_Scene_Db_Battle.rb, rand(100)+1)
 export function turnStart(b) {
-  for (const m of b.party) { ensure(m); m.wk = rand(100) + 1; m.mz = rand(100) + 1; }
+  for (const m of b.party) { typicalFix(b.world, b.game.state, ensure(m)); m.wk = rand(100) + 1; m.mz = rand(100) + 1; }
+}
+
+// set_typical_skill: a 固有技能 put in a slot, learned
+export function setTypical(w, s, m, slot, id) {
+  ensure(m);
+  m.typ[slot] = id;
+  m.set[id] = m.got[id] = 1;
+  m.sp[id] = need(w, id);
+  seen(s, id);
+}
+// set_typical_skill_first (all.rb 3312, at a new game / continue): a member whose first 固有 slot is empty gets the
+// listed ones (巴達克; not in his Z1 story, variable 43 = 101). Here it runs at battle start / end, once a member
+// (firstTyp), into the empty slots (page 6131 may have set slot 0 before his first battle). CE34 後から追加設定:
+// 巴達克's 最終決戦改 once Frieza is beaten in ZG (switch 598) or 外伝 is cleared (586), for saves from before 6131 set it.
+function typicalFix(w, s, m) {
+  if ((s.var || {})[43] === 101) return;
+  const first = (w.growth.first || {})[m.id];
+  if (first && !m.firstTyp) {
+    first.forEach((id, slot) => { if (!m.typ[slot]) setTypical(w, s, m, slot, id); });
+    m.firstTyp = 1;
+  }
+  if ((m.id === 16 || m.id === 32) && s.sw && (s.sw[598] || s.sw[586]) && m.typ[0] !== 670) setTypical(w, s, m, 0, 670);
+}
+
+// set_damage_add: is the enemy treated as a boss ($data_enemies[id].element_ranks[22] == 1)? 戦闘練習 sets the
+// 訓練人偶's (map 007: element_ranks[22] = 1 / 3 by the choice)
+let bossIds = null;
+function bossFoe(b, foe) {
+  if (b.practice && b.practice.bossKind != null) return !!b.practice.bossKind;
+  bossIds = bossIds || new Set(b.world.growth.boss || []);
+  return bossIds.has(foe.id);
 }
 
 // get_mp_cost: 湧き出る力 (no KI this turn), then 気のコントロール and 必殺の一撃 multiply the cost
@@ -141,7 +173,8 @@ const mates = (b, m) => b.party.filter((x, i) => x !== m && !x.ko && b.plans && 
 const kizunaMates = (b, m) => mates(b, m).filter((x) => F.kizuna.some((id) => has(b.world, x, id))).length;
 const dying = (x) => (x.hp * 100) / x.maxhp < HINSHI;
 
-// set_damage_add(add = 0): damage dealt — 鋼鉄の拳, Z戦士の絆, 激怒, 必殺の一撃 (special moves)
+// set_damage_add(add = 0): damage dealt — 鋼鉄の拳, Z戦士の絆, 激怒, 最終決戦 / 最終決戦改 (a boss, ×1.25 each),
+// 征服 (a normal enemy), 必殺の一撃 (special moves)
 export function dealt(b, m, skill, d, ctx = {}) {
   const w = b.world;
   let x = d;
@@ -151,12 +184,25 @@ export function dealt(b, m, skill, d, ctx = {}) {
   const n = kz ? kizunaMates(b, m) : 0;
   if (n) x *= 1 + (num(kz.fx.a) - 1) * n;
   if (has(w, m, 22)) x *= 1 + 0.35 * mates(b, m).filter(dying).length;
+  if (ctx.foe) x = bossRate(b, m, ctx.foe, x, 'a');
   const hs = best(w, m, F.hissatsu);
   if (hs && skill) x *= num(hs.fx.a);
   x = ext('dealt', x, b, m, skill, ctx); // (連擊, 輕視 …: src/cards_*.js)
   return Math.trunc(x);
 }
-// set_damage_add(add = 1): damage taken — Z戦士の絆, 激怒
+// all.rb 14679 / 15665 (dealt, k 'a') and 16045 / 16999 (taken, k 'g'): 最終決戦 8 and 最終決戦改 670 against a boss
+// (both stack), 征服 538-546 against a normal enemy (its highest level)
+function bossRate(b, m, foe, x, k) {
+  const w = b.world;
+  if (bossFoe(b, foe)) {
+    for (const id of [8, 670]) if (has(w, m, id)) x *= num(sk(w, id).fx[k]);
+  } else {
+    const sf = best(w, m, F.seifuku);
+    if (sf) x *= num(sf.fx[k]);
+  }
+  return x;
+}
+// set_damage_add(add = 1): damage taken — Z戦士の絆, 激怒, 最終決戦 / 最終決戦改 (×0.85 each), 征服
 export function taken(b, m, d, ctx = {}) {
   const w = b.world;
   let x = d;
@@ -164,6 +210,7 @@ export function taken(b, m, d, ctx = {}) {
   const n = kz ? kizunaMates(b, m) : 0;
   if (n) x *= 1 - (1 - num(kz.fx.g)) * n;
   if (has(w, m, 22) && mates(b, m).some(dying)) x *= 0.8;
+  if (ctx.foe) x = bossRate(b, m, ctx.foe, x, 'g');
   x = ext('taken', x, b, m, ctx); // (掩護, 輕視 …)
   return Math.trunc(x);
 }
@@ -220,7 +267,7 @@ export function afterBattle(b) {
   if (heavy === 1) pages.push({ lines: ['加重衣的效果結束了！'] });
   if (heavy > 0) s.var[313] = heavy - 1;
   for (const m of b.party) {
-    ensure(m);
+    typicalFix(w, s, ensure(m));
     const got = spRun(w, s, m, spFor(w, m, sp));
     for (const id of got) pages.push({ se: SE_GET, lines: [`${m.name}　學會技能`, `${skillName(w, id)}　了！`] });
     for (const id of typicalRun(w, s, m)) pages.push({ se: SE_GET, lines: [`${m.name}`, `已學會技能　${skillName(w, id)}　！`] });

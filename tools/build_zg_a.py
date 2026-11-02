@@ -198,7 +198,9 @@ def converter(h, z3):
             return [{'x': 'zgaCardi', 'n': int(m.group(1))}]
         if t == 'chk_scenario_progress':
             return [{'x': 'zgaEra'}]
-        return []  # ($eve, set_skn, the window switches 38 / 39, the $chadead loops, set_typical_skill 670: see docs)
+        if t == 'set_typical_skill chano,0,skillno #バーダック':  # 6131 最終決戦改取得 (chano 16, skillno 670; the next
+            return [{'x': 'zgaTypical', 'id': 16, 'slot': 0, 'skill': 670}]  # line, chano 32, is the same member here)
+        return []  # ($eve, set_skn, the window switches 38 / 39, the $chadead loops: see docs)
 
     def ce(p):
         n = p[0]

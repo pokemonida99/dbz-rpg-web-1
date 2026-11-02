@@ -16,6 +16,8 @@ import { eventCard, fieldCards } from './items.js?v=20261102-1750';
 import { memberChange } from './partymenu.js?v=20261102-1750';
 import { holds } from './field.js?v=20261102-1750';
 import { apeOffAll } from './cards_a.js?v=20261102-1750'; // CE160 大猿全解除
+import { applyLevel } from './party.js?v=20261102-1750';
+import { ensure } from './growth.js?v=20261102-1750';
 
 const TR = (game) => game.world.timeroom;
 const TX = (game) => TR(game).text;
@@ -325,6 +327,31 @@ registerZ3('tr', {
     }
     game.startField();
     enter(game);
+    return true;
+  },
+});
+
+// ?dev=pas…: 最終決戦 / 征服 (docs/batch1-plan.md §2) — the ?dev=tr hall with 巴達克 Lv 40 (his first 固有技能 come at the
+// battle start) and 悟空 with 征服9 learned in a 追加 slot. pasboss / pasnormal: a fight with 拉蒂茲 (a boss) / 甜菜人
+// (normal); pas670: after ZG 6131 (switch 598, 最終決戦改); pastr: the 戦闘練習
+registerZ3('pas', {
+  dev(game, step) {
+    if (!/^pas/.test(step)) return false;
+    const s = game.state = game.newState();
+    s.var[40] = 2;
+    for (const n of [68, 69, 502, 107, 522, 109, 426, 567, 520, 119, 431, 458, 521, 545, 429, 532, 421, 533, 561, 563, 564, 566, 568]) s.sw[n] = true;
+    if (step === 'pas670') s.sw[598] = true;
+    s.flags.z3 = 'done';
+    party(game, [16, 3, 5]);
+    for (const m of s.party) { m.level = 40; m.exp = game.world.actors[m.id].exp[40]; applyLevel(game.world, m); heal(m); }
+    const goku = ensure(s.party[1]);
+    goku.add[0] = 546; goku.sp[546] = game.world.growth.skills[546].sp; goku.got[546] = goku.set[546] = 1;
+    s.map = '48'; s.x = 44 * 32 + 16; s.y = 29 * 32 + 16;
+    game.startField();
+    const foe = { pasboss: 10, pasnormal: 1 }[step];
+    if (foe) setTimeout(() => game.startBattle([foe], false, { loseOk: true }), 300);
+    else if (step === 'pastr') setTimeout(() => practice(game), 300);
+    else enter(game);
     return true;
   },
 });

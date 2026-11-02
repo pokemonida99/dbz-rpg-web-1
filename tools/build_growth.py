@@ -5,6 +5,9 @@ world.growth = {
   skills:  {id: {n name, m manual, sp SP to learn, cap CAP to set, ord list order, same [same-effect ids], up next level,
                  old previous level, share settable as an 追加技能, fx {effect columns}}}   (_chaskill.csv)
   typical: {actor: [[level, skill, slot], ...]}   固有技能 by level (008_Share_Sub_skill.rb get_typical_skill)
+  first:   {actor: [slot 0, 1, 2]}   固有技能 set at the start (set_typical_skill_first, all.rb 3312)
+  boss:    [enemy ids]   enemies treated as a boss ($data_enemies[id].element_ranks[22] == 1; the others are 3, normal):
+                         最終決戦 / 最終決戦改 work against these, 征服 against the others
 }
 Only the skill families the Z1 cast can get are kept: their 固有技能 families, plus 必殺の一撃 and 激怒 (skill cards).
 """
@@ -33,7 +36,14 @@ TYPICAL = {
         (38, 34, 2), (46, 132, 1), (53, 102, 0), (60, 133, 1), (67, 103, 0), (73, 134, 1), (80, 104, 0), (87, 135, 1),
         (95, 105, 0)],
 }
-EXTRA = [280, 22, 618]  # 必殺の一撃, 激怒, 一か八か (skill cards; effects in src/growth.js)
+# バーダック (16, and 32 超サイヤ人): 最終決戦, サイヤ人の魂, 鋼鉄のこぶし (all.rb 5404)
+TYPICAL[16] = TYPICAL[32] = [
+    (3, 8, 0), (5, 5, 1), (16, 48, 2), (19, 6, 1), (23, 49, 2), (27, 7, 1), (36, 50, 2), (47, 95, 1), (55, 149, 2),
+    (62, 96, 1), (71, 150, 2), (80, 97, 1), (89, 151, 2), (99, 98, 1)]
+# set_typical_skill_first: バーダック starts with 最終決戦 / サイヤ人魂3 / 鋼鉄のこぶし2 (not in his Z1 story, variable 43 = 101).
+# The original sets actor 16 only; here 32 is the same member (src/supersaiyan.js), so both.
+FIRST = {16: [8, 7, 49], 32: [8, 7, 49]}
+EXTRA = [280, 22, 618, 670, 538]  # 必殺の一撃, 激怒, 一か八か (skill cards), 最終決戦改 (ZG 6131), 征服 (card 167 チルド)
 FX = {  # effect columns (get_cha_skill_manual shows them under ＊＊ 效果詳細 ＊＊)
     'cha_skill_a_kouka': 'a', 'cha_skill_g_kouka': 'g', 'cha_skill_hp_kaihuku': 'hp', 'cha_skill_hp_kaihuku_mozi': 'hpm',
     'cha_skill_ki_kaihuku': 'ki', 'cha_skill_ki_kaihuku_mozi': 'kim', 'cha_skill_hatudouritu': 'rate',
@@ -66,8 +76,10 @@ def add(world, h):
                     'old': ids(r['cha_old_skill_no']), 'share': r['cha_skill_share'] == 'TRUE', 'fx': fx}
     for eid, e in world['enemies'].items():  # SP reward = the enemy's max MP (docs/battle-rules.md §6)
         e['sp'] = int(h['enemies_db'][int(eid)]['maxmp'])
+    boss = [i for i, e in enumerate(h['enemies_db']) if e and e['element_ranks']['data'][22] == 1]
     # skill cards (Items element 32, base_damage = the skill): using one adds the skill to the 追加技能 list
     items = D('items')
     cards = {i: items[i]['base_damage'] for i in range(1, len(items))
              if items[i] and 32 in items[i]['element_set'] and items[i]['base_damage'] in out}
-    world['growth'] = {'skills': out, 'cards': cards, 'typical': {a: [list(x) for x in t] for a, t in TYPICAL.items()}}
+    world['growth'] = {'skills': out, 'cards': cards, 'typical': {a: [list(x) for x in t] for a, t in TYPICAL.items()},
+                       'first': FIRST, 'boss': boss}

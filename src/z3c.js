@@ -6,18 +6,18 @@
 // The scenes of chapters 3 and 4 (z1field 1230-1325, 1431-1434, 1581) and the story nodes both use are here; src/z3d.js
 // imports them. Also here: CE45 (the Super Saiyan transformation pictures) and set_battle_event (a battle film with no
 // input, src/anime.js Duel).
-import { audio, img, loadImages, view } from './core.js?v=20261102-2225';
-import { addScenes, addNodes } from './cutscene.js?v=20261102-2225';
-import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261102-2225';
-import { makeMember, applyLevel } from './party.js?v=20261102-2225';
-import { ensure } from './growth.js?v=20261102-2225';
-import { superSaiyan } from './supersaiyan.js?v=20261102-2225';
-import { newHand } from './battle.js?v=20261102-2225';
-import { Duel, SW, SH, ANIME_IMAGES, addMoves } from './anime.js?v=20261102-2225';
-import { drawAnim, animFrames } from './vxanim.js?v=20261102-2225'; // (map 36: animation 4 on the landed pod)
+import { audio, img, loadImages, view } from './core.js?v=20261102-2311';
+import { addScenes, addNodes } from './cutscene.js?v=20261102-2311';
+import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261102-2311';
+import { makeMember, applyLevel } from './party.js?v=20261102-2311';
+import { ensure } from './growth.js?v=20261102-2311';
+import { superSaiyan } from './supersaiyan.js?v=20261102-2311';
+import { newHand } from './battle.js?v=20261102-2311';
+import { Duel, SW, SH, ANIME_IMAGES, addMoves } from './anime.js?v=20261102-2311';
+import { drawAnim, animFrames } from './vxanim.js?v=20261102-2311'; // (map 36: animation 4 on the landed pod)
 import {
   registerZ3, nextZ3, Z3, begin, play, fight, toField, party, addMember, member, heal, card, moveTo,
-} from './z3.js?v=20261102-2225';
+} from './z3.js?v=20261102-2311';
 
 const MAPS = ['36'];
 

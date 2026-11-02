@@ -11,8 +11,8 @@
 // The goods and prizes follow the part of the story (variable 44, set by chk_card: see eraOf): the shop sells
 // Scene_Shop's z1～zG_cardlist (world.csq.shop) up to that part, the lottery and concentration draw from
 // create_get_card's card_id_z1～zg (world.csq.lot). Uses the card screen's overlay and helpers (src/items.js).
-import { img, audio, rand, toast, sleep } from './core.js?v=20261102-2225';
-import { cardState, gainCard, lose, maxOf, trim, iconCanvas, overlay, h, button, openShop } from './items.js?v=20261102-2225';
+import { img, audio, rand, toast, sleep } from './core.js?v=20261102-2311';
+import { cardState, gainCard, lose, maxOf, trim, iconCanvas, overlay, h, button, openShop } from './items.js?v=20261102-2311';
 
 const MG = 'Graphics/Pictures/カードミニゲーム素材1.png'; // (0,0,96,120) the lottery's link, (0,120,64,96) a card back
 const CARDS = 'Graphics/Pictures/カード関係.PNG'; // (64,96,64,96) the Z1 card frame (back side)

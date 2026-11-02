@@ -13,7 +13,7 @@ import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261102-1750';
 import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261102-1750';
 import { addMoves, ANIME_IMAGES } from './anime.js?v=20261102-1750';
 import { makeMember, applyLevel } from './party.js?v=20261102-1750';
-import { superSaiyan, syncSuperSaiyan, afterBattle } from './supersaiyan.js?v=20261102-1750';
+import { superSaiyan, syncSuperSaiyan, afterBattle, offHooks } from './supersaiyan.js?v=20261102-1750';
 import { applyEra } from './era.js?v=20261102-1750';
 import { newHand } from './battle.js?v=20261102-1750';
 import { cardSquare } from './cardgames.js?v=20261102-1750';
@@ -297,8 +297,7 @@ function ss5(on) {
     m.special = c.ss2.special;
   } else ssOff5();
 }
-function ssOff5() {
-  const s = G.state;
+function ssOff5(world = G.world, s = G.state) {
   if (!s.ss || !s.ss[5]) return;
   s.ss[5] = false;
   const m = s.party.find((x) => x.id === 18) || (s.bench || {})[18];
@@ -307,8 +306,9 @@ function ssOff5() {
     delete m.sprite;
     delete m.special;
   }
-  superSaiyan(G.world, s, 2, false);
+  superSaiyan(world, s, 2, false);
 }
+offHooks[5] = ssOff5; // (off_super_saiyazin_all after a battle, src/supersaiyan.js)
 let me = null; // the ME playing (249: ZSSD 戦いの終わり)
 function stopMe() { if (me) { try { me.stop(); } catch (e) { /* ended */ } me = null; } }
 addNodes({
@@ -332,9 +332,7 @@ addNodes({
     refresh(ctx);
   },
   z4fSsAll: async (node, { ctx }) => { // off_super_saiyazin_all: back to normal whom 作戰 says so (5 first)
-    const s = G.state;
-    if (s.ss && s.ss[5] && s.tactics && s.tactics[18] && s.tactics[18].ssOff) ssOff5();
-    afterBattle(G.world, s);
+    afterBattle(G.world, G.state);
     refresh(ctx);
   },
   z4fStore: async () => { G.state.flags.z4fTmp = snapshot(); }, // CE166 現在パーティーをtempへ格納

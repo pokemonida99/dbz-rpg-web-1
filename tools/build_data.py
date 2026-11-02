@@ -208,6 +208,8 @@ def script(lst):
                 out.append({'shake': True})  # 画面揺らすフラグ: the message window shakes
             elif code == 355 and p[0].startswith('$eve.window_shake_off'):
                 out.append({'shake': False})
+            elif code in (355, 655) and p[0].replace(' ', '') in ('on_off_oozaru(5,1)', 'off_oozaru5'):
+                out.append({'x': 'tacApeOff'})  # #ゴハン大猿OFF: the story turns him back, whatever 作戰 says (src/cards_a.js)
             elif code == 655 and p[0].startswith('for x in 0..'):  # a sound repeated in a loop (スカウター音 ×12)
                 loop = [c['parameters'][0] for c in lst[i + 1:i + 4] if c['code'] == 655]
                 se = next((re.search(r'"([^"]+)"\)', t) for t in loop if 'se_play' in t), None)

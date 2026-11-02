@@ -9,8 +9,9 @@
 //   79 老鼠 (Scene_Db_Status window 13, all.rb 43585): the 自由 slot set by 假面男 goes back to 自由
 // The Great Ape (on_off_oozaru 5, all.rb 13109): 悟飯 forgets 魔閃光 / 大猿変身 and fights as the 192×192 ape — special
 // moves ×2 power (once used), damage dealt ×1.5, taken ×0.7, 必 cards count as his school, more recovery, no S-combos;
-// a tail-cutting move turns him back. The original keeps him an ape after the battle unless 作戰 says otherwise (and
-// story events turn him back); this version has no such 作戰 option, so he is himself again when the battle ends.
+// a tail-cutting move turns him back. After the battle he stays an ape if his 作戰「變身狀態」is 保持 (off_oozaru_all
+// all.rb 13089, $cha_tactics[3][5]; by default 不保持: back), and the story turns him back after the Z1 bosses and Willow
+// (Map007 #ゴハン大猿OFF: the tacApeOff node, tools/build_data.py), as does CE160 in the 時之間 (apeOffAll).
 import { audio, say, choose, sleep, toast, rand } from './core.js?v=20261102-1750';
 import { fieldCards, cardState } from './items.js?v=20261102-1750';
 import * as battle from './battle.js?v=20261102-1750';
@@ -19,6 +20,8 @@ import * as field from './field.js?v=20261102-1750';
 import { has, ensure, useSkillCard, revive } from './growth.js?v=20261102-1750';
 import { pickMember, tally } from './partymenu.js?v=20261102-1750';
 import { registerZ3, party } from './z3.js?v=20261102-1750';
+import { addNodes } from './cutscene.js?v=20261102-1750';
+import { ssOff } from './supersaiyan.js?v=20261102-1750';
 
 const SE_ERR = 'Z3 エラー';
 const APE = { sprite: 'Graphics/Pictures/Z1_戦闘_ゴハン(大猿)96×96.png', special: 'Graphics/Pictures/Z1_戦闘_必殺技_ゴハン(大猿)96×96.png', size: 192 };
@@ -192,7 +195,10 @@ battleHooks.recover = (b) => {
     m.ki = Math.min(m.maxki, m.ki + ki);
   }
 };
-battleHooks.end = (b) => { for (const m of b.game.state.party) apeOff(b.game.state, m); };
+battleHooks.end = (b) => { const s = b.game.state; if (ssOff(s, 5)) for (const m of s.party) apeOff(s, m); };
+// CE160 大猿全解除 / #ゴハン大猿OFF: back to himself, wherever he is (the 時之間 calls it going in and out, src/timeroom.js)
+export function apeOffAll(s) { for (const m of [...s.party, ...Object.values(s.bench || {})]) apeOff(s, m); }
+addNodes({ tacApeOff: async (node, { s }) => apeOffAll(s) });
 
 // chk_doutyou_run (all.rb 8074): 阿吽の呼吸 lowers the stars a combo needs; the Great Ape joins no combo (52131)
 comboHooks.less = (b, m) => { const d = DOUTYOU.find(([id]) => has(b.world, m, id)); return d ? [d[1], d[2]] : [0, 0]; };

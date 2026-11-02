@@ -304,7 +304,9 @@ def add(world, h, z3, tr):
     faces = {f'zga:{k}': list(v) for k, v in FACES.items()}
     faces.update({f'zga2:{k}': list(v) for k, v in FACES2.items()})
     faces.update({f'zgaF:{k}': list(v) for k, v in FUTURE_FACES.items()})
-    # (NO_FACE: 'zga:？' / 'zga:男' are keys with no face behind them, so the box shows none — not the opening's ？)
+    # (NO_FACE: 'zga:男' has no face behind it, so the box shows none; 'zga:？' — someone not named yet — the black face of
+    # an unknown person, not the opening's ？)
+    faces['zga:？'] = ['ui/face_unknown.png', 0]
     world['faces'].update(faces)
 
     # ---------- the maps, their squares and encounters ----------

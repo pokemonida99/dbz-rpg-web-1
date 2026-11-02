@@ -225,7 +225,8 @@ export async function playScenes(list, s, more = {}) {
   const ui = overlay();
   await loadImages(pics());
   const stage = new Stage(ui);
-  const faces = { ...(world.opening && world.opening.faces), ...world.faces, ...more.faces };
+  const { '？': _raditz, ...openingFaces } = (world.opening && world.opening.faces) || {}; // the opening's ？ is Raditz (src/opening.js): only there
+  const faces = { ...openingFaces, ...world.faces, ...more.faces };
   const sw = s.sw || (s.sw = {});
   const v = s.var || (s.var = {});
   const ctx = { s, partyc: s.party.map((m) => m.id), faces };

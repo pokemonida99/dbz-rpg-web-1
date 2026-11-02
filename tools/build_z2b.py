@@ -166,7 +166,7 @@ def add(world, h):
                                                 ('弗利萨', 23), ('达列斯', 29), ('史拉格', 30)]})
     faces.update({s2t(n): [FE, r] for n, r in [('那美克星人', 1), ('青年', 7)]})
     faces.update({s2t('丹迪'): [FC, 14, 1], s2t('界王'): [FC, 25, 1], s2t('波仑加'): [FC, 31, 1]})
-    faces['？'] = None  # the stranger not yet named (Bardock, Turles, Slug): no face (the opening's ？ is Raditz's shadow)
+    faces['？'] = ['ui/face_unknown.png', 0]  # the stranger not yet named (Bardock, Turles, Slug): a black face, unknown (the opening's ？ is Raditz's shadow)
 
     def say_names(nodes, acc):
         for n in nodes:

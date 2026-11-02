@@ -1,0 +1,12 @@
+{
+  "name": "龍珠Z RPG 重製版",
+  "short_name": "龍珠Z 重製版",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    { "src": "assets/icons/goku_192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icons/goku_512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

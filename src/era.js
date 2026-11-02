@@ -2,7 +2,7 @@
 // $btl_top_file_name ("Z1_", "Z2_" … from variable 40), so from Z2 on the party's faces, battle sheets and card icons
 // are the Z2_ pictures. world.era[variable 40] = { Z1 path: its version for that part } (tools/build_z2a.py); core.js
 // img() looks paths up there, so every screen that draws those pictures follows without knowing about it.
-import { setImageAlias, loadImages } from './core.js?v=20261102-1141';
+import { setImageAlias, loadImages } from './core.js?v=20261102-1344';
 
 export function applyEra(game) {
   const v = ((game.state && game.state.var) || {})[40] || 0;

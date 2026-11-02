@@ -6,15 +6,15 @@
 //   map 39 Cooler's ship (1316 → battle 1318 → 1319 Super Vegeta → battle 1322 → 1323 his last form → battle 1325) →
 //          第五章 (src/z3e.js, variable 41 = 1326); Lunch (1581); the seven balls (1431: Shenron and his wishes).
 // The scenes and story nodes shared with chapter 3 are in src/z3c.js.
-import { audio } from './core.js?v=20261102-1141';
-import { addScenes, playScenes } from './cutscene.js?v=20261102-1141';
-import { SCROLL_X, SCENE_Y } from './opening.js?v=20261102-1141';
-import { superSaiyan } from './supersaiyan.js?v=20261102-1141';
-import { ryuhaPairTraining, z3GravityTraining } from './z3train.js?v=20261102-1141';
-import { bg, face, out, screenPic, use, takeAgain, devState, BG, P3, E3, F3, CARD } from './z3c.js?v=20261102-1141';
+import { audio } from './core.js?v=20261102-1344';
+import { addScenes, playScenes } from './cutscene.js?v=20261102-1344';
+import { SCROLL_X, SCENE_Y } from './opening.js?v=20261102-1344';
+import { superSaiyan } from './supersaiyan.js?v=20261102-1344';
+import { ryuhaPairTraining, z3GravityTraining } from './z3train.js?v=20261102-1344';
+import { bg, face, out, screenPic, use, takeAgain, devState, BG, P3, E3, F3, CARD } from './z3c.js?v=20261102-1344';
 import {
   registerZ3, nextZ3, Z3, begin, play, fight, toField, party, heal, card, moveTo,
-} from './z3.js?v=20261102-1141';
+} from './z3.js?v=20261102-1344';
 
 const MAPS = ['37', '38', '39'];
 const C = (game) => Z3(game).z3d;

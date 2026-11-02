@@ -491,7 +491,7 @@ export class Battle {
     this.hand.forEach((cd, k) => {
       const owner = this.phase === 'plan' ? this.owner(k) : null; // the member who picked this card
       const x = Math.round(x0 + k * step);
-      const special = m && owner == null && (ownSchool(cd, m) || cd.s === 0) && m.skills.length;
+      const special = m && owner == null && (ownSchool(cd, m) || cd.s === 0 || growth.ext('school', false, this, m, cd)) && m.skills.length; // (絶望への反抗: src/skills_c.js)
       const picked = this.pending && this.pending.card === k;
       const y = L.cardsY + (picked ? -10 : special ? -4 : 0);
       if (owner != null) c.globalAlpha = 0.45;
@@ -692,7 +692,7 @@ export class Battle {
   onCard(k) {
     const m = this.party[this.cur];
     const cd = this.hand[k];
-    if (cd.s === KI_CARD || (cd.s === 0 && growth.ext('pick', false, this, m, cd))) cd.s = m.school; // 「氣」; 「必」 for the favourite character (src/cards_b.js)
+    if (cd.s === KI_CARD || (cd.s === 0 && growth.ext('pick', false, this, m, cd)) || growth.ext('school', false, this, m, cd)) cd.s = m.school; // 「氣」; 「必」 for the favourite character (src/cards_b.js); 絶望への反抗 (src/skills_c.js)
     this.pending = { card: k, skill: null };
     audio.se(SE_OK);
     const alive = this.foes.filter((f) => f.hp > 0);
@@ -767,6 +767,7 @@ export class Battle {
       if (k != null && this.hand[k].s === KI_CARD) this.hand[k].s = m.school; // 「氣」
       if (k == null) k = free.find((x) => this.hand[x].s === 0);
       if (k != null && this.hand[k].s === 0 && growth.ext('pick', false, this, m, this.hand[k])) this.hand[k].s = m.school; // (喜歡的角色)
+      if (k == null && free.length && growth.ext('school', false, this, m, this.hand[free[0]])) { k = free[0]; this.hand[k].s = m.school; } // 絶望への反抗 (all.rb 49625)
       let skill = null;
       if (k != null) skill = autoSkill(this.world, this.game.state, m); // 作戰 (src/partymenu.js)
       else k = free[rand(free.length)];

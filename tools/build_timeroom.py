@@ -260,6 +260,8 @@ def add(world, h, z3):
     build_zg_b.add(world, h, z3, tr)
     import build_zg_c  # noqa: E402
     build_zg_c.add(world, h, z3, tr)
+    import build_zg_recap  # noqa: E402  (概況 of the stories above: src/zg_recap.js)
+    build_zg_recap.add(world, h, z3, tr)
 
     world['fieldPictures'] = sorted(set(world['fieldPictures']) | {f'Graphics/Characters/{n}.png' for n in sheets})
     world['extraBgm'] = sorted(set(world['extraBgm']) | {'DB3 イベント06', 'FCJ1 イベント1'})

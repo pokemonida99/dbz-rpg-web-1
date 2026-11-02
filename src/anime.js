@@ -93,6 +93,7 @@ const MOVES = {
 };
 // later chapters add the films of their moves (src/z2b.js: Vegeta, the Ginyu Force, Frieza …)
 export function addMoves(more) { Object.assign(MOVES, more); }
+export const moveFilm = (id) => MOVES[id]; // (src/combo-anime.js: a combo without a film of its own plays its members' moves)
 // 拡散エネルギー波 hits every enemy: the battle plays one film per target, and in the original only the first one
 // has the whole charge — the rest are just the beam falling on them. A film started right after the last one
 // ended belongs to the same attack.

@@ -54,6 +54,7 @@ import './zg_bojack.js?v=20261102-1750';
 import './zg_a.js?v=20261102-1750';
 import './zg_b.js?v=20261102-1750';
 import './zg_c.js?v=20261102-1750';
+import './zg_recap.js?v=20261102-1750'; // ZG 的概況 (前情提要: src/fieldmenu.js)
 
 // testing in a hidden browser pane (no animation frames there): ?timer drives every frame with timers instead
 if (new URLSearchParams(location.search).has('timer')) window.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16);

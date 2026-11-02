@@ -142,9 +142,14 @@ export function openFieldEntry(key, g) {
 // ---------- 概況 (Scene_Story_So_Far) ----------
 // Z2 on: the 概況 is a story scene of its own (game.storyScenes, src/z2a.js) for the numbers in world.story.soFarScenes
 const recapScene = (g) => g.storyScenes && (g.world.story.soFarScenes || []).includes((g.state.var || {})[43] || 0);
-export function hasRecap(g) { return !!g.world.story.soFar[(g.state.var || {})[43] || 0] || recapScene(g); }
+// the later parts' own (src/zg_recap.js: from variable 43 = 111 on): addRecap({ has(g), play(g) → Promise })
+const recaps = [];
+export const addRecap = (r) => { recaps.push(r); };
+const other = (g) => recaps.find((r) => r.has(g));
+export function hasRecap(g) { return !!g.world.story.soFar[(g.state.var || {})[43] || 0] || recapScene(g) || !!other(g); }
 export function storySoFar(g) {
   if (recapScene(g)) return g.storyScenes(g).then(() => { if (g.field) g.field.enter(); });
+  if (other(g)) return other(g).play(g).then(() => { if (g.field) g.field.enter(); });
   const text = g.world.story.soFar[(g.state.var || {})[43] || 0];
   if (!text) { audio.se(SE_ERR); return Promise.resolve(); }
   audio.playBgm('Z1 あらすじ');

@@ -29,6 +29,12 @@ import './z3c.js?v=20261102-0749';
 import './z3d.js?v=20261102-0749';
 import './z3e.js?v=20261102-0749';
 import './z3train.js?v=20261102-0749'; // the training mini-games (its ?dev=z3pair / z3gravity)
+import './z4a.js?v=20261102-0749'; // Z4 (セル編): its chapters register in src/z3.js too
+import './z4b.js?v=20261102-0749';
+import './z4c.js?v=20261102-0749';
+import './z4d.js?v=20261102-0749';
+import './z4e.js?v=20261102-0749';
+import './z4f.js?v=20261102-0749';
 
 // testing in a hidden browser pane (no animation frames there): ?timer drives every frame with timers instead
 if (new URLSearchParams(location.search).has('timer')) window.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16);
@@ -385,7 +391,7 @@ async function boot() {
   if (dev && dev.startsWith('ch6')) { title.hidden = true; devChapter6(game, dev); requestAnimationFrame(frame); return; }
   if (dev && ['z2ginyu', 'z2frieza', 'z2last', 'z2turles'].includes(dev)) { title.hidden = true; devZ2b(game, dev); requestAnimationFrame(frame); return; } // Z2 second half
   if (dev && dev.startsWith('willow')) { title.hidden = true; devWillow(game, dev); requestAnimationFrame(frame); return; } // ?dev=willow / willow51 / willowboss
-  if (dev && dev.startsWith('z3')) { title.hidden = true; if (devZ3(game, dev)) { requestAnimationFrame(frame); return; } title.hidden = false; } // Z3 (src/z3*.js)
+  if (dev && (dev.startsWith('z3') || dev.startsWith('z4'))) { title.hidden = true; if (devZ3(game, dev)) { requestAnimationFrame(frame); return; } title.hidden = false; } // Z3 (src/z3*.js)
   if (dev && dev.startsWith('z2')) { title.hidden = true; devZ2a(game, dev); requestAnimationFrame(frame); return; } // ?dev=z2 / z2b / z2c / z2d
   if (!options.skipOp) await playOpening(); // the title animation, like the original plays before its title screen
   showTitle();

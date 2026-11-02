@@ -33,8 +33,16 @@ BATTLES = {
     1283: [108, 105, 110], 1286: [105, 110, 108], 1289: [110, 108, 105], 1296: [133, 108, 105, 112, 115, 118],
     1318: [116, 119, 113], 1322: [120], 1325: [121],
     1342: [123, 122], 1363: [125, 124], 1372: [126], 1390: [127],
+    # Z4 (セル編, Map007 event 7: docs/z4-plan.md)
+    2015: [208, 209, 210, 211], 2123: [127], 2153: [127], 2188: [128], 2256: [128],
+    2726: [136], 2736: [136, 136, 136], 2765: [213, 213], 2782: [213, 214, 213],
+    2832: [235, 141, 236], 2842: [234, 140, 234], 2852: [237, 138, 237], 2871: [139],
+    2463: [129], 2464: [130, 130, 130, 130, 129, 130, 130, 130, 130], 2481: [129],
+    2561: [130, 130, 130, 130, 135, 130, 130, 130, 130],
 }
-Z3_ENEMIES = list(range(101, 141)) + list(range(177, 189))
+# the Z3 and Z4 enemies (the story battles above and the field encounters of 140_Field_Main.rb for maps 33-48, 78-93)
+Z3_ENEMIES = sorted(set(range(101, 141)) | set(range(177, 189)) | {148, 174, 175, 176, 189, 193, 207, 212}
+                    | set(range(197, 207)) | set(range(208, 215)) | set(range(234, 238)) | {135})
 
 # who speaks with which face (the remake's dialogue box): Z3_顔味方 row = actor id - 3; the chapters add the others
 # (Z3_顔イベント / 顔カード column 2 = Z3) to world.z3.faces in their own builders
@@ -255,6 +263,12 @@ def add(world, h):
     def page(v):
         return [{'v41': v}] + nodes_of(raw[v])
 
+    # Z4 (Map007 event 7 「Z4_セル編」): the same tools for its pages
+    raw4 = {p['condition']['variable_value']: p['list'] for p in D('map007')['events']['7']['pages'] if p['condition']['variable_valid']}
+
+    def page4(v):
+        return [{'v41': v}] + nodes_of(raw4[v])
+
     def split_battle(ns):
         """a page whose last top-level z1field is a battle_process: [before it, after it]"""
         k = max(i for i, n in enumerate(ns) if n.get('z1field'))
@@ -263,7 +277,7 @@ def add(world, h):
     # the map events' graphics by tile (get_event_id_and_graphic: the highest event id there, its first page), for the
     # Z3 battle backgrounds of set_battle_map (src/z3.js z3Backdrop)
     tile_events = {}
-    for mid in (33, 34, 36, 37, 38, 39, 40, 78, 79, 80, 81, 82):
+    for mid in (33, 34, 36, 37, 38, 39, 40, 78, 79, 80, 81, 82, 42, 43, 44, 46, 48, 84, 90, 93):
         ev = D('map%03d' % mid)['events']
         best = {}
         for k, e in ev.items():
@@ -291,7 +305,7 @@ def add(world, h):
     world['fieldPictures'] = sorted(set(world['fieldPictures']) | {v for v in alias.values() if v.startswith('Graphics/')} | {P3, E3, F3, CARD})
 
     z3 = {'page': page, 'split_battle': split_battle, 'nodes_of': nodes_of, 'raw': raw, 'file': file, 'faces': faces,
-          'P3': P3, 'E3': E3, 'F3': F3, 'CARD': CARD}
+          'P3': P3, 'E3': E3, 'F3': F3, 'CARD': CARD, 'page4': page4, 'raw4': raw4}
     # ---------- the chapters (each in its own file: one branch each) ----------
     import build_z3a  # noqa: E402  (Z3 第一章 集龍珠！: maps 33, 34, 35)
     build_z3a.add(world, h, z3)
@@ -305,3 +319,17 @@ def add(world, h):
     build_z3e.add(world, h, z3)
     import build_z3train  # noqa: E402  (Z3 的修行小遊戲: 流派一致修行・Z3 重力修行)
     build_z3train.add(world, h, z3)
+    # ---------- Z4 (セル編): the same shared part (world.z3), its chapters in their own files (docs/z4-plan.md) ----------
+    world['z3']['chapters'] += ['z4a', 'z4b', 'z4c', 'z4d', 'z4e', 'z4f']
+    import build_z4a  # noqa: E402  (Z4 第一章 賽魯誕生的秘密: maps 42, 44, 45)
+    build_z4a.add(world, h, z3)
+    import build_z4b  # noqa: E402  (Z4 第二章 悄悄接近的賽魯: map 43)
+    build_z4b.add(world, h, z3)
+    import build_z4c  # noqa: E402  (Z4 第三章 新生貝吉塔父子出擊: maps 46, 44)
+    build_z4c.add(world, h, z3)
+    import build_z4d  # noqa: E402  (Z4 第四章 金屬古拉: maps 84, 90)
+    build_z4d.add(world, h, z3)
+    import build_z4e  # noqa: E402  (Z4 第五章 人造人間 13 號: maps 44, 93)
+    build_z4e.add(world, h, z3)
+    import build_z4f  # noqa: E402  (Z4 第六章 賽魯遊戲: maps 48, 49)
+    build_z4f.add(world, h, z3)

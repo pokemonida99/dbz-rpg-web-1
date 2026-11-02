@@ -20,7 +20,7 @@ import { applyEra } from './era.js?v=20261102-0749';
 import { newHand } from './battle.js?v=20261102-0749';
 import { cardSquare } from './cardgames.js?v=20261102-0749';
 import { spotTally } from './fieldmenu.js?v=20261102-0749';
-import { registerZ3, Z3, begin, fight, toField, party, addMember, member, heal, card, moveTo, setParty } from './z3.js?v=20261102-0749';
+import { registerZ3, Z3, begin, fight, toField, party, addMember, member, heal, card, moveTo, setParty, hasChapter, nextZ3 } from './z3.js?v=20261102-0749';
 
 const MAPS = ['40'];
 const C = (game) => Z3(game).z3e;
@@ -337,6 +337,7 @@ async function ending(game) {
   game.busy = false;
   await card(c.end, 2400);
   stopMe();
+  if (hasChapter('z4a')) return nextZ3(game, 'z3e'); // Z4 (セル編), once its first chapter is there
   game.showTitle(c.end, c.unlocks);
 }
 

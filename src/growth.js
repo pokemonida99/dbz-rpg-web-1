@@ -58,6 +58,7 @@ const F = {
   koutetsu: [154, 153, 152, 151, 150, 149, 50, 49, 48], // 鋼鉄の拳
   kanashi: [39, 40, 41, 131, 132, 133, 134, 135, 136], // かなしばり
   regen: [10, 12, 35], // 再生能力 / 魔族の力: +5 % HP a turn
+  soul: [100, 99, 98, 97, 96, 95, 7, 6, 5], // サイヤ人魂 (超サイヤ人's サイヤ人の血: all.rb 14589 / 15903)
   seifuku: [546, 545, 544, 543, 542, 541, 540, 539, 538], // 征服
 };
 const BLOOD_SP = { 2: 1.1, 3: 1.15, 4: 1.2, 89: 1.25, 90: 1.3, 91: 1.35, 92: 1.4, 93: 1.45, 94: 1.5 }; // get_sp_add
@@ -107,14 +108,13 @@ export function setTypical(w, s, m, slot, id) {
   seen(s, id);
 }
 // set_typical_skill_first (all.rb 3312, at a new game / continue): a member whose first 固有 slot is empty gets the
-// listed ones (巴達克; not in his Z1 story, variable 43 = 101). Here it runs at battle start / end, once a member
-// (firstTyp), into the empty slots (page 6131 may have set slot 0 before his first battle). CE34 後から追加設定:
+// listed ones (琪琪, 龜仙人, 貝吉塔, 特蘭克斯, 16～18 號, 未來悟飯, 多瑪一夥, 巴達克 — him not in his Z1 story, variable
+// 43 = 101). Here it runs at battle start / end, once a member (firstTyp), into the empty slots (page 6131 may have set slot 0 before his first battle). CE34 後から追加設定:
 // 巴達克's 最終決戦改 once Frieza is beaten in ZG (switch 598) or 外伝 is cleared (586), for saves from before 6131 set it.
 function typicalFix(w, s, m) {
-  if ((s.var || {})[43] === 101) return;
   const first = (w.growth.first || {})[m.id];
-  if (first && !m.firstTyp) {
-    first.forEach((id, slot) => { if (!m.typ[slot]) setTypical(w, s, m, slot, id); });
+  if (first && !m.firstTyp && !((m.id === 16 || m.id === 32) && (s.var || {})[43] === 101)) {
+    first.forEach((id, slot) => { if (id && !m.typ[slot]) setTypical(w, s, m, slot, id); });
     m.firstTyp = 1;
   }
   if ((m.id === 16 || m.id === 32) && s.sw && (s.sw[598] || s.sw[586]) && m.typ[0] !== 670) setTypical(w, s, m, 0, 670);
@@ -173,11 +173,13 @@ const mates = (b, m) => b.party.filter((x, i) => x !== m && !x.ko && b.plans && 
 const kizunaMates = (b, m) => mates(b, m).filter((x) => F.kizuna.some((id) => has(b.world, x, id))).length;
 const dying = (x) => (x.hp * 100) / x.maxhp < HINSHI;
 
-// set_damage_add(add = 0): damage dealt — 鋼鉄の拳, Z戦士の絆, 激怒, 最終決戦 / 最終決戦改 (a boss, ×1.25 each),
+// set_damage_add(add = 0): damage dealt — サイヤ人魂, 鋼鉄の拳, Z戦士の絆, 激怒, 最終決戦 / 最終決戦改 (a boss, ×1.25 each),
 // 征服 (a normal enemy), 必殺の一撃 (special moves)
 export function dealt(b, m, skill, d, ctx = {}) {
   const w = b.world;
   let x = d;
+  const so = best(w, m, F.soul);
+  if (so) x *= num(so.fx.a);
   const kt = best(w, m, F.koutetsu);
   if (kt) x *= num(kt.fx.a);
   const kz = best(w, m, F.kizuna);
@@ -202,10 +204,12 @@ function bossRate(b, m, foe, x, k) {
   }
   return x;
 }
-// set_damage_add(add = 1): damage taken — Z戦士の絆, 激怒, 最終決戦 / 最終決戦改 (×0.85 each), 征服
+// set_damage_add(add = 1): damage taken — サイヤ人魂, Z戦士の絆, 激怒, 最終決戦 / 最終決戦改 (×0.85 each), 征服
 export function taken(b, m, d, ctx = {}) {
   const w = b.world;
   let x = d;
+  const so = best(w, m, F.soul);
+  if (so) x *= num(so.fx.g);
   const kz = best(w, m, F.kizuna);
   const n = kz ? kizunaMates(b, m) : 0;
   if (n) x *= 1 - (1 - num(kz.fx.g)) * n;

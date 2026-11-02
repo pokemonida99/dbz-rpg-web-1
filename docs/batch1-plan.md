@@ -2,6 +2,8 @@
 
 > **2026-11-02 已完成並合併到 main**：tac（`docs/tac` 見 `docs/cards-a.md`、README 隊伍與作戰）、pas（`docs/pas.md`）、etf（`docs/zg-b.md`）、ovw（`docs/zg-recap.md`）。「獲得經驗值」原版是註解掉的，不做。同時修了 Z1 第六章以後 224 隻敵人沒有 SP 的問題（`tools/build_data.py` 最後設定）。以下是開工時的說明。
 
+> **之後補上**：敵人每回合回復 HP 照原版 `*PARAM_HPRECOVER`（53 隻，`tools/build_data.py` 最後設定）；賽亞人魂（5～7、95～100）攻擊 ×1.05～1.25、受到傷害 ×0.95～0.75（`src/growth.js`）；其他 18 個角色的固有技能升級表與起始固有技能（`tools/build_growth.py` 從原版 `get_typical_skill`／`set_typical_skill_first` 抽出，到 Lv99，悟空的「地球育ちのサイヤ人」（開關 1312）不收）。這些角色新學到的技能裡，王子的驕傲、挑釁、慈愛之心、不服輸、應援、賽亞人的團結、向著未來的希望、面向絕望的反抗、P能量爐的效果還沒做。
+
 原則同前：**總之參照原版**，台詞全文保留（`tools/s2t.py` 簡轉繁），不確定先查原版（`research/all.rb`、`game/Data`）再討論手機版怎麼優化；跟使用者說話用繁體中文。
 先讀 `docs/HANDOFF.md` 的開發流程。從 `main` 開自己的 worktree 分支，**不要合併 main、不要 push**；做完在自己分支提交，回報分支名與測試結果。
 `data/world.json` 衝突由主 session 合併時重建；worktree 裡的 `game`、`research` 要從主資料夾重新連結；不要用不帶名字的 `git stash`。

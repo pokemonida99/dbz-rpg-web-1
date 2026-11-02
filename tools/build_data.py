@@ -3,7 +3,8 @@
 
 Text is converted to Traditional Chinese here, at build time (tools/s2t.py).
 """
-import json, os, re, sys
+import json
+import re, os, re, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from s2t import s2t  # noqa: E402
 
@@ -328,5 +329,11 @@ build_cards_ext.add(world, globals())
 for eid, e in world['enemies'].items():
     if 'sp' not in e and int(eid) < len(enemies_db) and enemies_db[int(eid)]:
         e['sp'] = int(enemies_db[int(eid)]['maxmp'])
+# *PARAM_HPRECOVER[n]: n % of the max HP back at every turn's end (get_add_ene_pra, all.rb 21180 / 47470; src/battle.js regen)
+for eid, e in world['enemies'].items():
+    edb = enemies_db[int(eid)] if int(eid) < len(enemies_db) else None
+    rec = edb and re.search(r'\*PARAM_HPRECOVER\[(\d+)%?\]', edb.get('note') or '', re.I)
+    if rec and int(rec.group(1)) > 0:
+        e['regen'] = int(rec.group(1))
 json.dump(world, open(os.path.join(root, 'data', 'world.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 print('world.json written')

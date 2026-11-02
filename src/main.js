@@ -67,6 +67,7 @@ import './sys.js?v=20261102-2311'; // 第二批 sys: 神龍的願望, the shop's
 import './viz.js?v=20261102-2311'; // the battle's skill names, the cover scene, the Great Ape's face (docs/batch2-plan.md viz)
 import './cos.js?v=20261102-2311'; // ?dev=cos…: 換裝 and the DB3 staff roll (docs/costume.md)
 import './anime_goku_gohan.js?v=20261102-2311'; // 悟空・悟飯's move films, ?dev=anga… (docs/anim-ab-plan.md anga)
+import './anime_piccolo_vegeta.js?v=20261102-2311'; // 比克・貝吉塔's Z3 move films (docs/anim-ab-plan.md anpv; after the chapters' addMoves)
 
 // testing in a hidden browser pane (no animation frames there): ?timer drives every frame with timers instead
 if (new URLSearchParams(location.search).has('timer')) window.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16);

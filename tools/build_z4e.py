@@ -47,13 +47,11 @@ def add(world, h, z3):
     TRAIN = {'label': '修行', 'effect': 'training'}
     at = lambda spots, kind: [dict(kind, x=x, y=y) for x, y in spots]
 
-    # ---------- map 44 精神と時の部屋 (shared with chapters 1 and 3: variable 121 tells who trains) ----------
-    world['maps'].setdefault('44', build_map(44))
-    pois = world['pois'].setdefault('44', [])
-    for p in [dict(SHOP, x=11, y=8), dict(INN, x=4, y=4)]:  # `when 44`: カード (11,8), 宿 (4,4)
-        if not any(q['x'] == p['x'] and q['y'] == p['y'] for q in pois):
-            pois.append(p)
-    pois.append({'x': 15, 'y': 4, 'label': '開始修行', 'chapter': KEY, 'kind': 'train', 'when': ['var', 121, 3]})  # 修行開始 → 2951
+    # ---------- map 44 精神と時の部屋: chapter 1 (tools/build_z4a.py) defines it for chapters 1, 3 and 5; until that is
+    # merged, the same here (setdefault): `when 44` カード (11,8), 宿 (4,4), 修行開始 (15,4) → the current chapter's spot()
+    world['maps'].setdefault('44', build_map(44, rows=14))
+    world['pois'].setdefault('44', [dict(SHOP, x=11, y=8), dict(INN, x=4, y=4),
+                                    {'x': 15, 'y': 4, 'label': '開始修行', 'chapter': 'z4', 'page': 'htc'}])
 
     # ---------- map 93 人造人間13号編 ----------
     world['maps']['93'] = build_map(93, rows=54)  # the last row holds the original's control events only

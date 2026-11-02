@@ -1,6 +1,7 @@
 # Z4 第五章 人造人間 13 號（`z4e`）
 
-程式：`src/z4e.js`；資料：`tools/build_z4e.py`（由 `tools/build_z3.py` 呼叫，寫進 `world.z3.pages['z4e…']`、`world.z3.z4e`、地圖 44・93）。
+程式：`src/z4e.js`；資料：`tools/build_z4e.py`（由 `tools/build_z3.py` 呼叫，寫進 `world.z3.pages['z4e…']`、`world.z3.z4e`、地圖 93）。
+地圖 44（精神時光屋）由第一章的 `tools/build_z4a.py` 統一定義（卡片 (11,8)、旅館 (4,4)、修行開始 (15,4) 的地點 `{chapter: 'z4', page: 'htc'}`）；這章的 `spot()` 在變數 121 = 3 時接手 `htc`。z4a 合併前，`build_z4e.py` 用 setdefault 先放一樣的定義供測試。
 
 ## README 用的章節說明
 

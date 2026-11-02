@@ -298,7 +298,7 @@ async function battleMerged(game) {
 
 function spot(game, poi) {
   G = game;
-  if (poi.kind === 'train') return training(game);
+  if (poi.page === 'htc' && game.state.var[121] === 3) return training(game); // map 44 修行開始 (tools/build_z4a.py)
   return null;
 }
 function boss(game, b) {

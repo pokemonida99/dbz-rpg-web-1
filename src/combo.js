@@ -26,6 +26,12 @@ const LEVEL_MAX = 99999, DMG_LEVEL_MAX = 999, ATK_RATIO = 5; // 139_Public.rb
 const HINT_ADD = 25; // $all_scombo_skill_level_add_num: the list reveals an unknown combo's partners past this many extra uses
 const FACES = 'Graphics/Pictures/Z1_顔味方.PNG', CARDS = 'Graphics/Pictures/カード関係.PNG';
 
+// rules other modules add (src/cards_a.js): less(b, m) → [a, g] stars a member's card may lack (阿吽の呼吸),
+// blocked(b, m) → true when the member can't join a combo (the Great Ape)
+export const comboHooks = {};
+const lessA = (b, m) => (comboHooks.less ? comboHooks.less(b, m)[0] : 0);
+const lessG = (b, m) => (comboHooks.less ? comboHooks.less(b, m)[1] : 0);
+const blocked = (b, m) => !!(comboHooks.blocked && comboHooks.blocked(b, m));
 const levels = (state) => state.skillLv || (state.skillLv = {});
 const learned = (state) => state.combos || (state.combos = []);
 const uses = (state, id) => levels(state)[id] || 0;
@@ -64,7 +70,7 @@ function fits(b, combo, newOnly) {
     if (!p || m.hp <= 0 || b.acted.has(i) || p.solo) return null;
     if (!p.skill || p.skill.id !== combo.tec[x]) return null;
     const cd = b.hand[p.card];
-    if (cd.s !== m.school || cd.a < combo.atk[x] || cd.g < combo.grd[x]) return null;
+    if (blocked(b, m) || cd.s !== m.school || cd.a < combo.atk[x] - lessA(b, m) || cd.g < combo.grd[x] - lessG(b, m)) return null;
     if (uses(state, combo.tec[x]) < combo.uses[x]) return null;
     who.push(i);
   }
@@ -160,7 +166,7 @@ export function comboHints(b, i, skillId) {
     if (x < 0 || c.tec[x] !== skillId || !learned(state).includes(c.id)) continue;
     let st = 'ok';
     if (!c.cha.every((id) => b.party.some((p) => p.id === id))) continue; // partner not in the party (result 4)
-    if (!cd || cd.s !== m.school || cd.a < c.atk[x] || cd.g < c.grd[x]) st = 'card';
+    if (!cd || blocked(b, m) || cd.s !== m.school || cd.a < c.atk[x] - lessA(b, m) || cd.g < c.grd[x] - lessG(b, m)) st = 'card';
     else {
       for (let y = 0; y < c.cha.length && st !== 'no'; y++) {
         if (y === x) continue;
@@ -169,7 +175,7 @@ export function comboHints(b, i, skillId) {
         else if (!q) st = 'wait';
         else {
           const qc = b.hand[q.card];
-          if (!q.skill || q.skill.id !== c.tec[y] || qc.s !== pm.school || qc.a < c.atk[y] || qc.g < c.grd[y]) st = 'no';
+          if (!q.skill || q.skill.id !== c.tec[y] || blocked(b, pm) || qc.s !== pm.school || qc.a < c.atk[y] - lessA(b, pm) || qc.g < c.grd[y] - lessG(b, pm)) st = 'no';
         }
       }
     }

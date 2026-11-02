@@ -11,14 +11,14 @@
 // moves ×2 power (once used), damage dealt ×1.5, taken ×0.7, 必 cards count as his school, more recovery, no S-combos;
 // a tail-cutting move turns him back. The original keeps him an ape after the battle unless 作戰 says otherwise (and
 // story events turn him back); this version has no such 作戰 option, so he is himself again when the battle ends.
-import { audio, say, choose, sleep, toast, rand } from './core.js?v=20261102-1554';
-import { fieldCards, cardState } from './items.js?v=20261102-1554';
-import * as battle from './battle.js?v=20261102-1554';
-import * as combo from './combo.js?v=20261102-1554';
-import * as field from './field.js?v=20261102-1554';
-import { has, ensure, useSkillCard, revive } from './growth.js?v=20261102-1554';
-import { pickMember, tally } from './partymenu.js?v=20261102-1554';
-import { registerZ3, party } from './z3.js?v=20261102-1554';
+import { audio, say, choose, sleep, toast, rand } from './core.js?v=20261102-1750';
+import { fieldCards, cardState } from './items.js?v=20261102-1750';
+import * as battle from './battle.js?v=20261102-1750';
+import * as combo from './combo.js?v=20261102-1750';
+import * as field from './field.js?v=20261102-1750';
+import { has, ensure, useSkillCard, revive } from './growth.js?v=20261102-1750';
+import { pickMember, tally } from './partymenu.js?v=20261102-1750';
+import { registerZ3, party } from './z3.js?v=20261102-1750';
 
 const SE_ERR = 'Z3 エラー';
 const APE = { sprite: 'Graphics/Pictures/Z1_戦闘_ゴハン(大猿)96×96.png', special: 'Graphics/Pictures/Z1_戦闘_必殺技_ゴハン(大猿)96×96.png', size: 192 };

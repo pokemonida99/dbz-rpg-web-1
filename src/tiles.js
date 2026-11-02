@@ -1,5 +1,5 @@
 // RPG Maker VX tilemap drawing (A1–A5 autotiles and B–E sheets), rendered once into layer canvases.
-import { img } from './core.js?v=20261102-1554';
+import { img } from './core.js?v=20261102-1750';
 
 const FLOOR = [
   [[2,4],[1,4],[2,3],[1,3]],[[2,0],[1,4],[2,3],[1,3]],[[2,4],[3,0],[2,3],[1,3]],[[2,0],[3,0],[2,3],[1,3]],

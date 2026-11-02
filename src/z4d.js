@@ -7,14 +7,14 @@
 //   map 90: the robot soldiers A-D (CE37, switches 571-574) → battle 2765 each; all four (switch 575) → 2769 the door
 //     opens; the door (30,14) → 2771 until then; the core (49,10) → 2781 → battle 2782 → 2791 back on Namek, Dende
 //     comes along → variable 41 = 2371 → 第五章 (nextZ3).
-import { audio } from './core.js?v=20261102-1554';
-import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261102-1554';
-import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261102-1554';
-import { addMoves } from './anime.js?v=20261102-1554';
-import { makeMember, applyLevel } from './party.js?v=20261102-1554';
-import { applyEra } from './era.js?v=20261102-1554';
-import { newHand } from './battle.js?v=20261102-1554';
-import { registerZ3, nextZ3, Z3, begin, fight, toField, party, member, heal, card, moveTo } from './z3.js?v=20261102-1554';
+import { audio } from './core.js?v=20261102-1750';
+import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261102-1750';
+import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261102-1750';
+import { addMoves } from './anime.js?v=20261102-1750';
+import { makeMember, applyLevel } from './party.js?v=20261102-1750';
+import { applyEra } from './era.js?v=20261102-1750';
+import { newHand } from './battle.js?v=20261102-1750';
+import { registerZ3, nextZ3, Z3, begin, fight, toField, party, member, heal, card, moveTo } from './z3.js?v=20261102-1750';
 
 const MAPS = ['84', '90'];
 const C = (game) => Z3(game).z4d;

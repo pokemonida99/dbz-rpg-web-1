@@ -16,7 +16,21 @@ const FILMS = {
   711: ['rokakuSouda', 23], // 狼鶴相打陣 (811, shortened)
   704: ['doubleShock', 22], // ダブル衝撃波 (804)
   730: ['kameRyu', 23], // 亀仙流かめはめは (830)
+  786: ['doubleKame', 43], 787: ['doubleKame', 43], 788: ['doubleKame', 43], 789: ['doubleKame', 43], 790: ['doubleKame', 43], // ダブルかめはめ波 (2886-2890)
 };
+// the Z3 pictures of the ダブルかめはめ波 ($btl_top_file_name Z3_: every one of them opens in Z3 or later)
+const pic = (n) => `Graphics/Pictures/${n}`;
+const AURA_Z3 = pic('Z3_戦闘_必殺技_気を溜める.png'); // back 201: two frames of 136×142
+const RAY_Z3_BIG = pic('Z3_戦闘_必殺技_エネルギー波_大.png'); // effects 359-362: 400×92, the lower half
+const RAY_Z3_HUGE = [pic('Z3_戦闘_必殺技_エネルギー波_特大.PNG'), 192, 76]; // effect 48
+const STD_CHAX = -70; // (src/anime.js)
+// combo → [the other one's charge row, fire row, his aura's x offset, his beam's offset from (340, 200)] (2886-2890)
+const DOUBLE_KAME = { 786: [2, 3, 0, [4, -126]], 787: [11, 12, -18, [-10, -122]], 788: [2, 3, -14, [-10, -122]],
+  789: [2, 3, -2, [6, -130]], 790: [5, 1, -2, [22, -134]] };
+
+// moves without a film of their own yet borrow the one they come from (as ひらめき does, src/combo.js): 超元気玉 19 →
+// 元気玉 18, 瞬間移動かめはめ波 27 → スーパーかめはめ波 26, 18 號 / 17 號's エネルギーウェイブ 198 / 208 → 193 / 203
+const BORROW = { 19: 18, 27: 26, 198: 193, 208: 203 };
 
 export class ComboDuel extends Duel {
   constructor(opts) {
@@ -25,7 +39,7 @@ export class ComboDuel extends Duel {
     this.crew = opts.crew;
     this.lead = opts.lead; // the participant whose turn started the combo (@chanum)
     // a combo without a film of its own (chain): each participant's own move (opts.tecs: actor id → skill id)
-    this.tecs = Object.fromEntries(Object.entries(opts.tecs || {}).map(([id, sk]) => [id, moveFilm(sk)]));
+    this.tecs = Object.fromEntries(Object.entries(opts.tecs || {}).map(([id, sk]) => [id, moveFilm(sk) || moveFilm(BORROW[sk]) || 'energyWave']));
   }
 
   * run() {
@@ -35,6 +49,7 @@ export class ComboDuel extends Duel {
     yield* this[film]();
     audio.seStop();
     if (dmg === 28) yield* this.shakeBoom();
+    else if (dmg === 43) yield* this.bigBoom();
     else if (dmg === 22) yield* this.blownAway(); // shock-wave hit
     else yield* this.explode(17, 50); // 23
     audio.seStop();
@@ -269,6 +284,56 @@ export class ComboDuel extends Duel {
     yield* this.cut(RAY.huge, 27, -30);
   }
 
+  // ---- 2886-2890 ダブルかめはめ波 (悟空 / 悟飯 / 克林 / 雅木茶 / 未來悟飯 + 龜仙人): the lead rises (or 龜仙人 sinks) while
+  // the other flies in below (effect 90) / above (89); the other one above and 龜仙人 below (effect 92), both charge
+  // with an aura each (back 201 ×2, back 118), two big beams (effects 359-362), then the huge wave on the enemy (48) ----
+  * doubleKame() {
+    const [charge, fire, au, beam] = DOUBLE_KAME[this.combo];
+    const other = Number(Object.keys(this.crew).find((id) => Number(id) !== 24)), roshiLead = this.lead === 24;
+    const [ux, uy] = other === 14 ? [14, -132] : beam; // (359: 超悟空 a little higher)
+    const roshi = (row) => (c) => draw(c, this.sheet(24, true), 0, row * 96, 96, 96, TEC_CENTER, STD_Y + 50);
+    this.se('Z1 逃げる');
+    this.pose(this.A, 0, true);
+    yield;
+    // 1-39
+    const mate = roshiLead ? other : 24, my = roshiLead ? -50 : 50;
+    this.effect((c, t) => draw(c, this.sheet(mate, true), 0, 0, 96, 96, STD_CHAX + (t - 1) * 8 + 30, STD_Y + my));
+    for (let f = 1; f <= 39; f++) { if (f <= 10) this.A.y += roshiLead ? 5 : -5; yield; }
+    // 40-59: the lead's sprite is the other one's, up there
+    if (roshiLead) { this.A.y -= 100; this.L.sheets = this.crew[other]; }
+    this.effect(roshi(0));
+    yield* this.wait(20);
+    // 60
+    this.se('Z3 変身');
+    this.se('Z1 気を溜める');
+    yield;
+    // 61-187: the charge
+    this.effect(null);
+    this.pose(this.A, charge, true);
+    const aura = (x, y) => (c, t) => draw(c, AURA_Z3, (Math.floor(t / 16) % 2) * 136, 0, 136, 142, x, y);
+    const lo = aura(216, 136), hi = aura(234 + au, 36), r2 = roshi(2);
+    this.behind((c, t) => { lo(c, t); hi(c, t); r2(c); });
+    yield* this.wait(127);
+    // 188-269: the two beams
+    audio.seStop();
+    this.se('DB3 エネルギー波2');
+    this.se('Z1 エネルギー波');
+    this.pose(this.A, fire, true);
+    this.behind(roshi(3));
+    this.effect((c, t) => {
+      const w = Math.min(400, 54 + t * RAY_SPEED);
+      draw(c, RAY_Z3_BIG, 0, 92, w, 92, 340 + ux, 200 + uy);
+      draw(c, RAY_Z3_BIG, 0, 92, w, 92, 330, 180);
+    });
+    yield* this.wait(82);
+    // 270-280: both gone; 281-305: the wave on the enemy
+    this.A.y = -200;
+    this.effect(null);
+    this.behind(null);
+    yield* this.wait(11);
+    yield* this.cut(RAY_Z3_HUGE, 25, -30);
+  }
+
   // 807 / 811 are long films in the original (807 alone is 618 frames over 18 effect pictures); here the two
   // participants' own moves play one after the other, the second one landing the combined hit.
   * chain() {
@@ -286,4 +351,6 @@ export class ComboDuel extends Duel {
   * rokakuSouda() { this.tecs = { 7: 'wolfFang', 8: 'shishinFist' }; yield* this.chain(); }
 }
 
-export const COMBO_SOUNDS = ['Z1 飛ぶ', 'ZG 技取得', 'DB3 気を溜める2'];
+export const COMBO_SOUNDS = ['Z1 飛ぶ', 'ZG 技取得', 'DB3 気を溜める2', 'Z3 変身'];
+// pictures of their own (tools/copy_assets.py)
+export const COMBO_PICTURES = [AURA_Z3, RAY_Z3_BIG, RAY_Z3_HUGE[0]];

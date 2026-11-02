@@ -217,8 +217,13 @@ Remake differences (cmb): Z戦士の絆 in a combo counts the mates of the lead,
 original excludes the holder); the original's quirks in `get_attack_hit_skill` (the skill list growing participant by
 participant, the かなしばり turns adding up) are not copied — each participant's hit skills run on their own.
 The Super Saiyan ×1.3 for
-any participant is in place, but the remake's 10 combos only list the base forms (actors 3 / 5), so it does not come up
-yet. A move learned by ひらめき that has no film yet borrows its `flag_tec` move's film (41, 27, 198, 208).
+any participant is in place. A move learned by ひらめき that has no film yet borrows its `flag_tec` move's film (41, 27, 198, 208).
+
+All 252 rows (172 combos) are in since cmb2 (`docs/combos.md`): each row is checked on its own (the Super Saiyan forms are
+other actors), opened by its switch / variable and variable 40 ≥ `scenario_progress`; the switches come from the story
+pages and from CE34 後から追加設定 / CE205 run before each check (`catchUp`). Per participant also (140426-140480): not
+stopped, no 局外人 (430, 644-651) or 旁若無人 (476-484), and the Great Ape exactly when the row says so (`oozaru_put`:
+742 強襲サイヤ人). The list shows a row with a Super Saiyan column only for the form in the party (144088).
 
 ---
 

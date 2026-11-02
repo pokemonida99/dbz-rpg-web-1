@@ -56,15 +56,19 @@ const WILLOW_RUSH = pic('Z1_戦闘_必殺技_突進(ウィロー).png');
 const AFTER_BIG = pic('戦闘アニメ96×96用回避.png');
 const ICE = pic('Z1_戦闘_必殺技_氷(FF3).PNG'); // 3 frames of 96×96
 const BOOM_BIG = pic('戦闘アニメ_爆発5.PNG'); // 4 frames of 158×160
+// 悟飯 as the Great Ape (anime 146 / 151): the full moon rising (11 frames of 48×48) and his face turning into the ape's
+// (the Z1 special sheet, rows 384 / 496: 96×112)
+const MOON = pic('Z1_戦闘_必殺技_満月.PNG');
+const GOHAN_SP = pic('Z1_戦闘_必殺技_ゴハン.PNG');
 
-export const ANIME_IMAGES = [SPARK, BOOM, DIGITS, WILLOW_RUSH, AFTER_BIG, ICE, BOOM_BIG, MAKANKO_BALL, PIERCE_FRONT, RAY_DOWN, KIENZAN, POWER_BALL, SOKIDAN, SOKIDAN_PINK, ...Object.values(BALL),
+export const ANIME_IMAGES = [SPARK, BOOM, DIGITS, WILLOW_RUSH, AFTER_BIG, ICE, BOOM_BIG, MOON, GOHAN_SP, MAKANKO_BALL, PIERCE_FRONT, RAY_DOWN, KIENZAN, POWER_BALL, SOKIDAN, SOKIDAN_PINK, ...Object.values(BALL),
   ...Object.values(RAY).map((r) => r[0]), ...Object.values(BACKS)];
 
 // special moves by skill id → the original's animation (attack pattern = skill id + 10)
 const MOVES = {
   1: 'shockwave', 2: 'energyWave', 5: 'kamehameha', // 悟空
   31: 'makouhou', 33: 'eyeBeam', 34: 'mouthBeam', 35: 'bakuretsu', 36: 'makankosappo', // 比克
-  46: 'gohanMakouhou', 47: 'masenko', // 悟飯
+  46: 'gohanMakouhou', 47: 'masenko', 51: 'gohanApe', // 悟飯
   61: 'krillinWave', 62: 'kameSmall', 63: 'scatterWave', 64: 'kienzan', // 克林
   71: 'wolfFang', 72: 'kameSmall', 73: 'sokidan', // 亞姆茶
   81: 'tienWave', 82: 'shishinFist', 83: 'kikouhou', 84: 'shishinKikouhou', // 天津飯
@@ -509,7 +513,51 @@ export class Duel {
   }
 
   // ---- 悟飯 ----
-  * gohanMakouhou() { yield* this.simpleWave(1, BALL.orange, 252, 130, RAY.small); } // 146 魔光砲(悟飯)
+  * gohanMakouhou() { // 146 魔光砲(悟飯); as the Great Ape (192×192 sheets) the beam comes from his mouth
+    if ((this.A.sheets.size || 96) === 192) return yield* this.apeMakouhou();
+    yield* this.simpleWave(1, BALL.orange, 252, 130, RAY.small);
+  }
+
+  * apeMakouhou() { // anime 146, $oozaru_flag[5] (all.rb 73744): the ape's face, the charge, a ball at the mouth (effect 5), the huge wave (48)
+    const face = (row) => (c) => draw(c, GOHAN_SP, 0, row, 96, 112, TEC_CENTER, 118);
+    this.A.y = -200;
+    this.behind(face(384));
+    yield* this.wait(60);
+    this.se('Z1 気を溜める');
+    this.behind(face(496));
+    yield* this.wait(120);
+    audio.seStop();
+    this.se('Z1 エネルギー波2');
+    this.effect(this.ball(BALL.orange, 250, 140));
+    yield* this.wait(60);
+    this.behind(null);
+    yield* this.cut(RAY.huge, 27, -30);
+  }
+
+  * gohanApe() { // 151 大猿変身 (all.rb 73832): the full moon rises, his face flickers into the great ape's (no damage)
+    const A = this.A, face = (row) => (c) => draw(c, GOHAN_SP, 0, row, 96, 112, TEC_CENTER, 118);
+    this.se('Z1 満月');
+    A.y = -120;
+    this.behind((c, t) => {
+      const f = Math.min(t + 1, 200), hk = f > 150 ? 300 : f * 2, h = Math.min(48, f * 2);
+      draw(c, MOON, 48 * Math.min(10, Math.floor(f / 8)), 0, 48, h, 596 - hk, 354 - hk);
+    });
+    yield* this.wait(200);
+    this.se('Z1 パワーアップ');
+    for (let f = 201; f <= 265; f++) { // eight frames the face, eight frames himself
+      const on = f <= 201 || Math.floor((f - 202) / 8) % 2 === 1;
+      A.y = on ? -120 : STD_Y;
+      this.behind(on ? face(384) : null);
+      yield;
+    }
+    this.se('Z1 大猿');
+    A.y = -200;
+    this.behind(face(496));
+    yield* this.wait(65);
+    this.behind(face(384));
+    yield* this.wait(60);
+    return 'none';
+  }
 
   * masenko() { // 147 魔閃光
     this.se('Z1 気を溜める3');
@@ -1531,6 +1579,6 @@ export const ANIME_SOUNDS = ['Z1 打撃', 'Z3 打撃', 'Z3 避ける', 'Z1 必�
   'Z1 怪光線', 'Z1 ザー', 'Z1 貫光線', 'Z1 パワーアップ', 'Z1 大猿', 'Z1 ブン', 'Z1 気円斬', 'Z1 逃げる', 'Z1 分身', 'Z1 気を溜める4',
   'Z1 強打', 'Z3 超能力', 'Z1 刀', 'Z1 刀攻撃', 'Z1 気を溜める7', 'Z1 気を溜める(元気弾)', 'Z1 ゴー', 'Z1 気を溜める6', 'Z1 繰気弾',
   'Z1 飛ぶ', 'DB3 残像拳', 'DB3 SE041', 'DB3 気を溜める1', 'DB3 エネルギー波1', 'DB3 エネルギー波2', 'DB3 SE091', 'DB3 キラーン',
-  'Z1 怪しい気', 'Z1 吹っ飛ぶ', 'Z1 爆発1'];
+  'Z1 怪しい気', 'Z1 吹っ飛ぶ', 'Z1 爆発1', 'Z1 満月'];
 // for the S-combo films (src/combo-anime.js)
 export { draw, spark, BALL, RAY, BACKS, MAKANKO_BALL, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED };

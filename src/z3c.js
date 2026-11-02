@@ -14,6 +14,7 @@ import { ensure } from './growth.js?v=20261102-1935';
 import { superSaiyan } from './supersaiyan.js?v=20261102-1935';
 import { newHand } from './battle.js?v=20261102-1935';
 import { Duel, SW, SH, ANIME_IMAGES, addMoves } from './anime.js?v=20261102-1935';
+import { drawAnim, animFrames } from './vxanim.js?v=20261102-1935'; // (map 36: animation 4 on the landed pod)
 import {
   registerZ3, nextZ3, Z3, begin, play, fight, toField, party, addMember, member, heal, card, moveTo,
 } from './z3.js?v=20261102-1935';
@@ -302,6 +303,9 @@ async function pod(game) {
   game.busy = true;
   f.leave();
   const at = { x: p.from[0] * 32, y: p.from[1] * 32 }, goku = { on: false, x: p.goku[0] * 32, y: p.goku[1] * 32 };
+  const anim = ((game.world.viz || {}).anims || {})[4]; // 宇宙船到着1フレ (src/vxanim.js), on the landed pod
+  let fx = -1;
+  if (anim) await loadImages(anim.pics);
   const draw0 = f.draw.bind(f);
   f.draw = () => {
     draw0();
@@ -314,13 +318,15 @@ async function pod(game) {
     const tb = img(TILE_B), ch = img(CHARA2);
     if (goku.on && ch.ok) c.drawImage(ch.im, 32, 32, 32, 32, goku.x - cx, goku.y - cy, 32, 32); // facing left
     if (tb.ok) c.drawImage(tb.im, 448, 128, 32, 32, at.x - cx, at.y - cy, 32, 32);
+    if (anim && fx >= 0 && fx % 30 < animFrames(anim)) drawAnim(c, anim, fx % 30, at.x - cx + 16, at.y - cy + 16);
   };
   const frames = (n) => new Promise((res) => setTimeout(res, (n * 1000) / 60));
   audio.se('Z3 宇宙船到着', 80);
   for (let k = 0; k < 15 * 16; k++) { at.y += 2; await frames(1); }
-  for (let k = 0; k < 60; k++) { view.canvas.style.transform = `translateX(${[-3, 0, 3, 0][(k >> 1) % 4]}px)`; await frames(1); } // (225: power 3, speed 8)
+  // 225 (power 3, speed 8, 60 frames, no wait) with 212 animation 4 on the pod, wait 30, animation 4 again, wait 30
+  for (let k = 0; k < 60; k++) { fx = k; view.canvas.style.transform = `translateX(${[-3, 0, 3, 0][(k >> 1) % 4]}px)`; await frames(1); }
+  fx = -1;
   view.canvas.style.transform = '';
-  await frames(60);
   goku.on = true;
   for (let k = 0; k < 16; k++) { goku.x -= 2; await frames(1); }
   await frames(90);

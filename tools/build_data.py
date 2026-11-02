@@ -323,6 +323,8 @@ import build_z3  # noqa: E402  (Z3: the shared part — Z3 art, enemies, battles
 build_z3.add(world, globals())
 import build_cards_ext  # noqa: E402  (cards and training squares: docs/cards-plan.md)
 build_cards_ext.add(world, globals())
+import build_viz  # noqa: E402  (batch 2 viz: the era's card faces, the Great Ape's face, map events, the 時之間 area names)
+build_viz.add(world, globals())
 # SP reward = the enemy's max MP (docs/battle-rules.md §6), here at the end so it covers the enemies every chapter added
 # (build_growth runs early and only sees the Z1 chapters' first ones)
 for eid, e in world['enemies'].items():

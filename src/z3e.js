@@ -115,16 +115,19 @@ const D = {
   1361: (st) => { wide(st, BG.山); trio(st); },
   1382: (st, ctx) => { wide(st, BG.山); out(st, ctx); },
   1383: (st) => { wide(st, BG.天界); face(st, CARD, 10, -64, 0, 2); under(st, CARD, 12, 0, 0, 2); face(st, P3, 1, 64); },
-  // 神様とピッコロ融合: the temple goes dark (three steps of 20 frames), then 神様 and ピッコロ slide together
+  // 神様とピッコロ融合: the temple goes dark (three steps of 20 frames), then 神様 and ピッコロ slide together, fading
+  // 5 a step (all.rb 175064); at the end ピッコロ is whole again and 神様 stays faint under him (opacity 95)
   1384: async (st, ctx, q) => {
     uses(ctx, 'uses1384');
     const p = member(G, 4); // set_typical_skill 4,0,249: 神との融合
     if (p.typ) { p.typ[0] = 249; p.got = p.got || {}; p.set = p.set || {}; p.got[249] = p.set[249] = true; }
-    const draw = (bg, k) => { st.clear(); if (bg) wide(st, bg); face(st, CARD, 10, -64 + k, 0, 2); face(st, P3, 1, 64 - k); };
+    const op = (v) => { st.sprites[st.sprites.length - 1].op = v; };
+    const draw = (bg, k, kami = 255, pic = 255) => { st.clear(); if (bg) wide(st, bg); face(st, CARD, 10, -64 + k, 0, 2); op(kami); face(st, P3, 1, 64 - k); op(pic); };
     draw(BG.天界, 0);
-    if (q) return;
+    if (q) { draw(null, 64, 95); return; }
     for (const bg of [...DARK, null]) { await st.ui.wait(20); draw(bg, 0); }
-    for (let x = 1; x <= 32 && !st.ui.skipped; x++) { draw(null, 2 * x); await st.ui.wait(2); }
+    for (let x = 1; x <= 32 && !st.ui.skipped; x++) { draw(null, 2 * x, 260 - 5 * x, 260 - 5 * x); await st.ui.wait(2); }
+    draw(null, 64, 95);
   },
   // 融合後気溜め: ピッコロ in the blue aura, his cut-in under it
   1385: async (st, ctx, q) => {

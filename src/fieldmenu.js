@@ -22,7 +22,7 @@ const RADAR = 'Graphics/Pictures/ドラゴンレーダー.PNG', BALL = 'Graphics
 
 // ---------- options (Scene_Db_Option) ----------
 const OPT_KEY = 'dbz-portrait-options';
-export const options = { bgm: 0, enc: 1, encSe: 0, battleFast: 0, quickGo: 0, fastMsg: 0, skipOp: 0, skipRecap: 0 };
+export const options = { bgm: 0, enc: 1, encSe: 0, battleFast: 0, quickGo: 0, fastMsg: 0, skipOp: 0, skipRecap: 0, runSkill: 0, runSlide: 0 };
 try { Object.assign(options, JSON.parse(localStorage.getItem(OPT_KEY)) || {}); } catch (e) { /* first run */ }
 const saveOptions = () => { try { localStorage.setItem(OPT_KEY, JSON.stringify(options)); } catch (e) { /* private mode */ } };
 textSpeed.instant = !!options.fastMsg;
@@ -309,6 +309,8 @@ const OPTION_ROWS = [
   ['enc', '遇敵', [[0, '少'], [1, '普通'], [2, '多']], '設定遇敵頻率'],
   ['encSe', '遇敵音樂', [[0, 'DBZ 強襲！サイヤ人！'], [1, 'DBZ3 烈戦人造人間'], [2, 'DBZ 超サイヤ伝説'], [3, 'DBZ 悟空激闘伝']], '設定遇敵音'],
   ['battleFast', '戰鬥速度', [[0, '默認值'], [1, '高速化']], '設定戰鬥動畫的速度'],
+  ['runSkill', '發動技能顯示', [[0, '全部'], [1, '攻擊時'], [2, '防禦時'], [3, '不顯示']], '設定戰鬥時技能發動的顯示條件'], // variable 351 (src/viz.js)
+  ['runSlide', '技能顯示方法', [[0, '滑動'], [1, '固定位置']], '設定戰鬥時技能發動的顯示方法'], // variable 352
   ['quickGo', '選完直接出招', [[0, '關閉'], [1, '打開']], '全員選好卡片後不用按「出招！」，直接開始（和原版一樣）'],
   ['fastMsg', '消息高速化', [[0, '無效'], [1, '有效']], '訊息一次全部顯示'],
   ['skipOp', '跳過ＯＰ', [[0, '關閉'], [1, '打開']], '啟動時不播放片頭動畫'],

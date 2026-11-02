@@ -93,12 +93,15 @@ fieldCards[62] = async ({ game, battle }) => {
       b.append(handCanvas(cd));
       b.onclick = () => {
         if (cd.s === KI_CARD) { audio.se(SE_ERR, 70); return; }
+        if (p.busy) return;
+        p.busy = true;
         audio.se('Z2 カードアップ', 80);
-        cd.s = KI_CARD;
-        b.replaceChildren(handCanvas(cd));
-        b.classList.add('flash');
-        toast('使用了「任意卡」');
-        setTimeout(() => end(true), 600);
+        items.cardBlink(game.state, 62, [b]).then(() => { // (the blink, then the change: output_card_change_effect 62)
+          cd.s = KI_CARD;
+          b.replaceChildren(handCanvas(cd));
+          toast('使用了「任意卡」');
+          setTimeout(() => end(true), 400);
+        });
       };
       p.append(b);
     });
@@ -167,10 +170,12 @@ growth.extra.push({
   // 見下す (set_damage_add, all.rb 14480 / 15850): own card's stars above the enemy's → more damage dealt, less taken
   dealt: (d, b, m, skill, x) => {
     const id = x && x.card && x.foeCard && sum(x.card) > sum(x.foeCard) && MIKUDASU.find((k) => inSlot(m, k));
+    if (id) growth.ran(id); // (all.rb 14483)
     return id ? d * Number(fx(b.world, id).a) : d;
   },
   taken: (d, b, m, x) => {
     const id = x && x.card && x.foeCard && sum(x.card) > sum(x.foeCard) && MIKUDASU.find((k) => growth.has(b.world, m, k));
+    if (id) growth.ran(id, 'skill', 1); // (15853)
     return id ? d * Number(fx(b.world, id).g) : d;
   },
   // get_attack_hit_skill (all.rb 17309 / 17330): 取替え swaps the whole card with the enemy's unless the member moved
@@ -180,10 +185,12 @@ growth.extra.push({
     const f = items.memberFx(m);
     if (growth.has(b.world, m, 421) && !(f && f.sente)) {
       for (const k of ['a', 'g', 's']) [card[k], foe.card[k]] = [foe.card[k], card[k]];
+      growth.ran(421, 'hit'); // (17324)
     }
     if (growth.has(b.world, m, 260)) {
       foe.card.a = Math.max(0, foe.card.a - 1);
       card.a = Math.min(7, card.a + 1);
+      growth.ran(260, 'hit'); // (17337)
     }
     return v;
   },

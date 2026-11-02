@@ -7,7 +7,7 @@
 //   map 110: guard robots 6611-6615 → battle 6616 → 6621 (all five: switch 845); the door 6601; 怨念增幅裝置 6631 → battle
 //     6641 → 6651 (CE94) → battle 6671 → 6681 → battle 6701 → 6711 (CE69) → battle 6721 → 6731 → 6751 (CE95) → 6761 → 9932
 //   the 時の間へ移動 squares → page 9932 (back to the ZG hall mid-story: state.flags.zgBack, src/zg_a.js leaveZg / backToZg)
-import { audio, img, loadImages, toast } from './core.js?v=20261102-1935';
+import { audio, img, loadImages, toast, view } from './core.js?v=20261102-1935';
 import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261102-1935';
 import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261102-1935';
 import { addMoves } from './anime.js?v=20261102-1935';
@@ -252,8 +252,9 @@ const FILMS = {
     await step(4, 32); await step(21, 28); await step(4, 180);
   }, [...Array.from({ length: 20 }, (_, k) => SHIP(k + 2)), ...Object.values(SHIP_SIZE)]),
   // CE94 ZGハッチヒャック登場イベント: 769 frames — the body (hatc_touzyo 001-769) at (64,114) between the moving
-  // backgrounds above / below (1-3, a frame each), the flashes at 453 / 457 / 461 (gone at 513), the message window from
-  // 33, the rumble stops at 269, the hand's sound at 388
+  // backgrounds above / below (1-3, a frame each), the flashes at 453 / 457 / 461 (gone at 513: picture 10, the grey
+  // 背景色_127 / 188 / 255 at 200 % added, under the body, picture 15), the message window from 33, the rumble stops at
+  // 269, the hand's sound at 388
   hatch: async (env) => {
     const { stage: st, ui, quiet } = env;
     if (quiet || !st.sprites) return;
@@ -264,25 +265,26 @@ const FILMS = {
     await loadImages([...first, top(1), top(2), top(3), low(1), low(2), low(3)]);
     loadImages(h.body.map((_, k) => body(k + 1))); // (the rest comes in while it plays)
     st.clear();
-    const B = screenPic(st, body(1), 64, 114, [0, 0, 512, 158]);
+    const flash = (n) => `${h.dir}ZG_イベント_ハッチ登場_背景色_${n}.PNG`;
+    loadImages([127, 188, 255].map(flash));
     const T = screenPic(st, top(1), 0, 18, [0, 0, 640, 94]);
     const L = screenPic(st, low(1), 0, 274, [0, 0, 640, 60]);
+    const FL = screenPic(st, flash(127), 0, 0, [0, 0, 320, 240], 0); // (over the backgrounds, under the body)
+    Object.assign(FL, { zoom: 2, blend: 'add' });
+    const B = screenPic(st, body(1), 64, 114, [0, 0, 512, 158]);
     let bg = 1;
     for (let k = 1; k <= 769 && !ui.skipped; k++) {
       const e = img(body(k));
       if (!e.ok) await e.p;
       B.path = body(k);
       T.path = top(bg); L.path = low(bg);
-      if (k === 453) st.flash = 127 / 255;
-      if (k === 457) st.flash = 188 / 255;
-      if (k === 461) st.flash = 1;
-      if (k === 513) st.flash = 0;
+      if (k === 453 || k === 457 || k === 461) { FL.path = flash({ 453: 127, 457: 188, 461: 255 }[k]); FL.op = 255; }
+      if (k === 513) FL.op = 0;
       if (k === 269) audio.stopBgs();
       if (k === 388) audio.se('ZG SE061', 80);
       await ui.wait(1);
       bg = bg >= 3 ? 1 : bg + 1;
     }
-    st.flash = 0;
     st.clear();
   },
   // CE69 オゾットから巨大化へ変身 → CE45: the back (0,128), Broly's three auras (88,128), Ozotto's two bodies (64,128)
@@ -445,13 +447,39 @@ async function afterPage(game, n, next) {
   return toField(game);
 }
 
-// map 108 event 88 (switch 833 on, autorun): the pirate ship → switch 834 → page 6531
-async function pirate(game) {
+// map 108 event 88 (switch 833 on, autorun): the pirate ship → switch 834 → page 6531 (exported for ?dev=vizpirate)
+export async function pirate(game) {
   const s = game.state;
   stop(game);
-  await playScenes([{ nodes: [{ x: 'zgcFilm', name: 'pirate' }] }], s);
+  await shipOverMap(game);
   s.sw[834] = true;
   return run(game, 6531);
+}
+// the ship's two pictures in turn over map 108 itself (the original shows them as pictures on the field: -150 → 700 at
+// y 280 of the 640×480 screen, 2 px a frame), placed from the player as the original's screen has him in its middle
+async function shipOverMap(game) {
+  const s = game.state, a = pic('ZG_イベント_海賊船_1.PNG'), b = pic('ZG_イベント_海賊船_2.PNG');
+  await loadImages([a, b]);
+  game.startField();
+  const f = game.field;
+  f.paused = true;
+  game.busy = true;
+  f.leave();
+  let x = -150, k = 1;
+  const draw0 = f.draw.bind(f);
+  f.draw = () => {
+    draw0();
+    const c = view.begin(), W = f.map.w * 32, H = f.map.h * 32; // (the camera of src/field.js)
+    let cx = s.x - view.w / 2, cy = s.y - view.h * 0.45;
+    cx = Math.round(W <= view.w ? (W - view.w) / 2 : Math.max(0, Math.min(W - view.w, cx)));
+    cy = Math.round(H <= view.h ? (H - view.h) / 2 : Math.max(-f.hudPad(), Math.min(H - view.h, cy)));
+    const e = img(k === 1 ? a : b);
+    if (e.ok) c.drawImage(e.im, Math.round(s.x - cx + x - 320), Math.round(s.y - cy + 280 - 240));
+  };
+  audio.se('ZG SE062', 80);
+  for (; x < 700; x += 2, k = 3 - k) await new Promise((res) => setTimeout(res, 1000 / 60));
+  audio.seStop();
+  f.draw = draw0;
 }
 
 // page 9932 (ＺＧ⇒時の間): CE182 (the area cards), CE157 / CE168 (the 時之間's party back: state.flags.zgParty), switch

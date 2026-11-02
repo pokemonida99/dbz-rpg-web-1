@@ -124,9 +124,7 @@ def add(world, h, z3):
     raw = z3['raw4']
 
     def page(v):
-        ns = z3['nodes_of'](raw[v], faces)
-        # 126 筋斗雲 (item 78): the remake has no such card
-        return [{'v41': v}] + [n for n in ns if not (n.get('item') and n['item'][0] == 78)]
+        return [{'v41': v}] + z3['nodes_of'](raw[v], faces)  # (126 筋斗雲 item 78 included: src/cards_story.js)
 
     pages = {str(v): page(v) for v in (2371, 2941, 2801, 2821, 2846, 2881, 2901, 2911, 2921, 2931)}
     for v in (2831, 2841, 2851, 2861):  # the ones that end in a battle_process: [before, after]

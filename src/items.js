@@ -48,6 +48,7 @@ export function lose(s, id) { if (!--s.cards[id]) delete s.cards[id]; }
 
 // set_max_item_card: copies over the limit are sold for half their price
 export function trim(world, s) {
+  if (world.items[38]) world.items[38].rank = s.sw && s.sw[491] ? 'S' : null; // chg_card_rank (all.rb 21281): 波倫加 is S once wished for
   let cap = 0;
   for (const [id, n] of Object.entries(s.cards)) {
     const it = world.items[id];
@@ -61,7 +62,8 @@ export function trim(world, s) {
 
 // the note text, with the original's \V[n] filled in
 function desc(world, s, it) {
-  const v = { 224: s.cardMax.S, 225: s.cardMax.A, 226: s.cardMax.B, 227: s.cardMax.C, 384: RINGANA_CAP, 383: s.cardMax.A - (s.cards[17] || 0) };
+  const v = { 224: s.cardMax.S, 225: s.cardMax.A, 226: s.cardMax.B, 227: s.cardMax.C, 384: RINGANA_CAP, 383: s.cardMax.A - (s.cards[17] || 0),
+    381: s.cardMax.C - (s.cards[74] || 0), 382: s.cardMax.C - (s.cards[75] || 0) }; // (381 / 382: 恐龍, set_card_remaining all.rb 10477)
   return it.desc.replace(/\\V\[(\d+)\]/g, (_, n) => String(v[n] ?? s.var[n] ?? 0));
 }
 
@@ -83,6 +85,7 @@ export function bubbles(s) {
 export function battleFx(b) { fx = { b, m: new Map(), oneTurnDef: false, stopUsed: false, gozu: false, mezu: false, scouter: false, stop: new Map() }; }
 export function battleEnd() { fx = null; }
 const mf = (m) => { let f = fx.m.get(m); if (!f) fx.m.set(m, (f = {})); return f; };
+export const memberFx = (m) => (fx ? mf(m) : null); // one member's flags this battle { pow, def, sente, … } (src/cards_story.js: 波倫加)
 export const powerUp = (m) => !!(fx && mf(m).pow); // ×1.3 like a school match (102:16236)
 export const guardUp = (m) => !!(fx && (fx.oneTurnDef || mf(m).def)); // damage taken ×0.7 (102:16325)
 export const evades = (m) => !!(fx && mf(m).evade); // every attack misses this turn (102:16366)
@@ -468,6 +471,8 @@ export function openCards(game, battle = null) {
 menuEntries.card = ({ game, battle }) => openCards(game, battle);
 
 // ---------- the card shop (Scene_Shop on a Z mark) ----------
+// the goods of the card shop: each f(world, s, ids) → ids, in order (src/cards_square.js: the era's list; src/cards_b.js: 141)
+export const shopHooks = [];
 export function openShop(game) {
   const world = game.world, s = cardState(game.state);
   trim(world, s);
@@ -510,7 +515,7 @@ export function openShop(game) {
         tabs.appendChild(b);
       }
       el.appendChild(tabs);
-      const ids = tab === 'buy' ? world.cardShop
+      const ids = tab === 'buy' ? shopHooks.reduce((l, f) => f(world, s, l), world.cardShop)
         : Object.keys(s.cards).map(Number).filter((id) => world.items[id] && world.items[id].price > 0).sort((a, b) => world.items[a].order - world.items[b].order);
       const list = h('div', 'cw list');
       if (!ids.length) list.appendChild(h('div', 'empty', '沒有可以賣的卡片。'));

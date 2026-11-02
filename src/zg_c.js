@@ -6,7 +6,7 @@
 //   map 109: 海盜船 6541, 庫阿鎮 6551, 漩渦 6561 → battle 6566 → 6571 → map 110
 //   map 110: guard robots 6611-6615 → battle 6616 → 6621 (all five: switch 845); the door 6601; 怨念增幅裝置 6631 → battle
 //     6641 → 6651 (CE94) → battle 6671 → 6681 → battle 6701 → 6711 (CE69) → battle 6721 → 6731 → 6751 (CE95) → 6761 → 9932
-//   the 時の間へ移動 squares → page 9932 (back to the ZG hall mid-story; docs/zg-c.md: state.flags.zgResume)
+//   the 時の間へ移動 squares → page 9932 (back to the ZG hall mid-story: state.flags.zgBack, src/zg_a.js leaveZg / backToZg)
 import { audio, img, loadImages, toast } from './core.js?v=20261102-1344';
 import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261102-1344';
 import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261102-1344';
@@ -21,6 +21,9 @@ import { spotTally } from './fieldmenu.js?v=20261102-1344';
 import { screenPic } from './z3c.js?v=20261102-1344';
 import { registerZ3, Z3, begin, fight, toField, party, member, heal, moveTo } from './z3.js?v=20261102-1344';
 import { registerBackdrop, endTrStory } from './timeroom.js?v=20261102-1344';
+// the ZG parts' shared party / way-back helpers (keepParty, restoreParty, leaveZg, backToZg: docs/zg-c.md); read through
+// the namespace so this part still runs on its own before the first part is merged (the same steps are below)
+import * as ZGA from './zg_a.js?v=20261102-1344';
 
 const MAPS = ['105', '108', '109', '110'];
 const C = (game) => Z3(game).zgc;
@@ -370,12 +373,12 @@ async function page(game, n) {
 }
 
 // the start (page 6421 is over: switches 1121 1137-1139 1141 1192 on, 1130 / 1135 by switch 438, variable 43 = 173,
-// 1 / 2 = 4 / 33, 17 = 3, 324 = 74, map 105) — or back from the ZG hall (state.flags.zgResume, page 6000 switch 850)
+// 1 / 2 = 4 / 33, 17 = 3, 324 = 74, map 105) — or back where ZG was left (state.flags.zgBack: door 9931 with switch 850,
+// or 「從暗黑星球區域開始」 after the clear)
 async function start(game) {
   const s = game.state;
   stop(game);
-  const back = s.flags.zgResume;
-  if (back && back.ch === 'zgc') return resumeHere(game, back);
+  if (ZGA.backToZg ? ZGA.backToZg(game, 'zgc') : backToZg(game)) return;
   for (const k of [1121, 1137, 1138, 1139, 1141, 1192]) s.sw[k] = true;
   s.sw[1130] = !s.sw[438]; s.sw[1135] = !!s.sw[438];
   s.sw[80] = false;
@@ -383,22 +386,24 @@ async function start(game) {
   s.var[42] = s.party[0].id;
   toField(game, C(game).start);
 }
-// page 6000, switch 850 on: CE157 / CE168 (the ZG party back: src/zg_a.js), everyone up and recovered, CE39,
-// variables 43 / 1 / 2 / 13 / 17 from 374 / 371 / 372 / 373 / 375
-function resumeHere(game, back) {
-  const s = game.state, z = s.flags.zgParty;
-  delete s.flags.zgResume;
-  if (z && z.story) { // CE168 (if door 9931 has not swapped the parties already)
-    syncSuperSaiyan(game.world, s, Object.fromEntries(Object.keys(FORMS).map((no) => [no, !!(z.story.ss || {})[no]])));
-    party(game, z.story.party);
-    delete z.story;
-  }
+// (without src/zg_a.js) door 9931 / page 6000 switch 850: the ZG party back (CE157 / CE168), everyone up and recovered,
+// variables 43 / 17 from the way back, then where ZG was left
+function backToZg(game) {
+  const s = game.state, k = s.flags.zgBack;
+  if (!k || k.key !== 'zgc') return false;
+  delete s.flags.zgBack;
+  if (k.party) { s.flags.zgParty = partyOf(s); putParty(game, k); }
   for (const m of s.party) heal(m);
   for (const m of Object.values(s.bench || {})) heal(m);
-  s.sw[466] = true; s.var[301] = 2;
-  Object.assign(s.var, { 43: back.v43, 17: back.v17, 42: s.party[0].id });
-  s.sw[19] = false; s.sw[78] = false;
-  toField(game, { map: back.map, x: back.x, y: back.y });
+  s.sw[466] = true; s.var[301] = 2; s.sw[19] = false; s.sw[78] = false;
+  Object.assign(s.var, { 43: k.v43, 17: k.v17, 42: s.party[0].id });
+  toField(game, { map: k.map, x: k.x, y: k.y });
+  return true;
+}
+const partyOf = (s) => ({ party: s.party.map((m) => m.id), ss: { ...(s.ss || {}) } });
+function putParty(game, k) { // CE157 / CE168: that party, its Super Saiyans as they were
+  syncSuperSaiyan(game.world, game.state, Object.fromEntries(Object.keys(FORMS).map((no) => [no, !!(k.ss || {})[no]])));
+  party(game, k.party);
 }
 
 // a story battle: the extra-attack switches the page set (25 the last one standing, 26 30 % HP, 27 40 %, 28 two
@@ -449,26 +454,25 @@ async function pirate(game) {
   return run(game, 6531);
 }
 
-// page 9932 (ＺＧ⇒時の間): CE182 (the area cards), CE157 / CE168 (the 時之間's party back), switch 78 on, 19 off,
-// variables 17 = 0, 1 / 2 = 18 / 3, 43 = 999 → the ZG hall (96: 18,3). Mid-story (a 時の間へ移動 square) CE171 keeps
-// where the party was (variables 371-375, state.flags.zgResume) for door 9931 (switch 850 still on)
+// page 9932 (ＺＧ⇒時の間): CE182 (the area cards), CE157 / CE168 (the 時之間's party back: state.flags.zgParty), switch
+// 78 on, 19 off, variables 17 = 0, 43 = 999 → the ZG hall (96: 18,3). Mid-story (a 時の間へ移動 square) CE171 keeps where
+// the party was (variables 371-375 and state.flags.zgBack, the ZG party with it) for door 9931 (switch 850 still on);
+// Event_Check moves the place one off the square (105 / 108: y − 1, 109: y + 1, 110: x + 1)
 async function toHall(game, done) {
-  const s = game.state, z = s.flags.zgParty;
+  const s = game.state;
   stop(game);
   if (!done) {
-    const x = Math.floor(s.x / 32), y = Math.floor(s.y / 32);
-    const yAdj = { 105: -1, 108: -1, 109: 1 }[s.map] || 0, xAdj = s.map === '110' ? 1 : 0;
-    Object.assign(s.var, { 371: x + xAdj, 372: y + yAdj, 373: Number(s.map), 374: s.var[43] || 0, 375: s.var[17] || 0 });
-    s.flags.zgResume = { ch: 'zgc', map: s.map, x: x + xAdj, y: y + yAdj, v43: s.var[43] || 0, v17: s.var[17] || 0 };
-  }
+    if (s.map === '110') s.x += 32;
+    const dy = { 105: -1, 108: -1, 109: 1 }[s.map] || 0;
+    if (ZGA.leaveZg) return ZGA.leaveZg(game, dy);
+    const x = Math.floor(s.x / 32), y = Math.floor(s.y / 32) + dy;
+    s.flags.zgBack = { key: 'zgc', map: s.map, x, y, v43: s.var[43] || 0, v17: s.var[17] || 0, ...partyOf(s) };
+    Object.assign(s.var, { 371: x, 372: y, 373: Number(s.map), 374: s.var[43] || 0, 375: s.var[17] || 0 });
+    if (s.flags.zgParty) putParty(game, s.flags.zgParty);
+  } else if (ZGA.restoreParty) ZGA.restoreParty(game);
+  else if (s.flags.zgParty) { putParty(game, s.flags.zgParty); delete s.flags.zgParty; }
   eventCard(s, 37, -99);
   eventCard(s, 124, -99);
-  if (z && z.party) { // CE168: the parties swap (the ZG one is kept for door 9931)
-    const story = { party: s.party.map((m) => m.id), ss: { ...(s.ss || {}) } };
-    syncSuperSaiyan(game.world, s, Object.fromEntries(Object.keys(FORMS).map((no) => [no, !!(z.ss || {})[no]])));
-    party(game, z.party);
-    if (!done) z.story = story; else delete s.flags.zgParty;
-  }
   s.sw[78] = true; s.sw[19] = false;
   Object.assign(s.var, { 17: 0, 1: 18, 2: 3, 43: 999, 42: s.party[0].id });
   audio.se('Z1 入る');
@@ -594,7 +598,7 @@ async function devState(game, step) {
   s.cardiMax = 10;
   s.zeni = 50000;
   s.party = [];
-  party(game, [3, 5, 4, 12, 17, 6]); // the 時之間's party (kept by the first part: state.flags.zgParty)
+  party(game, [3, 5, 4, 12, 17, 6]); // the 時之間's party (kept by the first part, page 6001 CE166: state.flags.zgParty)
   s.flags.tr = { back: { map: '48', x: 44 * 32 + 16, y: 29 * 32 + 16 }, v43: 0, v17: 2, party: s.party.map((m) => m.id), ss: {} };
   s.flags.trStory = { main: 'done' };
   s.flags.zgParty = { party: s.party.map((m) => m.id), ss: {} };

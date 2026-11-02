@@ -81,7 +81,7 @@ const play = Battle.prototype.play;
 Battle.prototype.play = function (m, f, playerAttacks, skill, dmg, target) {
   const t = stats(this.game.state);
   const k = playerAttacks ? 'chaMax' : 'eneMax';
-  if (dmg > ((t[k] || [])[2] || 0)) t[k] = playerAttacks ? [m.id, f.id, dmg] : [f.id, m.id, dmg];
+  if (dmg > ((t[k] || [])[2] || 0) && !this.noTopDamage) t[k] = playerAttacks ? [m.id, f.id, dmg] : [f.id, m.id, dmg]; // (switch 125)
   return play.call(this, m, f, playerAttacks, skill, dmg, target);
 };
 // after every battle (main.js startBattle)
@@ -91,9 +91,9 @@ export function battleTally(g, battle, result) {
   s.foeKills = s.foeKills || {};
   for (const f of battle.foes) {
     s.foeSeen[f.id] = true;
-    if (f.hp <= 0) s.foeKills[f.id] = (s.foeKills[f.id] || 0) + 1;
+    if (f.hp <= 0 && !battle.noRecord) s.foeKills[f.id] = (s.foeKills[f.id] || 0) + 1; // (switch 121: not in the 戰鬥記錄)
   }
-  if (result === 'win') { bump(s, 'wins'); bump(s, 'goldGot', battle.foes.reduce((n, f) => n + f.gold, 0)); }
+  if (result === 'win' && !battle.noRecord) { bump(s, 'wins'); bump(s, 'goldGot', battle.foes.reduce((n, f) => n + f.gold, 0)); }
 }
 // a field spot was used (main.js interact): inns (event 11) and card squares
 export function spotTally(s, poi) {

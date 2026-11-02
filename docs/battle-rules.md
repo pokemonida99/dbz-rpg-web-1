@@ -245,15 +245,24 @@ played; both also drive evasion. High agility + high guard = dodge.
 ### 4.4 Side effects (`chk_battle_damage`, `102:16406`)
 - Player hit: `enehp -= dmg`; ≤ 0 → enemy dead (credited to that character).
   Stun (`STOP_TURN = 1`, `102:23`): element 12 → +1 turn (+1 more if school matched); 13 → +1 only if school matched;
-  14 → +1. Element 25 reverts a giant enemy to normal form.
-- Enemy hit: `actor.hp -= dmg` (passive やせ我慢 keeps 1 HP); element 15 = drain (enemy heals dmg);
-  stun elements 12/14 (+1) and 13 (only if enemy school matched) unless passive 鋼の意志/自愛;
-  element 60 = self-destruct (attacker dies, e.g. 栽培人 自爆 skill 304). HP ≤ 0 → character KO (`$chadeadchk`).
+  14 → +1 (all only on a hit, all.rb 68866-68890). Element 61: `rand(100)+1 < variance` → +1, rolled whether it hit or
+  not (`get_attack_hit_skill`, all.rb 17696). Element 25 reverts a giant enemy to normal form.
+- Enemy hit: `actor.hp -= dmg` (passive やせ我慢 keeps 1 HP); element 15 = drain (enemy heals dmg, capped at max HP;
+  0 on a miss);
+  stun elements 12/14 (+1) and 13 (only if enemy school matched), on a hit, unless passive 鋼の意志 (619) / 慈愛の心
+  (57/426/427);
+  element 60 = self-destruct (attacker dies **only when it hit**, e.g. 栽培人 自爆 skill 304). HP ≤ 0 → character KO (`$chadeadchk`).
+- Stop counters: an enemy's goes down by one at each of its attacks it skips (`chk_attack`, all.rb 53897); a member's
+  goes down at every turn start (47498, the member then can't pick a card while still > 0) and when its own action comes
+  while stopped (53840). So a member stopped before acting loses that action; one stopped after acting is free again
+  next turn (STOP_TURN 1). A stopped member can't partner an S-combo (140459).
 
 ### 4.5 Skill element flags used by battle code (`Skills.element_set`)
 10 non-attack/support (no target), 11 deals 0 damage, 12/13/14 stun, 15 drain, 20 KI cost −level/10,
-24 enemy may use once per turn, 25 cancel giant form, 26 excluded by tactic, 27 小技, 28 大技, 29 never misses,
-33 S-combo move, 60 attacker self-destructs; `element_set[0] == 4` = enemy combined attack. `scope`: 1 single, 2 all.
+24 enemy may use once per turn (in fact once in one enemy's attack loop: `@one_turntec` is cleared after each attacker,
+all.rb 53564), 25 cancel giant form, 26 excluded by tactic, 27 小技, 28 大技, 29 never misses (both sides; also switch
+129 / passive 必中 389 for us, switch 130 for the enemy), 33 S-combo move, 60 attacker self-destructs, 61 chance stop
+(`variance` %); `element_set[0] == 4` = enemy move with a condition (`chk_scombo_flag`, §5). `scope`: 1 single, 2 all.
 
 ### 4.6 HP / KI recovery between turns — `turn_recover_hpki` (`010_Share.rb:10064`, from turn 2 on)
 - HP: alive `+ceil(maxhp * 3 / 100)`; **KO'd** characters `+ceil(maxhp * 7.5 / 100)` (`$turn_recover_hp = 3`, ×2.5 when dead);
@@ -270,7 +279,12 @@ played; both also drive evasion. High agility + high guard = dodge.
   special move; otherwise normal attack (`@ene_set_action = 1`).
 - Special move pick: uniform random among `Enemies.actions`, re-rolled until valid:
   `condition_type 0` always valid; `condition_type 2` valid when `hp*100/maxhp <= condition_param2`;
-  combined-attack skills need their partners; element-24 skills once per turn. (Other condition types never qualify.)
+  moves with `element_set[0] == 4` must pass `chk_scombo_flag` (all.rb 140311-140400): 304 自爆 only while Yamcha (7)
+  is in the fight (and it targets him), 373/644/645 大猿変身・巨大化 once a battle, combined attacks 382/383 (ジース＋バータ
+  49/50 or 248/249), 518 (145/146/147), 607 (178/180), 637/640 (68/69 or 220/221) only while every partner is present,
+  alive and not stopped (the original reads the partner's state one slot off, `$enedeadchk[index-1]`), 583 リベンジャー
+  チャージ only when not charged, 584 リベンジャーカノン only when charged in an earlier turn (66719 / 66737, reset at
+  turn start 47528); element-24 skills once per turn. (Other condition types never qualify.)
   `@ene_set_action = skill_id + 10`. Damage per §4.3 (enemy skill `base_damage` = % of enemy ATK).
 - Target: random living character among those holding a card (§2.4); `scope 2` hits all of them.
 - Attacks per turn = `Enemies.eva`.
@@ -279,6 +293,10 @@ played; both also drive evasion. High agility + high guard = dodge.
 - Z1 Raditz-area actions: 甜菜人 → 痺れ液 (301, 150 %); 球根人 → エネルギー弾 (302, 150 %);
   奥尼恩 → (サイヤ人)エネルギー波 (305, 130 %), 貫光線 (306, 160 %), 大猿変身 (384, 350 %, only at HP ≤ 30 %);
   帕普金 → 305, 306. All their schools are 惑 (hit 6) → special move when card is 必 or 惑 (2/5 chance in early Z1).
+- Battle switches (cleared after every battle, `reset_battle_flag` all.rb 13306): 121 not in 戦いの記録 (wins, KO
+  counts), 122 no card drops (unless 477), 123 (cleared but never read), 124 no EXP / CAP / SP (unless variable 317),
+  125 no top-damage record, 129 / 130 our / their attacks always hit, 137 an element_ranks-21 enemy shows
+  「受到嚴重的傷害！！」 instead of 「打倒了」 (50670), 148 no victory music (50714).
 
 ---
 
@@ -373,3 +391,33 @@ Z1 normal **1/5**, few 1/7, many 1/2.
 Runtime state worth mirroring: `$partyc`, `$chadead` (KO), `$cha_stop_num`, `$cardset_cha_no[card]=slot`,
 `$cha_set_action[slot]` (1 = normal, skill+10 = special), `$cha_set_enemy[slot]`, `$battleenemy[i]` (enemy ids),
 `$enehp[i]`, `$enedead[i]`, `$battle_turn_num`, `$cha_skill_level[skill]`, `$cha_normal_attack_level[actor]`.
+
+---
+
+## 9. 重製版的招式屬性與敵人機制（flg，2026-11-02）
+
+`tools/build_data.py` 的 `skill_flags()` 把上面用到的元素匯出成 `world.skills[id]` 的旗標（每章自己建的招式也在最後補上）：
+`stun`（12）、`stunSchool`（13）、`flash`（14）、`stunChance`（61，值＝variance）、`sure`（29）、`drain`（15）、`oncePerTurn`（24）、
+`tail`（25）、`selfDestruct`（60）；敵人的 `element_ranks` 匯出成 `world.enemies[id]` 的 `cardMin`（53 → 4）、`schoolRate`（45～48 →
+100／75／50／25）、`dummy`（55）、`bigHurt`（21）。`src/battle.js` 照原版做：
+
+1. 我方定身（12／13／14）：命中後 `foe.stop` 加回合數（12 用自流派卡 +2）；餃子的超能力、新氣功炮、精神攻擊、萬國驚天掌。
+2. 機率定身（61）：variance % 機率 +1，**原版不看有沒有命中**（17696 沒有 `attack_hit` 判斷），照原版。
+3. 必中（29）、開關 129、被動技能 必中 389 不擲迴避；敵人的 29 與開關 130 也一樣（資料裡目前沒有 389 這個技能，判斷先接好）。
+4. 吸收（15）：敵人回復造成的傷害（最多到最大 HP）。
+5. 一回合限一次（24）：同一個敵人這次的連續攻擊裡不會再選同一招（原版的 `@one_turntec` 每個攻擊者結束就清空，所以兩隻同樣的敵人各可用一次）。
+6. 自爆只在命中時：閃過的話栽培人不死。
+7. 敵人卡片：53 攻擊星重抽到 ★5 以上；45～48 依機率變「必」或自流派（各半）；55 每回合第一張固定 ★1／一（追加攻擊抽的卡不固定，照原版）。
+8. 選的敵人已倒下：照該角色作戰的目標設定（`autoTarget`：HP 最少／最大 HP 最高）改打。
+9. 敵人讓我方停止行動（12／14 +1，13 用敵人自流派卡 +1；鋼之意志 619、慈愛之心免疫）：被停的人選卡時跳過、不會被敵人當目標（沒出卡）、
+   不能當組合技夥伴；這回合還沒出手的會失去這次行動。回合開始時減 1（原版 47498），所以出手後才被停的人下回合照常。
+10. 停止回合數：狀態欄的臉右下、敵人臉右下用原版紫底白字數字（數字英語 第 4 列）；對決列的臉上顯示「!」（アイコン (160,16)）。
+11. 敵人有條件的招式：見 §5（合體招式要夥伴在場、活著、沒被停；哈奇亞克 583 充能、之後的回合才能 584）。
+12. 戰鬥開關 121／122／124／125／129／130／137／148：讀進 `battle.bsw`，戰鬥結束清掉（連 123）。121 不記勝場、擊破數（`src/fieldmenu.js`
+    `battleTally`、`tally` 的擊倒數）；122 不掉卡（`src/items.js`）；124 不給經驗值、CAP、SP（只顯示「打倒敵人了！」，等級帶來的固有技能照常）；
+    125 不記最大傷害；137 讓 `bigHurt` 的敵人顯示「X受到嚴重的傷害！！」（重製版平常不顯示每隻的「打倒了」，所以只有這句）；148 不放勝利音樂、不停戰鬥曲。
+
+和原版不同：合體招式的夥伴檢查照原意檢查夥伴本身（原版錯一格）；原版自動戰鬥在全員被停時會讓被停的人照樣出卡（`set_auto_btl` 的
+`chk_stop_non`），重製版全員被停時直接跳到「出招！」，沒有這個怪招；原版的選項變數 356（停止數字只顯示我方／敵方）沒做，兩邊都顯示；
+組合技本身的旗標（710、712、714 的定身等）與組合技傷害交給 `src/combo.js`。開發用跳關：`?dev=flgchao`、`flgguldo`、`flg19`、`flgsaiba`、
+`flgjeice`、`flghatch`、`flgcell`、`flgsw`、`flgdummy`（`src/flg.js`）。

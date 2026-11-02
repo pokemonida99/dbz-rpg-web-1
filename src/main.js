@@ -84,6 +84,7 @@ import './anime_goku_gohan.js?v=20261103-0338'; // 悟空・悟飯's move films,
 import './anime_piccolo_vegeta.js?v=20261103-0338'; // 比克・貝吉塔's Z3 move films (docs/anim-ab-plan.md anpv; after the chapters' addMoves)
 import './anime_zfighters.js?v=20261103-0338'; // the Z fighters' Z3 move films (docs/anim-ab-plan.md anzb; ?dev=anzb…)
 import './anime_bardock.js?v=20261103-0338'; // 巴達克・超巴達克's move films (docs/anim-cd-plan.md ancb; ?dev=ancb…)
+import './anime_bardock_crew.js?v=20261103-0338'; // バーダック一味's move films (docs/anim-cd-plan.md ancc; ?dev=ancc…)
 
 // testing in a hidden browser pane (no animation frames there): ?timer drives every frame with timers instead
 if (new URLSearchParams(location.search).has('timer')) window.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16);

@@ -54,6 +54,10 @@ cb = open(os.path.join(root, 'src', 'anime_bardock.js'), encoding='utf-8').read(
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", cb)}
 files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", cb.split('export const CB_SOUNDS')[1].split(']')[0])}
 files |= {f'Audio/BGS/{n}.ogg' for n in re.findall(r"'([^']+)'", cb.split('export const CB_BGS')[1].split(']')[0])}
+# バーダック一味's move films (src/anime_bardock_crew.js, docs/anim-cd-plan.md ancc): its pic('…') and CR_SOUNDS
+cr = open(os.path.join(root, 'src', 'anime_bardock_crew.js'), encoding='utf-8').read()
+files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", cr)}
+files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", cr.split('export const CR_SOUNDS')[1])}
 # the opening (src/opening.js): its pictures and sounds, and the faces / sounds named in world.opening
 opening = open(os.path.join(root, 'src', 'opening.js'), encoding='utf-8').read()
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\(`?'?([^'`$]+\.(?:PNG|png))", opening)}

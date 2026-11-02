@@ -17,13 +17,13 @@
 //
 // ひらめき (閃き必殺技, data/tecspark.json → world.tecspark, tools/build_tecspark.py) is checked here too, just before the
 // combos (chk_tecspark, all.rb 53813): see spark() below.
-import { VERSION, view, img, audio, rand, sleep } from './core.js?v=20261102-1935';
-import { SW, moveFilm, addMoves } from './anime.js?v=20261102-1935';
-import { ComboDuel } from './combo-anime.js?v=20261102-1935';
-import { menuEntries } from './partymenu.js?v=20261102-1935';
-import * as growth from './growth.js?v=20261102-1935';
-import * as items from './items.js?v=20261102-1935';
-import * as battle from './battle.js?v=20261102-1935'; // battleHooks (used at run time only: battle.js imports this file)
+import { VERSION, view, img, audio, rand, sleep } from './core.js?v=20261102-2129';
+import { SW, moveFilm, addMoves } from './anime.js?v=20261102-2129';
+import { ComboDuel } from './combo-anime.js?v=20261102-2129';
+import { menuEntries } from './partymenu.js?v=20261102-2129';
+import * as growth from './growth.js?v=20261102-2129';
+import * as items from './items.js?v=20261102-2129';
+import * as battle from './battle.js?v=20261102-2129'; // battleHooks (used at run time only: battle.js imports this file)
 
 let DATA = { combos: [], moves: {}, sync: {} };
 export const comboData = fetch(`data/combos.json?v=${VERSION}`).then((r) => r.json()).then((d) => (DATA = d)).catch(() => DATA);

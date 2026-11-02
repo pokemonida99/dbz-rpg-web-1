@@ -928,15 +928,17 @@ export class Battle {
     this.duel = null;
     this.buttons = [];
     await announceCombos(this);
-    const exp = items.expGain(this.game.state, this.foes.reduce((s, f) => s + f.exp, 0)) * EXP_RATE;
-    this.game.state.zeni += items.capGain(this.game.state, this.foes.reduce((s, f) => s + f.gold, 0));
-    growth.beforeExp(this, exp); // shared EXP pool, ZP
+    // a 時之間 boss (src/timeroom.js trBattle): no EXP (switch 124), its own shared EXP / CAP (variables 306 / 317)
+    const tr = this.trReward;
+    const exp = tr ? 0 : items.expGain(this.game.state, this.foes.reduce((s, f) => s + f.exp, 0)) * EXP_RATE;
+    this.game.state.zeni += items.capGain(this.game.state, tr && tr.cap ? tr.cap : this.foes.reduce((s, f) => s + f.gold, 0));
+    growth.beforeExp(this, tr ? tr.shared || 0 : exp); // shared EXP pool, ZP
     const ups = [];
     for (const m of this.party) {
       m.exp += growth.expFor(this.world, m, exp); // サイヤ人の血
       if (levelUp(this.world, m)) ups.push(`${m.name} 升到 LV ${m.level}`);
     }
-    this.say('打倒敵人了！', `獲得 ${exp} 點經驗值`);
+    this.say('打倒敵人了！', tr ? `獲得 ${tr.shared || 0} 點共有經驗值！` : `獲得 ${exp} 點經驗值`);
     await new Promise((res) => { this.cont = res; });
     if (ups.length) {
       audio.se('Z1 レベルアップ', 80);

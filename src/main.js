@@ -36,6 +36,11 @@ import './z4d.js?v=20261102-1141';
 import './z4e.js?v=20261102-1141';
 import './z4f.js?v=20261102-1141';
 import { trGoal } from './timeroom.js?v=20261102-1141'; // 時之間 (registers its spots in src/z3.js too)
+import './tr_z1.js?v=20261102-1141'; // 時之間 phase 2: the areas (docs/timeroom-plan.md)
+import './tr_z2.js?v=20261102-1141';
+import './tr_z3.js?v=20261102-1141';
+import './tr_z4.js?v=20261102-1141';
+import './tr_bardock.js?v=20261102-1141';
 
 // testing in a hidden browser pane (no animation frames there): ?timer drives every frame with timers instead
 if (new URLSearchParams(location.search).has('timer')) window.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16);

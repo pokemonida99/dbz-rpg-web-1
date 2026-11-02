@@ -76,6 +76,39 @@ TEXT = {
 }
 
 
+def cond(c):
+    """an event page's conditions → src/field.js holds() form"""
+    out = [['sw', c[k + '_id'], True] for k in ('switch1', 'switch2') if c[k + '_valid']]
+    if c['variable_valid']:
+        out.append(['var', c['variable_id'], c['variable_value'], 1])
+    return out
+
+
+def map_events(D, mid, rows, sheets=None):
+    """world.maps[id].ev: the map's events from id 5 on above `rows` (1-4 are the original's control events) as
+    [x, y, pages], a page = [conditions, graphic (tile id / [sheet, index, direction, pattern] / 0), priority (0 below,
+    1 same as, 2 above the player), through]; src/field.js draws them and they block the way like the original's.
+    The phase 2 areas use it for their maps' events too (boss sprites, doors). `sheets` collects the sheets used."""
+    evs = []
+    for k, e in sorted(D('map%03d' % mid)['events'].items(), key=lambda kv: int(kv[0])):
+        if int(k) < 5 or e['y'] >= rows:
+            continue
+        pages = []
+        for p in e['pages']:
+            g = p['graphic']
+            if g['tile_id']:
+                gfx = g['tile_id']
+            elif g['character_name']:
+                gfx = [g['character_name'], g['character_index'], g['direction'], g['pattern']]
+                if sheets is not None:
+                    sheets.add(g['character_name'])
+            else:
+                gfx = 0
+            pages.append([cond(p['condition']), gfx, p['priority_type'], int(p['through'])])
+        evs.append([e['x'], e['y'], pages])
+    return evs
+
+
 def add(world, h, z3):
     build_map, D, s2t, enemy, root = h['build_map'], h['D'], h['s2t'], h['enemy'], h['root']
     nodes_of, file = z3['nodes_of'], z3['file']
@@ -83,34 +116,11 @@ def add(world, h, z3):
     ce = {c['id']: c for c in D('commonevents') if c}
 
     # ---------- the maps: walking (src/field.js `walk`), the map events' graphics by the switches ----------
-    def cond(c):
-        out = [['sw', c[k + '_id'], True] for k in ('switch1', 'switch2') if c[k + '_valid']]
-        if c['variable_valid']:
-            out.append(['var', c['variable_id'], c['variable_value'], 1])
-        return out
-
     sheets = set()
     for mid, rows in ROWS.items():
         m = build_map(mid, rows=rows)
         m['walk'] = True
-        evs = []
-        for k, e in sorted(D('map%03d' % mid)['events'].items(), key=lambda kv: int(kv[0])):
-            if int(k) < 5 or e['y'] >= rows:  # 1-4: the original's control events (on the last row)
-                continue
-            pages = []
-            for p in e['pages']:
-                g = p['graphic']
-                if g['tile_id']:
-                    gfx = g['tile_id']
-                elif g['character_name']:
-                    gfx = [g['character_name'], g['character_index'], g['direction'], g['pattern']]
-                    sheets.add(g['character_name'])
-                else:
-                    gfx = 0
-                # [when, graphic, priority (0 below / 1 same as / 2 above the player), through]
-                pages.append([cond(p['condition']), gfx, p['priority_type'], int(p['through'])])
-            evs.append([e['x'], e['y'], pages])
-        m['ev'] = evs
+        m['ev'] = map_events(D, mid, rows, sheets)
         world['maps'][str(mid)] = m
         world['areas'][str(mid)] = None  # no encounters
 
@@ -209,6 +219,19 @@ def add(world, h, z3):
         bd.paste(strips.crop((120, 100 * row, 520, 100 * row + 100)), (0, 450))
         bd.save(os.path.join(root, 'assets', 'bg', f'tr_practice_{era}.png'), optimize=True)
     world['timeroom']['practiceBg'] = ['bg/tr_practice_0.png', 'bg/tr_practice_1.png', 'bg/z3_battle_10.png']
+
+    # ---------- phase 2: the areas, each part in its own file (docs/timeroom-plan.md) ----------
+    tr = {'map_events': map_events, 'cond': cond, 'sheets': sheets, 'GO': GO}
+    import build_tr_z1  # noqa: E402  (Z1 的區域: maps 60-64)
+    build_tr_z1.add(world, h, z3, tr)
+    import build_tr_z2  # noqa: E402  (Z2 的區域: maps 67-71)
+    build_tr_z2.add(world, h, z3, tr)
+    import build_tr_z3  # noqa: E402  (Z3 的區域: maps 73-77, 83)
+    build_tr_z3.add(world, h, z3, tr)
+    import build_tr_z4  # noqa: E402  (Z4 的區域: maps 87-95)
+    build_tr_z4.add(world, h, z3, tr)
+    import build_tr_bardock  # noqa: E402  (巴達克篇 Z1 / Z2: maps 31, 54, 65)
+    build_tr_bardock.add(world, h, z3, tr)
 
     world['fieldPictures'] = sorted(set(world['fieldPictures']) | {f'Graphics/Characters/{n}.png' for n in sheets})
     world['extraBgm'] = sorted(set(world['extraBgm']) | {'DB3 イベント06', 'FCJ1 イベント1'})

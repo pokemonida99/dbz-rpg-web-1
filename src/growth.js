@@ -192,7 +192,7 @@ export function beforeExp(b, exp) {
 // ({lines, se}) in order.
 export function afterBattle(b) {
   const w = b.world, s = b.game.state;
-  let sp = b.foes.reduce((t, f) => t + (f.sp || 0), 0);
+  let sp = b.trReward && b.trReward.sp ? b.trReward.sp : b.foes.reduce((t, f) => t + (f.sp || 0), 0); // (a 時之間 boss: variable 318)
   s.var = s.var || {};
   const heavy = s.var[313] || 0; // 加重衣 (card 82): SP ×1.5 for the next won battles
   if (heavy > 0) sp = Math.trunc(sp * 1.5);

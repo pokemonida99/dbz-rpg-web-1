@@ -21,9 +21,47 @@ const TX = (game) => TR(game).text;
 const HALL = { map: '58', x: 22, y: 13 };
 export const inTimeRoom = (s) => !!(s.flags && s.flags.tr);
 
-// phase 2 / 3: the areas behind the doors (by the original's page: 9102 拉蒂茲區 …) and the 闘技場
-const areas = {};
+// ---------- phase 2 / 3: the areas behind the doors (docs/timeroom-plan.md) ----------
+// registerArea(9102, fn): the door of the hall that runs the original's page 9102 (拉蒂茲區 …), 'arena' the 闘技場.
+// registerTrSpot('z1raditz', fn): a spot of an area map ({chapter: 'tr', page: 'z1raditz'} in world.pois).
+const areas = {}, spots = {};
 export function registerArea(no, fn) { areas[no] = fn; }
+export function registerTrSpot(page, fn) { spots[page] = fn; }
+
+// into an area (9102 …): CE181 (舞空術 37 and 帶路人 124 cards), variable 43 = the area's number (901 …: battle
+// backgrounds and rules key on it), then the map
+export function enterArea(game, to, v43) {
+  const s = game.state;
+  begin(game);
+  eventCard(s, 37, 1);
+  eventCard(s, 124, 1);
+  s.var[43] = v43;
+  audio.se('Z1 入る');
+  goTo(game, to);
+}
+// back to the era's hall (9103 …): CE182 (those cards gone), variable 43 = 999
+export function leaveArea(game, back) {
+  const s = game.state;
+  begin(game);
+  eventCard(s, 37, -99);
+  eventCard(s, 124, -99);
+  s.var[43] = 999;
+  audio.se('Z1 入る');
+  goTo(game, back);
+}
+// a boss of an area (9104 …: battle_process of that page): no EXP (switch 124), the shared EXP / CAP / SP the page
+// sets (variables 306 / 317 / 318), its card drops [[rate %, card], …] (241-245 / 246-250, switch 477), full
+// recovery after it when the page turns switch 141 on. opts: { shared, cap, sp, drops, heal, bgm, backdrop, … } (the
+// rest goes to game.startBattle). Returns 'win' | 'lose' | 'escape'; the field is back afterwards.
+export async function trBattle(game, foes, opts = {}) {
+  const { shared, cap, sp, drops, heal: healAfter, ...rest } = opts;
+  game.busy = false;
+  const won = await game.startBattle(foes, true, { trReward: { shared, cap, sp, drops }, ...rest });
+  if (won && healAfter) healAll(game);
+  game.renderHud();
+  return won ? 'win' : game.lastResult;
+}
+export { goTo, healAll };
 
 // all_charecter_recovery: every actor, in the party or not
 function healAll(game) {
@@ -220,7 +258,7 @@ async function notYet(game, poi) {
 
 registerZ3('tr', {
   spot(game, poi) {
-    const f = { enter, leave, go, party: partyChange, info, practice, area: notYet, arena: notYet }[poi.page];
+    const f = { enter, leave, go, party: partyChange, info, practice, area: notYet, arena: notYet }[poi.page] || spots[poi.page];
     return f ? f(game, poi) : null;
   },
   // ?dev=tr: a Z4-end save straight into the hall (for testing); ?dev=trz1: an early one (Z1 era)

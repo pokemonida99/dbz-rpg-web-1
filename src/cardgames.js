@@ -8,7 +8,9 @@
 //   compo       合成 from the field menu (140_Field_Main.rb menu 7 → Map007 event 1 page 45, 卡林大人):
 //               two cards in, a recipe (world.cardCompo, _card_compo.rvdata) makes a new one; a recipe made once is
 //               remembered and can be picked from the recipe list (128_Scene_Db_card_compo_recipe.rb)
-// The prizes come from create_get_card (world.cardLottery). Uses the card screen's overlay and helpers (src/items.js).
+// The goods and prizes follow the part of the story (variable 44, set by chk_card: see eraOf): the shop sells
+// Scene_Shop's z1～zG_cardlist (world.csq.shop) up to that part, the lottery and concentration draw from
+// create_get_card's card_id_z1～zg (world.csq.lot). Uses the card screen's overlay and helpers (src/items.js).
 import { img, audio, rand, toast, sleep } from './core.js?v=20261102-1554';
 import { cardState, gainCard, lose, maxOf, trim, iconCanvas, overlay, h, button, openShop } from './items.js?v=20261102-1554';
 
@@ -76,27 +78,75 @@ function frame(title) {
   return ui;
 }
 
+// set_card_frame 1 (all.rb 14062): the back of a card — Z1 / Z2, Z3, Z4 (switch 431), ZG (variable 43 151-200)
+let backAt = [64, 96];
+const backOf = (s) => {
+  const v40 = s.var[40] || 0, v43 = s.var[43] || 0;
+  if (v40 < 2) return [64, 96];
+  if (v43 >= 151 && v43 <= 200) return [704, 96];
+  return s.sw[431] ? [384, 272] : [576, 96];
+};
 function cardBack(c, x, y) {
   const mg = img(MG), cs = img(CARDS);
   if (mg.ok) c.drawImage(mg.im, 0, 120, 64, 96, x, y, 64, 96);
-  if (cs.ok) c.drawImage(cs.im, 64, 96, 64, 96, x, y, 64, 96);
+  if (cs.ok) c.drawImage(cs.im, backAt[0], backAt[1], 64, 96, x, y, 64, 96);
 }
 function cardFace(world, c, id, x, y) {
   const s = img(ICONS), it = world.items[id];
   if (s.ok && it) c.drawImage(s.im, 64 * (it.icon % 10), 64 * Math.floor(it.icon / 10), 64, 64, x, y + 16, 64, 64);
 }
-const prize = (world) => world.cardLottery[rand(world.cardLottery.length)]; // create_get_card(Z1)
+// create_get_card(variable 44): card_id_z1 plus the later lists; rand(size - 1) never picks the last one (kept)
+const LOT_TIERS = { 0: 1, 10: 1, 1: 2, 20: 2, 2: 3, 30: 3, 3: 4, 40: 4, 4: 5, 50: 5, 5: 5 };
+export function prizePool(world, v44) {
+  const lot = (world.csq && world.csq.lot) || { z1: world.cardLottery.concat(197) };
+  return ['z1', 'z2', 'z3', 'z4', 'zg'].slice(0, LOT_TIERS[v44] || 1).flatMap((k) => lot[k] || []);
+}
+const prize = (world, s) => { const p = prizePool(world, s.var[44] || 0); return p[rand(p.length - 1)]; };
+// Map007 event 1 page 21: variable 44 → variable 230 → Scene_Shop's lists (command_302, all.rb 31668) plus the cards
+// added after a boss or an arena rank; sorted by the Items' speed like the original
+const SHOP_TIERS = { 0: 1, 10: 2, 1: 2, 20: 3, 2: 3, 30: 4, 3: 4, 40: 5, 4: 5, 50: 6, 5: 6 };
+export function shopGoods(world, s) {
+  const c = world.csq;
+  if (!c) return world.cardShop;
+  const ids = ['z1', 'z2', 'z3', 'z4', 'zG', 'zGadd'].slice(0, SHOP_TIERS[s.var[44] || 0] || 1).flatMap((k) => c.shop[k] || []);
+  const arena = (s.flags && s.flags.arena && s.flags.arena.clear) || [];
+  for (const [id, q] of c.bonus) {
+    const ok = q.sw ? q.sw.some((n) => s.sw[n]) : q.arena != null ? (arena[q.arena] || 0) > 0
+      : (s.var[40] || 0) >= q.v40 && ((s.defeats || {})[q.defeats[0]] || 0) >= q.defeats[1] && !ids.includes(id);
+    if (ok) ids.push(id);
+  }
+  return [...new Set(ids)].filter((id) => world.items[id]).sort((a, b) => world.items[a].order - world.items[b].order);
+}
 const loaded = () => Promise.all([MG, CARDS, ICONS, KARIN].map((p) => img(p).p));
 const names = (world, ids) => ids.map((id) => world.items[id].name).join('　');
 
 // ---------- the card square ----------
+// chk_card (all.rb 186483): one of the three at random, unless a card forced one (switches 866 shop, 867 concentration,
+// 868 lottery: cards 198 / 199 / 200, src/cards_square.js); then the part of the story for the goods (variable 44, left
+// as it is when a カード特殊 square has set it): variable 40, +1 in Z4 (switch 431), +1 in ZG (variable 43 151-199)
+export function eraOf(s) {
+  let v = s.var[40] || 0;
+  if (s.sw[431]) v++;
+  const v43 = s.var[43] || 0;
+  if (v43 >= 151 && v43 <= 199) v++;
+  return v;
+}
 export async function cardSquare(game) {
   const s = cardState(game.state);
+  s.sw = s.sw || {};
   s.var[223] = (s.var[223] || 0) + 1; // times stopped on a card square
-  const n = rand(3);
-  if (n === 0) { audio.playBgm('DB3 メニュー'); await openShop(game); }
-  else if (n === 1) await lottery(game);
-  else await memory(game);
+  let n = rand(3);
+  if (s.sw[866]) n = 0;
+  if (s.sw[867]) n = 2;
+  if (s.sw[868]) n = 1;
+  s.sw[866] = s.sw[867] = s.sw[868] = false;
+  if (!s.var[44]) s.var[44] = eraOf(s);
+  backAt = backOf(s);
+  try {
+    if (n === 0) { audio.playBgm('DB3 メニュー'); await openShop(game); } // the goods: shopGoods (src/cards_square.js shopHooks)
+    else if (n === 1) await lottery(game);
+    else await memory(game);
+  } finally { s.var[44] = 0; } // (the scenes' terminate / page 21's last command)
   game.field.enter(); // the map's music again
 }
 
@@ -106,7 +156,7 @@ export async function lottery(game) {
   await loaded();
   audio.playBgm('Z1 ミニゲーム');
   const ui = frame('卡片連線抽獎');
-  const a = prize(world), b = prize(world);
+  const a = prize(world, s), b = prize(world, s);
   const hide = Array.from({ length: 6 }, () => (rand(2) ? b : a)); // 0-2 top row, 3-5 bottom row
   const open = hide.map(() => false);
   const cv = document.createElement('canvas');
@@ -176,7 +226,7 @@ export async function memory(game) {
   await loaded();
   audio.playBgm('DB3 ミニゲーム');
   const ui = frame('卡片神經衰弱');
-  const ids = Array.from({ length: 4 }, () => prize(world));
+  const ids = Array.from({ length: 4 }, () => prize(world, s));
   const hide = [];
   ids.forEach((id) => { for (let z = 0; z < 2;) { const y = rand(8); if (hide[y] == null) { hide[y] = id; z++; } } });
   const open = hide.map(() => false), gone = hide.map(() => false);

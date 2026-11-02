@@ -10,6 +10,8 @@
 //   闘技場 (map 58 (22,5), 'arena'): 90001 → Scene_Db_Battle_arena (the rank list) → 90011-90031 three rounds (90012 …:
 //        battle_arena_ene_set) → 90041 (CE191 prizes, the new ranks) / 90051 (lost); rank 69 Arale, 70-91 覚醒 bosses.
 import { audio, say, choose, toast } from './core.js?v=20261102-2129';
+import { db3ed } from './db3ed.js?v=20261102-2129'; // the DB3 staff roll
+import { trunksMoves } from './costume.js?v=20261102-2129'; // CE61
 import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261102-2129';
 import { SCROLL_X, SCENE_Y, ENE, PLAY_X, say as sceneSay } from './opening.js?v=20261102-2129';
 import { addMoves } from './anime.js?v=20261102-2129';
@@ -182,6 +184,7 @@ async function start(game) {
     game.zgbjMode = null;
     swapParty(game);
     s.var[173] = 4;
+    trunksMoves(game); // CE61 (the sword: 長髪私服刀あり)
     healAll(game);
     s.sw[360] = true;
     s.var[43] = 126;
@@ -191,6 +194,7 @@ async function start(game) {
   game.zgbjMode = null;
   s.var[41] = 5501;
   await play(game, 'zgbj:5501'); // (CE159, CE166, $partyc = [5,6,17,4,12,7,8,9,10], everyone healed)
+  trunksMoves(game); // CE61: variable 173 = 4 (長髪私服刀あり) → the sword moves
   healAll(game);
   toField(game, C(game).start);
 }
@@ -423,8 +427,8 @@ async function arena(game) {
   s.var[41] = 90041;
   s.var[284] = rank;
   await play(game, 'zgbj:90041'); // the new ranks, the prizes, the music switches
-  if (s.var[41] === 90901) { // every rank cleared and every enemy met: (the DB3 staff roll) → Arale
-    s.var[41] = 90911;
+  if (s.var[41] === 90901 && await db3ed(game)) { // every rank cleared and every enemy met: the DB3 staff roll (src/db3ed.js);
+    s.var[41] = 90911; // a tap while Arale's card shows → 遇見阿拉蕾, else back to the hall
     await play(game, 'zgbj:90911');
   }
   goTo(game, HALL_BACK);

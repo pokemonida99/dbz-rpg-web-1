@@ -206,21 +206,10 @@ async function sidePage(game, page) {
   s.var[41] = page;
   await play(game, String(page));
   s.var[41] = keep;
-  if (page === 521 && s.sw[439] && keep43(s) !== 34) suits(game); // (at 概況 34 it is Piccolo who takes one)
   toField(game);
 }
-const keep43 = (s) => s.var[43] || 0;
-// 521 バトルスーツ取得: Gohan and Krillin wear Saiyan battle suits (the Z2 sheets have them)
-function suits(game) {
-  const s = game.state;
-  s.flags.battleSuit = true;
-  for (const id of [5, 6]) {
-    const m = member(game, id);
-    const jp = id === 5 ? 'ゴハン' : 'クリリン';
-    m.sprite = `Graphics/Pictures/Z2_戦闘_${jp}_バトルスーツ.png`;
-    m.special = `Graphics/Pictures/Z2_戦闘_必殺技_${jp}_バトルスーツ.png`;
-  }
-}
+// 521 バトルスーツ取得: switch 439 (the page) — 悟飯 and 克林 can wear them from then on, by 換裝 in the party screen
+// (variables 161 / 162, src/costume.js), as the original's set_dress
 
 // Frieza on map 29: his 2nd form (478 → 480 → 481), 3rd (484 → 485 → 486), last (492 → 493 …)
 export async function z2bBoss(game, b) {

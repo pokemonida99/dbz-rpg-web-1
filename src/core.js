@@ -56,6 +56,8 @@ export function img(path) {
   return e;
 }
 export const loadImages = (paths) => Promise.all(paths.map((p) => img(p).p));
+// a picture made at run time (a canvas) under a name img() and the aliases can use (src/costume.js: the faces in clothes)
+export function putImage(path, im) { images.set(path, { im, ok: true, p: Promise.resolve(im) }); }
 
 // ---------- input: keyboard + one virtual stick + "confirm" taps ----------
 export const input = {

@@ -21,6 +21,7 @@ import { chapter6Goal, startChapter6, resumeChapter6, chapter6Spot, isChapter6Ma
 import { willowGoal, startWillow, resumeWillow, willowSpot, isWillowMap, willowBoss, devWillow } from './willow.js?v=20261102-2129'; // after Z1: the Willow chapter, up to the hand-over to Z2
 import { z2aGoal, startZ2a, resumeZ2a, z2aSpot, storyScenes, z2aBackdrop, devZ2a } from './z2a.js?v=20261102-2129'; // Z2 first half: Namek, Goku's training, the Grand Elder
 import { applyEra } from './era.js?v=20261102-2129'; // the Z2 art while variable 40 is 1
+import { syncCostume } from './costume.js?v=20261102-2129'; // 換裝: the pictures follow the clothes' variables
 import { z2bGoal, startZ2Ginyu, startZ2b, resumeZ2b, z2bSpot, isZ2bMap, z2bBoss, devZ2b } from './z2b.js?v=20261102-2129'; // Z2 second half: the Ginyu Force, Frieza
 import { startZ3, resumeZ3, z3Spot, isZ3Map, z3Boss, z3Goal, z3Backdrop, devZ3 } from './z3.js?v=20261102-2129'; // Z3 (the chapters below register themselves there)
 import './z3a.js?v=20261102-2129';
@@ -63,6 +64,7 @@ import './zg_recap.js?v=20261102-2129'; // ZG 的概況 (前情提要: src/field
 import './combo_dev.js?v=20261102-2129'; // ?dev=cmb…: S-combo / ひらめき tests (src/combo.js)
 import './sys.js?v=20261102-2129'; // 第二批 sys: 神龍的願望, the shop's added cards, Z3 / Z4 的概況 (docs/sys.md)
 import './viz.js?v=20261102-2129'; // the battle's skill names, the cover scene, the Great Ape's face (docs/batch2-plan.md viz)
+import './cos.js?v=20261102-2129'; // ?dev=cos…: 換裝 and the DB3 staff roll (docs/costume.md)
 
 // testing in a hidden browser pane (no animation frames there): ?timer drives every frame with timers instead
 if (new URLSearchParams(location.search).has('timer')) window.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16);
@@ -381,6 +383,7 @@ let last = performance.now();
 function frame(t) {
   const dt = Math.min(0.05, (t - last) / 1000);
   last = t;
+  syncCostume(game);
   if (game.scene) {
     game.scene.update(dt);
     game.scene.draw();

@@ -4,6 +4,7 @@
 // img() looks paths up there, so every screen that draws those pictures follows without knowing about it.
 // ZG (variable 43 151-200) has cards of its own (set_card_frame set 4, all.rb 14062): world.era.zg on top of era 2.
 import { setImageAlias, loadImages } from './core.js?v=20261102-2129';
+import { withCostume } from './costume.js?v=20261102-2129'; // the clothes' faces and battle sheets on top (換裝)
 
 export const eraKey = (s) => {
   const v = ((s && s.var) || {})[40] || 0, v43 = ((s && s.var) || {})[43] || 0;
@@ -12,6 +13,7 @@ export const eraKey = (s) => {
 export function applyEra(game) {
   const v = ((game.state && game.state.var) || {})[40] || 0, era = game.world.era || {};
   const map = { ...(era[v] || {}), ...(eraKey(game.state) === 'zg' ? era.zg || {} : {}) };
-  setImageAlias(map);
-  return loadImages(Object.values(map));
+  const all = withCostume(game, map);
+  setImageAlias(all);
+  return loadImages(Object.values(all));
 }

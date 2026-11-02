@@ -1,6 +1,7 @@
 // Field: free flight over the map, random encounters, the boss marker.
 import { view, img, input, audio, rand } from './core.js?v=20261102-2129';
 import { renderMap, drawTile, tileSheetPaths } from './tiles.js?v=20261102-2129';
+import { flySprite, walkSprite } from './costume.js?v=20261102-2129';
 
 const SPEED = 150; // art pixels per second (~4.7 tiles/s)
 // fieldHooks.step(state, step) → the distance actually flown this frame (src/cards_a.js: 飛機 doubles it); encounters and
@@ -157,6 +158,8 @@ export class Field {
     const s = this.game.state, t = this.world.timeroom, lead = (s.var && s.var[42]) || 3;
     let hit = null;
     for (const [v, sws, sheet, k] of (t && t.walk) || []) if (v === lead && sws.every((n) => s.sw[n])) hit = [sheet, k];
+    const cos = walkSprite(s, lead); // 換裝 (src/costume.js: map 44's clothes pages)
+    if (cos) hit = cos.split(':').map((x, i) => (i ? +x : x));
     return hit;
   }
   drawEvents(c, cx, cy, above) {
@@ -258,7 +261,7 @@ export class Field {
     }
     if (this.map.ev && !this.evAt) this.syncEvents();
     this.drawEvents(c, cx, cy, false);
-    const lead = (s.var && s.var[42]) || 3, more = FLY_MORE[lead] && FLY_MORE[lead].split(':');
+    const lead = (s.var && s.var[42]) || 3, fm = flySprite(s, lead) || FLY_MORE[lead], more = fm && fm.split(':'); // flySprite: 換裝
     const wk = this.map.walk && this.walker(), wi = wk && img(`Graphics/Characters/${wk[0]}.png`);
     const fi = img(more ? `Graphics/Characters/${more[0]}.png` : FLY);
     if (wk) { // on foot: 32×32 frames, standing = the middle one

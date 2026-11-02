@@ -9,6 +9,7 @@
 //            (switch 585, Bardock learns 158, CE167) → 9922 → the ZG hall (13,3)
 // The pages run one after another the way Map007 does (each sets variable 41 to the next one before its transfer).
 import { audio, img, say, choose, loadImages } from './core.js?v=20261102-2129';
+import { trunksMoves } from './costume.js?v=20261102-2129'; // CE61
 import { addScenes, addNodes } from './cutscene.js?v=20261102-2129';
 import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261102-2129';
 import { addMoves, ANIME_IMAGES, Duel, draw, STD_Y, CENTER_CHAX, RAY_SPEED } from './anime.js?v=20261102-2129';
@@ -364,27 +365,7 @@ function swap(game) { // CE168
   K(s).tmp[k] = snapshot(s);
   restore(game, t);
 }
-// CE61 トランクス技切り替え: Trunks' (and Super Trunks') sword moves by his clothes (variable 173; switch 438 the sword)
-function trunksMoves(game) {
-  const s = game.state, w = game.world, v = s.var[173] || 0;
-  if (v === 0 || v === 4) s.sw[438] = false;
-  if (v >= 1 && v <= 3) s.sw[438] = true;
-  const learn = (id, skill, on) => {
-    const m = s.party.find((x) => x.id === id) || (s.bench || {})[id];
-    s.forms = s.forms || {};
-    const list = m ? m.skills : (s.forms[id] = s.forms[id] || { skills: [...((w.actors[id] || {}).skills || [])] }).skills;
-    const k = list.indexOf(skill);
-    if (on && k < 0) list.push(skill);
-    if (!on && k >= 0) list.splice(k, 1);
-  };
-  for (const id of [17, 20]) {
-    for (const sk of [172, 173, 177, 178, 181]) learn(id, sk, false);
-    if (s.sw[438]) { learn(id, 172, true); learn(id, 177, true); continue; }
-    learn(id, 173, true);
-    if (s.sw[437] || s.sw[861]) learn(id, 178, true); // ヒートドーム覚える
-    else learn(id, 181, true);
-  }
-}
+// CE61 トランクス技切り替え: trunksMoves (src/costume.js)
 
 addNodes({
   zgbrCE: async (node, { ctx }) => {

@@ -218,6 +218,21 @@ def add(world, h, z3):
         bd = Image.new('RGB', (400, 600), (0, 0, 0))
         bd.paste(strips.crop((120, 100 * row, 520, 100 * row + 100)), (0, 450))
         bd.save(os.path.join(root, 'assets', 'bg', f'tr_practice_{era}.png'), optimize=True)
+    # the area cards (Scene_Db_Card run_card, all.rb 146687 / 146776): 舞空術 flies to a fixed spot of the area map,
+    # 帶路人 runs the area's way-back page (9103 …: the hall, in front of that area's door; Z4: map 85 or 86)
+    world['timeroom']['fly'] = {'60': [56, 5], '61': [54, 6], '62': [7, 3], '63': [56, 9], '64': [6, 9], '67': [5, 23],
+                                '68': [12, 31], '69': [8, 9], '70': [57, 22], '71': [38, 60], '73': [78, 81], '83': [5, 2],
+                                '74': [60, 21], '75': [9, 17], '76': [16, 16], '77': [64, 14], '87': [19, 10], '88': [8, 40],
+                                '89': [40, 33], '91': [68, 4], '92': [49, 11], '94': [64, 17], '95': [44, 36]}
+    guide = {}
+    ev7 = D('map007')['events']
+    pages = {p['condition']['variable_value']: p['list'] for k in ('17', '18', '20', '21') for p in ev7[k]['pages'] if p['condition']['variable_valid']}
+    for m, no in [(60, 9103), (61, 9112), (62, 9122), (63, 9132), (64, 9142), (67, 9303), (68, 9312), (69, 9322), (70, 9332),
+                  (71, 9342), (73, 9503), (83, 9552), (74, 9512), (75, 9522), (76, 9532), (77, 9542), (87, 9703), (88, 9712),
+                  (89, 9722), (91, 9732), (92, 9742), (94, 9752), (95, 9772)]:
+        to = [GO(c['parameters'][1], c['parameters'][2], c['parameters'][3]) for c in pages[no] if c['code'] == 201]
+        guide[str(m)] = to  # [after Z4 / always, before Z4]
+    world['timeroom']['guide'] = guide
     world['timeroom']['practiceBg'] = ['bg/tr_practice_0.png', 'bg/tr_practice_1.png', 'bg/z3_battle_10.png']
 
     # ---------- phase 2: the areas, each part in its own file (docs/timeroom-plan.md) ----------

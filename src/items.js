@@ -400,7 +400,11 @@ export function openCards(game, battle = null) {
       const it = world.items[id];
       if (!usable(x, id, it)) { audio.se(SE_ERR, 70); toast(it.kind === 'hook' ? '這張卡片的功能還沒做好' : it.kind === 'none' || it.occ === 3 ? '這張卡片不能使用' : it.occ === 1 && !battle ? '這張卡片只能在戰鬥中使用' : it.occ === 2 && battle ? '這張卡片只能在地圖上使用' : '現在使用也沒有效果'); return; }
       audio.se(SE_OK, 70);
-      if (it.kind === 'hook') { el.hidden = true; fieldCards[id]({ game, battle }).then((r) => { if (r && it.spent) lose(s, id); el.hidden = false; render(); }); return; }
+      if (it.kind === 'hook') { // r: used (spent if the card is), or 'close' (it moved the player: the card screen closes too)
+        el.hidden = true;
+        fieldCards[id]({ game, battle }).then((r) => { if (r && it.spent) lose(s, id); if (r === 'close') { el.remove(); if (game.renderHud && !battle) game.renderHud(); done(); return; } el.hidden = false; render(); });
+        return;
+      }
       mode = target(id, it);
       if (mode === 'none') mode = 'confirm';
       render();

@@ -12,7 +12,7 @@ import { audio, say, choose, sleep } from './core.js?v=20261102-1141';
 import { registerZ3, begin, play, heal, member, party } from './z3.js?v=20261102-1141';
 import { moveTo, enterMap } from './chapter2.js?v=20261102-1141';
 import { syncSuperSaiyan, FORMS } from './supersaiyan.js?v=20261102-1141';
-import { eventCard } from './items.js?v=20261102-1141';
+import { eventCard, fieldCards } from './items.js?v=20261102-1141';
 import { memberChange } from './partymenu.js?v=20261102-1141';
 import { holds } from './field.js?v=20261102-1141';
 
@@ -263,6 +263,22 @@ async function notYet(game, poi) {
   await say([['', `「${poi.label}」本版尚未製作，之後會照原版加入。`]]);
   goTo(game, { map: s.map, x: Math.floor(s.x / 32), y: Math.floor(s.y / 32) });
 }
+
+// the cards CE181 gives in an area (run_card 37 / 124): never spent; only on the map of an area
+fieldCards[37] = async ({ game, battle }) => { // 舞空術: fly to the area's fixed spot
+  const s = game.state, p = !battle && inTimeRoom(s) && TR(game).fly[s.map];
+  if (!p) { audio.se('Z3 エラー'); return false; }
+  begin(game);
+  audio.se('Z1 飛ぶ');
+  goTo(game, { map: s.map, x: p[0], y: p[1] });
+  return 'close';
+};
+fieldCards[124] = async ({ game, battle }) => { // 帶路人: back to the hall, in front of this area's door (the area's way-back page)
+  const s = game.state, to = !battle && inTimeRoom(s) && TR(game).guide[s.map];
+  if (!to) { audio.se('Z3 エラー'); return false; }
+  leaveArea(game, to.length > 1 && !s.sw[458] ? to[1] : to[0]);
+  return 'close';
+};
 
 registerZ3('tr', {
   spot(game, poi) {

@@ -1,6 +1,6 @@
 // Field: free flight over the map, random encounters, the boss marker.
 import { view, img, input, audio, rand } from './core.js?v=20261102-0958';
-import { renderMap } from './tiles.js?v=20261102-0958';
+import { renderMap, drawTile, tileSheetPaths } from './tiles.js?v=20261102-0958';
 
 const SPEED = 150; // art pixels per second (~4.7 tiles/s)
 const FLY = 'Graphics/Characters/chara_fly1.png'; // 48×48 frames, Goku = character 0
@@ -112,15 +112,65 @@ export class Field {
   }
 
   walkable(px, py) {
+    if (this.map.walk) { // walking (the 時之間 maps): a small box round the feet, on the original's passability
+      for (const [ox, oy] of [[-10, -2], [10, -2], [-10, 13], [10, 13]]) if (!this.passable(Math.floor((px + ox) / 32), Math.floor((py + oy) / 32))) return false;
+      return true;
+    }
     const tx = Math.floor(px / 32), ty = Math.floor(py / 32);
     if (tx < 0 || ty < 0 || tx >= this.map.w || ty >= this.map.h) return false;
     const id = this.map.layers[0][tx + ty * this.map.w];
     return id > 0 && (!this.map.path || this.map.path.includes(id)); // path maps (King Kai's planet): only these ground tiles
   }
 
+  // ---------- walking maps (world.maps[id].walk: the 時之間, src/timeroom.js) ----------
+  // The map's events (world.maps[id].ev = [x, y, pages]; a page = [conditions, graphic, priority, through]) are drawn
+  // and block the way as the original's do: the last page whose conditions hold is in effect; a tile graphic below
+  // the player passes by its own tile's passage, anything at the player's level (priority 1) blocks.
+  syncEvents() {
+    const s = this.game.state, w = this.map.w;
+    this.evAt = new Map();
+    for (const [x, y, pages] of this.map.ev || []) {
+      let pg = null;
+      for (let k = pages.length - 1; k >= 0 && !pg; k--) if (holds(s, pages[k][0])) pg = pages[k];
+      if (pg) this.evAt.set(x + y * w, { x, y, gfx: pg[1], pri: pg[2], through: !!pg[3] });
+    }
+  }
+  // Game_Map#passable? (flag 0x01): tile events below the player first, then layers 3 → 1; ☆ tiles don't count
+  passable(tx, ty) {
+    const { w, h, layers } = this.map, pas = this.world.passages;
+    if (tx < 0 || ty < 0 || tx >= w || ty >= h) return false;
+    const i = tx + ty * w, e = this.evAt && this.evAt.get(i);
+    if (e && !e.through && e.pri === 1) return false;
+    if (e && !e.through && e.pri === 0 && typeof e.gfx === 'number' && e.gfx && !(pas[e.gfx] & 0x10)) return !(pas[e.gfx] & 1);
+    for (let z = 2; z >= 0; z--) {
+      const p = pas[layers[z][i]];
+      if (p & 0x10) continue;
+      return !(p & 1);
+    }
+    return false;
+  }
+  // the leader on foot: map 58 event 2 「主人公」, its last page for variable 42 and the era's switch (471-473)
+  walker() {
+    const s = this.game.state, t = this.world.timeroom, lead = (s.var && s.var[42]) || 3;
+    let hit = null;
+    for (const [v, sws, sheet, k] of (t && t.walk) || []) if (v === lead && sws.every((n) => s.sw[n])) hit = [sheet, k];
+    return hit;
+  }
+  drawEvents(c, cx, cy, above) {
+    if (!this.evAt) return;
+    const bm = tileSheetPaths.map((p) => { const e = img(p); return e.ok ? e.im : null; });
+    for (const e of this.evAt.values()) {
+      if (!e.gfx || (e.pri === 2) !== above) continue;
+      if (typeof e.gfx === 'number') { drawTile(c, bm, e.gfx, e.x * 32 - cx, e.y * 32 - cy, 0); continue; }
+      const [sheet, k, dir, pat] = e.gfx, im = img(`Graphics/Characters/${sheet}.png`);
+      if (im.ok) c.drawImage(im.im, ((k % 4) * 3 + pat) * 32, (Math.floor(k / 4) * 4 + dir / 2 - 1) * 32, 32, 32, e.x * 32 - cx, e.y * 32 - cy, 32, 32);
+    }
+  }
+
   update(dt) {
     if (this.paused) return;
     const s = this.game.state;
+    if (this.map.ev) this.syncEvents(); // (the 時之間 maps, and a few events of the story maps)
     const { dx, dy } = input;
     const mag = Math.min(1, Math.hypot(dx, dy));
     if (mag > 0.05) {
@@ -137,6 +187,7 @@ export class Field {
         this.dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 1 : 2) : (dy < 0 ? 3 : 0);
       }
       this.anim += dt * 6;
+      this.moving = true;
       s.travel += step;
       if (s.travel >= 32) {
         s.travel -= 32;
@@ -144,6 +195,7 @@ export class Field {
       }
     } else {
       this.anim += dt * 2; // idle hover
+      this.moving = false;
       this.follow = null;
     }
     if (this.open) { // road maps: the camera leads a little in the direction of travel
@@ -153,7 +205,7 @@ export class Field {
       this.look.y += (ly * 90 - this.look.y) * k;
     }
     // nearest interactive spot within reach
-    let near = null, nd = 44;
+    let near = null, nd = this.map.walk ? 22 : 44; // on foot: standing on the square, like the original's Event_Check
     if (this.spent && Math.hypot(s.x - (this.spent.x * 32 + 16), s.y - (this.spent.y * 32 + 16)) >= 44) this.spent = null;
     for (const p of this.pois) {
       if (p.gone && s.sw[p.gone]) continue; // a beaten Pumpkin / Broccoli
@@ -177,7 +229,10 @@ export class Field {
     let cx = s.x + this.look.x - view.w / 2, cy = s.y + this.look.y - view.h * 0.45;
     if (this.cam) { cx = this.cam.x - view.w / 2; cy = this.cam.y - view.h / 2; } // 地圖 (src/fieldmenu.js mapView)
     cx = W <= view.w ? (W - view.w) / 2 : Math.max(0, Math.min(W - view.w, cx));
-    cy = H <= view.h ? (H - view.h) / 2 : Math.max(-this.hudPad(), Math.min(H - view.h, cy));
+    if (this.map.walk) { // a small room: centred in the space under the HUD's faces when it fits there
+      const pad = this.hudPad();
+      cy = H <= view.h - pad ? -pad - (view.h - pad - H) / 2 : Math.max(-pad, Math.min(H - view.h, cy));
+    } else cy = H <= view.h ? (H - view.h) / 2 : Math.max(-this.hudPad(), Math.min(H - view.h, cy));
     cx = Math.round(cx); cy = Math.round(cy);
     c.fillStyle = '#000';
     c.fillRect(0, 0, view.w, view.h);
@@ -189,17 +244,24 @@ export class Field {
       const f = Math.floor(this.anim) % 3, k = b.index || 0; // enemy1.png: 4 characters a row, 3×4 frames each
       c.drawImage(bi.im, ((k % 4) * 3 + f) * 32, Math.floor(k / 4) * 128 + (b.row || 0) * 32, 32, 32, b.x * 32 - cx, b.y * 32 - cy, 32, 32); // row: the direction row (enemy6.png: one demon each)
     }
+    if (this.map.ev && !this.evAt) this.syncEvents();
+    this.drawEvents(c, cx, cy, false);
     const lead = (s.var && s.var[42]) || 3, more = FLY_MORE[lead] && FLY_MORE[lead].split(':');
+    const wk = this.map.walk && this.walker(), wi = wk && img(`Graphics/Characters/${wk[0]}.png`);
     const fi = img(more ? `Graphics/Characters/${more[0]}.png` : FLY);
-    if (fi.ok) {
+    if (wk) { // on foot: 32×32 frames, standing = the middle one
+      const pat = this.moving ? [0, 1, 2, 1][Math.floor(this.anim) % 4] : 1, k = wk[1];
+      if (wi.ok) c.drawImage(wi.im, ((k % 4) * 3 + pat) * 32, (Math.floor(k / 4) * 4 + this.dir) * 32, 32, 32, Math.round(s.x - 16 - cx), Math.round(s.y - 16 - cy), 32, 32);
+    } else if (fi.ok) {
       const pat = [0, 1, 2, 1][Math.floor(this.anim) % 4];
       const bob = Math.round(Math.sin(this.anim * 1.3) * 1.5);
       const k = more ? +more[1] : lead - 3; // the leading character (actor id - 3), 4 a row like the VX sheets
       c.drawImage(fi.im, ((k % 4) * 3 + pat) * 48, (Math.floor(k / 4) * 4 + this.dir) * 48, 48, 48, Math.round(s.x - 24 - cx), Math.round(s.y - (this.map.path ? 28 : 36) - cy + bob), 48, 48); // on the squares: standing on them
     }
     c.drawImage(this.layers.upper, -cx, -cy);
+    this.drawEvents(c, cx, cy, true);
     if (this.near) { // "!" over the player's head
-      const bx = Math.round(s.x - cx), by = Math.round(s.y - 46 - cy + Math.sin(this.anim * 3) * 2);
+      const bx = Math.round(s.x - cx), by = Math.round(s.y - (this.map.walk ? 30 : 46) - cy + Math.sin(this.anim * 3) * 2);
       c.fillStyle = '#fff';
       c.fillRect(bx - 8, by - 10, 16, 18);
       c.fillStyle = '#d0480c';
@@ -246,6 +308,8 @@ export const nextEncounterSteps = () => 12 + rand(14);
 // ['sw', id, on] / ['var', id, value, op] (op as the original's conditional branch: 0 == 1 >= 2 <= 3 > 4 < 5 !=)
 const CMP = [(a, b) => a === b, (a, b) => a >= b, (a, b) => a <= b, (a, b) => a > b, (a, b) => a < b, (a, b) => a !== b];
 export function holds(s, c) {
+  if (!c.length) return true; // none
+  if (c[0] === 'any') return c.slice(1).some((x) => holds(s, x)); // ['any', a, b …]: one of them
   if (Array.isArray(c[0])) return c.every((x) => holds(s, x)); // several: all of them
   if (c[0] === 'sw') return !!(s.sw || {})[c[1]] === c[2];
   return CMP[c[3] || 0]((s.var || {})[c[1]] || 0, c[2]);

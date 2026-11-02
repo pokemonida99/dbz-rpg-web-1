@@ -26,7 +26,7 @@ const FALL = [[[2,0],[1,0],[2,1],[1,1]],[[0,0],[1,0],[0,1],[1,1]],[[2,0],[3,0],[
 const SHEETS = ['TileA1', 'TileA2', 'TileA3', 'TileA4', 'TileA5', 'TileB', 'TileC', 'TileD', 'TileE'];
 export const tileSheetPaths = SHEETS.map((n) => `Graphics/System/${n}.png`);
 
-function drawTile(c, bm, id, dx, dy, anim) {
+export function drawTile(c, bm, id, dx, dy, anim) {
   if (id < 1024) {
     const src = bm[5 + (id >> 8)];
     const t = id & 255;

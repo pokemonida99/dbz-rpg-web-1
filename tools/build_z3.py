@@ -333,6 +333,9 @@ def add(world, h):
     build_z4e.add(world, h, z3)
     import build_z4f  # noqa: E402  (Z4 第六章 賽魯遊戲: maps 48, 49)
     build_z4f.add(world, h, z3)
+    # ---------- 時之間 (phase 1: the hall, the era halls, 隊伍變更, 説明, 戦闘練習: src/timeroom.js) ----------
+    import build_timeroom  # noqa: E402
+    build_timeroom.add(world, h, z3)
 
     # every sound and song the story pages play (a chapter's own lists may miss some): copied if the original has it
     def walk(x, se, bgm):

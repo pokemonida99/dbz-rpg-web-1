@@ -55,6 +55,7 @@ export const combosOf = (actorId) => DATA.combos.filter((c) => c.cha.includes(ac
 function fits(b, combo, newOnly) {
   const state = b.game.state;
   if (learned(state).includes(combo.id) === newOnly) return null;
+  if (newOnly && b.practice) return null; // 戦闘練習: no new combos (all.rb 53703)
   const who = [];
   for (let x = 0; x < combo.cha.length; x++) {
     const i = b.party.findIndex((m) => m.id === combo.cha[x]);
@@ -110,8 +111,10 @@ export async function tryCombo(b, i) {
   // everyone pays KI and is done for the turn (102:944-985)
   for (const j of who) { const m = b.party[j]; m.ki = Math.max(0, m.ki - b.plans[j].skill.ki); b.acted.add(j); }
   const dmg = comboDamage(b, combo, who, foe, foe.card);
-  levels(state)[combo.id] = Math.min(LEVEL_MAX, uses(state, combo.id) + 1);
-  who.forEach((j, x) => noteSkillUse(state, combo.tec[combo.cha.indexOf(b.party[j].id)]));
+  if (!b.practice) { // (戦闘練習: no use counts, all.rb 53385)
+    levels(state)[combo.id] = Math.min(LEVEL_MAX, uses(state, combo.id) + 1);
+    who.forEach((j, x) => noteSkillUse(state, combo.tec[combo.cha.indexOf(b.party[j].id)]));
+  }
   if (!learned(state).includes(combo.id)) (b.newCombos || (b.newCombos = [])).push(combo.id);
   // the film
   const crew = {};
@@ -122,7 +125,7 @@ export async function tryCombo(b, i) {
   b.anim = new ComboDuel({
     party: crew[lead.id], foe: { normal: foe.portrait, special: foe.sprite }, combo: combo.id, crew, lead: lead.id,
     damage: dmg, margin: Math.max(0, (SW - view.w) / 2),
-    onHit: () => { foe.hp = Math.max(0, foe.hp - dmg); },
+    onHit: () => { if (b.practice) b.practice.dmg = (b.practice.dmg || 0) + dmg; else foe.hp = Math.max(0, foe.hp - dmg); },
   });
   await b.anim.finished;
   b.anim = null;

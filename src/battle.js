@@ -90,6 +90,9 @@ const pick = (a) => a[rand(a.length)];
 export function newCard() { return { a: rand(8), g: rand(8), s: pick(z2Schools(false) || (late() ? [0, 1, 3, 4] : [0, 1, 2, 4])) }; }
 const enemyCard = () => ({ a: rand(8), g: rand(8), s: pick(z2Schools(true) || (late() ? [0, 1, 3, 4, 5] : [0, 1, 2, 4, 5])) });
 export function newHand() { return Array.from({ length: HAND }, newCard); }
+// 「氣」 (school 16, the 時之間's 戦闘練習): it becomes the school of whoever plays it (all.rb 48888)
+export const KI_CARD = 16;
+const ownSchool = (cd, m) => cd.s === m.school || cd.s === KI_CARD;
 
 export function rollEncounter(world) {
   const pool = world.encounters['1'];
@@ -470,7 +473,7 @@ export class Battle {
     this.hand.forEach((cd, k) => {
       const owner = this.phase === 'plan' ? this.owner(k) : null; // the member who picked this card
       const x = Math.round(x0 + k * step);
-      const special = m && owner == null && (cd.s === m.school || cd.s === 0) && m.skills.length;
+      const special = m && owner == null && (ownSchool(cd, m) || cd.s === 0) && m.skills.length;
       const picked = this.pending && this.pending.card === k;
       const y = L.cardsY + (picked ? -10 : special ? -4 : 0);
       if (owner != null) c.globalAlpha = 0.45;
@@ -482,7 +485,7 @@ export class Battle {
         c.save(); c.translate(bx, by); c.scale(0.5, 0.5); face(c, this.party[owner], 0, 0); c.restore();
       }
       if (picked) glow(c, () => card(c, cd, x, y)); // raised and glowing (a ▼ above would sit on the buttons)
-      else if (special && cd.s === m.school) { c.strokeStyle = '#ffd27a'; c.lineWidth = 2; c.strokeRect(x - 1, y - 1, 66, 98); }
+      else if (special && ownSchool(cd, m)) { c.strokeStyle = '#ffd27a'; c.lineWidth = 2; c.strokeRect(x - 1, y - 1, 66, 98); }
       if (this.phase === 'plan' && !this.cont) this.hit(x, y, step, 100, () => this.tapCard(k), { card: k });
     });
   }
@@ -614,7 +617,7 @@ export class Battle {
     const m = this.party[this.cur];
     this.mode = 'card';
     this.pending = null;
-    this.say(`${m.name}：點一張卡出招。`, `${SCHOOL[m.school]}流或「必」的卡可以使用必殺技。`);
+    this.say(`${m.name}：點一張卡出招。`, this.practice ? '「氣」的卡會變成自己的流派，可以使用必殺技。' : `${SCHOOL[m.school]}流或「必」的卡可以使用必殺技。`);
     this.buttons = commandButtons(this); // 自動・菜單・(返回)・逃跑 (src/partymenu.js)
   }
 
@@ -669,6 +672,7 @@ export class Battle {
   onCard(k) {
     const m = this.party[this.cur];
     const cd = this.hand[k];
+    if (cd.s === KI_CARD) cd.s = m.school; // 「氣」
     this.pending = { card: k, skill: null };
     audio.se(SE_OK);
     const alive = this.foes.filter((f) => f.hp > 0);
@@ -738,6 +742,8 @@ export class Battle {
       const free = this.hand.map((c, k) => k).filter((k) => !usedCards.has(k));
       if (!free.length) return; // more members than cards: the rest sit out
       let k = free.find((x) => this.hand[x].s === m.school);
+      if (k == null) k = free.find((x) => this.hand[x].s === KI_CARD);
+      if (k != null && this.hand[k].s === KI_CARD) this.hand[k].s = m.school; // 「氣」
       if (k == null) k = free.find((x) => this.hand[x].s === 0);
       let skill = null;
       if (k != null) skill = autoSkill(this.world, this.game.state, m); // 作戰 (src/partymenu.js)
@@ -767,15 +773,27 @@ export class Battle {
       if (o.kind === 'p') await this.playerAct(o.i);
       else if (!items.foeStopped(o.f)) for (let n = 0; n < this.attacks(o.f) && o.f.hp > 0 && !this.over(); n++) { if (n > 0) o.f.card = enemyCard(); await this.enemyAct(o.f); }
     }
-    this.plans.forEach((p, i) => { if (p) this.hand[p.card] = growth.regenCard(this.world, this.party[i], newCard()); }); // used cards are regenerated in place (§1.6), 一か八か
+    this.plans.forEach((p, i) => { if (p) this.hand[p.card] = this.practice ? { a: 7, g: 7, s: KI_CARD } : growth.regenCard(this.world, this.party[i], newCard()); }); // used cards are regenerated in place (§1.6), 一か八か; 戦闘練習: always Z and 「氣」
     items.endTurn(this);
     if (this.over()) return;
+    if (this.practice) await this.practiceRecord();
     for (const f of this.foes) if (f.regen && f.hp > 0 && f.hp < f.maxhp) f.hp = Math.min(f.maxhp, f.hp + Math.floor((f.regen / 100) * f.maxhp)); // *PARAM_HPRECOVER
     growth.recover(this); // recovery from the second turn on, KO'd members back only at full HP (§4.6)
     await announceCombos(this);
     await sleep(400);
     this.turn++;
     this.startPlanning();
+  }
+
+  // 戦闘練習 (switch 1305, chk_damage_counter): the damage of the turn (variable 425) and the best so far (424 / 426)
+  async practiceRecord() {
+    const p = this.practice, d = p.dmg || 0;
+    p.dmg = 0;
+    if (d > p.best.dmg) Object.assign(p.best, { dmg: d, turn: this.turn });
+    audio.se('Z3 アイテム取得', 80);
+    this.say(`這回合的紀錄：${d}`, `開始前的紀錄：${p.old}`);
+    await new Promise((res) => { this.cont = res; setTimeout(res, 2400); });
+    this.cont = null;
   }
 
   over() { return this.foes.every((f) => f.hp <= 0) || this.party.every((m) => m.ko) || this.stopped(); }
@@ -805,6 +823,7 @@ export class Battle {
       playerAttacks, skill, ray: actor.ray, hit: dmg >= 0, damage: Math.max(0, dmg), margin: Math.max(0, (SW - view.w) / 2),
       onHit: () => {
         if (dmg < 0) return;
+        if (playerAttacks && this.practice) { this.practice.dmg = (this.practice.dmg || 0) + dmg; return; } // the dummy loses no HP
         target.hp = Math.max(0, target.hp - dmg);
         if (!playerAttacks) audio.se('Z1 ダメージ', 70);
         if (!playerAttacks && target.hp <= 0) growth.knockOut(target, this.turn);
@@ -833,14 +852,14 @@ export class Battle {
       await sleep(900);
       const to = superSaiyan(this.world, this.game.state, moveTransforms(m), true);
       if (to) { audio.se('Z1 パワーアップ', 80); this.say(`${to.name} 變成了超級賽亞人！`); await sleep(1200); }
-      tally(this.game.state, m, skill, 0);
+      if (!this.practice) tally(this.game.state, m, skill, 0);
       return;
     }
     const alive = targets.filter((t) => t.hp > 0).length;
     for (const t of targets) {
       t.card = t.card || enemyCard();
       this.duel = { m, mc: cd, f: t, fc: t.card };
-      this.say(`${m.name} 的${skill ? skill.name : '攻擊'}！`, cd.s === m.school ? '流派一致，威力 ×1.3！' : '');
+      this.say(`${m.name} 的${skill ? skill.name : '攻擊'}！`, ownSchool(cd, m) ? '流派一致，威力 ×1.3！' : '');
       const dmg = playerDamage(this, m, skill && { noDamage: skill.noDamage }, cd, t, t.card, growth.power(this.game.state, m, skill));
       await this.play(m, t, true, skill ? skill.id : null, dmg, t);
       if (dmg >= 0) growth.onHit(this, m, t); // かなしばり
@@ -850,7 +869,7 @@ export class Battle {
         await sleep(900);
       }
     }
-    tally(this.game.state, m, skill, alive - targets.filter((t) => t.hp > 0).length); // use counts, KOs
+    if (!this.practice) tally(this.game.state, m, skill, alive - targets.filter((t) => t.hp > 0).length); // use counts, KOs (not while practising)
   }
 
   async enemyAct(f) {

@@ -6,8 +6,8 @@
 //     tap a member, then 換順序 and another member to swap places — party[0] leads on the map (var 42)
 //   作戰 (103_Scene_Db_Tactics_Menu.rb, $cha_tactics): per-character settings that 自動 follows
 //     (set_auto_btl / set_auto_tec, 101_Scene_Db_Battle.rb:2940-3230)
-// Swapping active and waiting members (Scene_Db_Member_change) only exists in Z3 (時の間) and for an item card,
-// so it is not offered here; in Z1 only the active party ($partyc) earns EXP (get_sinario_full_party is empty).
+// Swapping active and waiting members (Scene_Db_Member_change) is the 時之間's (memberChange below, src/timeroom.js)
+// and an item card's, so the field menu doesn't offer it; in Z1 only the active party ($partyc) earns EXP (get_sinario_full_party is empty).
 //
 // Other screens plug into the menu through `menuEntries` (卡牌 = remake-cards, 組合技 = remake-combo):
 //   menuEntries.card = async ({ game, battle }) => { … }   // battle is null when opened from the field menu
@@ -383,6 +383,64 @@ export function pickMember(game, title, ok, zpPage) {
 }
 growth.setPicker(pickMember);
 
+// ---------- 隊伍變更 (Scene_Db_Member_change, called from the 時之間: src/timeroom.js) ----------
+// The party (up to nine, $partyc) from the members on offer (create_party_picture). Tapping one on offer puts them in
+// at the end, or takes them out if they are in (C); a full party refuses with the error sound; tapping a party slot
+// takes that one out (B takes out the last); 重設 = X (the party as it was); 決定 needs someone in. Resolves with the
+// ids, or null (取消, the remake's shortcut for 重設 + 決定).
+export function memberChange(game, offer) {
+  const world = game.world, s = game.state;
+  const start = s.party.map((m) => m.id);
+  let list = [...start], look = offer.find((m) => m.id === list[0]) || offer[0];
+  const who = (id) => offer.find((m) => m.id === id) || s.party.find((m) => m.id === id);
+  return new Promise((res) => {
+    const root = el('div', 'pm');
+    document.getElementById('app').appendChild(root);
+    root.addEventListener('pointerdown', (e) => { e.stopPropagation(); audio.unlock(); });
+    const end = (v) => { root.remove(); res(v); };
+    const render = () => {
+      root.innerHTML = '';
+      const top = el('div', 'win pm-list', el('div', 'pm-head', word('NO'), el('span', '', `隊伍變更（${list.length}／9 人）`)));
+      const slots = el('div', 'pm-slots');
+      for (let i = 0; i < 9; i++) {
+        const m = list[i] != null ? who(list[i]) : null;
+        const b = el('button', 'pm-slot' + (m ? '' : ' empty'), digits(i + 1, 3), m ? faceOf(m, 36) : el('i'));
+        b.onclick = () => {
+          if (!m) { audio.se(SE_ERR); return; }
+          audio.se(SE_MOVE);
+          list.splice(i, 1);
+          look = m;
+          render();
+        };
+        slots.append(b);
+      }
+      top.append(slots, el('div', 'pm-hint', '點下面的角色加入或移出隊伍；點上面的格子移出。'));
+      const pool = el('div', 'win pm-members pm-pool');
+      for (const m of offer) {
+        const inParty = list.includes(m.id);
+        const b = el('button', 'pm-mem' + (inParty ? ' in' : '') + (look === m ? ' on' : ''), faceOf(m, 44), el('span', '', m.name));
+        b.onclick = () => {
+          look = m;
+          if (inParty) { audio.se(SE_MOVE); list = list.filter((id) => id !== m.id); } else if (list.length >= 9) audio.se(SE_ERR);
+          else { audio.se(SE_MOVE); list.push(m.id); }
+          render();
+        };
+        pool.append(b);
+      }
+      const bar = el('div', 'pm-bar');
+      const ok = el('button', 'btn', '決定');
+      ok.onclick = () => { if (!list.length) { audio.se(SE_ERR); return; } audio.se(SE_OK); end(list); };
+      const reset = el('button', 'btn', '重設');
+      reset.onclick = () => { audio.se(SE_OK); list = [...start]; render(); };
+      const back = el('button', 'btn', '取消');
+      back.onclick = () => { audio.se(SE_OK); end(null); };
+      bar.append(ok, reset, back);
+      root.append(top, pool, ...(look ? [statWin(world, s, look, false)] : []), bar);
+    };
+    render();
+  });
+}
+
 // card 110 仮面男 (Scene_Db_Status, Freeskill_set_card_no): pick a learned skill for the member's 自由 slot
 function freeSkillScreen(game, m) {
   const world = game.world, s = game.state;
@@ -485,6 +543,15 @@ css.textContent = `
 .pm-mem.on { border-color: #f83800; }
 .pm-mem.from { background: #ffd27a; }
 .pm-hint { font-size: 15px; color: #d0480c; margin-top: 4px; }
+.pm-slots { display: grid; grid-template-columns: repeat(9, 1fr); gap: 2px; margin-top: 4px; }
+.pm-slot { position: relative; aspect-ratio: 1; padding: 0; background: #000; border: 2px solid #c8642a; display: flex; align-items: center; justify-content: center; }
+.pm-slot .pm-face { width: 100% !important; height: 100% !important; }
+.pm-slot > canvas:first-child { position: absolute; left: 0; top: 0; z-index: 1; width: 12px; height: 12px; }
+.pm-slot.empty { background: #fff0d0; border-style: dashed; }
+.pm-pool { grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); }
+.pm-pool .pm-mem { font-size: 13px; }
+.pm-pool .pm-mem > canvas:first-child { position: static; }
+.pm-mem.in { opacity: .45; }
 .pm-stat .pm-top { display: flex; gap: 12px; }
 .pm-left { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .pm-left .pm-face { background: #000; }

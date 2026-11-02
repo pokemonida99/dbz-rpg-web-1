@@ -5,6 +5,8 @@
 
 ## 現況（2026-11-02）
 
+> **已完成並合併到 main**（5 個分工：training、square、cards-a、cards-b、story）。138 張卡全部有效果；細節看各自的 `docs/training-more.md`、`docs/cards-square.md`、`docs/cards-a.md`、`docs/cards-b.md`、`docs/cards-story.md`。以下是開工時的說明。
+
 - `world.items` 已經有原版在各時代拿得到的全部卡片（`tools/build_items.py` 的 `BASE`，138 張）。效果還沒做的卡是 `kind: 'hook'`：
   地圖選單「卡片」／戰鬥「卡牌」用的時候顯示「這張卡片的功能還沒做好」，直到有人設定 `fieldCards[id]`（`src/items.js`）。
 - `fieldCards[id] = async ({ game, battle }) => …`：`battle` 是戰鬥中使用時的戰鬥物件（地圖上是 null）；回傳 true = 用掉了（卡片

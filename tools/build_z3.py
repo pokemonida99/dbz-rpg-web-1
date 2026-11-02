@@ -333,3 +333,23 @@ def add(world, h):
     build_z4e.add(world, h, z3)
     import build_z4f  # noqa: E402  (Z4 第六章 賽魯遊戲: maps 48, 49)
     build_z4f.add(world, h, z3)
+
+    # every sound and song the story pages play (a chapter's own lists may miss some): copied if the original has it
+    def walk(x, se, bgm):
+        if isinstance(x, dict):
+            if isinstance(x.get('se'), str):
+                se.add(x['se'])
+            if isinstance(x.get('bgm'), str) and x['bgm']:
+                bgm.add(x['bgm'])
+            if x.get('x') == 'bgm' and x.get('name'):
+                bgm.add(x['name'])
+            for v in x.values():
+                walk(v, se, bgm)
+        elif isinstance(x, list):
+            for v in x:
+                walk(v, se, bgm)
+    se, bgm = set(), set()
+    walk(world['z3']['pages'], se, bgm)
+    audio = os.path.join(root, 'game', 'Audio')
+    world['fieldSe'] = sorted(set(world['fieldSe']) | {n for n in se if os.path.exists(os.path.join(audio, 'SE', n + '.ogg'))})
+    world['extraBgm'] = sorted(set(world['extraBgm']) | {n for n in bgm if os.path.exists(os.path.join(audio, 'BGM', n + '.ogg'))})

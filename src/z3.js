@@ -39,9 +39,9 @@ export async function nextZ3(game, key) {
   s.flags.z3At = null;
   game.save(true);
   game.busy = false;
-  const t = (Z3(game).titles || {})[k];
-  await card(t ? `${t}　待續` : 'Ｚ３　待續', 2400);
-  game.showTitle(t ? `${t}（待續）` : 'Ｚ３（待續）');
+  const t = (Z3(game).titles || {})[k], part = String(k || key).startsWith('z4') ? 'Ｚ４' : 'Ｚ３';
+  await card(t ? `${t}　待續` : `${part}　待續`, 2400);
+  game.showTitle(t ? `${t}（待續）` : `${part}（待續）`);
   return false;
 }
 

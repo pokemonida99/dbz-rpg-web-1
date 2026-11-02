@@ -189,6 +189,7 @@ async function z1field(stage, ctx, quiet = false) {
   if (d.bg) stage.bg(d.bg);
   if (d.pic) stage.add(d.pic, SCENE_X, SCENE_Y, [0, 0, 192, 128]); // a picture by its path (the Z2 scenes)
   if (d.big) stage.add(d.big[0], d.big[1], d.big[2], d.big[3]); // [path, x, y, src]: a picture of another size
+  for (const b of d.bigs || []) stage.add(b[0], b[1], b[2], b[3]); // more of them (Z4: the plane over the sky)
   if (d.scroll) stage.add(BG(d.scroll), SCROLL_X, SCENE_Y, [0, 0, 512, 128]);
   if (d.full) stage.add(d.full, 0, 0, [0, 0, 640, 480], false, 0, 'full');
   if (d.foe) stage.add(d.foe[0], ENE[0], ENE[1] + (d.foe[2] || 0), [64 * (d.foe[3] || 0), 64 * d.foe[1], 64, 64]); // [sheet, row, dy, column]

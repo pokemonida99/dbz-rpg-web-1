@@ -37,6 +37,10 @@ files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", anime.split('exp
 combo = open(os.path.join(root, 'src', 'combo-anime.js'), encoding='utf-8').read()
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", combo)}
 files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", combo.split('export const COMBO_SOUNDS')[1])}
+# 比克・貝吉塔's Z3 move films (src/anime_piccolo_vegeta.js): their pic('…') and PV_SOUNDS
+pv = open(os.path.join(root, 'src', 'anime_piccolo_vegeta.js'), encoding='utf-8').read()
+files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", pv)}
+files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", pv.split('export const PV_SOUNDS')[1])}
 # the opening (src/opening.js): its pictures and sounds, and the faces / sounds named in world.opening
 opening = open(os.path.join(root, 'src', 'opening.js'), encoding='utf-8').read()
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\(`?'?([^'`$]+\.(?:PNG|png))", opening)}

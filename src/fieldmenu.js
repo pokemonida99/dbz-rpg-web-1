@@ -22,15 +22,29 @@ const RADAR = 'Graphics/Pictures/ドラゴンレーダー.PNG', BALL = 'Graphics
 
 // ---------- options (Scene_Db_Option) ----------
 const OPT_KEY = 'dbz-portrait-options';
-export const options = { bgm: 0, enc: 1, encSe: 0, battleFast: 0, quickGo: 0, fastMsg: 0, skipOp: 0, skipRecap: 0 };
+export const options = { bgm: 0, ready: 0, enc: 1, encSe: 0, battleFast: 0, quickGo: 0, fastMsg: 0, skipOp: 0, skipRecap: 0 };
 try { Object.assign(options, JSON.parse(localStorage.getItem(OPT_KEY)) || {}); } catch (e) { /* first run */ }
 const saveOptions = () => { try { localStorage.setItem(OPT_KEY, JSON.stringify(options)); } catch (e) { /* private mode */ } };
 textSpeed.instant = !!options.fastMsg;
 battleOpts.quick = !!options.quickGo;
 
-// 戰鬥BGM (set_battle_bgm_name): 0 默認 follows the story (Z1 戦闘2 from the Sansho area on), 1 隨機, 8-11 the Z1 songs
+// 戰鬥BGM (set_battle_bgm_name, variable 37): 0 默認 follows the story (Z1 戦闘2 from the Sansho area on), 1 隨機, then the
+// original's numbers with [file, title] (world.sys.bgm.battle, tools/build_sys.py; these four when it isn't there)
 const BATTLE_BGM = { 8: ['Z1 戦闘1', 'DBZ 強襲！サイヤ人！『サイヤ人編』'], 9: ['Z1 戦闘2', 'DBZ 強襲！サイヤ人！『ガーリック編』'],
   10: ['Z1 戦闘ボス1(中ボス)', 'DBZ 強襲！サイヤ人！『サイヤ人(ボス)』'], 11: ['Z1 戦闘ボス2(ベジータ)', 'DBZ 強襲！サイヤ人！『ラスト』'] };
+// the songs this save has unlocked (chk_battle_bgm_on / chk_battle_ready_bgm_on, all.rb 11637 / 12045): kind 'battle'
+// (numbers up to $max_battle_bgm for variable 40, then each rule's switches) or 'ready' (0, 2-5, then the rules)
+export function bgmOn(g, kind) {
+  const B = g.world.sys && g.world.sys.bgm, s = g.state || {}, sw = s.sw || {}, v40 = (s.var || {})[40] || 0;
+  if (!B) return kind === 'battle' ? [0, 1, 8, 9, 10, 11] : [0];
+  const on = new Set(kind === 'battle' ? Object.keys(B.battle).map(Number).filter((n) => n <= (B.battleMax[v40] ?? 22)) : B.readyBase);
+  for (const [terms, nums, val] of B[`${kind}Rules`]) {
+    if (terms.some((t) => (t[0] === 'sw' ? !!sw[t[1]] === t[2] : v40 >= t[1]))) for (const n of nums) { if (val) on.add(n); else on.delete(n); }
+  }
+  return [...on].filter((n) => B[kind][n]).sort((a, b) => a - b);
+}
+const songOf = (g, kind, no) => { const B = g.world.sys && g.world.sys.bgm; return B ? (B[kind][no] || [])[0] : kind === 'battle' && BATTLE_BGM[no] ? BATTLE_BGM[no][0] : null; };
+const songList = (kind) => (g) => bgmOn(g, kind).map((n) => [n, n === 0 ? '默認' : n === 1 ? '隨機' : (g.world.sys ? g.world.sys.bgm[kind][n][1] : BATTLE_BGM[n][1])]);
 const ENC_SE = ['Z1 敵発見', 'Z3 敵発見', 'ZSSD 敵発見(GXSCC音源Ver)', 'GBZ2 戦闘開始']; // set_encount_se
 let game = null;
 export function setFieldGame(g) {
@@ -50,12 +64,21 @@ const storyBattleBgm = (v) => ( // (all.rb 10600: by 概況)
 const playBgm = audio.playBgm.bind(audio), playSe = audio.se.bind(audio);
 audio.playBgm = (name, vol) => {
   const b = game && game.scene instanceof Battle ? game.scene : null;
+  // 戰鬥前ＢＧＭ (variable 319, all.rb 47545 / 53145): the battle opens on it; its own song once the first turn is fought
+  const ready = b && options.ready && !b.readyDone && bgmOn(game, 'ready').includes(options.ready) && songOf(game, 'ready', options.ready);
+  if (ready) { const first = !b.readyNext; b.readyNext = [name, vol]; if (first) return playBgm(ready, vol); return; }
   if (b && (name === 'Z1 戦闘1' || b.eventBgm)) { // an event battle without music of its own plays the story's default
-    let no = b.eventBgm ? 0 : options.bgm;
-    if (no === 1) no = 8 + Math.floor(Math.random() * 4);
-    name = no ? BATTLE_BGM[no][0] : storyBattleBgm(((game.state.var || {})[43]) || 0);
+    const on = bgmOn(game, 'battle');
+    let no = b.eventBgm || !on.includes(options.bgm) ? 0 : options.bgm;
+    if (no === 1) { const pool = on.filter((n) => n >= 2); no = pool.length ? pool[Math.floor(Math.random() * pool.length)] : 0; } // (10567)
+    name = (no && songOf(game, 'battle', no)) || storyBattleBgm(((game.state.var || {})[43]) || 0);
   }
   return playBgm(name, vol);
+};
+const resolveTurn = Battle.prototype.resolveTurn; // (set_battle_bgm when the first attacks start, all.rb 53148)
+Battle.prototype.resolveTurn = function (...a) {
+  if (this.readyNext && !this.readyDone) { this.readyDone = true; audio.playBgm(...this.readyNext); }
+  return resolveTurn.apply(this, a);
 };
 audio.se = (name, vol, pitch) => playSe(name === 'Z1 敵発見' ? ENC_SE[options.encSe] : name, vol, pitch);
 // 戰鬥速度 高速化: the battle film always runs as if tapped
@@ -305,7 +328,8 @@ function enemyHistory(g) {
 
 // ---------- 設定 (Scene_Db_Option) ----------
 const OPTION_ROWS = [
-  ['bgm', '戰鬥ＢＧＭ', [[0, '默認'], [1, '隨機'], ...Object.entries(BATTLE_BGM).map(([k, v]) => [Number(k), v[1]])], '設定通常戰鬥的BGM'],
+  ['bgm', '戰鬥ＢＧＭ', songList('battle'), '設定通常戰鬥的BGM（劇情中解鎖的曲子會加進來）'],
+  ['ready', '戰鬥前ＢＧＭ', songList('ready'), '設定戰鬥開始到第一次出招前的BGM（默認：不播）'],
   ['enc', '遇敵', [[0, '少'], [1, '普通'], [2, '多']], '設定遇敵頻率'],
   ['encSe', '遇敵音樂', [[0, 'DBZ 強襲！サイヤ人！'], [1, 'DBZ3 烈戦人造人間'], [2, 'DBZ 超サイヤ伝説'], [3, 'DBZ 悟空激闘伝']], '設定遇敵音'],
   ['battleFast', '戰鬥速度', [[0, '默認值'], [1, '高速化']], '設定戰鬥動畫的速度'],
@@ -318,7 +342,8 @@ function openOptions(g) {
   let help = '';
   return screen('設定', (render) => {
     const box = el('div', 'win fm-rows fm-opts');
-    for (const [key, label, values, desc] of OPTION_ROWS) {
+    for (const [key, label, list, desc] of OPTION_ROWS) {
+      const values = typeof list === 'function' ? list(g) : list; // (the songs this save has)
       const i = values.findIndex(([v]) => v === options[key]);
       const step = (d) => {
         audio.se(SE_MOVE);

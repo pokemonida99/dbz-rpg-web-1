@@ -61,6 +61,7 @@ import './zg_b.js?v=20261102-1935';
 import './zg_c.js?v=20261102-1935';
 import './zg_recap.js?v=20261102-1935'; // ZG 的概況 (前情提要: src/fieldmenu.js)
 import './combo_dev.js?v=20261102-1935'; // ?dev=cmb…: S-combo / ひらめき tests (src/combo.js)
+import './sys.js?v=20261102-1935'; // 第二批 sys: 神龍的願望, the shop's added cards, Z3 / Z4 的概況 (docs/sys.md)
 
 // testing in a hidden browser pane (no animation frames there): ?timer drives every frame with timers instead
 if (new URLSearchParams(location.search).has('timer')) window.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16);
@@ -134,7 +135,7 @@ const game = {
     else if (poi.lines) await say(poi.lines);
     if (poi.effect === 'rest') for (const m of s.party) { m.hp = m.maxhp; m.ki = m.maxki; m.ko = false; }
     if (poi.effect === 'ki') for (const m of s.party) m.ki = m.maxki;
-    if (poi.effect === 'shop') await cardSquare(this); // a Z mark: the original's card square (also saves)
+    if (poi.effect === 'shop') await cardSquare(this, poi); // a Z mark: the original's card square (also saves; poi.v44: カード特殊)
     if (poi.effect === 'rest' || poi.effect === 'save' || poi.effect === 'shop') { save(true); toast('已存檔'); }
     renderHud();
     this.busy = false;

@@ -474,7 +474,7 @@ export class Battle {
       text(c, f.name, f.fx + 32, f.fy + f.labY, '#fff', f.name.length > 5 ? 11 : 14, 'center'); // 卡里克(巨大化) fits its 72 px column
       c.fillStyle = '#402010'; c.fillRect(f.fx + 4, f.fy + f.barY, 56, 4);
       c.fillStyle = '#58d858'; c.fillRect(f.fx + 4, f.fy + f.barY, (56 * f.hp) / f.maxhp, 4);
-      if (items.scouted() && f.card) { // スカウター: this turn's enemy card and HP
+      if (items.scouted(f) && f.card) { // スカウター: this turn's enemy card and HP (sys: that enemy read, src/items.js scout)
         c.save(); c.translate(f.fx + 16, f.fy + 122); c.scale(0.5, 0.5); card(c, f.card, 0, 0); c.restore();
         text(c, `HP ${f.hp}`, f.fx + 32, f.fy + 174, '#fff', 12, 'center');
       }

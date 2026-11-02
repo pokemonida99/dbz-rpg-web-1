@@ -11,7 +11,7 @@ import { img, audio, rand } from './core.js?v=20261102-1935';
 import { newCard } from './battle.js?v=20261102-1935';
 import { makeMember, applyLevel } from './party.js?v=20261102-1935';
 import { el, sprite, overlay, button } from './fieldmenu.js?v=20261102-1935';
-import { addTraining, trainingRewards, drawCard } from './training.js?v=20261102-1935';
+import { addTraining, trainingRewards, drawCard, zpRate } from './training.js?v=20261102-1935';
 import { registerZ3 } from './z3.js?v=20261102-1935';
 
 const FACES = 'Graphics/Pictures/Z1_顔味方.PNG', FACE_CARDS = 'Graphics/Pictures/顔カード.PNG';
@@ -192,7 +192,7 @@ async function popoTraining(game) {
     exp = Math.trunc(exp * k) * ([1, 2][era(s)] || 4);
     await trainingRewards(game, m, {
       first: [T.rate.replace('{n}', rate)], exp, cap: Math.ceil(ratio * m.level), sp: Math.ceil(ratio * m.level),
-      zp: Math.ceil(ratio * 10), tec: Math.ceil(ratio * 3), pool: 'raw',
+      zp: Math.ceil(ratio * 10) * zpRate(s), tec: Math.ceil(ratio * 3), pool: 'raw', // (155606)
     }, T, rewardPage(ui));
   }
   window.removeEventListener('keydown', keys);
@@ -307,7 +307,7 @@ async function dajareTraining(game) {
     const lv = m.level;
     await trainingRewards(game, m, {
       exp: lv * 100 * count * ([1, 2][era(s)] || 3), cap: count * Math.floor(lv / 2), sp: count * Math.floor(lv / 3),
-      zp: count * 8, tec: count, pool: 'raw',
+      zp: count * 8 * zpRate(s), tec: count, pool: 'raw', // (154946)
     }, T, rewardPage(ui));
   }
   ticking = false;
@@ -440,7 +440,7 @@ async function chichiTraining(game) {
     exp *= count >= 99 ? 3.5 : count >= 75 ? 2.5 : count >= 50 ? 2 : count >= 25 ? 1.5 : 1;
     exp = count ? Math.trunc(exp) : 0;
     await trainingRewards(game, m, {
-      exp: half(exp), cap: half(count), sp: half(count), zp: half(Math.ceil(count / 2)), tec: half(Math.ceil(count / 7)), pool: 'raw',
+      exp: half(exp), cap: half(count), sp: half(count), zp: half(Math.ceil(count / 2) * zpRate(s)), tec: half(Math.ceil(count / 7)), pool: 'raw',
     }, T, rewardPage(ui));
   }
   if (old != null) { hand[old] = newCard(); used[old] = false; await wait(50); } // the last card played is dealt anew

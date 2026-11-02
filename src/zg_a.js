@@ -63,7 +63,11 @@ function charFace(s, sx, sy) {
 // character_output_all mode 26 (外伝編 全員集合, all.rb 167997): the party, then everyone else of the list in its order
 // (a Super Saiyan as such); mode 22 (ボージャック編 全員集合) for the 概況 of src/zg_recap.js
 const ALL26 = [3, 14, 4, 5, 18, 12, 19, 17, 20, 25, 26, 6, 7, 8, 9, 16, 32, 27, 28, 29, 30, 10, 24, 15, 21, 22, 23];
-const ALL = { 26: ALL26, 22: [4, 5, 18, 12, 19, 17, 20, 6, 7, 8, 9, 10, 24] };
+const ALL = { 26: ALL26, 22: [4, 5, 18, 12, 19, 17, 20, 6, 7, 8, 9, 10, 24],
+  // the Z4 modes, for the 概況 of src/sys.js (all.rb 168006-168039)
+  1: [3, 14, 4, 5, 18, 6, 7, 8, 9, 10, 24, 12, 19, 17, 20, 15], 2: [3, 14, 4, 5, 18, 6, 7, 8, 9, 10, 24, 12, 19, 17, 20],
+  5: [4, 5, 18, 6, 7, 8, 9, 10, 24, 12, 19, 17, 20, 23], 8: [3, 14, 4, 5, 18, 12, 19, 17, 20, 6, 7, 8, 9, 10, 24],
+  9: [3, 14, 4, 5, 18, 6, 7, 8, 9, 12, 19, 17, 20, 10, 24, 23] };
 const ALL_ORDER = [[3, 14, 1], [4], [5, 18, 2], [6], [7], [8], [9], [10], [24], [12, 19, 3], [17, 20, 4], [25, 26, 6], [16, 32, 7],
   [27], [28], [29], [30], [15], [23], [22], [21]];
 function everyone(s, ids, mode) {
@@ -89,10 +93,11 @@ function out(st, ctx, ids, line0) {
 const FIT = 224, ROW = 230;
 function drawScene(st, ctx, d) {
   const s = ctx.s;
-  const pick = (it) => (it[0] === '@cf' ? charFace(s, it[1], it[2]) : [it[0], it[1], it[2]]);
+  // '@pc': set_character_face of $partyc[k] (the 概況 of src/sys.js; nobody there: no face)
+  const pick = (it) => (it[0] === '@cf' ? charFace(s, it[1], it[2]) : it[0] === '@pc' ? charFace(s, 0, 64 * (ctx.partyc[it[1]] - 3)) : [it[0], it[1], it[2]]);
   if (d.bg) st.add(d.bg, SCROLL_X, SCENE_Y, [0, 0, 512, 128]);
-  const faces = d.ene.filter((e) => e[3] === 64 && e[4] === 64);
-  for (const e of d.ene) if (!faces.includes(e)) st.add(e[0], ENE[0] + e[5], ENE[1] + e[6], [e[1], e[2], e[3], e[4]]); // (the time machine)
+  const faces = d.ene.filter((e) => e[3] === 64 && e[4] === 64 && (e[0] !== '@pc' || ctx.partyc[e[1]]));
+  for (const e of d.ene) if (!faces.includes(e) && e[0] !== '@pc') st.add(e[0], ENE[0] + e[5], ENE[1] + e[6], [e[1], e[2], e[3], e[4]]); // (the time machine)
   if (faces.length) {
     const xs = faces.map((e) => e[5]), lo = Math.min(...xs), hi = Math.max(...xs), cols = new Set(xs).size;
     const fit = hi - lo + 64 <= FIT, size = fit ? 64 : Math.min(64, Math.floor(FIT / cols)), k = fit ? 1 : (FIT - size) / (hi - lo), mid = (hi + lo) / 2;

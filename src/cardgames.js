@@ -131,8 +131,10 @@ export function eraOf(s) {
   if (v43 >= 151 && v43 <= 199) v++;
   return v;
 }
-export async function cardSquare(game) {
+// poi.v44: a 「カード特殊」 square sets variable 44 first (10 / 20: the shop has the next part's goods too; tools/build_sys.py)
+export async function cardSquare(game, poi) {
   const s = cardState(game.state);
+  if (poi && poi.v44) s.var[44] = poi.v44;
   s.sw = s.sw || {};
   s.var[223] = (s.var[223] || 0) + 1; // times stopped on a card square
   let n = rand(3);

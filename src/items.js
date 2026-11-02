@@ -17,7 +17,9 @@ const ICONS = 'ui/item_cards.png'; // 64×64 icons, 10 a row, the Z1 column of t
 const CARDS = 'Graphics/Pictures/カード関係.PNG';
 const FACES = 'Graphics/Pictures/Z1_顔味方.PNG';
 const FOE_FACES = 'Graphics/Pictures/Z1_顔敵.PNG';
-const MAX_RANK_UP = 7; // $max_item_card_num_syokiti: a rank-up card raises a limit up to 7
+// $max_item_card_num (update_max_item_card_num, all.rb 12477): a rank-up card raises a limit up to 7, 8 / 9 with the
+// wishes of switches 494 / 495 (神龍, docs/z3cd.md)
+const maxRankUp = (s) => 7 + (s.sw && s.sw[494] ? 1 : 0) + (s.sw && s.sw[495] ? 1 : 0);
 const RINGANA_CAP = 30; // variable 384 in Z1 (010_Share.rb set_ringana_card_kouka)
 const SE_BUY = 'dbzsbk_購入(低音無しver)'; // Scene_Shop Sound.play_shop (System sounds[17])
 const SE_OK = 'Z3 決定', SE_ERR = 'Z3 エラー', SE_CARD = 'Z2 カードアップ', SE_HEAL = 'Z3 回復', SE_POWER = 'Z1 パワーアップ';
@@ -82,7 +84,7 @@ export function bubbles(s) {
   if (s.bubbleTiles >= 4) { s.bubbleTiles = 0; s.var[39]--; if (!s.var[39]) toast('巴布魯斯的效果結束了'); }
   return true;
 }
-export function battleFx(b) { fx = { b, m: new Map(), oneTurnDef: false, stopUsed: false, gozu: false, mezu: false, scouter: false, stop: new Map() }; }
+export function battleFx(b) { fx = { b, m: new Map(), oneTurnDef: false, stopUsed: false, gozu: false, mezu: false, scouter: false, scouted: new Set(), stop: new Map() }; }
 export function battleEnd() { fx = null; }
 const mf = (m) => { let f = fx.m.get(m); if (!f) fx.m.set(m, (f = {})); return f; };
 export const memberFx = (m) => (fx ? mf(m) : null); // one member's flags this battle { pow, def, sente, … } (src/cards_story.js: 波倫加)
@@ -105,7 +107,21 @@ export function foeStopped(f) {
   return n > 0;
 }
 export const stopCount = (f) => (fx && fx.stop.get(f)) || 0;
-export const scouted = () => !!(fx && fx.scouter);
+export const scouted = (f) => !!(fx && fx.scouter && (!f || fx.scouted.has(f))); // (f: that enemy was read)
+// スカウター 34 / 神探測器 205 (all.rb 48324-48577): the enemies are read one by one; element 17 / 30 (androids, Cell) can't
+// be read and element 16 breaks the scouter (none after it) — unless it is 205 or the wish of switch 490 (神龍)
+function scout(x, god) {
+  const sc = (x.world.sys && x.world.sys.scouter) || { cant: [], burst: [] }, all = god || !!(x.s.sw && x.s.sw[490]);
+  let broke = false;
+  for (const f of fx.b.foes) {
+    if (f.hp <= 0 || fx.scouted.has(f) || (!all && sc.cant.includes(f.id))) continue;
+    if (!all && sc.burst.includes(f.id)) { broke = true; break; }
+    fx.scouted.add(f);
+    (x.s.foeScouted = x.s.foeScouted || {})[f.id] = true; // $ene_sco_history_flag (46815)
+  }
+  fx.scouter = true;
+  return broke ? 'Z3 光線系ヒット' : SE_OK; // (48476: the scouter blows up)
+}
 // end of the turn's fighting (102:760-785)
 export function endTurn(b) {
   if (!fx) return;
@@ -176,14 +192,14 @@ const OTHER = { // no target
   80: [(x) => (x.s.var[312] || 0) < 999, (x) => { x.s.var[312] = Math.min(999, (x.s.var[312] || 0) + 5); return SE_HEAL; }],
   29: [() => !fx.oneTurnDef, () => { fx.oneTurnDef = true; return 'Z1 刀'; }],
   33: [(x) => x.party.some((m) => !mf(m).pow), (x) => { x.party.forEach((m) => { mf(m).pow = true; }); return SE_POWER; }],
-  34: [() => !fx.scouter, () => { fx.scouter = true; return SE_OK; }],
-  205: [() => !fx.scouter, () => { fx.scouter = true; return SE_OK; }],
+  34: [() => !fx.scouter, (x) => scout(x, false)],
+  205: [() => !fx.scouter || fx.b.foes.some((f) => f.hp > 0 && !fx.scouted.has(f)), (x) => scout(x, true)], // (147276)
   27: [(x) => (x.s.var[39] || 0) < 999, (x) => { x.s.var[39] = Math.min(999, (x.s.var[39] || 0) + 5); return 'Z1 飛ぶ'; }], // バブルス
-  42: [(x) => x.s.cardMax.S < MAX_RANK_UP, (x) => { x.s.cardMax.S++; return 'Z3 レベルアップ'; }],
-  43: [(x) => x.s.cardMax.A < MAX_RANK_UP, (x) => { x.s.cardMax.A++; return 'Z3 レベルアップ'; }],
-  44: [(x) => x.s.cardMax.B < MAX_RANK_UP, (x) => { x.s.cardMax.B++; return 'Z3 レベルアップ'; }],
+  42: [(x) => x.s.cardMax.S < maxRankUp(x.s), (x) => { x.s.cardMax.S++; return 'Z3 レベルアップ'; }],
+  43: [(x) => x.s.cardMax.A < maxRankUp(x.s), (x) => { x.s.cardMax.A++; return 'Z3 レベルアップ'; }],
+  44: [(x) => x.s.cardMax.B < maxRankUp(x.s), (x) => { x.s.cardMax.B++; return 'Z3 レベルアップ'; }],
   89: [(x) => (x.s.cards[17] || 0) < x.s.cardMax.A, (x) => { gainCard(x.world, x.s, 17); return 'Z3 アイテム取得'; }], // 仙豆の壺
-  45: [(x) => x.s.cardMax.C < MAX_RANK_UP, (x) => { x.s.cardMax.C++; return 'Z3 レベルアップ'; }],
+  45: [(x) => x.s.cardMax.C < maxRankUp(x.s), (x) => { x.s.cardMax.C++; return 'Z3 レベルアップ'; }],
   70: [() => true, (x) => { x.s.zeni += RINGANA_CAP; return SE_HEAL; }],
 };
 const MEMBER = { // one party member, in battle (100_Scene_Db_Status.rb run_card)
@@ -457,7 +473,7 @@ export function openCards(game, battle = null) {
           const b = h('button');
           b.appendChild(f.face ? faceCanvas(f.face[0], f.face[1], f.hp * 4 < f.maxhp ? 1 : 0) : faceCanvas(FOE_FACES, f.id, f.hp * 4 < f.maxhp ? 1 : 0));
           b.appendChild(h('div', null, f.name));
-          if (scouted() && f.card) b.appendChild(handCanvas(f.card)).style.cssText = 'width:32px;height:48px;background:none';
+          if (scouted(f) && f.card) b.appendChild(handCanvas(f.card)).style.cssText = 'width:32px;height:48px;background:none';
           b.onclick = () => { if (use(id, it, f)) { mode = 'list'; render(); } };
           p.appendChild(b);
         }

@@ -42,7 +42,14 @@ export function img(path) {
   let e = images.get(path);
   if (!e) {
     const im = new Image();
-    e = { im, ok: false, p: new Promise((res) => { im.onload = () => { e.ok = true; res(im); }; im.onerror = () => res(null); }) };
+    // the original's file names mix .PNG and .png; a web server (GitHub Pages) tells them apart, so a miss tries the
+    // other case once (the code names many pictures with .PNG)
+    const other = path.replace(/\.(png|PNG)$/, (x) => (x === '.png' ? '.PNG' : '.png'));
+    let retried = false;
+    e = { im, ok: false, p: new Promise((res) => {
+      im.onload = () => { e.ok = true; res(im); };
+      im.onerror = () => { if (!retried && other !== path) { retried = true; im.src = assetUrl(other); } else res(null); };
+    }) };
     im.src = assetUrl(path);
     images.set(path, e);
   }

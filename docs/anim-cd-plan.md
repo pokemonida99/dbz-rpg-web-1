@@ -1,5 +1,7 @@
 # 招式動畫 C／D 組：分工（照原版逐格移植）
 
+> **2026-11-03 四個分工都已完成並合併上線**（69 招）。悟空組檔案裡的登記函式有三種寫法：`agRegister`（anime_future）、`agFilms`（anime_bardock）、`agFilmsPL`（anime_androids，合併時改名避免重複 export）；背景條與 cut-in 仍分在 `anime_goku_gohan.js` 與 `anime_zfighters.js` 兩處，之後可收成一份。
+
 做法、檔案規則、測試要求和 A／B 組一樣，先讀 `docs/anim-ab-plan.md`（含開頭的完成說明）與已做好的三個檔案
 `src/anime_goku_gohan.js`、`src/anime_piccolo_vegeta.js`、`src/anime_zfighters.js` 當範本。重點：
 

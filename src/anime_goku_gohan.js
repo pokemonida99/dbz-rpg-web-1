@@ -9,12 +9,12 @@
 // @tec_output_back from frame 30 of pattern 32) and the cut-in (output_cutin: the member's 味方カットイン, after the
 // cut to the defender the enemy's 敵カットイン). src/anime.js has neither yet, so these films bring their own: a wrap
 // of launch() and render() that only acts for them (agSt). Frame numbers in the comments are @battle_anime_frame.
-import { audio, img, loadImages } from './core.js?v=20261103-0355';
-import { Duel, addMoves, moveFilm, draw, spark, SW, SH, STD_Y, CENTER_ENEX, CENTER_CHAX, TEC_CENTER, RAY_SPEED } from './anime.js?v=20261103-0355';
-import { battleHooks } from './battle.js?v=20261103-0355';
-import { registerZ3, party, heal } from './z3.js?v=20261103-0355';
-import { superSaiyan, moveTransforms } from './supersaiyan.js?v=20261103-0355';
-import { applyLevel } from './party.js?v=20261103-0355';
+import { audio, img, loadImages } from './core.js?v=20261103-0423';
+import { Duel, addMoves, moveFilm, draw, spark, SW, SH, STD_Y, CENTER_ENEX, CENTER_CHAX, TEC_CENTER, RAY_SPEED } from './anime.js?v=20261103-0423';
+import { battleHooks } from './battle.js?v=20261103-0423';
+import { registerZ3, party, heal } from './z3.js?v=20261103-0423';
+import { superSaiyan, moveTransforms } from './supersaiyan.js?v=20261103-0423';
+import { applyLevel } from './party.js?v=20261103-0423';
 
 addMoves({
   26: 'angaSuperKame', 27: 'angaShunkanKame', 29: 'angaSs', // 悟空
@@ -188,7 +188,8 @@ export function agRegister(films) {
   for (const [name, cfg] of Object.entries(films)) { MINE.add(name); FILM_PICTURES[name] = cfg.pics || (() => []); LAUNCH[name] = cfg; }
 }
 // other files' films on this stage (src/anime_androids.js): film → its pictures, film → its pattern 32 settings
-export function agFilms(pictures, launch) { Object.assign(FILM_PICTURES, pictures); Object.assign(LAUNCH, launch); for (const k in pictures) MINE.add(k); }
+// (agRegister: src/anime_future.js; agFilms: src/anime_bardock.js — three forms of the same registration)
+export function agFilmsPL(pictures, launch) { Object.assign(FILM_PICTURES, pictures); Object.assign(LAUNCH, launch); for (const k in pictures) MINE.add(k); }
 const baseLaunch = Duel.prototype.launch, baseRender = Duel.prototype.render;
 Object.assign(Duel.prototype, {
   // what these films draw besides the fighters: the strips and pictures behind them, effects in front, the cut-in on top

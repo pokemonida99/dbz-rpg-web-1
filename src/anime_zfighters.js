@@ -6,10 +6,10 @@
 // all.rb 67760) and the cut-ins (output_cutin, 67657). They live in a stage of draw lists rebuilt every frame, the
 // way the original draws straight into its window: the bars → the move's own pictures → the fighters → the
 // effects → the cut-in. Frame numbers in the comments are the original's @battle_anime_frame.
-import { audio, img, rand } from './core.js?v=20261103-0355';
-import { addMoves, Duel, spark, STD_Y, CENTER_CHAX, CENTER_ENEX, RAY_SPEED } from './anime.js?v=20261103-0355';
-import { registerZ3, party, heal } from './z3.js?v=20261103-0355';
-import { applyLevel } from './party.js?v=20261103-0355';
+import { audio, img, rand } from './core.js?v=20261103-0423';
+import { addMoves, Duel, spark, STD_Y, CENTER_CHAX, CENTER_ENEX, RAY_SPEED } from './anime.js?v=20261103-0423';
+import { registerZ3, party, heal } from './z3.js?v=20261103-0423';
+import { applyLevel } from './party.js?v=20261103-0423';
 
 const pic = (n) => `Graphics/Pictures/${n}`;
 // the bars (output_back): Z3 @tec_output_back_no 0 top / bottom, 1 left / right, 2 top-left / bottom-right corners,

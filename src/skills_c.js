@@ -6,7 +6,7 @@
 //                           whatever its school (get_battle_skill 7374, at the card pick 48894; auto 49610; blink 49737)
 //   Pエネルギー炉 423-425    turn_recover_hpki 18640 / 18941: HP +fx.hp %, KI +fx.ki % a turn, in the same elsif chain as
 //                           再生 10 / 11 / 12, 魔族の力 35, ネイルと同化 248, 神と融合 249 (only the first one learned counts)
-import * as growth from './growth.js?v=20261103-0355';
+import * as growth from './growth.js?v=20261103-0423';
 
 const { has, ensure } = growth;
 const num = (v) => Number(v) || 0;

@@ -31,6 +31,7 @@ addMoves({
   265: 'energyWave', 266: 'scatterWave', 267: 'kamehameha', 268: 'zanzouken', 269: 'kikouhou', // 多達布
   273: 'energyWave', 274: 'scatterWave', 275: 'kamehameha', 276: 'wolfFang', 277: 'galickGun', // 普普堅
   155: 'genkidama', // 超巴達克 超級復仇標槍
+  236: 'makouhou', 237: 'masenko', 238: 'nappaBlast', 240: 'makankosappo', 241: 'kamehameha', 242: 'wolfFang', // 未來悟飯
   550: 'foeWave', 552: 'foeWave', 553: 'psychic', // 金卡恩・阿比
   625: 'foeWave', 626: 'kienzan', 627: 'garlicBall', 629: 'foeWave', 630: 'zanzouken', 632: 'foeWave', 633: 'nappaBlast',
   634: 'garlicBall', 636: 'foeWave', 637: 'raditzWave', 639: 'foeWave', 640: 'raditzWave', // 達列斯軍
@@ -171,43 +172,57 @@ async function transformFilm(st, ui) {
 }
 
 // ---------- the party (CE166 / CE168 / CE157: the time room's party kept aside while ZG runs, variable 22 = 3) ----------
+// The three ZG parts agree (docs/zg-a.md): state.flags.zgParty = { party: [ids], ss } is the time room's party while
+// ZG runs; state.flags.zgBack = { key, map, x, y, v43, v17, party, ss } is where ZG was left half-way (page 9932) and
+// its party, until the door (switch 850) hands it back to that part: startTrStory(game, key), whose start() goes there.
 const base = (id) => { const no = formOf(id); return no ? FORMS[no][0] : id; };
 const noForms = () => Object.fromEntries(Object.keys(FORMS).map((no) => [no, false]));
-// CE166: the party and its Super Saiyans into state.flags.trTmp[x]
-export function keepParty(game, x = 3) {
+const partyOf = (s) => ({ party: s.party.map((m) => base(m.id)), ss: { ...(s.ss || {}) } });
+// a kept party back in place (CE157: the Super Saiyans each as they were; CE168; $chadead all false)
+function putParty(game, k) {
   const s = game.state;
-  s.flags.trTmp = s.flags.trTmp || {};
-  s.flags.trTmp[x] = { party: s.party.map((m) => base(m.id)), ss: { ...(s.ss || {}) } };
-}
-// CE157 + CE168: the party and the kept one change places (the Super Saiyans each as they were)
-export function swapParty(game, x = 3) {
-  const s = game.state, tmp = (s.flags.trTmp = s.flags.trTmp || {});
-  const was = tmp[x] || { party: s.party.map((m) => base(m.id)), ss: {} };
-  tmp[x] = { party: s.party.map((m) => base(m.id)), ss: { ...(s.ss || {}) } };
-  syncSuperSaiyan(game.world, s, { ...noForms(), ...was.ss });
-  party(game, was.party);
+  syncSuperSaiyan(game.world, s, { ...noForms(), ...(k.ss || {}) });
+  party(game, k.party);
   for (const m of s.party) m.ko = false;
   s.var[42] = s.party[0].id;
 }
-// page 9932 「ＺＧ⇒時之間」 (zgb / zgc call it from their 時之間 squares): CE171 (where ZG was left: state.flags.zgLeft,
-// variables 371-375; the caller's y − 1), CE182, CE157 / CE168, switch 78 on, 19 off, variables 17 = 0, 43 = 999, then
-// the ZG hall (18,3)
-export function leaveZg(game) {
-  const s = game.state;
-  s.flags.zgLeft = { key: s.flags.z3, map: s.map, x: Math.floor(s.x / 32), y: Math.floor(s.y / 32) - 1, v43: s.var[43] || 0, v17: s.var[17] || 0 };
+// CE166: the time room's party and its Super Saiyans aside (state.flags.zgParty)
+export function keepParty(game) { game.state.flags.zgParty = partyOf(game.state); }
+// CE157 + CE168 at the end of ZG (page 9932 after 6761: zgc): the time room's party back
+export function restoreParty(game) {
+  const s = game.state, k = s.flags.zgParty;
+  if (k) putParty(game, k);
+  delete s.flags.zgParty;
+}
+// page 9932 「ＺＧ⇒時之間」 half-way (zgb / zgc call it from their 時之間 squares): CE171 (where ZG was left, variables
+// 371-375; the caller's y − 1) into state.flags.zgBack with the ZG party, CE182, CE157 / CE168 (the time room's party),
+// switch 78 on, 19 off, variables 17 = 0, 43 = 999, then the ZG hall (18,3)
+export function leaveZg(game, dy = -1) {
+  const s = game.state, x = Math.floor(s.x / 32), y = Math.floor(s.y / 32) + dy;
+  s.flags.zgBack = { key: s.flags.z3, map: s.map, x, y, v43: s.var[43] || 0, v17: s.var[17] || 0, ...partyOf(s) };
+  [s.var[371], s.var[372], s.var[373], s.var[374], s.var[375]] = [x, y, Number(s.map), s.var[43] || 0, s.var[17] || 0];
   eventCard(s, 37, -99);
   eventCard(s, 124, -99);
-  swapParty(game, 3);
+  if (s.flags.zgParty) putParty(game, s.flags.zgParty);
   s.sw[78] = true; s.sw[19] = false;
   s.var[17] = 0; s.var[43] = 999;
   endTrStory(game, T(game).back);
+}
+// a part's start() with state.flags.zgBack for it: back where ZG was left (the door has put its party back); true if so
+export function backToZg(game, key) {
+  const s = game.state, k = s.flags.zgBack;
+  if (!k || k.key !== key) return false;
+  delete s.flags.zgBack;
+  begin(game);
+  applyEra(game).then(() => { audio.se('Z1 入る'); goTo(game, { map: k.map, x: k.x, y: k.y }); });
+  return true;
 }
 
 // ---------- the nodes of the pages (tools/build_zg_a.py converter) ----------
 const refresh = (ctx) => { if (G) ctx.partyc = G.state.party.map((m) => m.id); };
 addNodes({
   zgaGo: async (node) => { goal = node.to; },
-  zgaKeep: async () => { if (G) keepParty(G, 3); }, // CE166
+  zgaKeep: async () => { if (G) keepParty(G); }, // CE166
   zgaSsOff: async (node, { ctx }) => { if (G) { syncSuperSaiyan(G.world, G.state, noForms()); refresh(ctx); } }, // CE159
   zgaSs: async (node, { ctx }) => { if (G) { superSaiyan(G.world, G.state, node.no, node.on); refresh(ctx); } },
   zgaParty: async (node, { ctx }) => { if (G) { party(G, node.ids); refresh(ctx); } },
@@ -295,7 +310,7 @@ async function door(game) {
   begin(game);
   setFaces({ ...game.world.faces });
   s.var[22] = 3;
-  if (s.sw[850]) return resume850(game);
+  if (s.sw[850] && s.flags.zgBack) return resume850(game);
   audio.playBgm(x.bgm);
   await say([['', x.ask]], true);
   if (await choose(x.yesNo) !== 0) { audio.se('Z1 入る'); return goTo(game, t.back); } // (the square under the door)
@@ -308,21 +323,18 @@ async function door(game) {
   audio.fadeBgm(1);
   startTrStory(game, 'zga');
 }
-// switch 850 on: back into ZG where it was left (CE157, CE168, variables 371-375)
+// switch 850 on: back into ZG where it was left (page 6000's other branch: CE157, CE168, everyone up and full, CE39,
+// variables 371-375) — the part it was left in takes over (startTrStory; its start() sees state.flags.zgBack)
 async function resume850(game) {
-  const s = game.state, k = s.flags.zgLeft;
+  const s = game.state, k = s.flags.zgBack;
   if (!k || !hasChapter(k.key) || !game.world.maps[k.map]) return notYet(game);
-  swapParty(game, 3);
+  keepParty(game); // (the time room's party as it is now)
+  putParty(game, k);
   healAll(game);
   s.sw[466] = true; s.var[301] = 2;
   s.var[43] = k.v43; s.var[17] = k.v17;
   s.sw[19] = false; s.sw[78] = false;
-  s.flags.trStory = s.flags.trStory || { main: s.flags.z3 ?? null };
-  s.flags.z3 = k.key;
-  s.flags.z3At = null;
-  await applyEra(game);
-  audio.se('Z1 入る');
-  goTo(game, { map: k.map, x: k.x, y: k.y });
+  startTrStory(game, k.key);
 }
 // switch 586 (ZG cleared) — 從暗黑星球區域開始: the original's set-up, then zgc's dark planet (map 110 (2,21))
 async function darkPlanet(game) {
@@ -339,13 +351,11 @@ async function darkPlanet(game) {
     const m = member(game, +id), on = { 27: [629, 364], 28: [631, 365], 29: [633, 366], 30: [635, 367] }[id];
     if (s.sw[on[0]] && !s.sw[on[1]] && !m.skills.includes(sk)) m.skills.push(sk);
   }
-  keepParty(game, 3); // CE166
+  keepParty(game); // CE166
   healAll(game);
-  s.flags.trStory = s.flags.trStory || { main: s.flags.z3 ?? null };
-  s.flags.z3 = 'zgc';
-  s.flags.z3At = null;
-  await applyEra(game);
-  goTo(game, t.dark);
+  // (as a half-way return: zgc's start() takes the party to the dark planet, map 110 (2,21))
+  s.flags.zgBack = { key: 'zgc', map: t.dark.map, x: t.dark.x, y: t.dark.y, v43: 186, v17: 6, ...partyOf(s) };
+  startTrStory(game, 'zgc');
 }
 async function notYet(game) {
   const s = game.state;
@@ -368,6 +378,7 @@ for (const m of MAPS) registerBackdrop(m, backdrop);
 async function start(game) {
   const s = game.state;
   ensure(game);
+  if (backToZg(game, 'zga')) return; // (maps 100-102 have no 時之間 square in the original: only for the rule's sake)
   begin(game);
   setFaces({ ...game.world.faces });
   setPos(s);
@@ -411,7 +422,7 @@ function devState(game) {
 // the state of the crew's part (pages 6001 / 6061 without their scenes)
 function devCrew(game) {
   const s = game.state;
-  keepParty(game, 3);
+  keepParty(game);
   s.flags.trStory = { main: s.flags.z3 };
   s.flags.z3 = 'zga';
   s.sw[850] = true;
@@ -439,7 +450,7 @@ registerZ3('zga', {
       const page = Number(step.slice(3));
       if (page) {
         s.sw[850] = true;
-        keepParty(game, 3);
+        keepParty(game);
         s.flags.trStory = { main: s.flags.z3 };
         s.flags.z3 = 'zga';
         if (page >= 6061) devCrew(game);

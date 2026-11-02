@@ -54,7 +54,7 @@ ROWS = {100: 29, 101: 32, 102: 32}  # (the rows drawn on: below them only black 
 # set_battle_map, scenario_progress 1 (variable 301 = 1 on maps 100 / 102): the Z2_戦闘_背景 row by the ground tile
 Z2_TILES = [((2048,), 0), ((1543, 1551, 1580, 1581, 1588, 1590, 1596, 1598), 2), ((1575,), 3), ((1542,), 5)]
 
-# the party members of this part (CE9; the 大猿変身 moves 251 / 262 / 270 / 278 left out: the remake has no Great Ape
+# the party members of this part — zga defines them for the three ZG parts (the others only add them when missing) (CE9; the 大猿変身 moves 251 / 262 / 270 / 278 left out: the remake has no Great Ape
 # for the party) and the moves they may learn later in ZG
 CREW = {27: ('多瑪', 'トーマ', [246, 248, 247, 249]), 28: ('莎莉巴', 'セリパ', [255, 257, 256, 259]),
         29: ('多達布', 'トテッポ', [265, 267, 266, 268]), 30: ('普普堅', 'パンブーキン', [273, 275, 274, 276])}
@@ -62,7 +62,7 @@ CREW_BEST = {27: 250, 28: 260, 29: 269, 30: 277}  # CE9 / CE169 / CE170: the str
 FUTURE = {25: ('悟飯', 'ゴハン(未来)', [236, 237, 238, 240, 241, 245]), 26: ('悟飯', 'ゴハン(未来超)', [236, 237, 238, 240, 241, 242])}
 SS_BARDOCK = [147, 148, 149, 151, 152, 155]
 # the database names the moves only in Japanese / simplified Chinese: the words the earlier chapters use
-MOVE_NAMES = {155: '超級復仇標槍', 246: '能量波', 247: '多重能量波', 248: '大能量波', 249: '火焰狙擊', 250: '全功率火焰狙擊',
+MOVE_NAMES = {155: '超級復仇標槍', 236: '魔光砲', 237: '魔閃光', 238: '超爆力波', 240: '魔貫光殺砲', 241: '超級龜派氣功', 242: '爆裂亂舞', 245: '超賽變身', 246: '能量波', 247: '多重能量波', 248: '大能量波', 249: '火焰狙擊', 250: '全功率火焰狙擊',
               255: '能量波', 256: '多重能量波', 257: '大能量彈', 259: '歇斯底里的賽亞女士', 260: '狩獵之箭',
               265: '能量波', 266: '多重能量波', 267: '大能量波', 268: '憤怒攻擊', 269: '憤怒加農',
               273: '能量波', 274: '多重能量波', 275: '大能量波', 276: '巨型彈射', 277: '巨型加農'}
@@ -335,14 +335,15 @@ def add(world, h, z3, tr):
         if sid in MOVE_NAMES:
             world['skills'][sid]['name'] = MOVE_NAMES[sid]
     for aid, (name, jp, skills) in CREW.items():
-        world['actors'].setdefault(aid, dict(actor(aid, aid - 3, name, f'Z2_戦闘_{jp}.png', 'Z1_戦闘_必殺技_エネルギー波.PNG', skills),
+        world['actors'][aid] = (dict(actor(aid, aid - 3, name, f'Z2_戦闘_{jp}.png', 'Z1_戦闘_必殺技_エネルギー波.PNG', skills),
                                              special=f'Graphics/Pictures/Z2_戦闘_必殺技_{jp}.png'))
     for aid, (name, jp, skills) in FUTURE.items():
-        world['actors'].setdefault(aid, dict(actor(aid, aid - 3, name, f'Z3_戦闘_{jp}.png', 'Z1_戦闘_必殺技_エネルギー波.PNG', skills),
+        world['actors'][aid] = (dict(actor(aid, aid - 3, name, f'Z3_戦闘_{jp}.png', 'Z1_戦闘_必殺技_エネルギー波.PNG', skills),
                                              special=f'Graphics/Pictures/Z3_戦闘_必殺技_{jp}.png'))
-    world['actors'][26].setdefault('ss', 25)
-    world['actors'].setdefault(32, dict(actor(32, 29, '巴達克', 'Z3_戦闘_バーダック(超).PNG', 'Z1_戦闘_必殺技_エネルギー波.PNG', SS_BARDOCK),
+    world['actors'][26]['ss'] = 25
+    world['actors'][32] = (dict(actor(32, 29, '巴達克', 'Z3_戦闘_バーダック(超).PNG', 'Z1_戦闘_必殺技_エネルギー波.PNG', SS_BARDOCK),
                                         special='Graphics/Pictures/Z3_戦闘_必殺技_バーダック(超).png', ss=16))
+    world['skills'][245]['ss'] = True  # スーパーサイヤ人変身 (as 29): the future Gohan becomes 26
     for a in (25, 26, 27, 28, 29, 30, 32):
         for k in ('sprite', 'special'):
             assert os.path.exists(os.path.join(root, 'game', world['actors'][a][k])), world['actors'][a][k]

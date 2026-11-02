@@ -13,9 +13,10 @@
 //   menuEntries.card = async ({ game, battle }) => { … }   // battle is null when opened from the field menu
 // In battle the choosing comes back (picks kept) when the promise resolves, unless it resolves to 'stay'
 // (the entry has moved the battle on by itself, e.g. started the turn).
-import { img, audio, rand } from './core.js?v=20261102-2217';
-import * as growth from './growth.js?v=20261102-2217'; // 技能 page, ZP, KI cost with passive skills
-import { FORMS } from './supersaiyan.js?v=20261102-2217'; // the two forms whose 作戰 is one
+import { img, audio, rand } from './core.js?v=20261102-2129';
+import * as growth from './growth.js?v=20261102-2129'; // 技能 page, ZP, KI cost with passive skills
+import { FORMS } from './supersaiyan.js?v=20261102-2129'; // the two forms whose 作戰 is one
+import { canDress, dress, dressTag } from './costume.js?v=20261102-2129'; // 換裝 and its 「D:」 mark
 
 const FACES = 'Graphics/Pictures/Z1_顔味方.PNG'; // 64×64; row = actor id - 3; columns: normal, hurt, KO
 const CARDS = 'Graphics/Pictures/カード関係.PNG';
@@ -232,6 +233,8 @@ let skillList = null; // the 追加技能 list is open for this slot ($window_st
 function statWin(world, s, m, skillPage) {
   const st = el('div', 'win pm-stat');
   const left = el('div', 'pm-left', faceOf(m), schoolTag(m.school));
+  const dt = dressTag(s, m.id);
+  if (dt) left.append(dt);
   const curve = world.actors[m.id].exp;
   const next = m.level >= 99 ? 0 : curve[m.level + 1] - m.exp;
   const nums = el('div', 'pm-nums',
@@ -274,6 +277,11 @@ export function openParty({ game, battle }) {
     const t2 = el('button', 'btn', '看技能');
     t2.onclick = () => { audio.se(SE_MOVE); showSkills = true; render(); };
     tog.append(t1, t2);
+    if (!battle && canDress(s, m.id)) { // 衣替え (set_dress: L / R in the original's status screen)
+      const t3 = el('button', 'btn', '換裝');
+      t3.onclick = () => { if (dress(game, m.id)) render(); };
+      tog.append(t3);
+    }
     return [st, tec, tog];
   });
 }

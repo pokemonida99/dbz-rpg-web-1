@@ -3,7 +3,7 @@
 > **2026-11-02 已完成並合併到 main**：tac（`docs/tac` 見 `docs/cards-a.md`、README 隊伍與作戰）、pas（`docs/pas.md`）、etf（`docs/zg-b.md`）、ovw（`docs/zg-recap.md`）。「獲得經驗值」原版是註解掉的，不做。同時修了 Z1 第六章以後 224 隻敵人沒有 SP 的問題（`tools/build_data.py` 最後設定）。以下是開工時的說明。
 
 > **之後補上**：敵人每回合回復 HP 照原版 `*PARAM_HPRECOVER`（53 隻，`tools/build_data.py` 最後設定）；賽亞人魂（5～7、95～100）攻擊 ×1.05～1.25、受到傷害 ×0.95～0.75（`src/growth.js`）；其他 18 個角色的固有技能升級表與起始固有技能（`tools/build_growth.py` 從原版 `get_typical_skill`／`set_typical_skill_first` 抽出，到 Lv99，悟空的「地球育ちのサイヤ人」（開關 1312）不收）。這些角色新學到的技能的效果也照原版做了（`growth.extra` 登記）：`src/skills_a.js` 王子的驕傲（單獨戰鬥攻防、等級非最高時 EXP ×1.3）、賽亞人的團結、應援；`src/skills_b.js` 慈愛之心、不服輸、向著未來的希望；`src/skills_c.js` 挑釁、面向絕望的反抗（`battle.js` 的 `school`）、P能量爐。
-和原版不同／還沒做：重製版沒有敵人讓我方「停止行動」的攻擊（束縛類，原版元素 12／13／14），所以慈愛之心的束縛無效沒接上；組合技命中不會觸發挑釁等命中技能；再生 11／12 的 KI 回復重製版沒有。
+和原版不同／還沒做：敵人讓我方「停止行動」的攻擊（束縛類，原版元素 12／13／14）與慈愛之心的束縛無效已在第二批 flg 接上（`docs/battle-rules.md` §9）；組合技命中不會觸發挑釁等命中技能；再生 11／12 的 KI 回復重製版沒有。
 
 原則同前：**總之參照原版**，台詞全文保留（`tools/s2t.py` 簡轉繁），不確定先查原版（`research/all.rb`、`game/Data`）再討論手機版怎麼優化；跟使用者說話用繁體中文。
 先讀 `docs/HANDOFF.md` 的開發流程。從 `main` 開自己的 worktree 分支，**不要合併 main、不要 push**；做完在自己分支提交，回報分支名與測試結果。

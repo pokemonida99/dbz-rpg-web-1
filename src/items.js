@@ -130,7 +130,7 @@ export async function afterBattle(b) {
   const got = [];
   if (b.trReward) { // a 時之間 boss (switch 477): its own cards, each at rate % (variables 241-245 / 246-250)
     for (const [rate, id] of b.trReward.drops || []) if (id && w.items[id] && rate >= rand(100)) { gainCard(w, s, id); got.push(w.items[id].name); }
-  } else for (const f of b.foes) for (const [id, den] of w.drops[f.id] || []) if (rand(den) === 0) { gainCard(w, s, id); got.push(w.items[id].name); }
+  } else if (!b.noDrops) for (const f of b.foes) for (const [id, den] of w.drops[f.id] || []) if (rand(den) === 0) { gainCard(w, s, id); got.push(w.items[id].name); } // (switch 122: no cards)
   if (got.length) { audio.se('Z1 アイテム取得', 80); await show('獲得以下卡片！', got.join('　')); }
 }
 

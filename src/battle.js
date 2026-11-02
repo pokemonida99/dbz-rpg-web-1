@@ -95,6 +95,7 @@ function z3Schools(s, foe) {
   return all.filter((i) => !no.includes(i));
 }
 const pick = (a) => a[rand(a.length)];
+const BATTLE_SW = [121, 122, 123, 124, 125, 129, 130, 137, 148];
 // enemies who change form in battle (all.rb 53470 @ene_tec_oozaru): the move → who becomes whom; each move once a battle
 // ($battle_begi_oozaru_run / $battle_tare_oozaru_run / $battle_sura_big_run, chk_scombo_flag 140335). The Great Apes
 // (ape) turn back when their tail is cut (68895); a later part can add its own: FOE_FORMS[skill] = { …, film sheets }
@@ -103,8 +104,29 @@ export const FOE_FORMS = {
   644: { to: { 59: 70, 233: 222 }, ape: true, say: '變成了大猿！' }, // ターレス (Z2 / ZG(強))
   645: { to: { 60: 71, 255: 223 }, say: '巨大化了！' }, // スラッグ (Z2 / ZG(強))
 };
+// enemy combined attacks: the move → its partners (any of these sets; the first whose first enemy is here), each must be
+// here, standing and not stopped (chk_scombo_flag all.rb 140350-140400). The original looks the partners' state up one
+// slot off ($enedeadchk[index - 1]); here each partner's own state is checked.
+const FOE_PAIRS = {
+  382: [[49, 50], [248, 249]], 383: [[49, 50], [248, 249]], // パープルコメットクラッシュ (ジース & バータ)
+  518: [[145, 146, 147]], // ブージン 合体超能力 (ザンギャ, ビドー, ブージン)
+  607: [[178, 180]], // タード & ゾルト ダブルアタック
+  637: [[68, 69], [220, 221]], 640: [[68, 69], [220, 221]], // レズン & ラカセイ ダブルエネルギー波
+};
 export function newCard() { return { a: rand(8), g: rand(8), s: pick(z2Schools(false) || (late() ? [0, 1, 3, 4] : [0, 1, 2, 4])) }; }
-export const enemyCard = () => ({ a: rand(8), g: rand(8), s: pick(z2Schools(true) || (late() ? [0, 1, 3, 4, 5] : [0, 1, 2, 4, 5])) });
+// an enemy's card (create_enemy_card all.rb 12272-12300, then ryuhakakuritu_keisan 21147-21172), by its element_ranks
+// (tools/build_data.py): cardMin (53) → the attack ★ re-rolled up to 5 or more; dummy (55, 訓練人偶) → ★1 / 一, only for
+// the turn's first card (first: not the cards its extra attacks draw, 12305); schoolRate (45-48) → a card neither 必 nor
+// its school becomes (half each) its school or 必 at 100 / 75 / 50 / 25 %
+export const enemyCard = (foe = null, first = true) => {
+  let a;
+  do a = rand(8); while (foe && foe.cardMin && a < foe.cardMin);
+  let g = rand(8);
+  if (first && foe && foe.dummy) a = g = 0;
+  let s = pick(z2Schools(true) || (late() ? [0, 1, 3, 4, 5] : [0, 1, 2, 4, 5]));
+  if (foe && foe.schoolRate && s !== 0 && s !== foe.school && foe.schoolRate >= rand(100) + 1) s = rand(2) === 0 ? foe.school : 0;
+  return { a, g, s };
+};
 export function newHand() { return Array.from({ length: HAND }, newCard); }
 // 「氣」 (school 16, the 時之間's 戦闘練習): it becomes the school of whoever plays it (all.rb 48888)
 export const KI_CARD = 16;
@@ -127,7 +149,8 @@ function playerDamage(b, m, skill, card, foe, foeCard, P) {
   if (skill && skill.noDamage) d = 0;
   if (b.foesEvade) return -1; // switch 18 敵必ず回避 (an event battle: src/z3c.js, Mecha Frieza)
   const avoid = Math.trunc((foe.agi * 1.2 + foeCard.g) / 3 - (m.agi * 1.1 + card.a) / 3);
-  if (avoid > 0 && rand(100) + 1 < avoid) return -1;
+  // never misses (68688): switch 129, the move's element 29, the passive 必中 (389)
+  if (avoid > 0 && rand(100) + 1 < avoid && !b.bsw[129] && !(skill && skill.sure) && !growth.has(b.world, m, 389)) return -1;
   return b.dmgRate ? Math.trunc(d * b.dmgRate) : d; // variable 81 味方攻撃ダメージn倍 (an event battle: src/z3.js fight)
 }
 function enemyDamage(b, foe, skill, card, m, guardCard) {
@@ -138,9 +161,11 @@ function enemyDamage(b, foe, skill, card, m, guardCard) {
   if (items.guardUp(m)) d = Math.floor(d * 0.7);
   d = growth.taken(b, m, d, { card: guardCard, foe, foeCard: card }); // passive skills (set_damage_add)
   if (battleHooks.taken) d = battleHooks.taken(b, m, d);
+  if (skill && skill.noDamage) d = 0; // element 11 (時間停止, 太陽拳, 復仇衝鋒: 68757)
   if (items.evades(m)) return -1;
   const avoid = growth.ext('avoid', Math.trunc((m.agi * 1.2 + guardCard.g) / 3 - (foe.agi * 1.1 + card.a) / 3), b, m, foe); // (殘像拳: src/cards_b.js)
-  return avoid > 0 && rand(100) + 1 < avoid ? -1 : b.foeRate ? Math.trunc(d * b.foeRate) : d; // variable 82 敵攻撃ダメージn倍 (src/z3e.js)
+  const miss = avoid > 0 && rand(100) + 1 < avoid && !b.bsw[130] && !(skill && skill.sure); // switch 130 / element 29: always hits (68770)
+  return miss ? -1 : b.foeRate ? Math.trunc(d * b.foeRate) : d; // variable 82 敵攻撃ダメージn倍 (src/z3e.js)
 }
 
 // ---------- drawing helpers (original art) ----------
@@ -246,6 +271,10 @@ export class Battle {
     this.buttons = [];
     this.duel = null;
     this.hits = [];
+    this.stops = new Map(); // member → turns it can't act (held)
+    this.ribe = { charge: false, turn: false }; // 復仇衝鋒 charged / charged this turn ($battle_ribe_charge(_turn))
+    this.oneTurn = [];
+    this.bsw = {}; // the battle switches (run)
     this.el = document.getElementById('battle');
     items.battleFx(this);
   }
@@ -391,6 +420,7 @@ export class Battle {
         c.fillStyle = 'rgba(0,0,0,.7)'; c.fillRect(cx, y + 74, 64, 18);
         text(c, plan.skill ? plan.skill.name : '攻擊', cx + 32, y + 76, '#fff', 12, 'center');
       }
+      if (this.held(m) && !m.ko) num(c, this.stops.get(m), cx + 64, y + 28 + 48, 3); // the turns it can't act (50022)
       word(c, 'LV', cx, y + 96); num(c, m.level, cx + 64, y + 96);
       num(c, m.hp, cx + 64, y + 116); slash(c, cx, y + 132); num(c, m.maxhp, cx + 64, y + 132);
       num(c, m.ki, cx + 64, y + 152); slash(c, cx, y + 168); num(c, m.maxki, cx + 64, y + 168);
@@ -425,6 +455,7 @@ export class Battle {
         c.fillStyle = 'rgba(0,0,0,.7)'; c.fillRect(fx, y + 30 + fs - 14, fs, 14);
         text(c, plan.skill ? plan.skill.name : '攻擊', mid, y + 30 + fs - 13, '#fff', 10, 'center');
       }
+      if (this.held(m) && !m.ko) num(c, this.stops.get(m), fx + fs, y + 30 + fs - 16, 3); // the turns it can't act (50022)
       text(c, `Lv${m.level}`, mid, y + 82, '#7a5230', 14, 'center');
       const sl = (n, yy) => { if (rx - 16 * String(n).length - cx >= 16) slash(c, cx, yy); }; // the slash only where it fits
       num(c, m.hp, rx, y + 116); sl(m.maxhp, y + 132); num(c, m.maxhp, rx, y + 132);
@@ -447,7 +478,8 @@ export class Battle {
         c.save(); c.translate(f.fx + 16, f.fy + 122); c.scale(0.5, 0.5); card(c, f.card, 0, 0); c.restore();
         text(c, `HP ${f.hp}`, f.fx + 32, f.fy + 174, '#fff', 12, 'center');
       }
-      if (items.stopCount(f)) text(c, '停', f.fx + 56, f.fy + 2, '#ff5050', 16, 'center'); // じいちゃん
+      const st = (f.stop || 0) + items.stopCount(f); // the turns it can't act (超能力, かなしばり, じいちゃん): its face's corner (48154)
+      if (st) num(c, st, f.fx + 64, f.fy + 48, 3);
       if ((this.mode === 'target' || this.mode === 'move') && this.aim === f.slot) { // the current target
         glow(c, () => foeFace(c, f, f.fx, f.fy));
         cursor(c, f.fx + 32, f.fy - 18);
@@ -570,6 +602,10 @@ export class Battle {
     card(c, fc, x, y);
     x = W - 4 - 64;
     foeFace(c, f, x, y); tag(c, f.school, x, y + 64);
+    // 超能力: the icon while that side can't act (アイコン 32×32 at (160, 16); 54145 / 54312)
+    const ic = img(ICONS), icon = (ix) => { c.fillStyle = CREAM; c.fillRect(ix + 2, y + 2, 28, 28); c.drawImage(ic.im, 160, 16, 32, 32, ix, y, 32, 32); };
+    if (ic.ok && this.held(m) && !m.ko) icon(4 + 32);
+    if (ic.ok && f.hp > 0 && (f.stop || items.stopCount(f))) icon(x);
   }
 
   // the 640×356 film stage, cropped to the phone: centred across, and when the stage is short the top of the
@@ -602,7 +638,9 @@ export class Battle {
   }
 
   // ---------- planning ----------
-  able(m) { return !m.ko; } // KO'd members stay out until healed to full (growth.recover)
+  able(m) { return !m.ko && !this.held(m); } // KO'd members stay out until healed to full (growth.recover); stopped ones too
+  // a member an enemy has stopped (超能力, 時間停止, 太陽拳 …): turns left ($cha_stop_num, all.rb 68933)
+  held(m) { return (this.stops.get(m) || 0) > 0; }
 
   startPlanning() {
     this.phase = 'plan';
@@ -610,7 +648,11 @@ export class Battle {
     this.duel = null;
     this.plans = this.party.map(() => null);
     this.history = [];
-    for (const f of this.foes) if (f.hp > 0) f.card = enemyCard(); // §2.1: enemy cards are dealt at turn start
+    for (const f of this.foes) if (f.hp > 0) f.card = enemyCard(f); // §2.1: enemy cards are dealt at turn start
+    // turn start (all.rb 47498-47528): a stopped member's count goes down (still above 0: it sits this turn out), and
+    // 復仇衝鋒's turn is over
+    if (this.turn > 1) for (const m of this.party) if (this.held(m)) this.stops.set(m, this.stops.get(m) - 1);
+    this.ribe.turn = false;
     growth.turnStart(this);
     this.cur = null;
     this.resume();
@@ -797,7 +839,10 @@ export class Battle {
       if (this.over()) break;
       this.chain = o.kind === 'p' ? this.chain + 1 : 0;
       if (o.kind === 'p') await this.playerAct(o.i);
-      else if (!items.foeStopped(o.f)) for (let n = 0; n < this.attacks(o.f) && o.f.hp > 0 && !this.over(); n++) { if (n > 0) o.f.card = enemyCard(); await this.enemyAct(o.f); }
+      else if (!items.foeStopped(o.f)) {
+        this.oneTurn = []; // element 24 moves it used in these attacks (@one_turntec, all.rb 53108 / 53564 / 140144)
+        for (let n = 0; n < this.attacks(o.f) && o.f.hp > 0 && !this.over(); n++) { if (n > 0) o.f.card = enemyCard(o.f, false); await this.enemyAct(o.f); }
+      }
     }
     this.plans.forEach((p, i) => { if (p) this.hand[p.card] = this.practice ? { a: 7, g: 7, s: KI_CARD } : growth.regenCard(this.world, this.party[i], newCard()); }); // used cards are regenerated in place (§1.6), 一か八か; 戦闘練習: always Z and 「氣」
     items.endTurn(this);
@@ -864,10 +909,11 @@ export class Battle {
   async playerAct(i) {
     const m = this.party[i];
     const p = this.plans[i];
+    if (this.held(m)) { this.stops.set(m, this.stops.get(m) - 1); return; } // stopped after it picked: it loses this action (53840)
     if (m.ko || this.acted.has(i)) return;
     if (await tryCombo(this, i)) return;
     let foe = this.foes[p.target];
-    if (!foe || foe.hp <= 0) foe = this.foes.filter((f) => f.hp > 0).reduce((a, b) => (b.hp < a.hp ? b : a));
+    if (!foe || foe.hp <= 0) foe = this.foes[autoTarget(this.game.state, m, this.foes)]; // its target is down: by 作戰 (53859)
     const cd = this.hand[p.card];
     let skill = p.skill;
     let base = skill ? growth.kiCost(this.world, m, skill) : 0; // passive skills (get_mp_cost)
@@ -892,8 +938,14 @@ export class Battle {
       this.say(`${m.name} 的${skill ? skill.name : '攻擊'}！`, ownSchool(cd, m) ? '流派一致，威力 ×1.3！' : '');
       let P = growth.power(this.game.state, m, skill);
       if (battleHooks.power) P = battleHooks.power(this, m, skill, P);
-      const dmg = playerDamage(this, m, skill && { noDamage: skill.noDamage }, cd, t, t.card, P);
+      const dmg = playerDamage(this, m, skill && { noDamage: skill.noDamage, sure: skill.sure }, cd, t, t.card, P);
+      const up = t.hp > 0;
+      this.holdEnd = !!(this.bsw[137] && t.bigHurt); // (its message comes before the battle's end)
       await this.play(m, t, true, skill ? skill.id : null, dmg, t);
+      if (dmg >= 0 && skill) this.stopFoe(t, skill, cd, m);
+      if (skill && skill.stunChance && rand(100) + 1 < skill.stunChance) t.stop = (t.stop || 0) + 1; // element 61: variance % (rolled hit or miss, 17696)
+      if (up && t.hp <= 0 && this.holdEnd) { this.say(`${t.name}受到嚴重的傷害！！`); await sleep(900); } // switch 137: in place of 打倒了 (50670)
+      this.holdEnd = false;
       if (dmg >= 0) growth.onHit(this, m, t, cd); // かなしばり, the skill cards' hit effects
       if (dmg >= 0 && battleHooks.hit) battleHooks.hit(this, m, t, dmg);
       if (dmg >= 0 && skill && skill.tail && t.hp > 0 && t.apeOf) { // 尻尾切る: the Great Ape is himself again (all.rb 68895)
@@ -902,7 +954,40 @@ export class Battle {
         await sleep(900);
       }
     }
-    if (!this.practice) tally(this.game.state, m, skill, alive - targets.filter((t) => t.hp > 0).length); // use counts, KOs (not while practising)
+    if (!this.practice) tally(this.game.state, m, skill, this.bsw[121] ? 0 : alive - targets.filter((t) => t.hp > 0).length); // use counts, KOs (not while practising; switch 121: no KOs)
+  }
+
+  // our move hit and stops the enemy (chk_battle_damage all.rb 68866-68890): element 12 one turn, one more with an
+  // own-school card; 13 one with an own-school card; 14 (太陽拳) one
+  stopFoe(t, skill, cd, m) {
+    const same = cd.s === m.school;
+    const n = (skill.stun ? (same ? 2 : 1) : 0) + (skill.stunSchool && same ? 1 : 0) + (skill.flash ? 1 : 0);
+    if (n) t.stop = (t.stop || 0) + n;
+  }
+
+  // an enemy's move hit and stops the member (68933-68950): 12 / 14 one turn, 13 one with the enemy's own-school card;
+  // not one who has 鋼の意志 (619) or 慈愛の心 (src/skills_b.js bind). Stopped now, it can't partner an S-combo this
+  // turn (chk_scombo_flag 140459) — and if it hasn't acted yet, it loses that action (playerAct)
+  stopMember(m, f, skill, cd) {
+    const n = (skill.stun || skill.flash ? 1 : 0) + (skill.stunSchool && cd.s === f.school ? 1 : 0);
+    if (!n || growth.has(this.world, m, 619) || !growth.ext('bind', true, this, m, f, skill)) return;
+    this.stops.set(m, (this.stops.get(m) || 0) + n);
+    this.acted.add(this.party.indexOf(m));
+  }
+
+  // whether an enemy may pick this move now (chk_scombo_flag all.rb 140311-140400, the moves with element_set[0] == 4):
+  // 自爆 only at Yamcha while he is in the fight; 大猿変身 / 巨大化 once a battle; the combined attacks only while every
+  // partner is here, standing and not stopped; ハッチヒャック's 復仇衝鋒 (583) when not charged, 復仇加農砲 (584) when
+  // charged in an earlier turn (66719 / 66737, cleared at the turn start 47528)
+  foeMoveOk(f, sid, yamcha) {
+    if (sid === 304) return !!yamcha;
+    if (FOE_FORMS[sid]) return !(this.formsDone || []).includes(sid) && !!this.world.enemies[FOE_FORMS[sid].to[f.id]];
+    if (sid === 583) return !this.ribe.charge;
+    if (sid === 584) return this.ribe.charge && !this.ribe.turn;
+    const sets = FOE_PAIRS[sid];
+    if (!sets) return true;
+    const ids = sets.find((g) => this.foes.some((x) => x.id === g[0])) || sets[sets.length - 1];
+    return ids.every((id) => { const x = this.foes.find((y) => y.id === id); return x && x.hp > 0 && !x.stop && !items.stopCount(x); });
   }
 
   async enemyAct(f) {
@@ -914,10 +999,12 @@ export class Battle {
     const yamcha = targets.find((m) => m.id === 7);
     if ((cd.s === 0 || cd.s === f.school) && f.actions.length) {
       const ok = f.actions.filter((a) => (a.cond === 0 || (a.cond === 2 && (f.hp * 100) / f.maxhp <= a.param))
-        && (a.skill !== 304 || yamcha) // 自爆: only at Yamcha, while he is in the fight (chk_scombo_flag 304)
-        && (!FOE_FORMS[a.skill] || (!(this.formsDone || []).includes(a.skill) && this.world.enemies[FOE_FORMS[a.skill].to[f.id]]))); // 大猿変身 / 巨大化: once a battle
+        && !this.oneTurn.includes(a.skill) && this.foeMoveOk(f, a.skill, yamcha));
       if (ok.length) skill = this.world.skills[ok[rand(ok.length)].skill];
     }
+    if (skill && skill.oncePerTurn) this.oneTurn.push(skill.id);
+    if (skill && skill.id === 583) this.ribe.charge = this.ribe.turn = true; // 復仇衝鋒 (66719)
+    if (skill && skill.id === 584) this.ribe.charge = false; // 復仇加農砲 (66737)
     if (skill && FOE_FORMS[skill.id]) { // 大猿変身 / 巨大化: no damage; he becomes the other enemy, HP as it is
       const form = FOE_FORMS[skill.id], from = f.id, to = form.to[from], e = this.world.enemies[to], name = f.name;
       const m = targets[rand(targets.length)];
@@ -940,17 +1027,21 @@ export class Battle {
       const one = hit[0], c = growth.ext('cover', one, this, f);
       if (c && c !== one) { this.cover = c; this.say(`${c.name} 掩護了 ${one.name}！`); audio.se('Z1 逃げる', 80); await sleep(900); hit[0] = c; }
     }
+    let landed = false;
     for (const m of hit) {
       if (m.ko) continue;
       const guard = this.hand[this.plans[this.party.indexOf(m)].card];
       this.duel = { m, mc: guard, f, fc: cd };
       this.say(`${f.name} 的${skill ? skill.name : '攻擊'}！`);
-      const dmg = enemyDamage(this, f, skill && { power: skill.power }, cd, m, guard);
+      const dmg = enemyDamage(this, f, skill && { power: skill.power, noDamage: skill.noDamage, sure: skill.sure }, cd, m, guard);
       await this.play(m, f, false, skill ? skill.id : null, dmg, m);
       if (dmg >= 0) growth.ext('hurt', null, this, m, f); // (不屈的鬥志: src/cards_b.js)
+      if (dmg > 0 && skill && skill.drain) f.hp = Math.min(f.maxhp, f.hp + dmg); // element 15: it heals the damage (68922)
+      if (dmg >= 0 && skill) this.stopMember(m, f, skill, cd);
+      if (dmg >= 0) landed = true;
     }
     this.cover = null;
-    if (skill && skill.selfDestruct) { // the Saibaman is gone too (all.rb 68975)
+    if (skill && skill.selfDestruct && landed) { // the Saibaman is gone too — only when it hit (all.rb 68975)
       f.hp = 0;
       this.say(`${f.name} 自爆了！`);
       await sleep(900);
@@ -973,15 +1064,16 @@ export class Battle {
     await announceCombos(this);
     // a 時之間 boss (src/timeroom.js trBattle): no EXP (switch 124), its own shared EXP / CAP (variables 306 / 317)
     const tr = this.trReward;
-    const exp = tr ? 0 : items.expGain(this.game.state, this.foes.reduce((s, f) => s + f.exp, 0)) * EXP_RATE;
-    this.game.state.zeni += items.capGain(this.game.state, tr && tr.cap ? tr.cap : this.foes.reduce((s, f) => s + f.gold, 0));
+    const noExp = !tr && this.bsw[124]; // switch 124: no EXP, CAP or SP (50762 / 50867)
+    const exp = tr || noExp ? 0 : items.expGain(this.game.state, this.foes.reduce((s, f) => s + f.exp, 0)) * EXP_RATE;
+    if (!noExp) this.game.state.zeni += items.capGain(this.game.state, tr && tr.cap ? tr.cap : this.foes.reduce((s, f) => s + f.gold, 0));
     growth.beforeExp(this, tr ? tr.shared || 0 : exp); // shared EXP pool, ZP
     const ups = [];
     for (const m of this.party) {
       m.exp += growth.expFor(this.world, m, exp); // サイヤ人の血
       if (levelUp(this.world, m)) ups.push(`${m.name} 升到 LV ${m.level}`);
     }
-    this.say('打倒敵人了！', tr ? `獲得 ${tr.shared || 0} 點共有經驗值！` : `獲得 ${exp} 點經驗值`);
+    this.say(...noExp ? ['打倒敵人了！'] : ['打倒敵人了！', tr ? `獲得 ${tr.shared || 0} 點共有經驗值！` : `獲得 ${exp} 點經驗值`]);
     await new Promise((res) => { this.cont = res; });
     if (ups.length) {
       audio.se('Z1 レベルアップ', 80);
@@ -989,7 +1081,14 @@ export class Battle {
       await new Promise((res) => { this.cont = res; });
     }
     await items.afterBattle(this);
-    for (const pg of growth.afterBattle(this)) { // SP, 追加技能 learned, 固有技能 for the new levels
+    let pages;
+    if (noExp) { // no SP: only what the levels teach (the 加重衣 count stays)
+      const v = this.game.state.var, heavy = v[313];
+      for (const f of this.foes) f.sp = 0;
+      pages = growth.afterBattle(this).filter((pg) => pg.se);
+      v[313] = heavy;
+    } else pages = growth.afterBattle(this);
+    for (const pg of pages) { // SP, 追加技能 learned, 固有技能 for the new levels
       if (pg.se) audio.se(pg.se, 80);
       this.say(...pg.lines);
       await new Promise((res) => { this.cont = res; });
@@ -1016,6 +1115,12 @@ export class Battle {
     window.addEventListener('resize', onResize);
     const onKey = (e) => this.onKey(e);
     window.addEventListener('keydown', onKey);
+    // the battle's switches, cleared when it ends (reset_battle_flag all.rb 13306-13325): 121 no 戰鬥記錄 (wins, KOs),
+    // 122 no cards, 124 no EXP / CAP / SP, 125 no top damage, 129 / 130 our / their attacks always hit, 137 an element 21
+    // enemy is 「受到嚴重的傷害！！」, 148 no victory music. (123 is cleared too but nothing reads it.)
+    const sw = this.game.state.sw || {};
+    for (const n of BATTLE_SW) this.bsw[n] = !!sw[n];
+    this.noRecord = this.bsw[121]; this.noTopDamage = this.bsw[125]; this.noDrops = this.bsw[122]; // (src/fieldmenu.js, src/items.js)
     await document.fonts.load(`16px ${FONT}`).catch(() => {});
     audio.playBgm(this.bgm || (this.boss ? 'Z1 戦闘ボス1(中ボス)' : 'Z1 戦闘1')); // bgm: an event battle's own music
     this.say(`${this.foes.map((f) => f.name).join('、')} 出現了！`);
@@ -1023,7 +1128,8 @@ export class Battle {
     const result = await new Promise((res) => {
       this.done = res;
       const watch = () => {
-        if (this.foes.every((f) => f.hp <= 0)) res('win');
+        if (this.holdEnd) setTimeout(watch, 200);
+        else if (this.foes.every((f) => f.hp <= 0)) res('win');
         else if (this.party.every((m) => m.ko)) res('lose');
         else if (this.stopped()) res('break');
         else setTimeout(watch, 200);
@@ -1031,7 +1137,8 @@ export class Battle {
       watch();
       this.startPlanning();
     });
-    if (result === 'win') { audio.stopBgm(); audio.se('GBZ1 ファンファーレ1', 80); await this.rewards(); }
+    if (result === 'win') { if (!this.bsw[148]) { audio.stopBgm(); audio.se('GBZ1 ファンファーレ1', 80); } await this.rewards(); }
+    for (const n of BATTLE_SW) if (sw[n]) sw[n] = false;
     window.removeEventListener('resize', onResize);
     window.removeEventListener('keydown', onKey);
     this.el.removeEventListener('pointerdown', onTap);

@@ -64,10 +64,28 @@ def actor(aid, face, name, sprite, beam, skills, ray='orange'):
 SKILL_NAMES = {301: '麻痺液', 302: '能量彈', 305: '能量波', 306: '貫光線', 310: '能量波', 311: '強力能量波', 384: '大猿變身'}
 
 
+def skill_flags(sid):
+    """The skill's element flags the battle reads (Skills.element_set, docs/battle-rules.md §4.5; src/battle.js):
+    12 stun (+1 turn, +1 more with an own-school card; all.rb 68866) · 13 stunSchool (+1 with an own-school card) ·
+    14 flash (太陽拳 +1) · 61 stunChance = variance % (17696) · 29 sure (never misses, 68688 / 68770) · 15 drain (the
+    enemy heals the damage, 68922) · 24 oncePerTurn (an enemy uses it once in its attacks, 140144) · 25 tail (the Great
+    Ape turns back, 68895) · 60 selfDestruct (the user dies when it hits, 68976)."""
+    k = skills_db[sid]
+    el = k['element_set']
+    f = {}
+    for e, key in ((12, 'stun'), (13, 'stunSchool'), (14, 'flash'), (29, 'sure'), (15, 'drain'), (24, 'oncePerTurn'),
+                   (25, 'tail'), (60, 'selfDestruct')):
+        if e in el:
+            f[key] = True
+    if 61 in el:
+        f['stunChance'] = int(k['variance'])
+    return f
+
+
 def skill(sid):
     k = skills_db[sid]
     return {'id': sid, 'name': SKILL_NAMES.get(sid) or s2t(k['description'] or k['name']), 'power': k['base_damage'],
-            'ki': k['mp_cost'], 'all': k['scope'] == 2, 'noDamage': 11 in k['element_set']}
+            'ki': k['mp_cost'], 'all': k['scope'] == 2, 'noDamage': 11 in k['element_set'], **skill_flags(sid)}
 
 
 def enemy(eid):
@@ -335,5 +353,24 @@ for eid, e in world['enemies'].items():
     rec = edb and re.search(r'\*PARAM_HPRECOVER\[(\d+)%?\]', edb.get('note') or '', re.I)
     if rec and int(rec.group(1)) > 0:
         e['regen'] = int(rec.group(1))
+# the skills' element flags and the enemies' card flags (element_ranks), here at the end so they cover what every chapter
+# added, whichever way it built the entry (src/battle.js)
+for sid, k in world['skills'].items():
+    if int(sid) < len(skills_db) and skills_db[int(sid)]:
+        k.update(skill_flags(int(sid)))
+for eid, e in world['enemies'].items():
+    edb = enemies_db[int(eid)] if int(eid) < len(enemies_db) else None
+    if not edb:
+        continue
+    r = edb['element_ranks']['data']
+    if r[53] == 1:
+        e['cardMin'] = 4  # the attack ★ at least 5 (create_enemy_card, all.rb 12276)
+    rate = next((v for n, v in ((45, 100), (46, 75), (47, 50), (48, 25)) if r[n] == 1), 0)
+    if rate:
+        e['schoolRate'] = rate  # a card neither 必 nor its school turns into one of them (ryuhakakuritu_keisan, 21147)
+    if r[55] == 1:
+        e['dummy'] = True  # 訓練人偶: the turn's card is always ★1 / 一 (12290)
+    if r[21] == 1:
+        e['bigHurt'] = True  # with switch 137: 「受到嚴重的傷害！！」 instead of 「打倒了」 (50670)
 json.dump(world, open(os.path.join(root, 'data', 'world.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 print('world.json written')

@@ -50,6 +50,7 @@ import './cards_story.js?v=20261102-1935';
 import './skills_a.js?v=20261102-1935';
 import './skills_b.js?v=20261102-1935';
 import './skills_c.js?v=20261102-1935';
+import './flg.js?v=20261102-1935'; // ?dev=flg… test battles for the move flags (docs/batch2-plan.md flg)
 // 時之間 phase 3 / ZG: the stories (docs/zg-plan.md)
 import './tr_future.js?v=20261102-1935';
 import './zg_broly.js?v=20261102-1935';

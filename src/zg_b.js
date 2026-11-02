@@ -24,6 +24,8 @@ import { eventCard } from './items.js?v=20261102-1344';
 import { Field } from './field.js?v=20261102-1344';
 import { registerZ3, Z3, begin, fight, toField, party, member, heal, moveTo, z3BackdropAt } from './z3.js?v=20261102-1344';
 import { startTrStory, endTrStory, registerBackdrop } from './timeroom.js?v=20261102-1344';
+// zga's shared ZG helpers (leaveZg / backToZg); a namespace import, so this part still runs where zga is not there yet
+import * as zga from './zg_a.js?v=20261102-1344';
 
 const MAPS = ['103', '104', '105', '106', '107'];
 const C = (game) => Z3(game).zgb;
@@ -247,6 +249,7 @@ async function pyramid(game) {
 // door (page 6000, switch 850 on) brings the story back here (start below)
 function toHall(game) {
   const s = game.state;
+  if (zga.leaveZg) return zga.leaveZg(game); // (zga: CE171 one square up, CE182, the 時之間's party back, the hall)
   eventCard(s, 37, -99);
   eventCard(s, 124, -99);
   s.flags.zgBack = { key: 'zgb', map: s.map, x: 51, y: 3, v43: s.var[43], v17: s.var[17] };
@@ -259,7 +262,7 @@ function toHall(game) {
   }
   s.var[43] = 999;
   s.var[17] = 0;
-  s.sw[78] = false;
+  s.sw[78] = true;
   s.sw[19] = false;
   audio.se('Z1 入る');
   endTrStory(game, C(game).hall);
@@ -355,6 +358,7 @@ async function start(game) {
   stop(game);
   s.flags.z3 = 'zgb';
   s.flags.z3At = null;
+  if (zga.backToZg && zga.backToZg(game, 'zgb')) return; // from the ZG hall's door (zga puts the party back)
   const back = s.flags.zgBack;
   if (back && back.key === 'zgb') { // from the ZG hall's door (page 6000 with switch 850): where page 9932 left
     delete s.flags.zgBack;
@@ -367,16 +371,17 @@ async function start(game) {
     for (const m of s.party) heal(m); // (page 6000: everyone up and recovered)
     s.var[43] = back.v43;
     s.var[17] = back.v17;
-    s.sw[19] = true;
+    s.sw[19] = false;
+    s.sw[78] = false;
     s.var[42] = s.party[0].id;
     return toField(game, { map: back.map, x: back.x, y: back.y });
   }
-  // page 6171 (zga): Goku's team, everyone up and recovered, switches 1152-1161 off, CE39, variables 301 / 43 / 324
+  // page 6171 (zga): Goku's team, everyone up and recovered, switches 1152-1161 on, 80 / 19 off, CE39, variables 301 / 43 / 324
   ce9(game);
   party(game, C(game).party);
   for (const m of s.party) heal(m);
-  for (let k = 1152; k <= 1161; k++) s.sw[k] = false;
-  Object.assign(s.sw, { 80: true, 19: true, 38: true, 39: true });
+  for (let k = 1152; k <= 1161; k++) s.sw[k] = true;
+  Object.assign(s.sw, { 80: false, 19: false, 38: true, 39: true });
   Object.assign(s.var, { 301: 2, 43: 151, 17: 1, 324: 65, 41: 0, 42: s.party[0].id });
   s.var[40] = 2;
   await applyEra(game);
@@ -462,7 +467,7 @@ async function devState(game, step) {
   game.startField();
   if (step === 'zgb') return start(game);
   ce9(game);
-  Object.assign(s.sw, { 80: true, 19: true });
+  for (let k = 1152; k <= 1161; k++) s.sw[k] = true;
   Object.assign(s.var, { 301: 2, 43: 151, 17: 1, 324: 65 });
   const team = (map, v43, v17, at) => {
     party(game, TEAMS[map]);

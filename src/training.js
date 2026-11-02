@@ -1,13 +1,16 @@
-// Training squares (145_Event_Check.rb chk_training → var41 31 → 110_Scene_Db_Speed_Training.rb): in Z1 always
-// the speed training. Pick a member, then keep playing a card from the battle hand that shares the attack stars,
-// the guard numeral or the school with the training card (a 気 training card takes anything). Each hit flips the
-// card that was played; the one before it is dealt anew. Stop whenever you like; a miss ends it with half rewards.
-//   EXP  level × 2.5 / 2 per hit (Z1), CAP = hits, SP = hits, ZP = ⌈hits / 2⌉, ⌈hits / 5⌉ uses of random moves
-// SP and ZP are kept in state.sp[actor] / state.zp[actor] for the systems that spend them.
+// Training squares (145_Event_Check.rb chk_training → var41 31 → 110_Scene_Db_Speed_Training.rb): in Z1 and Z2 always
+// the speed training; from Z3 on (variable 40 ≥ 2) one of four at random — 0 the speed training (here), 1 Mr. Popo,
+// 2 King Kai's puns, 3 Chi-Chi (src/training_more.js registers those three with addTraining). The speed training: pick
+// a member, then keep playing a card from the battle hand that shares the attack stars, the guard numeral or the school
+// with the training card (a 気 training card takes anything). Each hit flips the card that was played; the one before
+// it is dealt anew. Stop whenever you like; a miss ends it with half rewards. get_exp, by variable 40 (Z1 / Z2 / Z3+):
+//   EXP  level × 2.5 / 2 per hit │ level × 2.5 × 2.5 per hit + level × 30 │ level × 2.5 × 10 per hit + level × 150,
+//        × 1.5–12 from 10 hits on;  CAP = SP = hits │ hits × 2 │ hits × 5;  ZP = ⌈hits / 2⌉, ⌈hits / 5⌉ random moves
+// SP goes to the member's 追加技能 and ZP to the member (src/growth.js), as after a battle.
 import { img, audio, rand } from './core.js?v=20261102-1554';
 import { newCard } from './battle.js?v=20261102-1554';
 import { levelUp, EXP_RATE } from './party.js?v=20261102-1554';
-import { expFor } from './growth.js?v=20261102-1554';
+import { expFor, has, ensure, afterBattle } from './growth.js?v=20261102-1554';
 import { el, sprite, overlay, button, bumpStat } from './fieldmenu.js?v=20261102-1554';
 
 const CARDS = 'Graphics/Pictures/カード関係.PNG', FACES = 'Graphics/Pictures/Z1_顔味方.PNG';
@@ -16,7 +19,7 @@ const SE_OK = 'Z3 決定', SE_MOVE = 'Z3 カーソル移動';
 const IDLE = [0, 1, 0, 4, 0, 2, 0, 3]; // output_character: 8 frames each
 const HURT = 17;
 
-function drawCard(c, cd, x, y, back) {
+export function drawCard(c, cd, x, y, back) { // (also the Chi-Chi training, src/training_more.js)
   const s = img(CARDS);
   if (!s.ok) return;
   if (back) { c.drawImage(s.im, 64, 96, 64, 96, x, y, 64, 96); return; }
@@ -26,10 +29,29 @@ function drawCard(c, cd, x, y, back) {
   c.drawImage(s.im, 32 * cd.s, 64, 32, 32, x + 16, y + 32, 32, 32);
 }
 
+// the trainings src/training_more.js adds: { 1: Popo, 2: King Kai's puns, 3: Chi-Chi } (event_no of chk_training)
+const more = {};
+export function addTraining(kind, fn) { more[kind] = fn; }
+
+// chk_training: Z1 / Z2 (variable 40 0 or 1) always 0; from Z3 on rand(4). (?dev=trn0 … trn3 picks one, for testing)
+function chkTraining(s) {
+  const dev = /^trn([0-3])$/.exec(new URLSearchParams(location.search).get('dev') || '');
+  if (dev) return +dev[1];
+  return ((s.var || {})[40] || 0) >= 2 ? rand(4) : 0;
+}
+
 export async function training(game) {
-  const world = game.world, s = game.state, T = world.trainingText;
+  const s = game.state;
   bumpStat(s, 'training'); // $game_variables[222]
-  audio.playBgm('Z1 修行');
+  const kind = chkTraining(s);
+  if (kind && more[kind]) return more[kind](game);
+  return speedTraining(game);
+}
+
+async function speedTraining(game) {
+  const world = game.world, s = game.state, T = world.trainingText;
+  const era = (s.var || {})[40] || 0;
+  if (era <= 2) audio.playBgm(['Z1 修行', 'Z2 修行', 'Z3 修行'][era]); // (past variable 40 = 2 the field music goes on)
   const root = overlay('tr');
   const msg = el('div', 'win tr-msg');
   const stage = el('canvas', 'tr-stage');
@@ -68,9 +90,9 @@ export async function training(game) {
     anim = (anim + 1) % 64;
     raf = requestAnimationFrame(draw);
   };
-  const deal = () => { // create_card 1: Z1 training card, 1 in 7 turns 気
-    card = newCard(); // rand(8) stars, rand(8) guard, a Z1 school (create_card_i 0)
-    if (rand(7) === 1) card.s = KI;
+  const deal = () => { // create_card 1: the training card turns 気 1 in 7 (Z1) / 5 (Z2) / 4 (Z3 on)
+    card = newCard(); // rand(8) stars, rand(8) guard, a school of the era (create_card_i 0)
+    if (rand([7, 5][era] || 4) === 1) card.s = KI;
   };
   const buttons = (...bs) => { bar.innerHTML = ''; bar.append(...bs); };
   let wake = null;
@@ -152,33 +174,62 @@ export async function training(game) {
   root.remove();
   game.field.enter();
 
-  // get_exp (Z1 branch); a miss halves everything (rounded up)
+  // get_exp; a miss halves everything (rounded up)
   async function rewards() {
     const half = (n) => (success ? n : Math.ceil(n / 2));
-    const say1 = async (t) => { setMsg([t]); await wait(); audio.se(SE_OK); };
-    // × the EXP rate like battles; サイヤ人の血 counts here too (get_exp_add, as in the original)
-    const exp = expFor(world, m, half(count ? Math.trunc(((m.level * 2.5) / 2) * count) : 0) * EXP_RATE);
-    await say1(`修行終了！　　獲得${exp}經驗值！`);
-    m.exp += exp;
-    if (levelUp(world, m)) { audio.se('Z1 レベルアップ', 80); await say1(`${m.name}升到了${m.level}級！`); }
-    const cap = half(count);
-    await say1(`獲得CAP　${cap}　！`);
-    s.zeni = (s.zeni || 0) + cap;
-    const sp = half(count);
-    await say1(`獲得SP　${sp}　！`);
-    s.sp = s.sp || {};
-    s.sp[m.id] = (s.sp[m.id] || 0) + sp;
-    const zp = half(Math.ceil(count / 2));
-    await say1(`獲得ZP　${zp}　！`);
-    s.zp = s.zp || {};
-    s.zp[m.id] = (s.zp[m.id] || 0) + zp;
-    const tec = half(Math.ceil(count / 5));
-    await say1(`隨機必殺技的使用回數增加　${tec}　回！`);
-    s.skillLv = s.skillLv || {};
-    for (let n = 0; n < tec && m.skills.length; n++) { // add_random_skill_num
-      const id = m.skills[rand(m.skills.length)];
-      s.skillLv[id] = Math.min(99999, (s.skillLv[id] || 0) + 1);
+    const e = m.level * 2.5;
+    let exp = era === 0 ? Math.trunc((e / 2) * count) : era === 1 ? Math.trunc(e * count * 2.5) + m.level * 30 : Math.trunc(e * count * 10) + m.level * 150;
+    if (era >= 2) { // 人造人間編 on: a bonus by the number of hits
+      const k = [[99, 12], [90, 9], [80, 8], [70, 7], [60, 6], [50, 5], [40, 4], [30, 3], [20, 2], [10, 1.5]].find(([n]) => count >= n);
+      if (k) exp = Math.trunc(exp * k[1]);
     }
+    const divide = [1, 0.5][era] || 0.2;
+    await trainingRewards(game, m, {
+      exp: half(count ? exp : 0), cap: half(Math.ceil(count / divide)), sp: half(Math.ceil(count / divide)),
+      zp: half(Math.ceil(count / 2)), tec: half(Math.ceil(count / 5)), pool: 'after',
+    }, SPEED_TEXT, async (lines) => { setMsg(lines); await wait(); audio.se(SE_OK); });
+  }
+}
+
+const SPEED_TEXT = { exp: '修行終了！　　獲得{n}經驗值！', level: '{name}升到了{n}級！', cap: '獲得CAP　{n}　！', sp: '獲得SP　{n}　！',
+  zp: '獲得ZP　{n}　！', tec: '隨機必殺技的使用回數增加　{n}　回！' };
+
+// get_sp_add: サイヤ人の血 raises the SP shown (the same table as src/growth.js, which applies it itself)
+const BLOOD_SP = [[2, 1.1], [3, 1.15], [4, 1.2], [89, 1.25], [90, 1.3], [91, 1.35], [92, 1.4], [93, 1.45], [94, 1.5]];
+
+// The rewards every training ends with (get_exp of each training scene), each on its own page:
+//   r = { exp, cap, sp, zp, tec, first: [lines before the EXP line], pool: 'raw' | 'after' } — exp before the EXP rate
+//   T = { exp, level, cap, sp, zp, tec }: the page texts, {n} the number ({name} the member)
+//   show(lines) shows a page and waits for a tap
+// EXP × the EXP rate like battles, サイヤ人の血 counts too (get_exp_add); it also goes to the shared EXP pool
+// (variable 305: before サイヤ人の血 in the Z3 trainings, after it in the speed training, as the original does).
+// SP: get_cha_sp_run into the 追加技能 (src/growth.js afterBattle, without the 加重衣); ZP to the member;
+// add_random_skill_num: one use each to that many random moves.
+export async function trainingRewards(game, m, r, T, show) {
+  const world = game.world, s = game.state;
+  const fill = (t, n) => t.replace('{n}', n).replace('{name}', m.name);
+  s.var = s.var || {};
+  const raw = Math.trunc(r.exp) * EXP_RATE;
+  const exp = expFor(world, m, raw);
+  s.var[305] = (s.var[305] || 0) + (r.pool === 'after' ? exp : raw);
+  await show([...(r.first || []), fill(T.exp, exp)]);
+  m.exp += exp;
+  if (levelUp(world, m)) { audio.se('Z1 レベルアップ', 80); await show([fill(T.level, m.level)]); }
+  await show([fill(T.cap, r.cap)]);
+  s.zeni = (s.zeni || 0) + r.cap;
+  const blood = BLOOD_SP.find(([id]) => has(world, m, id));
+  await show([fill(T.sp, blood ? Math.trunc(r.sp * blood[1]) : r.sp)]);
+  const heavy = s.var[313];
+  s.var[313] = 0; // (加重衣 is for battles)
+  afterBattle({ world, game, party: [m], foes: [], trReward: { sp: r.sp } });
+  if (heavy === undefined) delete s.var[313]; else s.var[313] = heavy;
+  await show([fill(T.zp, r.zp)]);
+  ensure(m).zp += r.zp;
+  await show([fill(T.tec, r.tec)]);
+  s.skillLv = s.skillLv || {};
+  for (let n = 0; n < r.tec && m.skills.length; n++) { // add_random_skill_num
+    const id = m.skills[rand(m.skills.length)];
+    s.skillLv[id] = Math.min(99999, (s.skillLv[id] || 0) + 1);
   }
 }
 

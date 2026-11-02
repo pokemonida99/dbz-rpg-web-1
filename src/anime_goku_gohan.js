@@ -148,6 +148,7 @@ function cutIn(c, d, st) {
     if (st.era === 2 && id === 14 && v(171) === 2) [sheet, row] = [CUT.zg, 10]; // Z3悟空 (さらにボロボロ)
     if (st.era === 2 && id === 5 && sw(445)) [sheet, row] = [CUT.zg, 6]; // Z3悟飯短髪
     if (st.era === 2 && id === 18 && s.ss && s.ss[5]) [sheet, row] = [CUT.zg, 2]; // 超サイヤ人2
+    if ((id === 16 || id === 32) && v(175) === 1) [sheet, row] = [CUT.zg, id === 16 ? 8 : 9]; // バーダック(超) スカウターなし
     draw(c, sheet, 0, row * 64, 640, 64, 0, 292);
   } else {
     const id = duel.f && duel.f.id;
@@ -356,6 +357,9 @@ battleHooks.act = async (b, i, skill) => {
   }
   return prevAct ? prevAct(b, i, skill) : false;
 };
+// the films of other files on this stage (the strips, the cut-in, 必殺技!): agFilms({ film: [pictures(), LAUNCH entry] })
+export function agFilms(films) { for (const [k, [p, cfg]] of Object.entries(films)) { FILM_PICTURES[k] = p; LAUNCH[k] = cfg; MINE.add(k); } }
+export { Cyc, at, afterImage };
 
 
 // ---------- 悟飯 ----------

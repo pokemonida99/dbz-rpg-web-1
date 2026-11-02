@@ -48,6 +48,7 @@ for r in rows[1:]:
         'name': s2t(k['description'] or k['name']),
         'power': k['base_damage'],
         'stun': 12 in k['element_set'],  # 超能力気功砲 also freezes the enemy (element 12)
+        **({'tail': True} if 25 in k['element_set'] else {}),  # 繰気円斬 cuts a Great Ape's tail (element 25, all.rb 68895)
         'cha': cha,
         'tec': ints(d['scombo_flag_tec']),
         'uses': ints(d['scombo_skill_level_num']),

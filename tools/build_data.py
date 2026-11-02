@@ -342,6 +342,8 @@ import build_z3  # noqa: E402  (Z3: the shared part — Z3 art, enemies, battles
 build_z3.add(world, globals())
 import build_cards_ext  # noqa: E402  (cards and training squares: docs/cards-plan.md)
 build_cards_ext.add(world, globals())
+import build_tecspark  # noqa: E402  (ひらめき: the moves that may turn into a stronger one in battle, src/combo.js)
+build_tecspark.add(world, globals())
 # SP reward = the enemy's max MP (docs/battle-rules.md §6), here at the end so it covers the enemies every chapter added
 # (build_growth runs early and only sees the Z1 chapters' first ones)
 for eid, e in world['enemies'].items():

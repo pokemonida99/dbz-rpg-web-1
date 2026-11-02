@@ -151,6 +151,7 @@
    "name": "操氣氣圓斬",
    "power": 45,
    "stun": false,
+   "tail": true,
    "cha": [
     6,
     7

@@ -47,7 +47,7 @@ taken／hit／recover，battle.js 的 avoid／hurt／cover／pick 與 `this.chai
   第二批 grw 查過原版：`get_exp_add`（喜歡的角色 ×1.15、賽亞人之血）只有戰鬥（50833）與速度／琪琪／冷笑話／波波先生修行（149246、150074、
   154842、155500）呼叫，重力室、界王（Bubbles）、古雷格利、Z3 重力、流派一致修行直接 `change_exp`，所以**和原版相同**，不改。
 - 技能發動時原版有技能名的滑入框（output_runskill）、掩護有一段過場；這裡沒有技能名框，掩護改成一句「X 掩護了 Y！」＋SE Z1 逃げる。
-- 組合技的傷害在重製版不經過 `growth.dealt`，所以連擊對組合技無效（原版有）。
+- 組合技的傷害現在也經過 `growth.dealt`（第二批 cmb，`docs/battle-rules.md` §4.2），連擊對組合技有效，和原版一樣。
 - 173 的地圖移動效果在 cards-a（變數 420，和 76 飛機一起）。
 - ~~隊伍畫面的喜歡角色記號沒做~~：第二批 grw 已照原版做（output_party 45434：`アイコン.PNG` 第 29 格，畫在隊伍清單頭像右上；`partymenu.hooks.badge`）。
 

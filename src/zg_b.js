@@ -15,7 +15,7 @@
 import { audio, img, loadImages } from './core.js?v=20261102-1750';
 import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261102-1750';
 import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261102-1750';
-import { addMoves } from './anime.js?v=20261102-1750';
+import { addMoves, Duel, draw, BACKS, SW, SH, STD_Y, TEC_CENTER } from './anime.js?v=20261102-1750';
 import { makeMember, applyLevel } from './party.js?v=20261102-1750';
 import { superSaiyan } from './supersaiyan.js?v=20261102-1750';
 import { applyEra } from './era.js?v=20261102-1750';
@@ -49,6 +49,61 @@ addMoves({
   655: 'raditzWave', 657: 'foeWave', 658: 'raditzBigWave', 661: 'giantWave', // 史拉格軍
   391: 'foeWave', 392: 'psychic', 393: 'swordAttack', 394: 'raditzWave', 395: 'raditzBigWave', // 弗利薩
   400: 'giantWave', 403: 'raditzWave', 405: 'raditzWave', 452: 'swordAttack', // 古拉一味
+  644: 'etfTurlesApe', 645: 'etfSlugGiant', // 大猿変身 / 巨大化 (their own films below; src/battle.js FOE_FORMS)
+  642: 'apeWave', 667: 'apeWave', 668: 'nappaBlast', 669: 'apeWave', // 達列斯(大猿) / 史拉格(巨大化)
+});
+
+// the form changes in battle (anime_pattern 1744 / 1745), ported from the original frame by frame
+const POWER_BALL = 'Graphics/Pictures/Z1_戦闘_必殺技_繰気弾.PNG'; // effect 21
+const APE_HEAD = 'Graphics/Pictures/Z2_戦闘_必殺技_敵_达列斯.png'; // its 96×112 faces at (0,1056) / (0,1168), mouth shut / open
+const FLASH = ['#fff', '#000', '#fff', '#ffd8a0']; // 375-439: the screen flashes, 8 frames each
+Object.assign(Duel.prototype, {
+  * etfTurlesApe() { // 1744 大猿変身(ターレス): the power ball goes up and becomes the moon, he looks at it — the Great Ape's face
+    const A = this.A, aura = this.cycler(BACKS.aura, 160, 222, 234, 70);
+    img(APE_HEAD); // (Z2 Turles's sheet: not met yet in ZG; it loads while the moon rises)
+    let bx = 234, by = 100, face = 1;
+    const ball = (c) => draw(c, POWER_BALL, 0, 0, 128, 128, bx, by);
+    this.se('Z1 気を溜める6'); this.pose(A, 7, true); this.behind(aura); yield; // 0
+    yield* this.wait(80); // 1-80
+    this.se('Z1 高速移動'); this.effect(ball); yield; // 81
+    for (let f = 82; f <= 102; f++) { by = 100 - (f - 82); yield; }
+    by = 80; yield* this.wait(82); // 103-184
+    this.behind(null); this.pose(A, 8, true); bx = 226; by = 88; yield* this.wait(25); // 185-209
+    this.se('Z1 繰気弾'); this.pose(A, 9, true); yield; // 210
+    for (let f = 211; f <= 305; f++) { // the ball thrown up; from 265 he holds out his hand
+      bx = 226 - (f - 211) * 4; by = 88 - (f - 211) * 4;
+      if (f === 265) { this.pose(A, 10, true); this.behind((c, t) => draw(c, BACKS.handOne, 0, (Math.floor(t / 5) % 10) * 48, 40, 48, 266, 116)); }
+      yield;
+    }
+    audio.seStop(); this.effect(null); this.behind(null); yield; // 306
+    A.y = -200; this.effect(ball); bx = 256; // 307
+    for (let f = 308; f <= 374; f++) { by = 240 - (f - 308) * 2; yield; } // the moon rises
+    by = 108; this.se('Z1 気を溜める(元気弾)');
+    this.behind((c, t) => { c.fillStyle = FLASH[Math.floor(t / 8) % 4]; c.fillRect(0, 0, SW, SH); });
+    yield* this.wait(65); // 375-439
+    this.behind(null); this.effect(null); this.pose(A, 0, true); A.y = STD_Y; yield* this.wait(31); // 440-470
+    this.se('Z1 パワーアップ');
+    this.behind((c) => { if (face) draw(c, APE_HEAD, 0, face === 2 ? 1168 : 1056, 96, 112, 266, 118); });
+    for (let f = 471; f <= 660; f++) { // he and the face by turns (8 frames), then the face roars
+      if (f === 536) this.se('Z1 大猿');
+      const head = f === 471 || f >= 536 || Math.floor((f - 472) / 8) % 2 === 1;
+      face = !head ? 0 : f >= 536 && f <= 600 ? 2 : 1;
+      A.y = head ? -200 : STD_Y;
+      yield;
+    }
+    return 'none';
+  },
+  * etfSlugGiant() { // 1745 スラッグ巨大化: he and the giant by turns (8 frames), then the giant
+    const A = this.A, small = A.sheets, big = this.form || small;
+    this.pose(A, 0, true); A.x = TEC_CENTER; A.y = STD_Y; yield; // 0
+    this.se('Z1 気を溜める5');
+    for (let f = 1; f <= 199; f++) {
+      if (f === 66) this.se('Z1 パワーアップ');
+      A.sheets = f === 1 || f >= 58 || Math.floor((f - 2) / 8) % 2 === 1 ? big : small;
+      yield;
+    }
+    return 'none';
+  },
 });
 
 // ---------- the scenes (z1field 6181-6423, data from all.rb: background, faces, character_output(_all)) ----------
@@ -492,3 +547,14 @@ async function devState(game, step) {
 }
 
 registerZ3('zgb', { maps: MAPS, start, spot, resume, dev, goal });
+// ?dev=etf (docs/batch1-plan.md §3, the enemies' form changes): straight into the battle with Turles and Slug (強) —
+// etf: 6411 (both), etfturles: 6261, etfslug: 6326; the story goes on from there as usual
+registerZ3('etf', {
+  dev(game, step) {
+    const m = /^etf(turles|slug)?$/.exec(step);
+    if (!m) return false;
+    const no = { turles: 6261, slug: 6326 }[m[1]] || 6411;
+    devState(game, { 6261: 'zgbturles', 6326: 'zgbkawazu', 6411: 'zgbtower' }[no]).then(() => { stop(game); return battle(game, no); });
+    return true;
+  },
+});

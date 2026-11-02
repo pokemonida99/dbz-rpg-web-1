@@ -130,7 +130,7 @@ export async function tryCombo(b, i) {
   b.say(`${who.map((j) => b.party[j].name).join('＋')}的組合技！`, `「${combo.name}」`);
   const before = foe.hp;
   b.anim = new ComboDuel({
-    party: crew[lead.id], foe: { normal: foe.portrait, special: foe.sprite }, combo: combo.id, crew, lead: lead.id,
+    party: crew[lead.id], foe: { normal: foe.portrait, special: foe.sprite, size: foe.size }, combo: combo.id, crew, lead: lead.id,
     damage: dmg, margin: Math.max(0, (SW - view.w) / 2),
     onHit: () => { if (b.practice) b.practice.dmg = (b.practice.dmg || 0) + dmg; else foe.hp = Math.max(0, foe.hp - dmg); },
   });

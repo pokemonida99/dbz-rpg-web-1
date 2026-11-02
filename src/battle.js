@@ -9,7 +9,7 @@
 // window over the stage. Tapping outside the window / anything but an enemy while targeting cancels that card.
 // A picked card wears its member's face: tap it (or the face above) to pick again for that member; 返回 undoes the
 // last pick. With everyone picked a big 出招！ starts the turn (or right away with 設定「選完直接出招」).
-import { view, img, audio, sleep, rand } from './core.js?v=20261102-1750';
+import { view, img, loadImages, audio, sleep, rand } from './core.js?v=20261102-1750';
 import { levelUp, EXP_RATE } from './party.js?v=20261102-1750';
 import { Duel, ANIME_IMAGES, SW, SH, BACK_Y } from './anime.js?v=20261102-1750';
 import { commandButtons, autoSkill, autoTarget, tally } from './partymenu.js?v=20261102-1750'; // command row, 作戰, counters
@@ -95,6 +95,14 @@ function z3Schools(s, foe) {
   return all.filter((i) => !no.includes(i));
 }
 const pick = (a) => a[rand(a.length)];
+// enemies who change form in battle (all.rb 53470 @ene_tec_oozaru): the move → who becomes whom; each move once a battle
+// ($battle_begi_oozaru_run / $battle_tare_oozaru_run / $battle_sura_big_run, chk_scombo_flag 140335). The Great Apes
+// (ape) turn back when their tail is cut (68895); a later part can add its own: FOE_FORMS[skill] = { …, film sheets }
+export const FOE_FORMS = {
+  373: { to: { 12: 26 }, ape: true, say: '變成了大猿！' }, // ベジータ
+  644: { to: { 59: 70, 233: 222 }, ape: true, say: '變成了大猿！' }, // ターレス (Z2 / ZG(強))
+  645: { to: { 60: 71, 255: 223 }, say: '巨大化了！' }, // スラッグ (Z2 / ZG(強))
+};
 export function newCard() { return { a: rand(8), g: rand(8), s: pick(z2Schools(false) || (late() ? [0, 1, 3, 4] : [0, 1, 2, 4])) }; }
 export const enemyCard = () => ({ a: rand(8), g: rand(8), s: pick(z2Schools(true) || (late() ? [0, 1, 3, 4, 5] : [0, 1, 2, 4, 5])) });
 export function newHand() { return Array.from({ length: HAND }, newCard); }
@@ -906,18 +914,22 @@ export class Battle {
     if ((cd.s === 0 || cd.s === f.school) && f.actions.length) {
       const ok = f.actions.filter((a) => (a.cond === 0 || (a.cond === 2 && (f.hp * 100) / f.maxhp <= a.param))
         && (a.skill !== 304 || yamcha) // 自爆: only at Yamcha, while he is in the fight (chk_scombo_flag 304)
-        && (a.skill !== 373 || !this.apeDone)); // 大猿変身: once a battle ($battle_begi_oozaru_run)
+        && (!FOE_FORMS[a.skill] || (!(this.formsDone || []).includes(a.skill) && this.world.enemies[FOE_FORMS[a.skill].to[f.id]]))); // 大猿変身 / 巨大化: once a battle
       if (ok.length) skill = this.world.skills[ok[rand(ok.length)].skill];
     }
-    if (skill && skill.id === 373) { // 大猿変身: no damage; Vegeta (12) becomes the Great Ape (26), HP as it is
+    if (skill && FOE_FORMS[skill.id]) { // 大猿変身 / 巨大化: no damage; he becomes the other enemy, HP as it is
+      const form = FOE_FORMS[skill.id], from = f.id, to = form.to[from], e = this.world.enemies[to], name = f.name;
       const m = targets[rand(targets.length)];
       this.duel = { m, mc: this.hand[this.plans[this.party.indexOf(m)].card], f, fc: cd };
       this.say(`${f.name} 的${skill.name}！`);
-      this.apeDone = true;
-      await this.play(m, f, false, skill.id, -1, m);
-      this.transform(f, 26);
-      f.apeOf = 12;
-      this.say(`${this.world.enemies[12].name} 變成了大猿！`);
+      (this.formsDone = this.formsDone || []).push(skill.id);
+      await loadImages([e.sprite, e.portrait, ...(e.face || []).slice(0, 1)]);
+      const film = this.play(m, f, false, skill.id, -1, m);
+      this.anim.form = { normal: e.portrait, special: e.sprite, size: e.size }; // (the films that show the new form)
+      await film;
+      this.transform(f, to);
+      if (form.ape) f.apeOf = from;
+      this.say(`${name} ${form.say}`);
       await sleep(1200);
       return;
     }
@@ -944,13 +956,12 @@ export class Battle {
     }
   }
 
-  // an enemy becomes another (the Great Ape and back), keeping its HP, slot and card
+  // an enemy becomes another (the Great Ape and back, 巨大化), keeping its HP, slot and card
   transform(f, id) {
     const e = this.world.enemies[id];
-    const keep = { hp: f.hp, slot: f.slot, card: f.card, fx: f.fx, fy: f.fy, apeOf: f.apeOf };
-    for (const k of ['regen', 'size']) delete f[k];
+    const keep = { hp: f.hp, slot: f.slot, card: f.card, fx: f.fx, fy: f.fy };
+    for (const k of ['regen', 'size', 'apeOf']) delete f[k];
     Object.assign(f, e, { id }, keep);
-    if (id !== 26) delete f.apeOf;
   }
 
   // ---------- result ----------

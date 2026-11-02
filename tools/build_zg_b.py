@@ -92,8 +92,11 @@ FOE_MOVES = {550: '能量波', 552: '能量波', 553: '能量吸收', 555: '能�
              639: '能量波', 640: '雙重能量波', 646: '能量波', 647: '邪惡類星體', 648: '伸長手臂', 650: '能量波', 651: '邪惡重力',
              653: '能量波', 654: '邪惡彗星', 655: '青蛙攻擊', 657: '能量波', 658: '邪惡衝擊', 661: '安基拉與梅達瑪茶',
              391: '能量波', 392: '超能力', 393: '弗利薩切割', 394: '連續能量波', 395: '死亡球', 400: '超新星',
-             403: '內茲束縛波', 405: '德雷恐怖連擊', 452: '沙維扎之刃斬'}
-NO_FOE_SKILLS = {644, 645}  # 大猿変身 / 巨大化: the remake's battles have no form change for these (docs/zg-b.md)
+             403: '內茲束縛波', 405: '德雷恐怖連擊', 452: '沙維扎之刃斬',
+             644: '大猿變身', 645: '巨大化', 642: '能量波', 667: '魔光砲', 668: '爆發波', 669: '大粉碎'}
+# what Turles / Slug (強) become in battle with 大猿変身 644 / 巨大化 645 (all.rb 53485-53500; src/battle.js FOE_FORMS):
+# 192×192 battle sheets like the Great Ape, *PARAM_HPRECOVER[2]
+FORMS = {233: 222, 255: 223}
 # the actors who join in ZG (zga brings them first; here only if it has not): CE9 必殺技設定 without the 大猿変身
 # moves (the remake has no Great Ape state for the party). [face row, name, battle sheet, special sheet, skills, ray]
 ACTORS = {
@@ -335,7 +338,7 @@ def add(world, h, z3, tr):
     # ---------- enemies, their moves ----------
     edb, sdb = D('enemies'), D('skills')
     sk = lambda sid: world['skills'][sid] if sid in world['skills'] else world['skills'][str(sid)]
-    for eid in FOES:
+    for eid in FOES + sorted(FORMS.values()):
         e = enemy(eid)
         name = edb[eid]['name']
         e['sprite'] = file(f'Z3_戦闘_必殺技_敵_{name}')
@@ -343,7 +346,9 @@ def add(world, h, z3, tr):
         assert e['sprite'] and e['portrait'], name
         e['face'] = [F3, eid - 100]  # Z3_顔敵: one row per enemy from 100
         e['name'] = e['name'].replace('変', '變')  # (薩博(変身)(强): s2t leaves the Japanese form)
-        e['actions'] = [a for a in e['actions'] if a['skill'] not in NO_FOE_SKILLS]
+        if eid in FORMS.values():
+            e['size'] = 192
+            e['regen'] = int(re.search(r'PARAM_HPRECOVER\[(\d+)', edb[eid]['note']).group(1))
         world['enemies'][eid] = e
         world['drops'][eid] = [[d['item_id'], d['denominator']] for d in (edb[eid]['drop_item1'], edb[eid]['drop_item2'])
                                if d['kind'] == 1 and d['item_id'] in world['items']]
@@ -370,6 +375,11 @@ def add(world, h, z3, tr):
             if sid not in world['skills'] and str(sid) not in world['skills']:
                 world['skills'][sid] = skill(sid)
     sk(245)['ss'] = True  # スーパーサイヤ人変身 (未來悟飯: as 29 / 59)
+    # 尻尾切る (element 25): the moves of the party here that turn the Great Ape back (all.rb 68895; Trunks's 剣攻撃,
+    # 18's 気円斬 …)
+    for k, v in world['skills'].items():
+        if int(k) < 300 and 25 in sdb[int(k)]['element_set']:
+            v['tail'] = True
 
     # ---------- battles ----------
     consts, names = build_z3.bgm_names(src)
@@ -406,8 +416,9 @@ def add(world, h, z3, tr):
         for n in walk_nodes(p):
             if n.get('x') == 'pic':
                 pics.add(n['name'])
-    for eid in FOES:
+    for eid in FOES + list(FORMS.values()):
         pics |= {world['enemies'][eid]['sprite'], world['enemies'][eid]['portrait']}
+    pics.add(file('Z2_戦闘_必殺技_敵_达列斯'))  # the Great Ape's head in Turles's 大猿変身 film (anime_pattern 1744)
     for aid in ACTORS:
         a = world['actors'].get(aid) or world['actors'].get(str(aid))
         pics |= {a['sprite'], a['special']}

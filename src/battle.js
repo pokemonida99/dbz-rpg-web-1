@@ -59,6 +59,8 @@ function z2Schools(foe) {
   if (s.var[40] >= 2) return z3Schools(s, foe);
   const no = foe ? [2, 7] : [2, 6, 7];
   if (s.ss && s.ss[1]) no.push(3);
+  const v43 = s.var[43] || 0; // the party: 41 Z2 たった一人の最終決戦, 143-149 ZG バーダック一味編 — without 亀・界・魔・超・造
+  if (!foe && (v43 === 41 || (v43 >= 143 && v43 <= 149))) no.push(1, 3, 4, 8, 9);
   return Array.from({ length: s.cardiMax || 7 }, (_, i) => i).filter((i) => !no.includes(i));
 }
 // Z3 (variable 40 = 2, $cardi_max = 10, create_card_i all.rb 20768-20830). Party: without 神・ギニュー・悟・造 (造 is
@@ -78,6 +80,7 @@ function z3Schools(s, foe) {
   let no = party.some((m) => m.school === 9) ? [2, 6, 7] : [2, 6, 7, 9];
   if (s.ss && s.ss[1]) no.push(3);
   if (!s.ss || !Object.values(s.ss).some(Boolean)) no.push(8);
+  if (v43 >= 143 && v43 <= 149) no.push(1, 3, 4, 9); // ZG バーダック一味編: without 亀・界・魔・造
   if (party.length === 1) {
     no = [2, 6, 7];
     if (!s.sw[435]) no.push(9);

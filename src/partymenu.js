@@ -182,6 +182,7 @@ function screen(title, game, battle, body) {
   const render = () => {
     const party = s.party;
     cur = Math.min(cur, party.length - 1);
+    keepScroll(root);
     root.innerHTML = '';
     const list = el('div', 'win pm-list');
     const head = el('div', 'pm-head', word('NO'), el('span', '', title));
@@ -406,6 +407,7 @@ export function memberChange(game, offer) {
     root.addEventListener('pointerdown', (e) => { e.stopPropagation(); audio.unlock(); });
     const end = (v) => { root.remove(); res(v); };
     const render = () => {
+      keepScroll(root);
       root.innerHTML = '';
       const top = el('div', 'win pm-list', el('div', 'pm-head', word('NO'), el('span', '', `隊伍變更（${list.length}／9 人）`)));
       const slots = el('div', 'pm-slots');
@@ -458,6 +460,7 @@ function freeSkillScreen(game, m) {
     root.addEventListener('pointerdown', (e) => { e.stopPropagation(); audio.unlock(); });
     const end = (v) => { root.remove(); res(v); };
     const render = () => {
+      keepScroll(root);
       root.innerHTML = '';
       const box = el('div', 'win pm-skl pm-list2', el('div', 'pm-th', el('span', '', `${m.name}　自由技能`)));
       const list = growth.freeList(world, s, m);
@@ -558,6 +561,21 @@ export function openTactics({ game, battle }) {
   });
 }
 
+// these screens rebuild themselves on every tap: put the page and its lists (by their title) back where they were
+// scrolled to once the new content is in, and keep the picked line in view
+function keepScroll(root) {
+  const key = (x) => { const t = x.firstChild; return (t && (t.firstChild || t).textContent) || ''; }; // the title's first part (not the CAP, which changes)
+  const page = root.scrollTop, lists = new Map([...root.querySelectorAll('.pm-list2')].map((x) => [key(x), x.scrollTop]));
+  queueMicrotask(() => {
+    root.scrollTop = page;
+    for (const x of root.querySelectorAll('.pm-list2')) {
+      if (lists.has(key(x))) x.scrollTop = lists.get(key(x));
+      const on = x.querySelector('.on');
+      if (on) on.scrollIntoView({ block: 'nearest' });
+    }
+  });
+}
+
 const css = document.createElement('style');
 css.textContent = `
 .pm { position: absolute; inset: 0; z-index: 46; background: #9040f0; display: flex; flex-direction: column; gap: 4px;
@@ -607,7 +625,7 @@ css.textContent = `
 .pm-sk .dim { color: #a08868; }
 .pm-sk.on { border-color: #f83800; }
 .pm-sk:disabled { opacity: .45; }
-.pm-list2 { max-height: 46vh; overflow-y: auto; }
+.pm-list2 { max-height: 46vh; min-height: min(25vh, 200px); overflow-y: auto; } /* small phones: the page scrolls rather than the list shrinking to one line */
 .pm-memo { font-size: 15px; white-space: pre-line; line-height: 1.35; }
 .pm-ask { position: absolute; left: 12px; right: 12px; top: 34%; z-index: 2; font-size: 17px; display: flex; flex-direction: column; gap: 4px; }
 .pm-gname { margin-top: 6px; }

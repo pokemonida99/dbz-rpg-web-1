@@ -36,6 +36,11 @@ const BACKDROPS = ['bg/battle_night.png', 'bg/battle_dusk.png', 'bg/battle_day.p
 const BACKDROP_TOP = 205;
 // 設定「選完直接出招」(src/fieldmenu.js keeps it in sync): resolve as soon as everyone has picked, like the original
 export const battleOpts = { quick: false };
+// rules other modules add (src/cards_a.js: the skill cards' passive skills, 月亮和尾巴's Great Ape); each is optional:
+//   cardFor(b, m, cd) → cd   kiCost(b, m, skill, ki, cd) → ki   power(b, m, skill, P) → P   dealt(b, m, skill, d) → d
+//   taken(b, m, d) → d   act(b, i, skill) → true if it took the action   hit(b, m, foe, dmg)   hurt(b, m, foe, skill, dmg)
+//   recover(b)   end(b)
+export const battleHooks = {};
 
 export function battleImages(world) {
   const sheets = new Set([...BACKDROPS, CARDS, FACES, FOE_FACES, DIGITS, FRAME_IMG, ICONS, ...ANIME_IMAGES]);
@@ -110,6 +115,7 @@ function playerDamage(b, m, skill, card, foe, foeCard, P) {
   if (m.school === 8) d = Math.floor(d * 1.3); // class 9 (超サイヤ人)
   if (card.s === m.school || items.powerUp(m)) d = Math.floor(d * 1.3);
   d = growth.dealt(b, m, skill, d); // passive skills (set_damage_add)
+  if (battleHooks.dealt) d = battleHooks.dealt(b, m, skill, d);
   if (skill && skill.noDamage) d = 0;
   if (b.foesEvade) return -1; // switch 18 敵必ず回避 (an event battle: src/z3c.js, Mecha Frieza)
   const avoid = Math.trunc((foe.agi * 1.2 + foeCard.g) / 3 - (m.agi * 1.1 + card.a) / 3);
@@ -123,6 +129,7 @@ function enemyDamage(b, foe, skill, card, m, guardCard) {
   if (m.school === 8) d = Math.floor(d * 0.85); // the defender is of class 9 (超サイヤ人)
   if (items.guardUp(m)) d = Math.floor(d * 0.7);
   d = growth.taken(b, m, d); // passive skills (set_damage_add)
+  if (battleHooks.taken) d = battleHooks.taken(b, m, d);
   if (items.evades(m)) return -1;
   const avoid = Math.trunc((m.agi * 1.2 + guardCard.g) / 3 - (foe.agi * 1.1 + card.a) / 3);
   return avoid > 0 && rand(100) + 1 < avoid ? -1 : b.foeRate ? Math.trunc(d * b.foeRate) : d; // variable 82 敵攻撃ダメージn倍 (src/z3e.js)
@@ -514,7 +521,9 @@ export class Battle {
     word(c, 'KI', x + w - 96, y + 12); num(c, m.ki, x + w - 14, y + 12);
     skills.forEach((s, i) => {
       const ry = y + 40 + i * rowH;
-      const ki = items.kiNeed(m, growth.kiCost(this.world, m, s)); // passive skills (get_mp_cost), 必殺技 card
+      let ki = growth.kiCost(this.world, m, s); // passive skills (get_mp_cost)
+      if (battleHooks.kiCost) ki = battleHooks.kiCost(this, m, s, ki, this.hand[this.pending.card]);
+      ki = items.kiNeed(m, ki); // 必殺技 card
       const ok = m.ki >= ki;
       text(c, s.name + (s.all ? '（全體）' : ''), x + 30, ry + 6, ok ? INK : '#a08060', 18);
       text(c, `KI ${ki}`, x + w - 14, ry + 8, ok ? '#7a5230' : '#c0a080', 14, 'right');
@@ -766,6 +775,7 @@ export class Battle {
     this.acted = new Set(); // members already done this turn (S-combo partners)
     const order = [];
     this.party.forEach((m, i) => { const p = this.plans[i]; if (p) this.hand[p.card] = growth.cardFor(this.world, m, this.hand[p.card]); }); // ミラクル全開パワー, ムダのない動き
+    if (battleHooks.cardFor) this.party.forEach((m, i) => { const p = this.plans[i]; if (p) this.hand[p.card] = battleHooks.cardFor(this, m, this.hand[p.card]); });
     this.party.forEach((m, i) => { const p = this.plans[i]; if (p) order.push({ kind: 'p', i, key: this.hand[p.card].a + this.hand[p.card].g, r: Math.random() }); });
     for (const f of this.foes) if (f.hp > 0) { order.push({ kind: 'e', f, key: f.card.a + f.card.g, r: Math.random() }); }
     order.sort((a, b) => b.key - a.key || a.r - b.r);
@@ -782,6 +792,7 @@ export class Battle {
     if (this.practice) await this.practiceRecord();
     for (const f of this.foes) if (f.regen && f.hp > 0 && f.hp < f.maxhp) f.hp = Math.min(f.maxhp, f.hp + Math.floor((f.regen / 100) * f.maxhp)); // *PARAM_HPRECOVER
     growth.recover(this); // recovery from the second turn on, KO'd members back only at full HP (§4.6)
+    if (battleHooks.recover) battleHooks.recover(this);
     await announceCombos(this);
     await sleep(400);
     this.turn++;
@@ -821,7 +832,7 @@ export class Battle {
   play(m, f, playerAttacks, skill, dmg, target) {
     const actor = this.world.actors[m.id];
     this.anim = new Duel({
-      party: { normal: m.sprite || actor.sprite, special: m.special || actor.special }, // m.sprite: Z2 battle suits
+      party: { normal: m.sprite || actor.sprite, special: m.special || actor.special, size: m.spriteSize }, // m.sprite: Z2 battle suits, the Great Ape (192×192)
       foe: { normal: f.portrait, special: f.sprite, size: f.size },
       playerAttacks, skill, ray: actor.ray, hit: dmg >= 0, damage: Math.max(0, dmg), margin: Math.max(0, (SW - view.w) / 2),
       onHit: () => {
@@ -829,6 +840,7 @@ export class Battle {
         if (playerAttacks && this.practice) { this.practice.dmg = (this.practice.dmg || 0) + dmg; return; } // the dummy loses no HP
         target.hp = Math.max(0, target.hp - dmg);
         if (!playerAttacks) audio.se('Z1 ダメージ', 70);
+        if (!playerAttacks && battleHooks.hurt) battleHooks.hurt(this, target, f, this.world.skills[skill] || null, dmg);
         if (!playerAttacks && target.hp <= 0) growth.knockOut(target, this.turn);
       },
     });
@@ -845,10 +857,12 @@ export class Battle {
     if (!foe || foe.hp <= 0) foe = this.foes.filter((f) => f.hp > 0).reduce((a, b) => (b.hp < a.hp ? b : a));
     const cd = this.hand[p.card];
     let skill = p.skill;
-    const base = skill ? growth.kiCost(this.world, m, skill) : 0; // passive skills (get_mp_cost)
+    let base = skill ? growth.kiCost(this.world, m, skill) : 0; // passive skills (get_mp_cost)
+    if (skill && battleHooks.kiCost) base = battleHooks.kiCost(this, m, skill, base, cd);
     if (skill && m.ki < items.kiNeed(m, base)) skill = null;
     const targets = skill && skill.all ? this.foes.filter((f) => f.hp > 0) : [foe];
     if (skill) items.payKi(m, base);
+    if (battleHooks.act && await battleHooks.act(this, i, skill)) return;
     if (skill && skill.ss && moveTransforms(m)) { // 超サイヤ人變身: no attack; this member becomes a Super Saiyan
       this.say(`${m.name} 的${skill.name}！`);
       audio.se('Z3 変身', 80);
@@ -863,9 +877,12 @@ export class Battle {
       t.card = t.card || enemyCard();
       this.duel = { m, mc: cd, f: t, fc: t.card };
       this.say(`${m.name} 的${skill ? skill.name : '攻擊'}！`, ownSchool(cd, m) ? '流派一致，威力 ×1.3！' : '');
-      const dmg = playerDamage(this, m, skill && { noDamage: skill.noDamage }, cd, t, t.card, growth.power(this.game.state, m, skill));
+      let P = growth.power(this.game.state, m, skill);
+      if (battleHooks.power) P = battleHooks.power(this, m, skill, P);
+      const dmg = playerDamage(this, m, skill && { noDamage: skill.noDamage }, cd, t, t.card, P);
       await this.play(m, t, true, skill ? skill.id : null, dmg, t);
       if (dmg >= 0) growth.onHit(this, m, t); // かなしばり
+      if (dmg >= 0 && battleHooks.hit) battleHooks.hit(this, m, t, dmg);
       if (dmg >= 0 && skill && skill.tail && t.hp > 0 && t.apeOf) { // 尻尾切る: the Great Ape is himself again (all.rb 68895)
         this.transform(t, t.apeOf);
         this.say(`${t.name} 的尾巴被切斷，變回原狀了！`);
@@ -999,6 +1016,7 @@ export class Battle {
     this.el.hidden = true;
     this.el.innerHTML = '';
     items.battleEnd();
+    if (battleHooks.end) battleHooks.end(this);
     ssAfterBattle(this.world, this.game.state);
     // KO'd members stay KO'd after the fight (the original's $chadead), until an inn or their HP is full again
     return result;

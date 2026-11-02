@@ -69,6 +69,21 @@ import './cos.js?v=20261103-0355'; // ?dev=cos…: 換裝 and the DB3 staff roll
 import './anime_goku_gohan.js?v=20261103-0355'; // 悟空・悟飯's move films, ?dev=anga… (docs/anim-ab-plan.md anga)
 import './anime_piccolo_vegeta.js?v=20261103-0355'; // 比克・貝吉塔's Z3 move films (docs/anim-ab-plan.md anpv; after the chapters' addMoves)
 import './anime_zfighters.js?v=20261103-0355'; // the Z fighters' Z3 move films (docs/anim-ab-plan.md anzb; ?dev=anzb…)
+import './tr_future.js?v=20261103-0338';
+import './zg_broly.js?v=20261103-0338';
+import './zg_bojack.js?v=20261103-0338';
+import './zg_a.js?v=20261103-0338';
+import './zg_b.js?v=20261103-0338';
+import './zg_c.js?v=20261103-0338';
+import './zg_recap.js?v=20261103-0338'; // ZG 的概況 (前情提要: src/fieldmenu.js)
+import './combo_dev.js?v=20261103-0338'; // ?dev=cmb…: S-combo / ひらめき tests (src/combo.js)
+import './sys.js?v=20261103-0338'; // 第二批 sys: 神龍的願望, the shop's added cards, Z3 / Z4 的概況 (docs/sys.md)
+import './viz.js?v=20261103-0338'; // the battle's skill names, the cover scene, the Great Ape's face (docs/batch2-plan.md viz)
+import './cos.js?v=20261103-0338'; // ?dev=cos…: 換裝 and the DB3 staff roll (docs/costume.md)
+import './anime_goku_gohan.js?v=20261103-0338'; // 悟空・悟飯's move films, ?dev=anga… (docs/anim-ab-plan.md anga)
+import './anime_piccolo_vegeta.js?v=20261103-0338'; // 比克・貝吉塔's Z3 move films (docs/anim-ab-plan.md anpv; after the chapters' addMoves)
+import './anime_zfighters.js?v=20261103-0338'; // the Z fighters' Z3 move films (docs/anim-ab-plan.md anzb; ?dev=anzb…)
+import './anime_bardock.js?v=20261103-0338'; // 巴達克・超巴達克's move films (docs/anim-cd-plan.md ancb; ?dev=ancb…)
 
 // testing in a hidden browser pane (no animation frames there): ?timer drives every frame with timers instead
 if (new URLSearchParams(location.search).has('timer')) window.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16);

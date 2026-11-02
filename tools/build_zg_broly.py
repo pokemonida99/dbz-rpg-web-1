@@ -308,6 +308,8 @@ def add(world, h, z3, tr):
             jp = sdb[sid]['name'].split(')')[-1]
             if jp in MOVE_NAMES:
                 world['skills'][sid if sid in world['skills'] else str(sid)]['name'] = MOVE_NAMES[jp]
+    # スーパーサイヤ人変身 of Bardock (learned here, CE167): as 29 / 245 — the film 2129 and the change (docs/anim-cd-plan.md ancb)
+    world['skills'][158 if 158 in world['skills'] else '158']['ss'] = True
     consts, names = build_z3.bgm_names(src)
     bp = src[src.index('def battle_process event_no'):]
     bp = bp[:bp.index('\n  def ', 10)]

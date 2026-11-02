@@ -35,7 +35,7 @@ import './z4c.js?v=20261102-1141';
 import './z4d.js?v=20261102-1141';
 import './z4e.js?v=20261102-1141';
 import './z4f.js?v=20261102-1141';
-import { trGoal } from './timeroom.js?v=20261102-1141'; // 時之間 (registers its spots in src/z3.js too)
+import { trGoal, trBackdrop } from './timeroom.js?v=20261102-1141'; // 時之間 (registers its spots in src/z3.js too)
 import './tr_z1.js?v=20261102-1141'; // 時之間 phase 2: the areas (docs/timeroom-plan.md)
 import './tr_z2.js?v=20261102-1141';
 import './tr_z3.js?v=20261102-1141';
@@ -314,7 +314,7 @@ function startField() {
 // the chapter that follows, by name (a later part calls game.nextChapter('ch6') …); false when it isn't there
 const CHAPTERS = { ch4: startChapter4, ch5: startChapter5, ch6: startChapter6, willow: startWillow };
 const nextChapter = (k) => (typeof k !== 'string' ? startChapter3(game) : CHAPTERS[k] ? CHAPTERS[k](game) : false);
-Object.assign(game, { startZ2a, storyScenes, backdrop: () => z3Backdrop(game) || z2aBackdrop(game), startZ3: () => startZ3(game) }); // Z2 (src/z2a.js); the Willow chapter calls game.startZ2a
+Object.assign(game, { startZ2a, storyScenes, backdrop: () => trBackdrop(game) || z3Backdrop(game) || z2aBackdrop(game), startZ3: () => startZ3(game) }); // Z2 (src/z2a.js); the Willow chapter calls game.startZ2a
 Object.assign(game, { startField, save, renderHud: () => renderHud(), showTitle: (sub, notes) => showTitle(sub, notes), nextChapter, startChapter4, startChapter5, startChapter6, startWillow, devChapter5: () => devChapter5(game), devChapter6: () => devChapter6(game), startZ2Ginyu: () => startZ2Ginyu(game), startZ2b: () => startZ2b(game) }); // for src/chapter*.js
 
 // ---------- title ----------

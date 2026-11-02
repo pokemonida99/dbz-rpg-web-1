@@ -55,8 +55,10 @@ export function skillPower(state, id, base) {
   return p;
 }
 
+// a combo with a switch (c.sw: 琪琪's / 龜仙人's, tools/build_combo.py) is left out while it is off (get_scombo_list)
+const open = (state, c) => !c.sw || !!(state.sw || {})[c.sw];
 // combos a character takes part in (get_scombo_list, 010_Share.rb:328)
-export const combosOf = (actorId) => DATA.combos.filter((c) => c.cha.includes(actorId));
+export const combosOf = (actorId, state) => DATA.combos.filter((c) => c.cha.includes(actorId) && (!state || open(state, c)));
 
 // ---------- the check (chk_scombo_flag, 102:87887) ----------
 function fits(b, combo, newOnly) {
@@ -81,7 +83,7 @@ function fits(b, combo, newOnly) {
 function findCombo(b, i) {
   const p = b.plans[i];
   if (!p || !p.skill) return null;
-  const list = DATA.combos.filter((c) => c.tec.includes(p.skill.id) && c.cha.includes(b.party[i].id));
+  const list = DATA.combos.filter((c) => c.tec.includes(p.skill.id) && c.cha.includes(b.party[i].id) && open(b.game.state, c));
   for (const newOnly of [true, false]) {
     for (const c of list) { const who = fits(b, c, newOnly); if (who) return { combo: c, who }; }
   }
@@ -131,6 +133,7 @@ export async function tryCombo(b, i) {
   const before = foe.hp;
   b.anim = new ComboDuel({
     party: crew[lead.id], foe: { normal: foe.portrait, special: foe.sprite, size: foe.size }, combo: combo.id, crew, lead: lead.id,
+    tecs: Object.fromEntries(combo.cha.map((id, x) => [id, combo.tec[x]])),
     damage: dmg, margin: Math.max(0, (SW - view.w) / 2),
     onHit: () => { if (b.practice) b.practice.dmg = (b.practice.dmg || 0) + dmg; else foe.hp = Math.max(0, foe.hp - dmg); },
   });
@@ -241,7 +244,7 @@ export function openComboList(b, start = 0) {
       panel.appendChild(tabs);
       const list = document.createElement('div'); list.className = 'cl-list';
       const me = b.party[cur];
-      const mine = combosOf(me.id);
+      const mine = combosOf(me.id, state);
       if (!mine.length) list.innerHTML = '<p class="cl-none">這個角色沒有組合技。</p>';
       for (const c of mine) {
         const known = learned(state).includes(c.id);

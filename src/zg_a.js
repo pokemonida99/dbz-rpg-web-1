@@ -61,14 +61,15 @@ function charFace(s, sx, sy) {
   return to(sh.p3, row);
 }
 // character_output_all mode 26 (外伝編 全員集合, all.rb 167997): the party, then everyone else of the list in its order
-// (a Super Saiyan as such)
+// (a Super Saiyan as such); mode 22 (ボージャック編 全員集合) for the 概況 of src/zg_recap.js
 const ALL26 = [3, 14, 4, 5, 18, 12, 19, 17, 20, 25, 26, 6, 7, 8, 9, 16, 32, 27, 28, 29, 30, 10, 24, 15, 21, 22, 23];
+const ALL = { 26: ALL26, 22: [4, 5, 18, 12, 19, 17, 20, 6, 7, 8, 9, 10, 24] };
 const ALL_ORDER = [[3, 14, 1], [4], [5, 18, 2], [6], [7], [8], [9], [10], [24], [12, 19, 3], [17, 20, 4], [25, 26, 6], [16, 32, 7],
   [27], [28], [29], [30], [15], [23], [22], [21]];
-function everyone(s, ids) {
-  const list = ids.filter((id) => ALL26.includes(id));
+function everyone(s, ids, mode) {
+  const all = ALL[mode] || ALL26, list = ids.filter((id) => all.includes(id));
   for (const [a, b, no] of ALL_ORDER) {
-    if (list.includes(a) || (b && list.includes(b))) continue;
+    if (!all.includes(a) || list.includes(a) || (b && list.includes(b))) continue;
     list.push(b && s.ss && s.ss[no] ? b : a);
   }
   return list;
@@ -107,7 +108,7 @@ function drawScene(st, ctx, d) {
   let size = 64, rows = 0;
   const o = d.out;
   if (o) {
-    const ids = o.all ? everyone(s, ctx.partyc) : ctx.partyc;
+    const ids = o.all ? everyone(s, ctx.partyc, o.all) : ctx.partyc;
     const r = out(st, ctx, ids, o.dy / 64);
     size = r.size; rows = r.rows;
   }
@@ -124,6 +125,8 @@ function drawScene(st, ctx, d) {
   }
   st.faceSize = size;
 }
+// a scene of this format from elsewhere (the 概況, src/zg_recap.js)
+export function drawZgScene(game, st, ctx, d) { G = game; drawScene(st, ctx, d); }
 let ready = false;
 function ensure(game) {
   G = game;

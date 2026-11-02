@@ -8,8 +8,11 @@ skill database. Loaded in the original by set_scombo (010_Share.rb:4080). Column
   participant's card, 0-based like $carda: 1 = ★2), chk_flag/_no/_process/_value (an extra switch or variable
   condition), ssaiya / oozaru columns (Super Saiyan and giant variants), scenario_progress (minimum var 40).
 
-Only the rows open in Z1 (scenario progress 0, no extra switch) whose participants are the Z1 fighters 3-9 are kept;
-the Super Saiyan rows (actors 14 / 18) are duplicates for later chapters.
+Only the rows open in Z1 (scenario progress 0) whose participants are the Z1 fighters 3-9 are kept, with no extra
+switch — plus the Willow chapter's two with 琪琪 / 龜仙人 (actor 10 / 24), which wait for a switch (`sw`: get_scombo_list
+skips the row while it is off): ダブル衝撃波 704 on switch 779 (琪琪 joins: Map007 event 1 page 145 in Z1, event 9 page
+901 in the Willow chapter), 亀仙流かめはめは 730 on switch 117 (龜仙人 joins, event 9 page 941). The Super Saiyan rows
+(actors 14 / 18) are duplicates for later chapters.
 Usage: python3 tools/build_combo.py   (after `ruby tools/extract.rb game/Data data`)
 """
 import json, os
@@ -19,6 +22,7 @@ root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 rows = json.load(open(os.path.join(root, 'data', 'scombo.json'), encoding='utf-8'))
 skills = {k['id']: k for k in json.load(open(os.path.join(root, 'data', 'skills.json'), encoding='utf-8')) if k}
 Z1 = set(range(3, 10))
+WILLOW = {10, 24}  # 琪琪, 龜仙人
 
 
 def ints(v):
@@ -29,7 +33,10 @@ head, out, seen = rows[0], [], set()
 for r in rows[1:]:
     d = dict(zip(head, r))
     cha = ints(d['scombo_cha'])
-    if int(d['scombo_chk_scenario_progress']) > 0 or int(d['scombo_chk_flag']) != 0 or not set(cha) <= Z1:
+    flag = int(d['scombo_chk_flag'])
+    if int(d['scombo_chk_scenario_progress']) > 0 or not set(cha) <= Z1 | WILLOW:
+        continue
+    if flag != 0 and not (flag == 1 and set(cha) & WILLOW) or flag == 0 and set(cha) & WILLOW:
         continue
     no = int(d['scombo_no'])
     if no in seen:
@@ -46,6 +53,7 @@ for r in rows[1:]:
         'uses': ints(d['scombo_skill_level_num']),
         'atk': ints(d['scombo_card_attack_num']),
         'grd': ints(d['scombo_card_gard_num']),
+        **({'sw': int(d['scombo_chk_flag_no'])} if flag else {}),
     })
 # the participants' moves, for the combo list (names) and the damage (power with proficiency)
 moves = {sid: {'name': s2t(skills[sid]['description'] or skills[sid]['name']), 'power': skills[sid]['base_damage'],

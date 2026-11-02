@@ -55,7 +55,7 @@ def add(world, h):
     rows = D('chaskill')
     table = {r[0]: dict(zip(rows[0], r)) for r in rows[1:]}
     ids = lambda v: [int(x) for x in str(v).replace('`', ',').split(',') if x not in ('', '0')]
-    for sid in range(687, 696):  # 武泰斗の教え (its effect, Sコンボ stars, is not in this version yet)
+    for sid in range(687, 696):  # 武泰斗の教え (its effect — evasion, Sコンボ stars — is in src/willow.js)
         r = table[sid]
         world['growth']['skills'][sid] = {
             'n': s2t(r['cha_skill_mozi_set']), 'm': s2t(r['cha_skill_manual']), 'sp': r['cha_skill_get_val'],

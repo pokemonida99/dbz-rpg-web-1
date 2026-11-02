@@ -260,8 +260,13 @@ export class Stage {
     this.dlgH = Math.max(this.dlgH || 190, ui.dlg.offsetHeight); // css px; kept so the scene doesn't jump
     const dlgH = this.dlgH / px;
     // scene, the party's faces, then the message box, centred as one block
-    const fz = this.faceSize;
-    const rows = fz + (fz + 4) * Math.max(0, ...this.sprites.map((s) => s.line || 0)); // the faces under the scene
+    const lines = Math.max(0, ...this.sprites.map((s) => s.line || 0));
+    // a short phone with many rows of faces (ZG's everyone, four or five rows): smaller faces rather than a message
+    // box running off the bottom
+    let fz = this.faceSize;
+    while (fz > 32 && 128 + 10 + fz + (fz + 4) * lines + 12 + dlgH > h - 44 / px - 10) fz -= 4;
+    this.fz = fz;
+    const rows = fz + (fz + 4) * lines; // the faces under the scene
     const block = 128 + 10 + rows + 12 + dlgH;
     const top = Math.max(44 / px + 10, Math.round((h - block) / 2));
     ui.dlg.style.top = `${(top + 128 + 10 + rows + 12) * px}px`;
@@ -278,7 +283,7 @@ export class Stage {
     for (const s of this.sprites) {
       const [sx, sy, sw, sh] = s.src;
       if (s.face) {
-        const fz = this.faceSize, fy = top + 128 + 10 + (fz + 4) * s.line;
+        const fz = this.fz, fy = top + 128 + 10 + (fz + 4) * s.line;
         if (fz === 64) blt(c, s.path, s.x + ox, fy, sw, sh, sx, sy);
         else { const e = img(s.path); if (e.ok) c.drawImage(e.im, sx, sy, sw, sh, PLAY_X + ((s.x - PLAY_X) * fz) / 64 + ox + (64 - fz) / 2, fy, fz, fz); }
         continue;

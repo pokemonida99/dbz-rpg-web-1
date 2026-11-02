@@ -5,7 +5,7 @@
 // A ComboDuel is a Duel whose left side can be any of the participants: `crew` = { actorId: { normal, special } }.
 // Frame numbers in the comments are the original's @battle_anime_frame.
 import { audio } from './core.js?v=20261102-1750';
-import { Duel, draw, spark, BALL, RAY, BACKS, MAKANKO_BALL, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED } from './anime.js?v=20261102-1750';
+import { Duel, draw, spark, BALL, RAY, BACKS, MAKANKO_BALL, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED, SW, moveFilm } from './anime.js?v=20261102-1750';
 
 // combo skill id → [film, damage pattern]
 const FILMS = {
@@ -14,6 +14,8 @@ const FILMS = {
   710: ['psychoKikou', 28], // 超能力気功砲 (810)
   707: ['sokiEnzan', 23], // 繰気円斬 (807, shortened)
   711: ['rokakuSouda', 23], // 狼鶴相打陣 (811, shortened)
+  704: ['doubleShock', 22], // ダブル衝撃波 (804)
+  730: ['kameRyu', 23], // 亀仙流かめはめは (830)
 };
 
 export class ComboDuel extends Duel {
@@ -22,6 +24,8 @@ export class ComboDuel extends Duel {
     this.combo = opts.combo;
     this.crew = opts.crew;
     this.lead = opts.lead; // the participant whose turn started the combo (@chanum)
+    // a combo without a film of its own (chain): each participant's own move (opts.tecs: actor id → skill id)
+    this.tecs = Object.fromEntries(Object.entries(opts.tecs || {}).map(([id, sk]) => [id, moveFilm(sk)]));
   }
 
   * run() {
@@ -31,6 +35,7 @@ export class ComboDuel extends Duel {
     yield* this[film]();
     audio.seStop();
     if (dmg === 28) yield* this.shakeBoom();
+    else if (dmg === 22) yield* this.blownAway(); // shock-wave hit
     else yield* this.explode(17, 50); // 23
     audio.seStop();
     this.ending = true;
@@ -194,6 +199,76 @@ export class ComboDuel extends Duel {
     }
   }
 
+  // ---- 804 ダブル衝撃波 (悟空 + 琪琪): the lead steps back while the other flickers in (effect 50), both raise a
+  // hand (effect 51), then the shock wave behind the enemy (back 1) ----
+  * doubleShock() {
+    const other = this.lead === 3 ? 10 : 3;
+    this.se('Z1 逃げる');
+    this.pose(this.A, 0, false);
+    yield;
+    this.effect(this.appear(other, CENTER_CHAX + 120, 8, false));
+    yield* this.stepAside(-2, 40, 71);
+    this.se('Z1 高速移動');
+    this.se('Z1 ゴー');
+    this.pose(this.A, 1, true);
+    this.effect((c) => draw(c, this.sheet(other, true), 0, 96, 96, 96, CENTER_CHAX + 104, STD_Y));
+    yield* this.wait(59);
+    this.se('Z1 衝撃波');
+    this.effect(null);
+    this.A.y = -200;
+    this.G.x = CENTER_ENEX; this.G.y = STD_Y;
+    this.pose(this.G, 0, false);
+    this.behind(this.shockBack());
+    yield* this.wait(59);
+    this.behind(null);
+  }
+
+  // ---- 830 亀仙流かめはめは (悟空・克林・雅木茶・龜仙人): the lead walks to his place while the other three flicker in
+  // (back 115-120), all four charge (back 8) with 悟空 in the middle (@btl_ani_cha_chg_no = 3), four balls
+  // (effect 95), then the huge wave (effect 48) ----
+  * kameRyu() {
+    const SLOT = { 6: 74, 3: 198, 24: 336, 7: 458 }; // CENTER_CHAX −166 / −42 / +96 / +218
+    // the four take 480 px of the stage: on a phone they close up so all of them stay on screen
+    const lo = Math.max(74, Math.round(this.margin)), hi = Math.min(458, SW - Math.round(this.margin) - 96);
+    const X = (x) => Math.round(lo + ((x - 74) * (hi - lo)) / 384);
+    const MOVE = { 3: 17, 24: 18, 6: 24, 7: 24 }; // the frames the lead walks (@ax until frame 18 / 19 / 25)
+    const others = [3, 24, 6, 7].filter((id) => id !== this.lead);
+    const rows = { 24: 2, 6: 1, 7: 1 }; // @scombo_cha*_anime_type from frame 60 (190: 3 / 2 / 2)
+    const at = (id, row) => (c) => draw(c, this.sheet(id, true), 0, row * 96, 96, 96, X(SLOT[id]), STD_Y);
+    this.se('Z1 逃げる');
+    this.pose(this.A, 0, false);
+    yield;
+    // 1-59: the lead walks to his place, the others flicker in (normal sheet rows 14, 13, 12, then their special sheet)
+    const flick = others.map((id) => this.appear(id, X(SLOT[id]), 0, true));
+    this.behind((c, t) => flick.forEach((f) => f(c, t)));
+    const n = MOVE[this.lead], dx = (X(SLOT[this.lead]) - this.A.x) / n;
+    for (let f = 1; f < 60; f++) { if (f <= n) this.A.x += dx; yield; }
+    // 60-190: 悟空 in the lead's place, everyone charging (back 8 over them)
+    this.L.sheets = this.crew[3];
+    this.A.x = X(SLOT[3]);
+    this.pose(this.A, 3, true);
+    this.se('Z1 ザー');
+    this.se('Z1 ゴー');
+    this.se('DB3 気を溜める2');
+    const aura = this.cycler(BACKS.gatherFour, 640, 360, 0, 0);
+    this.behind((c, t) => { for (const id of [24, 6, 7]) at(id, rows[id])(c); aura(c, t); });
+    yield* this.wait(130);
+    // 190: the hands forward; 191-299: four balls (effect 95)
+    rows[24] = 3; rows[6] = 2; rows[7] = 2;
+    audio.seStop();
+    this.se('Z1 エネルギー波2');
+    this.se('Z1 ゴー');
+    yield;
+    this.pose(this.A, 4, true);
+    const balls = [[6, 56, 122], [3, 172, 116], [24, 310, 126], [7, 430, 118]].map(([id, x, y]) => this.ball(BALL.orange, X(SLOT[id]) + x - SLOT[id], y));
+    this.effect((c, t) => balls.forEach((b) => b(c, t)));
+    yield* this.wait(109);
+    // 300: everyone off; 302-326: the wave on the enemy
+    this.behind(null);
+    this.effect(null);
+    yield* this.cut(RAY.huge, 27, -30);
+  }
+
   // 807 / 811 are long films in the original (807 alone is 618 frames over 18 effect pictures); here the two
   // participants' own moves play one after the other, the second one landing the combined hit.
   * chain() {
@@ -211,4 +286,4 @@ export class ComboDuel extends Duel {
   * rokakuSouda() { this.tecs = { 7: 'wolfFang', 8: 'shishinFist' }; yield* this.chain(); }
 }
 
-export const COMBO_SOUNDS = ['Z1 飛ぶ', 'ZG 技取得'];
+export const COMBO_SOUNDS = ['Z1 飛ぶ', 'ZG 技取得', 'DB3 気を溜める2'];

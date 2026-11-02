@@ -10,9 +10,19 @@ import { scenes, setParty, moveTo, enterMap, card } from './chapter2.js?v=202611
 import { addScenes } from './cutscene.js?v=20261102-1750';
 import { makeMember, applyLevel } from './party.js?v=20261102-1750';
 import { eventCard } from './items.js?v=20261102-1750';
-import { ensure } from './growth.js?v=20261102-1750';
+import { ensure, has, extra } from './growth.js?v=20261102-1750';
+import { registerZ3 } from './z3.js?v=20261102-1750';
 
 const MAPS = ['50', '51'];
+
+// 武泰斗の教え (龜仙人's 固有技能 687-695, tools/build_willow.py): evasion + its rate, on top of 残像拳 (get_avoid_add,
+// all.rb 18055), and the S-combo's attack stars + its a_hoshi, the best of the members, on top of 連携 (all.rb 68502)
+const MUTAITO = [695, 694, 693, 692, 691, 690, 689, 688, 687];
+const mutaito = (w, m) => { const id = m && MUTAITO.find((x) => has(w, m, x)); return id ? w.growth.skills[id].fx : null; };
+extra.push({
+  avoid: (v, b, m) => { const fx = mutaito(b.world, m); return fx ? v + (Number(fx.rate) || 0) : v; },
+  combo: (v, b, who) => v + Math.max(0, ...who.map((i) => Number((mutaito(b.world, b.party[i]) || {}).ah) || 0)),
+});
 const pic = (n) => `Graphics/Pictures/${n}.PNG`;
 const PARTY = pic('Z1_顔味方'), FOE = pic('Z1_顔敵'), CARD = pic('顔カード');
 
@@ -238,3 +248,18 @@ export function devWillow(game, step) {
   game.startField();
   game.save(true);
 }
+
+// ?dev=ovwwillow (&timer): ?dev=willowboss plus what pages 901 / 941 set that the jump skips — switches 779 (琪琪) and
+// 117 (龜仙人) for the combos 704 / 730 — 武泰斗の教え l1 for 龜仙人, and the move uses those combos need
+registerZ3('ovwwillow', {
+  dev(game, step) {
+    if (step !== 'ovwwillow') return false;
+    devWillow(game, 'willowboss');
+    const s = game.state;
+    Object.assign(s.sw, { 115: true, 117: true, 779: true });
+    const roshi = s.party.find((m) => m.id === 24);
+    if (roshi) { ensure(roshi); roshi.typ = [687, 13, 39]; } // (get_typical_skill 24: lv 9 武泰斗の教え, 3 Z戦士の絆, 6 かなしばり)
+    s.skillLv = Object.assign(s.skillLv || {}, { 1: 10, 5: 50, 62: 40, 72: 40, 101: 10, 226: 30 });
+    return true;
+  },
+});

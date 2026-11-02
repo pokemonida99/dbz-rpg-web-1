@@ -3,8 +3,8 @@
 //                             immune to the enemy's 動きを止める moves (the `bind` key: no call point yet)
 //   負けん気 70-72, 185-190   a chance (rate) to take × 0.6
 //   未来への希望 336-344      card stars, and damage dealt / taken, growing with the battle's turn count
-import * as growth from './growth.js?v=20261102-2150';
-import { rand } from './core.js?v=20261102-2150';
+import * as growth from './growth.js?v=20261102-2217';
+import { rand } from './core.js?v=20261102-2217';
 
 const FAM = {
   jiai: [57, 426, 427],

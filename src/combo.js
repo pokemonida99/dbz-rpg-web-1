@@ -18,6 +18,7 @@ import { VERSION, view, img, audio, rand } from './core.js?v=20261102-1554';
 import { SW } from './anime.js?v=20261102-1554';
 import { ComboDuel } from './combo-anime.js?v=20261102-1554';
 import { menuEntries } from './partymenu.js?v=20261102-1554';
+import { ext } from './growth.js?v=20261102-1554';
 
 let DATA = { combos: [], moves: {}, sync: {} };
 export const comboData = fetch(`data/combos.json?v=${VERSION}`).then((r) => r.json()).then((d) => (DATA = d)).catch(() => DATA);
@@ -99,7 +100,7 @@ function comboDamage(b, combo, who, foe, foeCard) {
   });
   const k = n > 2 ? 1 + (n - 2) * 0.2 : 1;
   P += Math.ceil(uses(state, combo.id) * (n / 2) * k);
-  star = Math.min(7, star + (n - 2));
+  star = Math.min(7, star + (n - 2) + ext('combo', 0, b, who)); // (連攜: src/cards_b.js)
   let d = Math.floor(((A + P) * 8 * (star + 7 + rand(2) + 1)) / Math.floor((foe.def * (foeCard.g + 7)) / 3));
   d = Math.floor(d * 1.3); // every participant's card is their own school; combos never miss (element 29)
   return d;

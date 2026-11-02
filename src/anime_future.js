@@ -12,12 +12,12 @@
 //   龜仙人 (24)            230 魔封波 240 → 2330, 22
 // The special-move strips and the cut-in are src/anime_goku_gohan.js's stage (agStage / agFrame / agCut / agEnd,
 // agRegister for the launch); this file only draws each film's own pictures. Frame numbers are @battle_anime_frame.
-import { audio, img } from './core.js?v=20261103-0423';
-import { Duel, addMoves, SW, SH, STD_Y, CENTER_ENEX, TEC_CENTER, RAY_SPEED } from './anime.js?v=20261103-0423';
-import { agRegister } from './anime_goku_gohan.js?v=20261103-0423';
-import { registerZ3, party, heal } from './z3.js?v=20261103-0423';
-import { superSaiyan } from './supersaiyan.js?v=20261103-0423';
-import { applyLevel } from './party.js?v=20261103-0423';
+import { audio, img } from './core.js?v=20261103-0433';
+import { Duel, addMoves, SW, SH, STD_Y, CENTER_ENEX, TEC_CENTER, RAY_SPEED } from './anime.js?v=20261103-0433';
+import { agRegister } from './anime_goku_gohan.js?v=20261103-0433';
+import { registerZ3, party, heal } from './z3.js?v=20261103-0433';
+import { superSaiyan } from './supersaiyan.js?v=20261103-0433';
+import { applyLevel } from './party.js?v=20261103-0433';
 
 const FILMS = {
   171: 'dtWave', 172: 'dtSword', 173: 'dtBlast', 174: 'dtMasenko', 176: 'dtBurning', 177: 'dtShiningSword', 178: 'dtHeatDome',

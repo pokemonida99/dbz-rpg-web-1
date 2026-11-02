@@ -5,16 +5,16 @@
 //   - the Great Ape's face in the battle status (set_character_face, all.rb 19769: Z1_顔大猿 row 2, Z1 only)
 //   - ZG / Z3 card faces follow the part of the story (src/era.js; set_card_frame, all.rb 14062)
 // ?dev=viz… jumps (registerZ3) are at the end.
-import { img, view, audio, setImageAlias, VERSION } from './core.js?v=20261103-0423';
-import { Battle } from './battle.js?v=20261103-0423';
-import * as growth from './growth.js?v=20261103-0423';
-import { SW, SH, BACK_Y } from './anime.js?v=20261103-0423';
-import { options } from './fieldmenu.js?v=20261103-0423';
-import { applyEra, eraKey } from './era.js?v=20261103-0423';
-import { registerZ3, party, devZ3 } from './z3.js?v=20261103-0423';
-import { pirate } from './zg_c.js?v=20261103-0423';
-import { playScenes } from './cutscene.js?v=20261103-0423';
-import { cardState, gainCard } from './items.js?v=20261103-0423';
+import { img, view, audio, setImageAlias, VERSION } from './core.js?v=20261103-0433';
+import { Battle } from './battle.js?v=20261103-0433';
+import * as growth from './growth.js?v=20261103-0433';
+import { SW, SH, BACK_Y } from './anime.js?v=20261103-0433';
+import { options } from './fieldmenu.js?v=20261103-0433';
+import { applyEra, eraKey } from './era.js?v=20261103-0433';
+import { registerZ3, party, devZ3 } from './z3.js?v=20261103-0433';
+import { pirate } from './zg_c.js?v=20261103-0433';
+import { playScenes } from './cutscene.js?v=20261103-0433';
+import { cardState, gainCard } from './items.js?v=20261103-0433';
 
 const WAKU = 'Graphics/Pictures/戦闘_Sコンボ表示枠.PNG'; // 240×28
 const DIGITS = 'Graphics/Pictures/数字英語.PNG'; // row 0: 0-9 / … and cell 21 「l」 (the LV glyph)

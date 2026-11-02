@@ -3,8 +3,10 @@
 //
 // How a combo goes off (chk_scombo_flag_num / chk_scombo_flag, 102:1394, 102:87754-88070): when a party member's
 // turn comes and they picked a special move, every combo listing that move is checked — first the ones not learned
-// yet, then the learned ones. A combo fires when every participant
-//   is in the party, played a card this turn, is alive, has not acted yet and did not forbid combos ("Y"),
+// yet, then the learned ones (each row of data/combos.json on its own, in the original's order; a row must be open:
+// see open() below). A combo fires when every participant
+//   is in the party, played a card this turn, is alive, not stopped, has not acted yet and did not forbid combos ("Y"),
+//   has not learned 局外人 / 旁若無人, is the Great Ape exactly when the row wants it (742 強襲サイヤ人),
 //   picked exactly the combo's move for them, with a card of their OWN school (a 必 card does not count),
 //   whose attack / guard values reach the combo's minimum, and has used that move at least the combo's
 //   number of times (proficiency, $cha_skill_level).
@@ -60,10 +62,46 @@ export function skillPower(state, id, base) {
   return p;
 }
 
-// a combo with a switch (c.sw: 琪琪's / 龜仙人's, tools/build_combo.py) is left out while it is off (get_scombo_list)
-const open = (state, c) => !c.sw || !!(state.sw || {})[c.sw];
+// ---------- which rows are open (get_scombo_list, all.rb 8821; chk_scombo_flag 140311) ----------
+// A row needs its switch (c.sw) or variable (c.v) condition and variable 40 ≥ its scenario progress (c.era). The
+// switches are turned on by the story pages (world.json) and, as the original does on loading a save, by CE34 後から
+// 追加設定 / CE205 (DATA.catchUp, tools/build_combo.py), run here before each check.
+const CMP = [(a, b) => a === b, (a, b) => a >= b, (a, b) => a <= b, (a, b) => a > b, (a, b) => a < b, (a, b) => a !== b];
+// learn_skill state: whether the actor knows the move (in the party, on the bench, or the form not in use)
+function knows(state, id, skill) {
+  const m = state.party.find((x) => x.id === id) || (state.bench || {})[id] || (state.forms || {})[id];
+  return !!m && (m.skills || []).includes(skill);
+}
+function test(state, c) {
+  const sw = state.sw || {}, v = state.var || {};
+  if (c[0] === 'sw') return !!sw[c[1]] === c[2];
+  if (c[0] === 'var') return CMP[c[3]](v[c[1]] || 0, c[2]);
+  if (c[0] === 'any') return c[1].some((n) => sw[n]);
+  if (c[0] === 'knows') return knows(state, c[1], c[2]);
+  return false;
+}
+function run(state, nodes) {
+  for (const n of nodes) {
+    if (n.if) run(state, test(state, n.if) ? n.then : n.else);
+    else if (n.sw) for (let k = n.sw[0]; k <= n.sw[1]; k++) state.sw[k] = n.sw[2];
+  }
+}
+export function catchUp(state) { state.sw = state.sw || {}; run(state, DATA.catchUp || []); }
+const open = (state, c) => {
+  const v = state.var || {};
+  if ((c.era || 0) > (v[40] || 0)) return false;
+  if (c.sw && !(state.sw || {})[c.sw]) return false;
+  if (c.v && !CMP[c.v[1]](v[c.v[0]] || 0, c.v[2])) return false;
+  return true;
+};
+// the combo list (Scene_Db_Scombo_Menu, all.rb 144060): a row with a Super Saiyan column shows only while that actor
+// is in the party (put 0) or is not (put 1), and a Great Ape row only while the member is the ape
+const shown = (b, c, m) => (!c.ss || b.party.some((p) => p.id === c.ss[0]) === !c.ss[1]) && !!c.ape === blocked(b, m);
 // combos a character takes part in (get_scombo_list, 010_Share.rb:328)
 export const combosOf = (actorId, state) => DATA.combos.filter((c) => c.cha.includes(actorId) && (!state || open(state, c)));
+// 局外人 (アウトサイダー) and 旁若無人: a member who has learned one never joins a combo (all.rb 140440-140458)
+const LONERS = [430, 644, 645, 646, 647, 648, 649, 650, 651, 476, 477, 478, 479, 480, 481, 482, 483, 484];
+const loner = (b, m) => LONERS.some((id) => growth.has(b.world, m, id));
 
 // ---------- the check (chk_scombo_flag, 102:87887) ----------
 function fits(b, combo, newOnly) {
@@ -75,10 +113,11 @@ function fits(b, combo, newOnly) {
     const i = b.party.findIndex((m) => m.id === combo.cha[x]);
     if (i < 0) return null; // not in the party
     const m = b.party[i], p = b.plans[i];
-    if (!p || m.hp <= 0 || b.acted.has(i) || p.solo) return null;
+    if (!p || m.hp <= 0 || m.stop > 0 || b.acted.has(i) || p.solo || loner(b, m)) return null;
     if (!p.skill || p.skill.id !== combo.tec[x]) return null;
     const cd = b.hand[p.card];
-    if (blocked(b, m) || cd.s !== m.school || cd.a < combo.atk[x] - lessA(b, m) || cd.g < combo.grd[x] - lessG(b, m)) return null;
+    // a Great Ape row (強襲サイヤ人) wants every participant as the ape, the others none (oozaru_put, 140476)
+    if (blocked(b, m) !== !!combo.ape || cd.s !== m.school || cd.a < combo.atk[x] - lessA(b, m) || cd.g < combo.grd[x] - lessG(b, m)) return null;
     if (uses(state, combo.tec[x]) < combo.uses[x]) return null;
     who.push(i);
   }
@@ -88,6 +127,7 @@ function fits(b, combo, newOnly) {
 function findCombo(b, i) {
   const p = b.plans[i];
   if (!p || !p.skill) return null;
+  catchUp(b.game.state);
   const list = DATA.combos.filter((c) => c.tec.includes(p.skill.id) && c.cha.includes(b.party[i].id) && open(b.game.state, c));
   for (const newOnly of [true, false]) {
     for (const c of list) { const who = fits(b, c, newOnly); if (who) return { combo: c, who }; }
@@ -227,7 +267,10 @@ export async function tryCombo(b, i) {
   if (!learned(state).includes(combo.id)) (b.newCombos || (b.newCombos = [])).push(combo.id);
   // the film
   const crew = {};
-  for (const j of who) { const a = b.world.actors[b.party[j].id]; crew[b.party[j].id] = { normal: a.sprite, special: a.special }; }
+  for (const j of who) { // (m.sprite: Z2 battle suits, the Great Ape — as src/battle.js play())
+    const m = b.party[j], a = b.world.actors[m.id];
+    crew[m.id] = { normal: m.sprite || a.sprite, special: m.special || a.special, size: m.spriteSize };
+  }
   b.duel = { m: lead, mc: b.hand[b.plans[i].card], f: foe, fc: foe.card };
   b.say(`${who.map((j) => b.party[j].name).join('＋')}的組合技！`, `「${combo.name}」`);
   const before = foe.hp, hit = Math.max(0, dmg);
@@ -290,13 +333,15 @@ export async function announceCombos(b) {
 // 'card' (this card is too weak or not of the own school)
 export function comboHints(b, i, skillId) {
   const m = b.party[i], state = b.game.state, out = [];
-  const cd = b.pending && b.hand[b.pending.card];
+  const cd = b.pending && b.hand[b.pending.card], seen = new Set();
+  catchUp(state);
   for (const c of DATA.combos) {
     const x = c.cha.indexOf(m.id);
-    if (x < 0 || c.tec[x] !== skillId || !learned(state).includes(c.id)) continue;
+    if (x < 0 || c.tec[x] !== skillId || !learned(state).includes(c.id) || !open(state, c) || seen.has(c.id)) continue;
     let st = 'ok';
     if (!c.cha.every((id) => b.party.some((p) => p.id === id))) continue; // partner not in the party (result 4)
-    if (!cd || blocked(b, m) || cd.s !== m.school || cd.a < c.atk[x] - lessA(b, m) || cd.g < c.grd[x] - lessG(b, m)) st = 'card';
+    seen.add(c.id);
+    if (!cd || blocked(b, m) !== !!c.ape || loner(b, m) || cd.s !== m.school || cd.a < c.atk[x] - lessA(b, m) || cd.g < c.grd[x] - lessG(b, m)) st = 'card';
     else {
       for (let y = 0; y < c.cha.length && st !== 'no'; y++) {
         if (y === x) continue;
@@ -305,7 +350,7 @@ export function comboHints(b, i, skillId) {
         else if (!q) st = 'wait';
         else {
           const qc = b.hand[q.card];
-          if (!q.skill || q.skill.id !== c.tec[y] || blocked(b, pm) || qc.s !== pm.school || qc.a < c.atk[y] - lessA(b, pm) || qc.g < c.grd[y] - lessG(b, pm)) st = 'no';
+          if (!q.skill || q.skill.id !== c.tec[y] || blocked(b, pm) !== !!c.ape || loner(b, pm) || qc.s !== pm.school || qc.a < c.atk[y] - lessA(b, pm) || qc.g < c.grd[y] - lessG(b, pm)) st = 'no';
         }
       }
     }
@@ -369,12 +414,14 @@ export function openComboList(b, start = 0) {
       });
       panel.appendChild(tabs);
       const list = document.createElement('div'); list.className = 'cl-list';
-      const me = b.party[cur];
-      const mine = combosOf(me.id, state);
+      const me = b.party[cur], ids = new Set();
+      catchUp(state);
+      // one row per combo (the first open one shown for the forms in the party, like the original's list)
+      const mine = combosOf(me.id, state).filter((c) => shown(b, c, me) && !ids.has(c.id) && ids.add(c.id));
       if (!mine.length) list.innerHTML = '<p class="cl-none">這個角色沒有組合技。</p>';
       for (const c of mine) {
         const known = learned(state).includes(c.id);
-        const near = c.cha.every((id, y) => b.world.actors[id].skills.includes(c.tec[y]) && uses(state, c.tec[y]) >= c.uses[y] + HINT_ADD);
+        const near = c.cha.every((id, y) => (knows(state, id, c.tec[y]) || b.world.actors[id].skills.includes(c.tec[y])) && uses(state, c.tec[y]) >= c.uses[y] + HINT_ADD);
         const item = document.createElement('div'); item.className = 'cl-item';
         item.innerHTML = `<div class="cl-name">${known ? c.name : '？？？'}${known ? `<span class="cl-lv">使用 ${uses(state, c.id)} 次</span>` : ''}</div>`;
         c.cha.forEach((id, y) => {

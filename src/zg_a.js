@@ -423,7 +423,7 @@ function devState(game) {
 function devCrew(game) {
   const s = game.state;
   keepParty(game);
-  s.flags.trStory = { main: s.flags.z3 };
+  s.flags.trStory = s.flags.trStory || { main: s.flags.z3 };
   s.flags.z3 = 'zga';
   s.sw[850] = true;
   party(game, [27, 28, 29, 30]);
@@ -451,7 +451,7 @@ registerZ3('zga', {
       if (page) {
         s.sw[850] = true;
         keepParty(game);
-        s.flags.trStory = { main: s.flags.z3 };
+        s.flags.trStory = s.flags.trStory || { main: s.flags.z3 };
         s.flags.z3 = 'zga';
         if (page >= 6061) devCrew(game);
         if (page >= 6131) { s.sw[596] = true; s.sw[597] = true; s.var[43] = 146; }

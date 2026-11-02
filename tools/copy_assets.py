@@ -45,6 +45,10 @@ files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", ag.split('export
 pv = open(os.path.join(root, 'src', 'anime_piccolo_vegeta.js'), encoding='utf-8').read()
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", pv)}
 files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", pv.split('export const PV_SOUNDS')[1])}
+# the Z fighters' Z3 move films (src/anime_zfighters.js): its pic('…') and ZF_SOUNDS
+zf = open(os.path.join(root, 'src', 'anime_zfighters.js'), encoding='utf-8').read()
+files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", zf)}
+files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", zf.split('export const ZF_SOUNDS')[1])}
 # the opening (src/opening.js): its pictures and sounds, and the faces / sounds named in world.opening
 opening = open(os.path.join(root, 'src', 'opening.js'), encoding='utf-8').read()
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\(`?'?([^'`$]+\.(?:PNG|png))", opening)}

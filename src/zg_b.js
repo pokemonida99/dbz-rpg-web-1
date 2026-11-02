@@ -40,8 +40,7 @@ addMoves({
   255: 'energyWave', 256: 'scatterWave', 257: 'vegetaWave', 259: 'kaioken', 260: 'galickGun', // 莎莉巴
   265: 'energyWave', 266: 'scatterWave', 267: 'vegetaWave', 268: 'nappaBlast', 269: 'galickGun', // 多達布
   273: 'energyWave', 274: 'scatterWave', 275: 'vegetaWave', 276: 'nappaBlast', 277: 'galickGun', // 普普堅
-  194: 'kienzan', 107: 'shockwave', 146: 'kikouhou', 230: 'maxKamehameha', // 18號 / 琪琪 / 青年 / 龜仙人
-  74: 'sokidan', 75: 'wolfFang', 94: 'psychic', 95: 'dodonpa', 65: 'kienzan', // 雅木茶 / 餃子 / 克林
+  194: 'kienzan', 230: 'maxKamehameha', // 18號 / 龜仙人 (琪琪・青年・雅木茶・餃子・克林: src/anime_zfighters.js)
   550: 'foeWave', 552: 'foeWave', 553: 'raditzWave', 555: 'foeWave', // 金卡恩・阿比・古勒 (the field)
   625: 'foeWave', 626: 'kienzan', 627: 'raditzBigWave', 629: 'foeWave', 630: 'raditzWave', 632: 'foeWave', 633: 'nappaBlast',
   634: 'raditzBigWave', 636: 'foeWave', 637: 'raditzWave', 639: 'foeWave', 640: 'raditzWave', // 達列斯軍

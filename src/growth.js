@@ -63,13 +63,23 @@ const BLOOD_SP = { 2: 1.1, 3: 1.15, 4: 1.2, 89: 1.25, 90: 1.3, 91: 1.35, 92: 1.4
 const num = (v) => Number(v) || 0;
 
 // get_exp_add / get_sp_add: サイヤ人の血
+// ---------- passive effects other modules add (src/cards_*.js: the favourite character, the skill cards' skills) ----------
+// extra.push({ key: fn, … }); ext(key, v, ...args) passes v through every entry that has the key and returns it. Keys and
+// where they run: ki (kiCost) · exp / sp (expFor / spFor) · cardMid (cardFor, after ミラクル全開パワー) · card (cardFor, last) ·
+// dealt (b, m, skill, ctx {card, foe, foeCard}) · taken (b, m, ctx {card, foe, foeCard}) · hit (onHit: b, m, foe, card) ·
+// recover (b) · avoid / hurt / cover / pick (src/battle.js) · combo (src/combo.js)
+export const extra = [];
+export const ext = (k, v, ...a) => { for (const e of extra) if (e[k]) v = e[k](v, ...a); return v; };
+
 export function expFor(world, m, exp) {
+  exp = ext('exp', exp, m); // (喜歡的角色 ×1.15: src/cards_b.js)
   const b = best(world, m, F.blood);
-  return b ? Math.trunc(exp * num(b.fx.b)) : exp;
+  return Math.trunc(b ? exp * num(b.fx.b) : exp);
 }
 function spFor(world, m, sp) {
+  sp = ext('sp', sp, m); // (喜歡的角色 ×1.5)
   const id = F.blood.find((x) => has(world, m, x));
-  return id ? Math.trunc(sp * BLOOD_SP[id]) : sp;
+  return Math.trunc(id ? sp * BLOOD_SP[id] : sp);
 }
 
 // ---------- proficiency (熟練度, docs/battle-rules.md §3.3) ----------
@@ -92,6 +102,7 @@ export function kiCost(world, m, skill) {
   let cost = skill.ki;
   const wk = best(world, m, F.wakideru);
   if (wk && (m.wk || 101) < num(wk.fx.rate)) return 0;
+  if (cost) cost = ext('ki', cost, m); // (喜歡的角色 ×0.8)
   if (cost) {
     const kc = best(world, m, F.kicon);
     if (kc) cost *= num(kc.fx.kis);
@@ -110,12 +121,13 @@ export function cardFor(world, m, cd) {
   for (const f of cardHooks) f(world, m, c);
   const mp = best(world, m, F.miracle);
   if (mp && (m.mz || 101) < num(mp.fx.rate)) { c.a = 7; c.g = 7; }
+  ext('cardMid', c, m); // (さかさま 422: src/cards_story.js)
   const md = best(world, m, F.muda);
   if (md) {
     c.a = Math.max(0, Math.min(7, c.a + num(md.fx.ah)));
     c.g = Math.max(0, Math.min(7, c.g + num(md.fx.gh)));
   }
-  return c;
+  return ext('card', c, m); // (捨身: src/cards_b.js)
 }
 
 // createcardval: a card a member used comes back as 1/1 or Z/Z (both stars) with 一か八か
@@ -130,7 +142,7 @@ const kizunaMates = (b, m) => mates(b, m).filter((x) => F.kizuna.some((id) => ha
 const dying = (x) => (x.hp * 100) / x.maxhp < HINSHI;
 
 // set_damage_add(add = 0): damage dealt — 鋼鉄の拳, Z戦士の絆, 激怒, 必殺の一撃 (special moves)
-export function dealt(b, m, skill, d) {
+export function dealt(b, m, skill, d, ctx = {}) {
   const w = b.world;
   let x = d;
   const kt = best(w, m, F.koutetsu);
@@ -141,22 +153,25 @@ export function dealt(b, m, skill, d) {
   if (has(w, m, 22)) x *= 1 + 0.35 * mates(b, m).filter(dying).length;
   const hs = best(w, m, F.hissatsu);
   if (hs && skill) x *= num(hs.fx.a);
+  x = ext('dealt', x, b, m, skill, ctx); // (連擊, 輕視 …: src/cards_*.js)
   return Math.trunc(x);
 }
 // set_damage_add(add = 1): damage taken — Z戦士の絆, 激怒
-export function taken(b, m, d) {
+export function taken(b, m, d, ctx = {}) {
   const w = b.world;
   let x = d;
   const kz = best(w, m, F.kizuna);
   const n = kz ? kizunaMates(b, m) : 0;
   if (n) x *= 1 - (1 - num(kz.fx.g)) * n;
   if (has(w, m, 22) && mates(b, m).some(dying)) x *= 0.8;
+  x = ext('taken', x, b, m, ctx); // (掩護, 輕視 …)
   return Math.trunc(x);
 }
 // get_attack_hit_skill: かなしばり may stop the enemy that was hit (STOP_TURN)
-export function onHit(b, m, foe) {
+export function onHit(b, m, foe, card) {
   const id = F.kanashi.find((x) => has(b.world, m, x));
   if (id && rand(100) + 1 < num(sk(b.world, id).fx.rate)) foe.stop = (foe.stop || 0) + 1;
+  ext('hit', null, b, m, foe, card); // (急中生智, 交換, 吸收: src/cards_*.js)
 }
 // a stopped enemy loses its action (the counter goes down)
 export function foeStopped(f) {
@@ -181,6 +196,7 @@ export function recover(b) {
     if (m.ko && m.hp >= m.maxhp) revive(m);
     if (!m.ko) m.ki = Math.min(m.maxki, m.ki + Math.ceil((m.maxki * 2.5) / 100));
   }
+  ext('recover', null, b); // (練氣: src/cards_b.js)
 }
 
 // ---------- after a won battle (101_Scene_Db_Battle.rb chk_all_enemy_dead) ----------

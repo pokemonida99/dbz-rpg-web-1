@@ -96,7 +96,7 @@ function z3Schools(s, foe) {
 }
 const pick = (a) => a[rand(a.length)];
 export function newCard() { return { a: rand(8), g: rand(8), s: pick(z2Schools(false) || (late() ? [0, 1, 3, 4] : [0, 1, 2, 4])) }; }
-const enemyCard = () => ({ a: rand(8), g: rand(8), s: pick(z2Schools(true) || (late() ? [0, 1, 3, 4, 5] : [0, 1, 2, 4, 5])) });
+export const enemyCard = () => ({ a: rand(8), g: rand(8), s: pick(z2Schools(true) || (late() ? [0, 1, 3, 4, 5] : [0, 1, 2, 4, 5])) });
 export function newHand() { return Array.from({ length: HAND }, newCard); }
 // 「氣」 (school 16, the 時之間's 戦闘練習): it becomes the school of whoever plays it (all.rb 48888)
 export const KI_CARD = 16;
@@ -114,7 +114,7 @@ function playerDamage(b, m, skill, card, foe, foeCard, P) {
   let d = Math.floor(((m.atk + P) * 8 * (card.a + 7 + rand(2) + 1)) / Math.floor((foe.def * (foeCard.g + 7)) / 3));
   if (m.school === 8) d = Math.floor(d * 1.3); // class 9 (超サイヤ人)
   if (card.s === m.school || items.powerUp(m)) d = Math.floor(d * 1.3);
-  d = growth.dealt(b, m, skill, d); // passive skills (set_damage_add)
+  d = growth.dealt(b, m, skill, d, { card, foe, foeCard }); // passive skills (set_damage_add)
   if (battleHooks.dealt) d = battleHooks.dealt(b, m, skill, d);
   if (skill && skill.noDamage) d = 0;
   if (b.foesEvade) return -1; // switch 18 敵必ず回避 (an event battle: src/z3c.js, Mecha Frieza)
@@ -128,10 +128,10 @@ function enemyDamage(b, foe, skill, card, m, guardCard) {
   if (card.s === foe.school) d = Math.floor(d * 1.2);
   if (m.school === 8) d = Math.floor(d * 0.85); // the defender is of class 9 (超サイヤ人)
   if (items.guardUp(m)) d = Math.floor(d * 0.7);
-  d = growth.taken(b, m, d); // passive skills (set_damage_add)
+  d = growth.taken(b, m, d, { card: guardCard, foe, foeCard: card }); // passive skills (set_damage_add)
   if (battleHooks.taken) d = battleHooks.taken(b, m, d);
   if (items.evades(m)) return -1;
-  const avoid = Math.trunc((m.agi * 1.2 + guardCard.g) / 3 - (foe.agi * 1.1 + card.a) / 3);
+  const avoid = growth.ext('avoid', Math.trunc((m.agi * 1.2 + guardCard.g) / 3 - (foe.agi * 1.1 + card.a) / 3), b, m, foe); // (殘像拳: src/cards_b.js)
   return avoid > 0 && rand(100) + 1 < avoid ? -1 : b.foeRate ? Math.trunc(d * b.foeRate) : d; // variable 82 敵攻撃ダメージn倍 (src/z3e.js)
 }
 
@@ -684,7 +684,7 @@ export class Battle {
   onCard(k) {
     const m = this.party[this.cur];
     const cd = this.hand[k];
-    if (cd.s === KI_CARD) cd.s = m.school; // 「氣」
+    if (cd.s === KI_CARD || (cd.s === 0 && growth.ext('pick', false, this, m, cd))) cd.s = m.school; // 「氣」; 「必」 for the favourite character (src/cards_b.js)
     this.pending = { card: k, skill: null };
     audio.se(SE_OK);
     const alive = this.foes.filter((f) => f.hp > 0);
@@ -742,7 +742,8 @@ export class Battle {
     const r = await fn();
     this.plans = this.party.map((m) => (this.able(m) && by.get(m)) || null);
     this.history = hist.map((m) => this.party.indexOf(m)).filter((i) => i >= 0 && this.plans[i]);
-    this.cur = cur ? this.party.indexOf(cur) : null;
+    const k = cur ? this.party.indexOf(cur) : -1; // (筋斗雲 may have swapped that member out: src/cards_story.js)
+    this.cur = k >= 0 ? k : null;
     return r;
   }
 
@@ -757,6 +758,7 @@ export class Battle {
       if (k == null) k = free.find((x) => this.hand[x].s === KI_CARD);
       if (k != null && this.hand[k].s === KI_CARD) this.hand[k].s = m.school; // 「氣」
       if (k == null) k = free.find((x) => this.hand[x].s === 0);
+      if (k != null && this.hand[k].s === 0 && growth.ext('pick', false, this, m, this.hand[k])) this.hand[k].s = m.school; // (喜歡的角色)
       let skill = null;
       if (k != null) skill = autoSkill(this.world, this.game.state, m); // 作戰 (src/partymenu.js)
       else k = free[rand(free.length)];
@@ -781,8 +783,10 @@ export class Battle {
     order.sort((a, b) => b.key - a.key || a.r - b.r);
     order.splice(0, order.length, ...items.firstMovers(this, order));
     await sleep(300);
+    this.chain = 0; // our actions in a row ($cha_biattack_count: 連擊, src/cards_b.js)
     for (const o of order) {
       if (this.over()) break;
+      this.chain = o.kind === 'p' ? this.chain + 1 : 0;
       if (o.kind === 'p') await this.playerAct(o.i);
       else if (!items.foeStopped(o.f)) for (let n = 0; n < this.attacks(o.f) && o.f.hp > 0 && !this.over(); n++) { if (n > 0) o.f.card = enemyCard(); await this.enemyAct(o.f); }
     }
@@ -881,7 +885,7 @@ export class Battle {
       if (battleHooks.power) P = battleHooks.power(this, m, skill, P);
       const dmg = playerDamage(this, m, skill && { noDamage: skill.noDamage }, cd, t, t.card, P);
       await this.play(m, t, true, skill ? skill.id : null, dmg, t);
-      if (dmg >= 0) growth.onHit(this, m, t); // かなしばり
+      if (dmg >= 0) growth.onHit(this, m, t, cd); // かなしばり, the skill cards' hit effects
       if (dmg >= 0 && battleHooks.hit) battleHooks.hit(this, m, t, dmg);
       if (dmg >= 0 && skill && skill.tail && t.hp > 0 && t.apeOf) { // 尻尾切る: the Great Ape is himself again (all.rb 68895)
         this.transform(t, t.apeOf);
@@ -919,13 +923,20 @@ export class Battle {
     }
     // a move on the whole party (卡里克's 黑洞波) hits everyone standing, one film each; 自爆 goes at Yamcha
     const hit = skill && skill.all ? targets : [skill && skill.selfDestruct ? yamcha : targets[rand(targets.length)]];
+    if (hit.length === 1 && !(skill && skill.selfDestruct)) { // 掩護 (src/cards_b.js): someone else takes a single attack
+      const one = hit[0], c = growth.ext('cover', one, this, f);
+      if (c && c !== one) { this.cover = c; this.say(`${c.name} 掩護了 ${one.name}！`); audio.se('Z1 逃げる', 80); await sleep(900); hit[0] = c; }
+    }
     for (const m of hit) {
       if (m.ko) continue;
       const guard = this.hand[this.plans[this.party.indexOf(m)].card];
       this.duel = { m, mc: guard, f, fc: cd };
       this.say(`${f.name} 的${skill ? skill.name : '攻擊'}！`);
-      await this.play(m, f, false, skill ? skill.id : null, enemyDamage(this, f, skill && { power: skill.power }, cd, m, guard), m);
+      const dmg = enemyDamage(this, f, skill && { power: skill.power }, cd, m, guard);
+      await this.play(m, f, false, skill ? skill.id : null, dmg, m);
+      if (dmg >= 0) growth.ext('hurt', null, this, m, f); // (不屈的鬥志: src/cards_b.js)
     }
+    this.cover = null;
     if (skill && skill.selfDestruct) { // the Saibaman is gone too (all.rb 68975)
       f.hp = 0;
       this.say(`${f.name} 自爆了！`);

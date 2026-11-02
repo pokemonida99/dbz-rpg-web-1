@@ -67,12 +67,18 @@ export function syncSuperSaiyan(world, s, want) {
   for (const [no, on] of Object.entries(want)) superSaiyan(world, s, Number(no), !!on);
 }
 
-// off_super_saiyazin_all, after a battle: back to normal only for those whose 作戰 says so ($cha_tactics[3][id] == 1);
-// by default a Super Saiyan stays one
+// 作戰「變身狀態」of an actor ($cha_tactics[3][id]): 0 保持, 1 不保持 — by default 1 (set_cha_tactics_nil_to_zero all.rb 14330)
+export const ssOff = (s, id) => { const t = s.tactics && s.tactics[id]; return !t || t.ssOff == null || t.ssOff === 1; };
+// a form's own way back (5: src/z4f.js — 超2 悟飯 is the same actor), instead of superSaiyan(…, false)
+export const offHooks = {}; // no → (world, s) => …
+
+// off_super_saiyazin_all (all.rb 12766), after a battle: back to normal those whose 作戰 says 不保持, each checked on the
+// actor the original looks at (the base form; 18 for 5 — the 作戰 screen keeps both forms the same); 5 before 2
 export function afterBattle(world, s) {
-  for (const no of Object.keys(s.ss || {})) {
-    const [, sup] = FORMS[no];
-    if (s.ss[no] && s.tactics && s.tactics[sup] && s.tactics[sup].ssOff) superSaiyan(world, s, Number(no), false);
+  for (const no of [1, 5, 2, 3, 4, 6, 7]) {
+    if (!(s.ss && s.ss[no]) || !ssOff(s, FORMS[no][0])) continue;
+    if (offHooks[no]) offHooks[no](world, s);
+    else superSaiyan(world, s, no, false);
   }
 }
 

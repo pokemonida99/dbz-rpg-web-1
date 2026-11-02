@@ -15,6 +15,7 @@ import { syncSuperSaiyan, FORMS } from './supersaiyan.js?v=20261102-1750';
 import { eventCard, fieldCards } from './items.js?v=20261102-1750';
 import { memberChange } from './partymenu.js?v=20261102-1750';
 import { holds } from './field.js?v=20261102-1750';
+import { apeOffAll } from './cards_a.js?v=20261102-1750'; // CE160 大猿全解除
 
 const TR = (game) => game.world.timeroom;
 const TX = (game) => TR(game).text;
@@ -121,6 +122,7 @@ async function enter(game) {
   s.var[43] = 999;
   s.var[23] = s.var[17] || 0;
   eventCard(s, 67, -1); // (the original's guard: a 通知！ card picked up for nothing)
+  apeOffAll(s); // CE160
   const era = s.var[40] || 0;
   s.sw[471] = era === 0; s.sw[472] = era === 1; s.sw[473] = era >= 2; // the walking sprites of the era
   s.sw[466] = true;
@@ -142,6 +144,7 @@ async function leave(game) {
   for (const m of s.party) m.ko = false; // $chadead all false
   healAll(game);
   s.var[42] = s.party[0].id;
+  apeOffAll(s); // CE160
   s.sw[78] = false;
   delete s.flags.tr;
   s.map = k.back.map;
@@ -178,7 +181,8 @@ async function partyChange(game) {
   s.sw[476] = true;
   await say1(t.partyAsk);
   if (await choose([t.yes, t.no]) === 0) {
-    syncSuperSaiyan(game.world, s, Object.fromEntries(Object.keys(FORMS).map((no) => [no, false]))); // CE160, CE159
+    apeOffAll(s); // CE160
+    syncSuperSaiyan(game.world, s, Object.fromEntries(Object.keys(FORMS).map((no) => [no, false]))); // CE159
     const list = candidates(s).filter((id) => game.world.actors[id]);
     for (const id of list) heal(member(game, id)); // (variable 43 = 999: everyone full)
     const ids = await memberChange(game, list.map((id) => member(game, id)));

@@ -15,6 +15,7 @@
 // (the entry has moved the battle on by itself, e.g. started the turn).
 import { img, audio, rand } from './core.js?v=20261102-1750';
 import * as growth from './growth.js?v=20261102-1750'; // 技能 page, ZP, KI cost with passive skills
+import { FORMS } from './supersaiyan.js?v=20261102-1750'; // the two forms whose 作戰 is one
 
 const FACES = 'Graphics/Pictures/Z1_顔味方.PNG'; // 64×64; row = actor id - 3; columns: normal, hurt, KO
 const CARDS = 'Graphics/Pictures/カード関係.PNG';
@@ -22,12 +23,13 @@ const DIGITS = 'Graphics/Pictures/数字英語.PNG'; // 16×16: row 0 black digi
 const SE_OK = 'Z3 決定', SE_MOVE = 'Z3 カーソル移動', SE_ERR = 'Z3 エラー', SE_RUN = 'Z1 逃げる'; // 139_Public.rb $BGM_*
 
 // ---------- saved per game: tactics and the counters the status screen shows ----------
-// state.tactics[actor] = $cha_tactics[0..8][actor]; state.skillLv[skill] = $cha_skill_level (use count, by skill id,
+// state.tactics[actor] = $cha_tactics[0..8][actor] (hensin = [2], ssOff = [3]); state.skillLv[skill] = $cha_skill_level (use count, by skill id,
 // what S-combos check); state.atkLv[actor] = $cha_normal_attack_level; state.defeats[actor] = $cha_defeat_num
-const TACTICS_DEFAULT = { target: 0, tec: 0, nonki: 0, kiheri: 0, kiPct: 1, tecId: 0 };
+const TACTICS_DEFAULT = { target: 0, tec: 0, nonki: 0, kiheri: 0, kiPct: 1, tecId: 0, hensin: 0, ssOff: 1 };
 export function tactics(state, m) {
   state.tactics = state.tactics || {};
-  // set_cha_tactics_nil_to_zero: all 0 except "KI below N%" = 1; the chosen move must be one the character knows
+  // set_cha_tactics_nil_to_zero (all.rb 14319): all 0 except "KI below N%" and 變身狀態 (不保持) = 1; the chosen move
+  // must be one the character knows
   const t = (state.tactics[m.id] = state.tactics[m.id] || {});
   for (const [k, v] of Object.entries(TACTICS_DEFAULT)) if (t[k] == null) t[k] = v;
   if (!m.skills.includes(t.tecId)) t.tecId = m.skills[0] || 0;
@@ -45,6 +47,7 @@ export function tally(state, m, skill, defeated) {
 // Skill element flags (Skills.element_set in the original database): 27 = 小技, 28 = 大技 (a few are both).
 const SMALL = new Set([1, 2, 5, 31, 33, 34, 35, 46, 47, 61, 62, 63, 71, 72, 81, 82, 83, 91, 92, 93]);
 const BIG = new Set([29, 36, 47, 63, 64, 73, 83, 84, 92, 93]);
+const TRANSFORM = new Set([29, 51, 59, 133, 158, 185, 245, 251, 262, 270, 278]); // 26 = 變身技 (超サイヤ人／大猿変身)
 
 // KI a move really costs (get_mp_cost, 008_Share_Sub_skill.rb:4601); other systems replace it,
 // e.g. the 必殺技 item card makes the next move free (src/items.js sets hooks.kiNeed)
@@ -63,6 +66,7 @@ export function autoSkill(world, state, m) {
     if (t.tec === 4) min = Math.min(min, cost(world.skills[t.tecId]));
     let set = t.tec;
     if (m.ki < min || loop > 50) set = t.nonki === 0 ? 1 : 2; // short of KI: 不使用KI or 小技能
+    if (t.hensin !== 0 && TRANSFORM.has(pick.id)) continue; // 變身技能：不使用 (all.rb 49485)
     if (t.kiheri === 1 && t.kiPct >= Math.floor((m.ki * 100) / m.maxki)) set = 1;
     let s = pick;
     if (set === 1 && pick.ki !== 0) continue; // the move's own cost (Skills.mp_cost), like the original
@@ -483,15 +487,35 @@ function freeSkillScreen(game, m) {
 growth.setFreeSkillScreen(freeSkillScreen);
 
 // ---------- 作戰 (Scene_Db_Tactics_Menu) ----------
-// option texts from output_status (the Chinese edition), in Traditional characters
+// option texts from output_status (the Chinese edition), in Traditional characters.
+// 變身技能／變身狀態 only for those who can transform (all.rb 141820 / 141880); the original's 獲得經驗值 ($cha_tactics[4])
+// is commented out of the screen (=begin … =end, 141933) and nothing reads it, so it isn't here either.
+const ALWAYS_TRANSFORM = [14, 18, 19, 32, 17, 20, 25, 26, 27, 28, 29, 30]; // 超悟空…超未來悟飯, 托馬・賽利帕・托特帕・潘布金
+function canTransform(m) {
+  const knows = (...ids) => ids.some((id) => m.skills.includes(id));
+  if (m.id === 3) return knows(29);
+  if (m.id === 5) return knows(59, 51) || !!m.cdaApe; // (or now the Great Ape: src/cards_a.js)
+  if (m.id === 12) return knows(133);
+  if (m.id === 16) return knows(158);
+  return ALWAYS_TRANSFORM.includes(m.id);
+}
+// chgcha_tactics (141363): a change is copied to the other form (悟空 3 ⇄ 14 …), all but the specified move
+function syncForms(s, id, t) {
+  const f = Object.values(FORMS).find(([a, b]) => a !== b && (a === id || b === id));
+  if (!f) return;
+  const other = f[0] === id ? f[1] : f[0];
+  const u = (s.tactics[other] = s.tactics[other] || {});
+  for (const [k, v] of Object.entries(t)) if (k !== 'tecId') u[k] = v;
+}
 export function openTactics({ game, battle }) {
   const world = game.world, s = game.state;
   return screen('作戰', game, battle, (m, render) => {
     const t = tactics(s, m);
     const box = el('div', 'win pm-tac');
+    const changed = () => { syncForms(s, m.id, t); render(); };
     const opt = (key, value, label) => {
       const b = el('button', 'pm-opt' + (t[key] === value ? ' on' : ''), label);
-      b.onclick = () => { audio.se(SE_MOVE); t[key] = value; render(); };
+      b.onclick = () => { audio.se(SE_MOVE); t[key] = value; changed(); };
       return b;
     };
     // ◀ value ▶ stepper (the specified move / the KI percentage), live only while its option is chosen;
@@ -500,7 +524,7 @@ export function openTactics({ game, battle }) {
       const w = el('span', 'pm-step' + (live ? '' : ' off'));
       const btn = (label, d) => {
         const b = el('button', '', label);
-        b.onclick = () => { if (live) { audio.se(SE_MOVE); step(d); render(); } };
+        b.onclick = () => { if (live) { audio.se(SE_MOVE); step(d); changed(); } };
         return b;
       };
       if (big) w.append(btn('«', -5));
@@ -522,6 +546,10 @@ export function openTactics({ game, battle }) {
     group('・指定的招式／KI不足時', [opt('nonki', 0, 'KI不使用'), opt('nonki', 1, '小技能')]);
     group('・KI的消費', [opt('kiheri', 0, '不介意')], [opt('kiheri', 1, `${t.kiPct}％以下不使用KI`)],
       [stepper(t.kiheri === 1, `${t.kiPct}％`, (d) => { t.kiPct = ((((t.kiPct - 1 + d) % 99) + 99) % 99) + 1; }, true)]);
+    if (canTransform(m)) {
+      group('・變身技能', [opt('hensin', 0, '使用'), opt('hensin', 1, '不使用')]);
+      group('・變身狀態', [opt('ssOff', 0, '保持'), opt('ssOff', 1, '不保持')]);
+    }
     if (!m.skills.length) box.append(el('div', 'pm-hint', `${m.name}沒有必殺技，自動時只會普通攻擊。`));
     return [box];
   });

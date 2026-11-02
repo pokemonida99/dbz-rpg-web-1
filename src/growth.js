@@ -102,8 +102,12 @@ export function kiCost(world, m, skill) {
 }
 
 // get_battle_skill: the card a member plays — ミラクル全開パワー makes it Z/Z, ムダのない動き adds stars
+// changes to a played card before the passive skills below (get_battle_skill, all.rb 6794: きまぐれ in src/cards_square.js):
+// each f(world, m, c) changes c
+export const cardHooks = [];
 export function cardFor(world, m, cd) {
   const c = { ...cd };
+  for (const f of cardHooks) f(world, m, c);
   const mp = best(world, m, F.miracle);
   if (mp && (m.mz || 101) < num(mp.fx.rate)) { c.a = 7; c.g = 7; }
   const md = best(world, m, F.muda);

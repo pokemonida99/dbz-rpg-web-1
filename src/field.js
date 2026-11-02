@@ -3,6 +3,9 @@ import { view, img, input, audio, rand } from './core.js?v=20261102-1554';
 import { renderMap, drawTile, tileSheetPaths } from './tiles.js?v=20261102-1554';
 
 const SPEED = 150; // art pixels per second (~4.7 tiles/s)
+// fieldHooks.step(state, step) → the distance actually flown this frame (src/cards_a.js: 飛機 doubles it); encounters and
+// the other per-tile counts still go by the plain step, as the original counts card moves, not squares
+export const fieldHooks = {};
 const FLY = 'Graphics/Characters/chara_fly1.png'; // 48×48 frames, Goku = character 0
 const BOSS = 'Graphics/Characters/enemy1.png'; // 32×32 frames, Raditz = character 0
 export const fieldImages = [FLY, BOSS];
@@ -174,7 +177,9 @@ export class Field {
     const { dx, dy } = input;
     const mag = Math.min(1, Math.hypot(dx, dy));
     if (mag > 0.05) {
-      let step = SPEED * dt * (0.35 + 0.65 * mag);
+      const plain = SPEED * dt * (0.35 + 0.65 * mag);
+      const want = fieldHooks.step ? fieldHooks.step(s, plain) : plain;
+      let step = want;
       if (this.open) {
         step = this.roadMove(s, dx, dy, step);
         if (this.dist) this.far = Math.max(this.far, this.dist[Math.floor(s.x / 32) + Math.floor(s.y / 32) * this.map.w]);
@@ -188,7 +193,7 @@ export class Field {
       }
       this.anim += dt * 6;
       this.moving = true;
-      s.travel += step;
+      s.travel += (step * plain) / want;
       if (s.travel >= 32) {
         s.travel -= 32;
         this.game.onStep();

@@ -101,7 +101,7 @@ const shown = (b, c, m) => (!c.ss || b.party.some((p) => p.id === c.ss[0]) === !
 export const combosOf = (actorId, state) => DATA.combos.filter((c) => c.cha.includes(actorId) && (!state || open(state, c)));
 // 局外人 (アウトサイダー) and 旁若無人: a member who has learned one never joins a combo (all.rb 140440-140458)
 const LONERS = [430, 644, 645, 646, 647, 648, 649, 650, 651, 476, 477, 478, 479, 480, 481, 482, 483, 484];
-const loner = (b, m) => LONERS.some((id) => growth.has(b.world, m, id));
+const loner = (b, m) => LONERS.some((id) => growth.has(b.world, m, id)) || growth.ext('noCombo', false, b, m); // + 剛腕 (src/skills_d.js, all.rb 140449)
 
 // ---------- the check (chk_scombo_flag, 102:87887) ----------
 function fits(b, combo, newOnly) {

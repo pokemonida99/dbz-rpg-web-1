@@ -12,16 +12,16 @@
 // a tail-cutting move turns him back. After the battle he stays an ape if his 作戰「變身狀態」is 保持 (off_oozaru_all
 // all.rb 13089, $cha_tactics[3][5]; by default 不保持: back), and the story turns him back after the Z1 bosses and Willow
 // (Map007 #ゴハン大猿OFF: the tacApeOff node, tools/build_data.py), as does CE160 in the 時之間 (apeOffAll).
-import { audio, say, choose, sleep, toast, rand } from './core.js?v=20261102-1750';
-import { fieldCards, cardState } from './items.js?v=20261102-1750';
-import * as battle from './battle.js?v=20261102-1750';
-import * as combo from './combo.js?v=20261102-1750';
-import * as field from './field.js?v=20261102-1750';
-import { has, ensure, useSkillCard, revive } from './growth.js?v=20261102-1750';
-import { pickMember, tally } from './partymenu.js?v=20261102-1750';
-import { registerZ3, party } from './z3.js?v=20261102-1750';
-import { addNodes } from './cutscene.js?v=20261102-1750';
-import { ssOff } from './supersaiyan.js?v=20261102-1750';
+import { audio, say, choose, sleep, toast, rand } from './core.js?v=20261102-1935';
+import { fieldCards, cardState } from './items.js?v=20261102-1935';
+import * as battle from './battle.js?v=20261102-1935';
+import * as combo from './combo.js?v=20261102-1935';
+import * as field from './field.js?v=20261102-1935';
+import { has, ensure, useSkillCard, revive } from './growth.js?v=20261102-1935';
+import { pickMember, tally } from './partymenu.js?v=20261102-1935';
+import { registerZ3, party } from './z3.js?v=20261102-1935';
+import { addNodes } from './cutscene.js?v=20261102-1935';
+import { ssOff } from './supersaiyan.js?v=20261102-1935';
 
 const SE_ERR = 'Z3 エラー';
 const APE = { sprite: 'Graphics/Pictures/Z1_戦闘_ゴハン(大猿)96×96.png', special: 'Graphics/Pictures/Z1_戦闘_必殺技_ゴハン(大猿)96×96.png', size: 192 };

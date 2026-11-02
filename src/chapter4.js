@@ -3,9 +3,9 @@
 //   (src/gregorytraining.js) → King Kai, the west pair (map 12, the Ginger area) → 吉加 → everyone gathers at
 //   Garlic's castle → end of chapter; the Garlic area (map 13) is the next chapter (game.startChapter5).
 // state.flags.ch4 tracks the step: 'gregory' → 'west' → 'done'.
-import { input } from './core.js?v=20261102-1750';
-import { scenes, setParty, moveTo, enterMap, card } from './chapter2.js?v=20261102-1750';
-import { gregoryTraining } from './gregorytraining.js?v=20261102-1750';
+import { input } from './core.js?v=20261102-1935';
+import { scenes, setParty, moveTo, enterMap, card } from './chapter2.js?v=20261102-1935';
+import { gregoryTraining } from './gregorytraining.js?v=20261102-1935';
 
 const MAPS = ['11', '12'];
 

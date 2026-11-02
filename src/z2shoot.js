@@ -11,8 +11,8 @@
 // its 640×480 screen, shown at the top of the portrait screen; the damage window sits under it and the rest of the
 // screen is a drag pad. Dragging moves the player like the original's arrow keys (one per axis, 2500/1024 px a
 // frame); with no left / right "key" held he drifts right at half speed, as in the original. Arrow keys / WASD too.
-import { img, audio, input, rand } from './core.js?v=20261102-1750';
-import { el, overlay } from './fieldmenu.js?v=20261102-1750';
+import { img, audio, input, rand } from './core.js?v=20261102-1935';
+import { el, overlay } from './fieldmenu.js?v=20261102-1935';
 
 const SHOOT = 'Graphics/Pictures/shoot1.png'; // (0,0) the player, (32,0) Dodoria
 const GROUND = 'Graphics/Pictures/Z2_シューティング背景.png';

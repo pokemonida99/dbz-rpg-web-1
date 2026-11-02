@@ -114,7 +114,10 @@ FIRST.update({10: [77, 70, 0], 24: [687, 14, 39], 12: [9, 3, 31], 27: [7, 82, 49
               30: [7, 82, 49], 17: [339, 90, 102], 21: [424, 33, 34], 22: [424, 33, 34], 23: [426, 425, 151],
               25: [358, 91, 103]})
 EXTRA = [280, 22, 618, 670, 538,  # 必殺の一撃, 激怒, 一か八か (skill cards), 最終決戦改 (ZG 6131), 征服 (card 167 チルド)
-         38, 678]  # 真の力 (超2 悟飯, on_off_super_saiyazin 5), 地球育ちのサイヤ人 1-9 (悟空, switch 1312)
+         38, 678,  # 真の力 (超2 悟飯, on_off_super_saiyazin 5), 地球育ちのサイヤ人 1-9 (悟空, switch 1312)
+         # 大工程 skc (src/skills_d.js): the skills of the 時之間 bosses' skill cards and of 引き寄せ / 追い払い, with their levels
+         617, 392, 503, 507, 64, 389, 616, 221, 203, 300, 212, 381, 74, 250, 261, 290, 378, 369, 367, 412, 430, 51, 518, 529,
+         697]
 FX = {  # effect columns (get_cha_skill_manual shows them under ＊＊ 效果詳細 ＊＊)
     'cha_skill_a_kouka': 'a', 'cha_skill_g_kouka': 'g', 'cha_skill_hp_kaihuku': 'hp', 'cha_skill_hp_kaihuku_mozi': 'hpm',
     'cha_skill_ki_kaihuku': 'ki', 'cha_skill_ki_kaihuku_mozi': 'kim', 'cha_skill_hatudouritu': 'rate',

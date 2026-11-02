@@ -12,6 +12,7 @@
 import { img, audio, toast, rand } from './core.js?v=20261102-2129';
 import { newCard } from './battle.js?v=20261102-2129';
 import { menuEntries, hooks } from './partymenu.js?v=20261102-2129';
+import { ext } from './growth.js?v=20261102-2129'; // (先手必勝, カードドロップ: src/skills_d.js)
 
 const ICONS = 'ui/item_cards.png'; // 64×64 icons, 10 a row, the Z1 column of the original 顔カード.PNG
 const CARDS = 'Graphics/Pictures/カード関係.PNG';
@@ -94,10 +95,10 @@ export const evades = (m) => !!(fx && mf(m).evade); // every attack misses this 
 export const kiNeed = (m, ki) => (fx && mf(m).kiZero ? 0 : ki); // 必殺技 card: one move without KI (008:4614)
 hooks.kiNeed = (m, ki) => kiNeed(m, ki); // 自動 (partymenu.js autoSkill) sees the 必殺技 card too
 export function payKi(m, ki) { m.ki -= kiNeed(m, ki); if (fx) mf(m).kiZero = false; }
-// 少年: acts first this turn (101:203)
+// 少年: acts first this turn (101:203); 先手必勝 too (src/skills_d.js) — in party order, like the original's unshifts (46663)
 export function firstMovers(b, order) {
   if (!fx) return order;
-  const first = order.filter((o) => o.kind === 'p' && mf(b.party[o.i]).sente);
+  const first = order.filter((o) => o.kind === 'p' && (mf(b.party[o.i]).sente || ext('sente', false, b, b.party[o.i]))).sort((p, q) => p.i - q.i);
   return [...first, ...order.filter((o) => !first.includes(o))];
 }
 // 爺爺: the enemy loses its next action (102:1499)
@@ -146,7 +147,7 @@ export async function afterBattle(b) {
   const got = [];
   if (b.trReward) { // a 時之間 boss (switch 477): its own cards, each at rate % (variables 241-245 / 246-250)
     for (const [rate, id] of b.trReward.drops || []) if (id && w.items[id] && rate >= rand(100)) { gainCard(w, s, id); got.push(w.items[id].name); }
-  } else if (!b.noDrops) for (const f of b.foes) for (const [id, den] of w.drops[f.id] || []) if (rand(den) === 0) { gainCard(w, s, id); got.push(w.items[id].name); } // (switch 122: no cards)
+  } else if (!b.noDrops) for (const f of b.foes) for (const [id, den] of w.drops[f.id] || []) if (rand(ext('drop', den, b, f, id)) === 0) { gainCard(w, s, id); got.push(w.items[id].name); } // (switch 122: no cards)
   if (got.length) { audio.se('Z1 アイテム取得', 80); await show('獲得以下卡片！', got.join('　')); }
 }
 

@@ -426,6 +426,7 @@ export function openCards(game, battle = null) {
       return true;
     };
     const render = () => {
+      const top = (el.querySelector('.list') || {}).scrollTop || 0; // every tap rebuilds the screen: keep the list where it was
       el.innerHTML = '';
       const head = h('div', 'cw head', battle ? '卡牌' : '卡片');
       head.appendChild(h('small', null, `信用點 ${s.zeni} CAP`));
@@ -447,6 +448,8 @@ export function openCards(game, battle = null) {
           list.appendChild(b);
         }
         el.appendChild(list);
+        list.scrollTop = top;
+        requestAnimationFrame(() => { const c = list.querySelector('.sel'); if (c) c.scrollIntoView({ block: 'nearest' }); }); // the detail box below may have squeezed the list
       }
       const box = h('div', 'cw');
       if (sel != null) box.appendChild(detail(world, s, world.items[sel]));
@@ -576,7 +579,10 @@ export function openShop(game) {
       const msg = h('div', 'bought', '購入！');
       box.appendChild(msg); setTimeout(() => msg.remove(), 700);
     };
+    let keepTop = true; // a new tab starts at the top
     const render = () => {
+      const top = keepTop ? (el.querySelector('.list') || {}).scrollTop || 0 : 0; // every tap rebuilds the screen: keep the list where it was
+      keepTop = true;
       el.innerHTML = '';
       const head = h('div', 'cw head', '卡片商店');
       const capEl = h('small', null, `信用點 ${s.zeni} CAP`);
@@ -585,7 +591,7 @@ export function openShop(game) {
       el.appendChild(head);
       const tabs = h('div', 'tabs');
       for (const [k, label] of [['buy', '買'], ['sell', '賣']]) {
-        const b = button(label, () => { tab = k; sel = null; render(); }, k === tab ? 'on' : '');
+        const b = button(label, () => { tab = k; sel = null; keepTop = false; render(); }, k === tab ? 'on' : '');
         tabs.appendChild(b);
       }
       el.appendChild(tabs);
@@ -612,6 +618,8 @@ export function openShop(game) {
         list.appendChild(b);
       }
       el.appendChild(list);
+      list.scrollTop = top;
+      requestAnimationFrame(() => { const c = list.querySelector('.sel'); if (c) c.scrollIntoView({ block: 'nearest' }); }); // the detail box below may have squeezed the list
       const box = h('div', 'cw');
       box.appendChild(sel != null ? detail(world, s, world.items[sel])
         : h('div', 'detail', tab === 'buy' ? '這裡是卡片商店，\n可以用信用點來交換卡片喲。' : '賣出的價錢是買價的一半。'));

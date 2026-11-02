@@ -386,5 +386,7 @@ for eid, e in world['enemies'].items():
         e['bigHurt'] = True  # with switch 137: 「受到嚴重的傷害！！」 instead of 「打倒了」 (50670)
 import build_skc  # noqa: E402  (大工程 skc: the enemies' second drops for カードドロップ, src/skills_d.js)
 build_skc.add(world, globals())
+import build_bgext  # noqa: E402  (battle backgrounds: the generated ground under each original strip, for the tall layout)
+build_bgext.add(world, globals())
 json.dump(world, open(os.path.join(root, 'data', 'world.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 print('world.json written')

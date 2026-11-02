@@ -46,8 +46,8 @@
 63 → 第 8 列；64 地面 1556 → 第 10 列。原版沒列到的圖塊沿用上一場的背景，本版用該區域的預設。
 圖是建資料時從 `Z1_戦闘_背景.PNG` 切出來（同第 1 階段戰鬥練習的做法），存成 `assets/bg/tr_z1_battle_<列>.png`。
 
-區域裡的一般遇敵沒有現成的地圖掛鉤，所以 `src/tr_z1.js` 在載入後包一層 `game.backdrop`（地圖 60～64 用自己的背景，其他地圖照舊）。
-主 session 若想改成共用掛鉤（例如 `src/timeroom.js` 的 `registerBackdrop`），把 `backdrop(game)` 搬過去即可。
+區域裡的一般遇敵用共用掛鉤 `registerBackdrop('60'～'64', …)`（`src/timeroom.js`，main 的 commit 6c811eb，已挑進本分支）；
+頭目戰直接把背景傳給 `trBattle`。
 
 ## 跳關（開發用）
 

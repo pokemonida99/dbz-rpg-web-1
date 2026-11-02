@@ -7,7 +7,7 @@
 //   trz1boss   the boss squares: 9104 拉蒂茲, 9113 卡里克 (its win runs 9114: 卡里克(巨大化) and the three), 9123 界王
 //              (map 62's training squares), 9133 那巴, 9134 貝吉塔, 9143 生化戰士, 9144 威洛 (src/timeroom.js trBattle)
 // The inns, card squares and training squares are the usual field spots (src/main.js interact).
-import { registerArea, registerTrSpot, enterArea, leaveArea, trBattle, goTo, healAll } from './timeroom.js?v=20261102-1141';
+import { registerArea, registerTrSpot, registerBackdrop, enterArea, leaveArea, trBattle, goTo, healAll } from './timeroom.js?v=20261102-1141';
 import { registerZ3, begin, party } from './z3.js?v=20261102-1141';
 import { makeMember, applyLevel } from './party.js?v=20261102-1141';
 
@@ -17,7 +17,6 @@ const Z = (game) => game.world.trZ1;
 for (const no of [9102, 9111, 9121, 9131, 9141]) {
   registerArea(no, (game) => {
     const d = Z(game).doors[no];
-    hookBackdrop(game);
     enterArea(game, d.to, d.v43);
   });
 }
@@ -27,7 +26,6 @@ registerTrSpot('trz1back', (game, poi) => leaveArea(game, poi.to));
 
 // a boss page: its battle_process with what the page sets; 9113 goes on to 9114 when won (switch 128)
 registerTrSpot('trz1boss', async (game, poi) => {
-  hookBackdrop(game);
   for (let no = poi.boss; no;) {
     const b = Z(game).bosses[no];
     begin(game);
@@ -40,21 +38,12 @@ registerTrSpot('trz1boss', async (game, poi) => {
 });
 
 // ---------- the battle background (set_battle_map: the strip of Z1_戦闘_背景 for the ground tile) ----------
-// The areas' random encounters have no map hook of their own, so game.backdrop (src/main.js) is wrapped once: these
-// maps get their strip, every other map whatever came before.
-function backdrop(game) {
-  const s = game.state, t = Z(game) && Z(game).backdrops[s.map];
-  if (!t) return null;
-  const m = game.world.maps[s.map], i = Math.floor(s.x / 32) + Math.floor(s.y / 32) * m.w;
-  return t[m.layers[0][i]] || t.default;
+for (const map of ['60', '61', '62', '63', '64']) {
+  registerBackdrop(map, (game) => {
+    const s = game.state, t = Z(game).backdrops[map], m = game.world.maps[map];
+    return t[m.layers[0][Math.floor(s.x / 32) + Math.floor(s.y / 32) * m.w]] || t.default;
+  });
 }
-function hookBackdrop(game) {
-  if (!game || game.trZ1Backdrop) return;
-  const prev = game.backdrop;
-  game.backdrop = () => backdrop(game) || (prev ? prev() : null);
-  game.trZ1Backdrop = true;
-}
-setTimeout(() => hookBackdrop(window.__game)); // (src/main.js has made the game by then: a save loaded in an area)
 
 // ---------- ?dev=trz1hall / trz1raditz / trz1garlic / trz1kaio / trz1vegeta / trz1willow (&timer) ----------
 // a save after the Willow chapter (Z1 party, levels as src/willow.js devWillow), already in the time room (what page
@@ -86,7 +75,6 @@ registerZ3('trz1', {
     healAll(game);
     game.startField();
     if (k[1] === 'hall') { begin(game); goTo(game, { map: '59', x: 15, y: 10 }); return true; }
-    hookBackdrop(game);
     const d = Z(game).doors[DEV[k[1]]];
     enterArea(game, d.to, d.v43);
     return true;

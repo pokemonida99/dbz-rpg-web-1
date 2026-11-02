@@ -7,7 +7,7 @@ const FLY = 'Graphics/Characters/chara_fly1.png'; // 48×48 frames, Goku = chara
 const BOSS = 'Graphics/Characters/enemy1.png'; // 32×32 frames, Raditz = character 0
 export const fieldImages = [FLY, BOSS];
 // leaders past the eight of chara_fly1 (the Z3 maps' 飛行キャラ event pages: actor → [sheet, character])
-const FLY_MORE = { 12: 'chara_fly2:7', 14: 'chara_fly4:0', 17: 'chara_fly3:0', 18: 'chara_fly1:4', 19: 'chara_fly5:4', 20: 'chara_fly5:5', 21: 'chara_fly4:5', 22: 'chara_fly4:4', 23: 'chara_fly4:6', 25: 'chara_fly3:4', 26: 'chara_fly5:2' };
+const FLY_MORE = { 12: 'chara_fly2:7', 16: 'chara_fly1:2', 14: 'chara_fly4:0', 17: 'chara_fly3:0', 18: 'chara_fly1:4', 19: 'chara_fly5:4', 20: 'chara_fly5:5', 21: 'chara_fly4:5', 22: 'chara_fly4:4', 23: 'chara_fly4:6', 25: 'chara_fly3:4', 26: 'chara_fly5:2' };
 
 export class Field {
   constructor(world, game) {

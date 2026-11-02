@@ -3,7 +3,7 @@
 // are the Z2_ pictures. world.era[variable 40] = { Z1 path: its version for that part } (tools/build_z2a.py); core.js
 // img() looks paths up there, so every screen that draws those pictures follows without knowing about it.
 // ZG (variable 43 151-200) has cards of its own (set_card_frame set 4, all.rb 14062): world.era.zg on top of era 2.
-import { setImageAlias, loadImages } from './core.js?v=20261102-2129';
+import { setImageAlias, loadImages } from './core.js?v=20261102-2150';
 
 export const eraKey = (s) => {
   const v = ((s && s.var) || {})[40] || 0, v43 = ((s && s.var) || {})[43] || 0;

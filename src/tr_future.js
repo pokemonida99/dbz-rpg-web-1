@@ -7,16 +7,16 @@
 //     set_battle_event 14 → 3661 → 3681 (switch 569) → CE167, 9782: back to the hall (38,3)
 //   9791 (switch 569): trtrunks: 3801 (Trunks alone) → 3821 → film 15 → 3841 → film 16 → 3861 (switch 570: the ZG hall)
 //     → CE167, 9792: back to the hall (43,3)
-import { audio, img, loadImages } from './core.js?v=20261102-2129';
-import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261102-2129';
-import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261102-2129';
-import { addMoves, ANIME_IMAGES } from './anime.js?v=20261102-2129';
-import { superSaiyan, syncSuperSaiyan, FORMS } from './supersaiyan.js?v=20261102-2129';
-import { eventCard } from './items.js?v=20261102-2129';
-import { applyEra } from './era.js?v=20261102-2129';
-import { duelFilm, screenPic } from './z3c.js?v=20261102-2129';
-import { registerZ3, Z3, begin, fight, toField, party, moveTo } from './z3.js?v=20261102-2129';
-import { registerArea, startTrStory, endTrStory, goTo, healAll } from './timeroom.js?v=20261102-2129';
+import { audio, img, loadImages } from './core.js?v=20261102-2150';
+import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261102-2150';
+import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261102-2150';
+import { addMoves, ANIME_IMAGES } from './anime.js?v=20261102-2150';
+import { superSaiyan, syncSuperSaiyan, FORMS } from './supersaiyan.js?v=20261102-2150';
+import { eventCard } from './items.js?v=20261102-2150';
+import { applyEra } from './era.js?v=20261102-2150';
+import { duelFilm, screenPic } from './z3c.js?v=20261102-2150';
+import { registerZ3, Z3, begin, fight, toField, party, moveTo } from './z3.js?v=20261102-2150';
+import { registerArea, startTrStory, endTrStory, goTo, healAll } from './timeroom.js?v=20261102-2150';
 
 const T = (game) => game.world.trFuture;
 let G = null; // the game, for the scenes and page commands below (set whenever these stories take over)

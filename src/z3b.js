@@ -7,13 +7,13 @@
 //   Tower: 1551 → Garlic Jr. and his three (1556) → 1561 the Makyo Star → Garlic Jr. giant and the four (1565) → 1571
 //   → variable 41 = 1230: the next chapter (nextZ3). Yajirobe (1583) on map 82.
 // East, west and south are played by the team that chose that way (variables 314 / 315 / 316: 6 east, 4 west, 2 south).
-import { registerZ3, nextZ3, Z3, begin, play, fight, toField, party, addMember, heal, card, moveTo } from './z3.js?v=20261102-2129';
-import { setFaces } from './core.js?v=20261102-2129';
-import { addScenes } from './cutscene.js?v=20261102-2129';
-import { SCENE_Y, SCROLL_X, ENE, PLAY_X } from './opening.js?v=20261102-2129';
-import { makeMember, applyLevel } from './party.js?v=20261102-2129';
-import { applyEra } from './era.js?v=20261102-2129';
-import { newHand } from './battle.js?v=20261102-2129';
+import { registerZ3, nextZ3, Z3, begin, play, fight, toField, party, addMember, heal, card, moveTo } from './z3.js?v=20261102-2150';
+import { setFaces } from './core.js?v=20261102-2150';
+import { addScenes } from './cutscene.js?v=20261102-2150';
+import { SCENE_Y, SCROLL_X, ENE, PLAY_X } from './opening.js?v=20261102-2150';
+import { makeMember, applyLevel } from './party.js?v=20261102-2150';
+import { applyEra } from './era.js?v=20261102-2150';
+import { newHand } from './battle.js?v=20261102-2150';
 
 const MAPS = ['78', '79', '80', '81', '82'];
 const W = (game) => Z3(game).z3b;

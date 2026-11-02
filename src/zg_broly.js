@@ -8,14 +8,14 @@
 //   zgeob    9921 → 5701 (variable 22 = 0, party [16]) → 5741 → 5791 → the film 5801 (set_battle_event 18) → 5811
 //            (switch 585, Bardock learns 158, CE167) → 9922 → the ZG hall (13,3)
 // The pages run one after another the way Map007 does (each sets variable 41 to the next one before its transfer).
-import { audio, img, say, choose, loadImages } from './core.js?v=20261102-2129';
-import { addScenes, addNodes } from './cutscene.js?v=20261102-2129';
-import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261102-2129';
-import { addMoves, ANIME_IMAGES, Duel, draw, STD_Y, CENTER_CHAX, RAY_SPEED } from './anime.js?v=20261102-2129';
-import { syncSuperSaiyan, superSaiyan, FORMS } from './supersaiyan.js?v=20261102-2129';
-import { duelFilm, screenPic } from './z3c.js?v=20261102-2129';
-import { registerZ3, Z3, begin, play, fight, toField, party, member, heal, z3BackdropAt } from './z3.js?v=20261102-2129';
-import { registerArea, registerBackdrop, startTrStory, endTrStory, goTo, healAll } from './timeroom.js?v=20261102-2129';
+import { audio, img, say, choose, loadImages } from './core.js?v=20261102-2150';
+import { addScenes, addNodes } from './cutscene.js?v=20261102-2150';
+import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261102-2150';
+import { addMoves, ANIME_IMAGES, Duel, draw, STD_Y, CENTER_CHAX, RAY_SPEED } from './anime.js?v=20261102-2150';
+import { syncSuperSaiyan, superSaiyan, FORMS } from './supersaiyan.js?v=20261102-2150';
+import { duelFilm, screenPic } from './z3c.js?v=20261102-2150';
+import { registerZ3, Z3, begin, play, fight, toField, party, member, heal, z3BackdropAt } from './z3.js?v=20261102-2150';
+import { registerArea, registerBackdrop, startTrStory, endTrStory, goTo, healAll } from './timeroom.js?v=20261102-2150';
 
 const C = (game) => Z3(game).zgbroly;
 const MAP = '56';

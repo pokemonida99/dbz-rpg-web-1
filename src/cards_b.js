@@ -11,11 +11,11 @@
 //   173 氣墊車  15 more card moves at double distance (variable 420, shared with 76 飛機)
 //   197 修行之石  every special move of one member +5 uses (add_actor_all_tec_level)
 //   203 重力裝置  CAP → ZP for one member, 15 CAP a point ($captozp_rate); never used up
-import { audio, say, choose, img } from './core.js?v=20261102-2129';
-import * as items from './items.js?v=20261102-2129';
-import * as battle from './battle.js?v=20261102-2129';
-import * as partymenu from './partymenu.js?v=20261102-2129';
-import * as growth from './growth.js?v=20261102-2129';
+import { audio, say, choose, img } from './core.js?v=20261102-2150';
+import * as items from './items.js?v=20261102-2150';
+import * as battle from './battle.js?v=20261102-2150';
+import * as partymenu from './partymenu.js?v=20261102-2150';
+import * as growth from './growth.js?v=20261102-2150';
 
 const { fieldCards, overlay, h, button, handCanvas } = items;
 const { newCard, KI_CARD } = battle;

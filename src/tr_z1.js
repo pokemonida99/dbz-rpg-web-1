@@ -7,9 +7,9 @@
 //   trz1boss   the boss squares: 9104 拉蒂茲, 9113 卡里克 (its win runs 9114: 卡里克(巨大化) and the three), 9123 界王
 //              (map 62's training squares), 9133 那巴, 9134 貝吉塔, 9143 生化戰士, 9144 威洛 (src/timeroom.js trBattle)
 // The inns, card squares and training squares are the usual field spots (src/main.js interact).
-import { registerArea, registerTrSpot, registerBackdrop, enterArea, leaveArea, trBattle, goTo, healAll } from './timeroom.js?v=20261102-2129';
-import { registerZ3, begin, party } from './z3.js?v=20261102-2129';
-import { makeMember, applyLevel } from './party.js?v=20261102-2129';
+import { registerArea, registerTrSpot, registerBackdrop, enterArea, leaveArea, trBattle, goTo, healAll } from './timeroom.js?v=20261102-2150';
+import { registerZ3, begin, party } from './z3.js?v=20261102-2150';
+import { makeMember, applyLevel } from './party.js?v=20261102-2150';
 
 const Z = (game) => game.world.trZ1;
 

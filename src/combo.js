@@ -14,10 +14,10 @@
 //
 // Game state: state.skillLv = { skillId: uses } ($cha_skill_level, shared with src/partymenu.js tally(): moves and
 // combos alike), state.combos = [learned ids]. The battle 菜單's 組合技 entry opens the list (menuEntries.combo).
-import { VERSION, view, img, audio, rand } from './core.js?v=20261102-0924';
-import { SW } from './anime.js?v=20261102-0924';
-import { ComboDuel } from './combo-anime.js?v=20261102-0924';
-import { menuEntries } from './partymenu.js?v=20261102-0924';
+import { VERSION, view, img, audio, rand } from './core.js?v=20261102-0958';
+import { SW } from './anime.js?v=20261102-0958';
+import { ComboDuel } from './combo-anime.js?v=20261102-0958';
+import { menuEntries } from './partymenu.js?v=20261102-0958';
 
 let DATA = { combos: [], moves: {}, sync: {} };
 export const comboData = fetch(`data/combos.json?v=${VERSION}`).then((r) => r.json()).then((d) => (DATA = d)).catch(() => DATA);

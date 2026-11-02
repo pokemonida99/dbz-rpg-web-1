@@ -68,7 +68,7 @@ async function training(game) {
 
 function spot(game, poi) {
   use(game);
-  if (poi.kind === 'timeroom' && game.state.map === '44' && (game.state.var[121] || 0) === 2) return room(game);
+  if (poi.page === 'htc' && game.state.map === '44' && (game.state.var[121] || 0) === 2) return room(game);
   return null;
 }
 function boss(game, b) {

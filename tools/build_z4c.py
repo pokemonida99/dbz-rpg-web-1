@@ -36,17 +36,11 @@ def add(world, h, z3):
     world['areas'][MAP46] = {'pool': [137, 174, 175, 176, 189, 193, 207, 212], 'n': [1, 3]}
 
     # ---------- map 44 精神と時の部屋 (the first, third and fifth chapters use it too: variable 121 = 1 / 2 / 3) ----------
-    # Only what is not there yet is added, so the chapters' builders don't overwrite each other (docs/z4bc.md). The
-    # training square is one spot for all of them: chapter 'z4' hands it to the chapter being played (src/z3.js z3Spot).
-    if MAP44 not in world['maps']:
-        world['maps'][MAP44] = build_map(44, rows=14)  # (row 14: the original's control events)
-    pois = world['pois'].setdefault(MAP44, [])
-    have = {(p['x'], p['y']): p for p in pois}
-    for p in [dict(SHOP, x=11, y=8), dict(INN, x=4, y=4), {'x': 15, 'y': 4, 'label': '開始修行', 'chapter': 'z4', 'kind': 'timeroom'}]:
-        if (p['x'], p['y']) not in have:
-            pois.append(p)
-        elif p.get('kind') == 'timeroom':
-            have[(15, 4)].update(chapter='z4', kind='timeroom')
+    # tools/build_z4a.py defines it (the map, the card square, the inn, the training square (15,4) {chapter: 'z4',
+    # page: 'htc'}: src/z3.js z3Spot hands it to the chapter being played); here only a stand-in while z4a isn't merged
+    world['maps'].setdefault(MAP44, build_map(44, rows=14))  # (row 14: the original's control events)
+    world['pois'].setdefault(MAP44, [dict(SHOP, x=11, y=8), dict(INN, x=4, y=4),
+                                     {'x': 15, 'y': 4, 'label': '開始修行', 'chapter': 'z4', 'page': 'htc'}])
     world['areas'].setdefault(MAP44, None)  # (140_Field_Main.rb: no encounters in the room)
 
     # ---------- the pages ----------

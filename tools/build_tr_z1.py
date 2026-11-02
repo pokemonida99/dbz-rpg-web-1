@@ -81,10 +81,10 @@ def add(world, h, z3, tr):
         mid = a['map']
         m = build_map(mid, rows=a['rows'])
         ev = map_events(D, mid, a['rows'])
-        for e in ev:  # map 60: Raditz shows with switch 41 (on since his fight in the story); his pod (EV009) is a
-            for pg in e[2]:  # 96×64 '!bigsize_anime' sheet the map events can't draw (the story's map 1 has none either)
+        for e in ev:  # map 60: Raditz shows with switch 41 (on since his fight in the story), and EV009 by his pod (the
+            for pg in e[2]:  # 96×64 '!bigsize_anime' sheet: Gohan's 「たすけて」, src/field.js draws the big frames)
                 pg[0] = [c for c in pg[0] if c != ['sw', 41, True]]
-        m['ev'] = [e for e in ev if not any(isinstance(pg[1], list) and pg[1][0].startswith('!') for pg in e[2])]
+        m['ev'] = ev
         sheets.update(pg[1][0] for e in m['ev'] for pg in e[2] if isinstance(pg[1], list))
         if mid == 62:
             m['path'] = [1544]  # the ring of squares round King Kai's house, as the story's map 14 (src/field.js)

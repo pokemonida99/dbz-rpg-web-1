@@ -20,7 +20,7 @@ import { fieldCards, cardState } from './items.js?v=20261102-1935';
 import * as battle from './battle.js?v=20261102-1935';
 import * as combo from './combo.js?v=20261102-1935';
 import * as field from './field.js?v=20261102-1935';
-import { has, ensure, useSkillCard, revive } from './growth.js?v=20261102-1935';
+import { has, ensure, useSkillCard, revive, ran } from './growth.js?v=20261102-1935';
 import { pickMember, tally } from './partymenu.js?v=20261102-1935';
 import { registerZ3, party } from './z3.js?v=20261102-1935';
 import { addNodes } from './cutscene.js?v=20261102-1935';
@@ -171,12 +171,19 @@ battleHooks.act = async (b, i, skill) => {
   const m = b.party[i];
   if (!skill || !APES[m.id] || skill.id !== APES[m.id].move || m.cdaApe) return false;
   b.say(`${m.name} 的${skill.name}！`);
-  audio.se('Z1 満月', 80);
-  await sleep(1400);
-  audio.se('Z1 パワーアップ', 80);
-  await sleep(700);
-  apeOn(b.game.state, m);
-  audio.se('Z1 大猿', 80);
+  const foe = b.foes.find((f) => f.hp > 0), cd = cardOf(b, m);
+  if (m.id === 5 && foe) { // 悟飯: the film (src/anime.js gohanApe: the full moon, the face)
+    if (foe.card && cd) b.duel = { m, mc: cd, f: foe, fc: foe.card };
+    await b.play(m, foe, true, 51, -1, foe);
+    apeOn(b.game.state, m);
+  } else {
+    audio.se('Z1 満月', 80);
+    await sleep(1400);
+    audio.se('Z1 パワーアップ', 80);
+    await sleep(700);
+    apeOn(b.game.state, m);
+    audio.se('Z1 大猿', 80);
+  }
   b.say(`${m.name} 變成了大猿！`);
   await sleep(1200);
   if (!b.practice) tally(b.game.state, m, skill, 0);
@@ -187,16 +194,16 @@ battleHooks.act = async (b, i, skill) => {
 battleHooks.hit = (b, m, foe) => {
   const c = foe.card;
   if (!c) return;
-  if (has(b.world, m, 23) && c.g < c.a) [c.a, c.g] = [c.g, c.a];
-  if (has(b.world, m, 259) && c.g > c.a) [c.a, c.g] = [c.g, c.a];
-  if (has(b.world, m, 289)) { if (c.a >= 4) c.a = rand(7); if (c.g >= 4) c.g = rand(7); }
+  if (has(b.world, m, 23) && c.g < c.a) { [c.a, c.g] = [c.g, c.a]; ran(23, 'hit'); } // (17264 / 17279 / 17303: ran = the name box)
+  if (has(b.world, m, 259) && c.g > c.a) { [c.a, c.g] = [c.g, c.a]; ran(259, 'hit'); }
+  if (has(b.world, m, 289) && (c.a >= 4 || c.g >= 4)) { if (c.a >= 4) c.a = rand(7); if (c.g >= 4) c.g = rand(7); ran(289, 'hit'); }
 };
 // the party being hit (all.rb 17483 / 17746 / 68912 / 68955): たぎる闘志 raises the member's card, やせがまん may keep
 // 1 HP, a tail-cutting move turns the Great Ape back
 battleHooks.hurt = (b, m, foe, skill) => {
   const w = b.world, cd = cardOf(b, m);
   const up = [[42, 1], [43, 2], [44, 3]].find(([id]) => has(w, m, id));
-  if (up && cd) cd.a = Math.min(7, cd.a + up[1]);
+  if (up && cd) { cd.a = Math.min(7, cd.a + up[1]); ran(up[0], 'hit', 1); } // (17490)
   const yg = first(b, m, YASEGAMAN);
   if (yg && rand(100) + 1 < fx(b, yg, 'rate') && m.hp <= 0) m.hp = 1;
   if (m.cdaApe && skill && w.cardsA.tail.includes(skill.id)) {

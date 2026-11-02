@@ -47,6 +47,7 @@ function best(world, m, fam) {
   for (const id of fam) if (has(world, m, id)) return sk(world, id);
   return null;
 }
+const bestId = (world, m, fam) => fam.find((id) => has(world, m, id)) || 0; // (for ran)
 const F = {
   blood: [2, 3, 4, 89, 90, 91, 92, 93, 94], // サイヤ人の血 (checked lowest first, like get_exp_add)
   // Z戦士の絆, with 地球育ちのサイヤ人 678-686 counted as the same (all.rb 14737-14771 / 16112: 686, 106, 685, 105 … 678, 13)
@@ -74,6 +75,27 @@ const num = (v) => Number(v) || 0;
 // recover (b) · avoid / hurt / cover / pick (src/battle.js) · combo (src/combo.js)
 export const extra = [];
 export const ext = (k, v, ...a) => { for (const e of extra) if (e[k]) v = e[k](v, ...a); return v; };
+
+// ---------- skills that fired (output_runskill all.rb 54324: the name boxes sliding in over the battle film) ----------
+// ran(id, kind, course): kind 'skill' = $tmp_run_skill (set_damage_add, emptied at each call: dealt / taken start a new
+// group), 'hit' = $tmp_run_hit_skill (get_attack_hit_skill), 'cover' = $tmp_run_kabau_skill; course 0 = the party
+// attacks, 1 = an enemy does (option 351). src/viz.js draws runShow.
+export const runShow = { kind: null, ids: [], course: 0, n: 0, open: false, quiet: false };
+export function ran(id, kind = 'skill', course = 0) {
+  const r = runShow;
+  if (!r.open || r.kind !== kind) { Object.assign(r, { kind, ids: [], course, open: true, quiet: false }); r.n++; }
+  if (id && !r.ids.includes(id)) r.ids.push(id);
+}
+// set_damage_add's `$tmp_run_skill = []` (14369); a second target of the same member's attack this turn shows nothing
+// (output_runskill: @all_attack_count == 1 for the party)
+let lastDealt = null;
+function newRun(b, m, course) {
+  const key = course === 0 && b ? `${b.turn}:${m && m.id}` : null;
+  Object.assign(runShow, { kind: 'skill', ids: [], course, open: true, quiet: !!key && key === lastDealt && b === lastB });
+  runShow.n++;
+  lastDealt = key; lastB = b;
+}
+let lastB = null;
 
 export function expFor(world, m, exp) {
   exp = ext('exp', exp, m); // (喜歡的角色 ×1.15: src/cards_b.js)
@@ -191,18 +213,19 @@ const dying = (x) => (x.hp * 100) / x.maxhp < HINSHI;
 // 征服 (a normal enemy), 必殺の一撃 (special moves)
 export function dealt(b, m, skill, d, ctx = {}) {
   const w = b.world;
+  newRun(b, m, 0);
   let x = d;
   const so = best(w, m, F.soul);
   if (so) x *= num(so.fx.a);
   const kt = best(w, m, F.koutetsu);
-  if (kt) x *= num(kt.fx.a);
+  if (kt) { x *= num(kt.fx.a); ran(bestId(w, m, F.koutetsu)); }
   const kz = best(w, m, F.kizuna);
   const n = kz ? kizunaMates(b, m) : 0;
-  if (n) x *= 1 + (num(kz.fx.a) - 1) * n;
-  if (has(w, m, 22)) x *= 1 + 0.35 * mates(b, m).filter(dying).length;
+  if (n) { x *= 1 + (num(kz.fx.a) - 1) * n; ran(bestId(w, m, F.kizuna)); }
+  if (has(w, m, 22) && mates(b, m).some(dying)) { x *= 1 + 0.35 * mates(b, m).filter(dying).length; ran(22); }
   if (ctx.foe) x = bossRate(b, m, ctx.foe, x, 'a');
   const hs = best(w, m, F.hissatsu);
-  if (hs && skill) x *= num(hs.fx.a);
+  if (hs && skill) { x *= num(hs.fx.a); ran(bestId(w, m, F.hissatsu)); }
   x = ext('dealt', x, b, m, skill, ctx); // (連擊, 輕視 …: src/cards_*.js)
   return Math.trunc(x);
 }
@@ -210,24 +233,26 @@ export function dealt(b, m, skill, d, ctx = {}) {
 // (both stack), 征服 538-546 against a normal enemy (its highest level)
 function bossRate(b, m, foe, x, k) {
   const w = b.world;
+  const course = k === 'a' ? 0 : 1;
   if (bossFoe(b, foe)) {
-    for (const id of [8, 670]) if (has(w, m, id)) x *= num(sk(w, id).fx[k]);
+    for (const id of [8, 670]) if (has(w, m, id)) { x *= num(sk(w, id).fx[k]); ran(id, 'skill', course); }
   } else {
     const sf = best(w, m, F.seifuku);
-    if (sf) x *= num(sf.fx[k]);
+    if (sf) { x *= num(sf.fx[k]); ran(bestId(w, m, F.seifuku), 'skill', course); }
   }
   return x;
 }
 // set_damage_add(add = 1): damage taken — サイヤ人魂, Z戦士の絆, 激怒, 最終決戦 / 最終決戦改 (×0.85 each), 征服
 export function taken(b, m, d, ctx = {}) {
   const w = b.world;
+  newRun(b, m, 1);
   let x = d;
   const so = best(w, m, F.soul);
   if (so) x *= num(so.fx.g);
   const kz = best(w, m, F.kizuna);
   const n = kz ? kizunaMates(b, m) : 0;
-  if (n) x *= 1 - (1 - num(kz.fx.g)) * n;
-  if (has(w, m, 22) && mates(b, m).some(dying)) x *= 0.8;
+  if (n) { x *= 1 - (1 - num(kz.fx.g)) * n; ran(bestId(w, m, F.kizuna), 'skill', 1); }
+  if (has(w, m, 22) && mates(b, m).some(dying)) { x *= 0.8; ran(22, 'skill', 1); }
   if (ctx.foe) x = bossRate(b, m, ctx.foe, x, 'g');
   x = ext('taken', x, b, m, ctx); // (掩護, 輕視 …)
   return Math.trunc(x);
@@ -235,7 +260,7 @@ export function taken(b, m, d, ctx = {}) {
 // get_attack_hit_skill: かなしばり may stop the enemy that was hit (STOP_TURN)
 export function onHit(b, m, foe, card) {
   const id = F.kanashi.find((x) => has(b.world, m, x));
-  if (id && rand(100) + 1 < num(sk(b.world, id).fx.rate)) foe.stop = (foe.stop || 0) + 1;
+  if (id && rand(100) + 1 < num(sk(b.world, id).fx.rate)) { foe.stop = (foe.stop || 0) + 1; ran(id, 'hit'); }
   ext('hit', null, b, m, foe, card); // (急中生智, 交換, 吸收: src/cards_*.js)
 }
 // a stopped enemy loses its action (the counter goes down)

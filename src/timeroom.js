@@ -359,7 +359,8 @@ registerZ3('pas', {
 // the goal line on the HUD (src/main.js renderHud)
 export function trGoal(world, s) {
   if (!inTimeRoom(s) || inTrStory(s)) return undefined; // (a story run from here shows its own goal)
-  return s.map === '58' ? '時之間：從下方出口回到主線' : '時之間';
+  if (s.map === '58') return '時之間：從下方出口回到主線';
+  return ((world.viz && world.viz.trArea) || {})[(s.var || {})[43]] || '時之間'; // in an area: its name (story_string, variable 43 901-937)
 }
 
 const css = document.createElement('style');

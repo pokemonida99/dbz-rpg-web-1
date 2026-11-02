@@ -287,6 +287,43 @@ export function handCanvas(cd) { // the original Z1 card (64×96)
   if (s.ok) paint(); else s.p.then(paint);
   return c;
 }
+// change_card_run / output_card_change_effect (all.rb 146173 / 146203): after the SE (Z2 カードアップ) the card's blink
+// frame (set_card_frame n: 5 attack, 6 guard, 7 both, 8 school, 9 all, 1 the back) lies on the card it changes — on
+// all six for the cards that change the whole hand — two frames in four for 50 frames; then the change. The blink
+// frames of Z3 / ZG come through the era's card sheet (src/era.js); the back (1) is the era's own (set_card_frame 1).
+export const BLINK = { 19: 5, 20: 6, 21: 5, 22: 6, 23: 8, 24: 1, 25: 7, 26: 7, 38: 9, 50: 8, 62: 8, 84: 5, 87: 6, 93: 7, 98: 6, 104: 8, 105: 5, 106: 7, 156: 8, 169: 1 };
+const BLINK_X = { 5: 128, 6: 192, 7: 256, 8: 320, 9: 384 };
+function backAt(s) {
+  const v = (s.var || {})[40] || 0, v43 = (s.var || {})[43] || 0;
+  if (v < 2) return [64, 96];
+  if (v43 >= 151 && v43 <= 200) return [704, 96];
+  return (s.sw || {})[431] ? [384, 272] : [576, 96];
+}
+export function cardBlink(s, id, els) {
+  const n = BLINK[id] || 9, [bx, by] = n === 1 ? backAt(s) : [BLINK_X[n], 96];
+  const overs = els.map((el) => {
+    const cv = el.querySelector('canvas');
+    if (!cv) return null;
+    const o = document.createElement('canvas');
+    o.width = 64; o.height = 96;
+    o.className = 'blinkov';
+    el.style.position = 'relative';
+    o.style.cssText = `left:${cv.offsetLeft}px;top:${cv.offsetTop}px;width:${cv.offsetWidth}px;height:${cv.offsetHeight}px`;
+    const e = img(CARDS);
+    if (e.ok) o.getContext('2d').drawImage(e.im, bx, by, 64, 96, 0, 0, 64, 96);
+    el.appendChild(o);
+    return o;
+  }).filter(Boolean);
+  return new Promise((done) => {
+    let x = 0;
+    const tick = () => {
+      for (const o of overs) o.style.visibility = x % 4 < 2 ? 'visible' : 'hidden';
+      if (++x > 50) { overs.forEach((o) => o.remove()); done(); return; }
+      setTimeout(tick, 1000 / 60);
+    };
+    tick();
+  });
+}
 function faceCanvas(sheet, row, col = 0) {
   const c = document.createElement('canvas');
   c.width = c.height = 64;
@@ -340,6 +377,7 @@ const CSS = `
 #cards .pick .hand { padding: 1px; }
 #cards .pick .hand canvas { width: 44px; height: 66px; background: none; }
 #cards .pick .flash { animation: cardflash .5s 2; }
+#cards .blinkov { position: absolute; pointer-events: none; image-rendering: pixelated; }
 @keyframes cardflash { 50% { filter: brightness(2.4); } }
 `;
 export function overlay() {
@@ -378,10 +416,11 @@ export function openCards(game, battle = null) {
   let sel = null, mode = 'list';
   return new Promise((done) => {
     const close = () => { el.remove(); audio.se(SE_OK, 70); if (game.renderHud && !battle) game.renderHud(); done(); };
-    const use = (id, it, t) => {
+    let blinking = false; // (the blink of a card that changes the hand: cardBlink)
+    const use = (id, it, t, quiet) => {
       const se = apply(x, id, it, t);
       if (!se) { audio.se(SE_ERR, 70); return false; }
-      audio.se(se, 80);
+      if (!quiet) audio.se(se, 80);
       lose(s, id);
       toast(`使用了「${it.name}」`);
       return true;
@@ -440,7 +479,22 @@ export function openCards(game, battle = null) {
       const after = () => { if (!s.cards[id] && mode !== 'hand') mode = 'list'; render(); };
       if (mode === 'confirm') {
         p.appendChild(h('div', null, '要使用這張卡片嗎？'));
-        const yes = button('是', () => { if (use(id, it)) mode = 'list'; render(); }, 'btn');
+        const yes = button('是', async () => {
+          if (blinking) return;
+          if (it.kind === 'cardAll' && HAND[id][0](x.hand)) { // the whole hand blinks, then changes
+            blinking = true;
+            audio.se(SE_CARD, 80);
+            const row = h('div', 'pick');
+            const bs = x.hand.map((cd) => { const hb = h('button', 'hand'); hb.appendChild(handCanvas(cd)); row.appendChild(hb); return hb; });
+            p.replaceChildren(row);
+            await cardBlink(s, id, bs);
+            blinking = false;
+            use(id, it, undefined, true);
+            mode = 'list'; render();
+            return;
+          }
+          if (use(id, it)) mode = 'list'; render();
+        }, 'btn');
         const no = button('否', () => { mode = 'list'; render(); }, 'btn');
         const row = h('div', 'acts'); row.style.width = '100%'; row.append(yes, no);
         p.appendChild(row);
@@ -459,11 +513,15 @@ export function openCards(game, battle = null) {
         x.hand.forEach((cd, k) => {
           const b = h('button', `hand${!s.cards[id] || CARD[id][0](cd) ? '' : ' off'}`);
           b.appendChild(handCanvas(cd));
-          b.onclick = () => {
-            if (!s.cards[id] || !use(id, it, cd)) return;
+          b.onclick = async () => {
+            if (blinking || !s.cards[id]) return;
+            if (!CARD[id][0](cd)) { audio.se(SE_ERR, 70); return; }
+            blinking = true;
+            audio.se(SE_CARD, 80);
+            await cardBlink(s, id, [b]); // (the change lands after the blink)
+            blinking = false;
+            use(id, it, cd, true);
             after();
-            const nb = el.querySelectorAll('.pick .hand')[k];
-            if (nb) nb.classList.add('flash');
           };
           p.appendChild(b);
         });

@@ -122,11 +122,14 @@ function handWindow(game, it, one, change) {
       if (one && !busy) acts.appendChild(button('返回', () => { audio.se(SE_MOVE); close(false); }));
       el.appendChild(acts);
     };
-    const go = (ks) => { // the card flashes, then changes (50 frames in the original)
+    const go = async (ks) => { // the card blinks, then changes (items.cardBlink: 50 frames, as the original)
       busy = true;
       audio.se(SE_CARD);
-      render(ks);
-      setTimeout(() => { change(ks); render(ks); setTimeout(() => close(true), 700); }, 500);
+      render();
+      await items.cardBlink(s, one ? 169 : 156, [...el.querySelectorAll('.pick .hand')].filter((b, k) => ks.includes(k)));
+      change(ks);
+      render();
+      setTimeout(() => close(true), 500);
     };
     render();
     if (!one) go(hand.map((c, k) => k));
@@ -244,6 +247,7 @@ const FAM = {
 };
 const G = () => window.__game; // (main.js) the running game: its state for the favourite, its world for the skills
 const best = (w, m, fam) => { const id = fam.find((x) => growth.has(w, m, x)); return id ? w.growth.skills[id] : null; };
+const firstId = (w, m, fam) => fam.find((x) => growth.has(w, m, x)) || 0; // (growth.ran: the skill shown)
 const n = (v) => Number(v) || 0;
 const dying = (x) => Math.trunc((x.hp * 100) / x.maxhp) < 31; // $hinshi_hp
 const clamp7 = (v) => Math.max(0, Math.min(7, v));
@@ -258,13 +262,14 @@ const passive = {
     if (sk && c.a < c.g) return { ...c, a: c.g, g: c.a };
     return c;
   },
-  dealt: (v, b, m) => { const r = best(b.world, m, FAM.rengeki); return r && b.chain > 1 ? v * (1 + (n(r.fx.a) - 1) * (b.chain - 1)) : v; },
-  taken: (v, b, m) => { if (b.cover !== m) return v; const k = best(b.world, m, FAM.kabau); return k ? v * n(k.fx.g) : v; },
+  dealt: (v, b, m) => { const r = best(b.world, m, FAM.rengeki); if (r && b.chain > 1) growth.ran(firstId(b.world, m, FAM.rengeki)); return r && b.chain > 1 ? v * (1 + (n(r.fx.a) - 1) * (b.chain - 1)) : v; },
+  taken: (v, b, m) => { if (b.cover !== m) return v; const k = best(b.world, m, FAM.kabau); if (k) growth.ran(firstId(b.world, m, FAM.kabau), 'skill', 1); return k ? v * n(k.fx.g) : v; },
   hit: (v, b, m, foe) => { // the enemy's card stops allowing its special move
     const cd = foe.card;
     if (!growth.has(b.world, m, 56) || !cd || !(cd.s === 0 || cd.s === foe.school) || b.world.cardsB.sure.includes(Number(foe.id))) return v;
     if (!battle.enemyCard) return v;
     for (let k = 0; k < 50; k++) { const s = battle.enemyCard().s; if (s !== 0 && s !== foe.school) { cd.s = s; break; } } // create_card_i(1, true, school)
+    growth.ran(56, 'hit'); // (all.rb 17475)
     return v;
   },
   recover: (v, b) => {
@@ -280,7 +285,7 @@ const passive = {
   avoid: (v, b, m) => { const z = best(b.world, m, FAM.zanzo); return z ? v + n(z.fx.rate) : v; },
   hurt: (v, b, m) => { // the guard stars of the card this member plays
     const f = best(b.world, m, FAM.fukutsu), p = b.plans && b.plans[b.party.indexOf(m)];
-    if (f && p) b.hand[p.card].g = clamp7(b.hand[p.card].g + n(f.fx.gh));
+    if (f && p) { b.hand[p.card].g = clamp7(b.hand[p.card].g + n(f.fx.gh)); growth.ran(firstId(b.world, m, FAM.fukutsu), 'hit', 1); } // (17520)
     return v;
   },
   cover: (one, b) => { // the first member (in card order) with かばう who played a card, isn't dying and isn't the target
@@ -288,6 +293,7 @@ const passive = {
     const by = b.party.map((m, i) => [m, b.plans && b.plans[i]]).filter(([m, p]) => p && m !== one && !m.ko && m.hp > 0 && !dying(m))
       .sort((x, y) => x[1].card - y[1].card);
     const c = by.find(([m]) => best(b.world, m, FAM.kabau));
+    if (c) growth.ran(firstId(b.world, c[0], FAM.kabau), 'cover', 1); // $tmp_run_kabau_skill (all.rb 15784), shown in the cover scene
     return c ? c[0] : one;
   },
   combo: (v, b, who) => v + Math.max(0, ...who.map((i) => n((best(b.world, b.party[i], FAM.renkei) || { fx: {} }).fx.ah))),

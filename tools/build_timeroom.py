@@ -86,8 +86,9 @@ def cond(c):
 
 def map_events(D, mid, rows, sheets=None):
     """world.maps[id].ev: the map's events from id 5 on above `rows` (1-4 are the original's control events) as
-    [x, y, pages], a page = [conditions, graphic (tile id / [sheet, index, direction, pattern] / 0), priority (0 below,
-    1 same as, 2 above the player), through]; src/field.js draws them and they block the way like the original's.
+    [x, y, pages], a page = [conditions, graphic (tile id / [sheet, index, direction, pattern(, move speed when it has
+    step animation)] / 0), priority (0 below, 1 same as, 2 above the player), through]; src/field.js draws them and they
+    block the way like the original's.
     The phase 2 areas use it for their maps' events too (boss sprites, doors). `sheets` collects the sheets used."""
     evs = []
     for k, e in sorted(D('map%03d' % mid)['events'].items(), key=lambda kv: int(kv[0])):
@@ -99,7 +100,7 @@ def map_events(D, mid, rows, sheets=None):
             if g['tile_id']:
                 gfx = g['tile_id']
             elif g['character_name']:
-                gfx = [g['character_name'], g['character_index'], g['direction'], g['pattern']]
+                gfx = [g['character_name'], g['character_index'], g['direction'], g['pattern']] + ([p['move_speed']] if p['step_anime'] else [])
                 if sheets is not None:
                     sheets.add(g['character_name'])
             else:

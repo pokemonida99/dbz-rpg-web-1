@@ -59,5 +59,6 @@ Enemy cards are now dealt at the start of each turn (§2.1 of battle-rules.md) s
 - New game: 三星球, 六星球, 龜屋, 哥美拉 (Map007 event 1 page 1). 龜屋 (71) and 哥美拉 (77) are hooks for the growth session.
 
 ## Not built (yet)
-Skill / SP / ZP cards (hooks), 飛機, 妖怪 (the remake has no
-"KO'd with HP > 0" state), 龍珠雷達 (shown, not usable).
+（2026-11-02 更新）原本列在這裡的都已經做好：技能卡／SP／ZP 卡（`src/growth.js`、`src/cards_*.js` 的 `fieldCards`）、
+飛機 76（`src/cards_a.js`）、妖怪 121（`src/growth.js` useGhost：倒下且 HP > 0 的人站起來）、龍珠雷達 1（`src/fieldmenu.js` openRadar）。
+`world.items` 裡 `kind: 'hook'` 的卡現在每一張都有 `fieldCards[id]`（不會再出現「這張卡片的功能還沒做好」）。

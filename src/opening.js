@@ -289,9 +289,14 @@ export class Stage {
         continue;
       }
       if (s.size === 'screen') { // a picture placed on the original's 640×480 screen (show picture), scaled to the width
-        const e = img(s.path), k = w / 640;
+        const e = img(s.path), k = w / 640, z = s.zoom || 1; // zoom / blend 'add': a picture shown at 200 %, additive (src/zg_c.js)
         const y0 = this.ui.dlg.hidden ? Math.round((h - 480 * k) / 2) : top + 64 - 240 * k; // mid-screen while the message box is closed
-        if (e.ok) { c.globalAlpha = s.op == null ? 1 : s.op / 255; c.drawImage(e.im, sx, sy, sw, sh, s.x * k, y0 + s.y * k, sw * k, sh * k); c.globalAlpha = 1; }
+        if (e.ok) {
+          c.globalAlpha = s.op == null ? 1 : s.op / 255;
+          if (s.blend === 'add') c.globalCompositeOperation = 'lighter';
+          c.drawImage(e.im, sx, sy, sw, sh, s.x * k, y0 + s.y * k, sw * k * z, sh * k * z);
+          c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+        }
         continue;
       }
       if (s.size === 'full') { // as wide as the screen, its middle on the scene window
@@ -303,6 +308,7 @@ export class Stage {
       c.beginPath();
       c.rect(SCROLL_X + ox, top, 512, 128); // nothing shows outside the scene window
       c.clip();
+      if (s.op != null) c.globalAlpha = s.op / 255; // (a sprite fading: src/z3e.js 1384)
       if (s.size) { const e = img(s.path); if (e.ok) c.drawImage(e.im, sx, sy, sw, sh, s.x + ox, s.y + oy, s.size[0], s.size[1]); }
       else blt(c, s.path, s.x + ox, s.y + oy, sw, sh, sx, sy);
       c.restore();

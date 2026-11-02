@@ -48,7 +48,7 @@ src, out, *maps = ARGV
 load_rv = ->(n) { Marshal.load(File.binread(File.join(src, "#{n}.rvdata"))) }
 write = ->(n, obj) { File.write(File.join(out, "#{n}.json"), JSON.generate(obj)) }
 
-%w(Actors Classes Skills Enemies Troops Items States CommonEvents).each { |n| write.(n.downcase, plain(load_rv.(n))) }
+%w(Actors Classes Skills Enemies Troops Items States CommonEvents Animations).each { |n| write.(n.downcase, plain(load_rv.(n))) }
 %w(_chaskill _scombo _tecspark _card_compo).each do |n|
   write.(n.delete('_'), plain(load_rv.(n))) if File.exist?(File.join(src, "#{n}.rvdata"))
 end

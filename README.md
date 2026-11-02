@@ -84,6 +84,7 @@ python3 tools/copy_assets.py game            # 只複製用到的素材到 asset
 | `src/timeroom.js` | 時之間（第 1 階段）：進出、大廳與各時代大廳的門、隊伍變更（`src/partymenu.js` 的 `memberChange`）、功能說明、戰鬥練習；區域用 `registerArea` 接上。資料 `world.timeroom` 與走路地圖（`world.maps[id].walk`／`.ev`：`src/field.js`）由 `tools/build_timeroom.py` 產生，見 `docs/timeroom.md` |
 | `src/supersaiyan.js` | 超級賽亞人變身（角色交換、技能；class 9 的傷害規則在 `src/battle.js`） |
 | `src/cardgames.js` | Z 標記（卡片格子）照原版隨機出現：卡片商店、卡片連線抽獎、爺爺的神經衰弱；地圖選單「合成」：卡林大人的卡片合成（自己選擇／配方），規則見 `docs/item-cards.md` |
+| `src/viz.js` / `src/vxanim.js` | 畫面表現的小補齊（batch2 viz，`docs/viz.md`）：發動技能名的滑入框、掩護的過場、大猿的頭像、時代的卡面；地圖上的 RPG Maker 動畫。資料 `tools/build_viz.py`。跳關 `?dev=viz`、`vizcover`、`vizz3`、`vizzg`、`vizpod`、`vizpod1`、`vizfusion`、`vizpirate`、`vizhatch` |
 
 ## 本版自製素材
 `assets/bg/battle_{night,dusk,day}.png`：直向戰鬥背景（400×600），用 ChatGPT 照原版 Z1 戰場地面的風格生成，再縮成像素、減色。每場戰鬥隨機選一張，同一場不會換。

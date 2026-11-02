@@ -62,6 +62,7 @@ import './zg_c.js?v=20261102-1935';
 import './zg_recap.js?v=20261102-1935'; // ZG 的概況 (前情提要: src/fieldmenu.js)
 import './combo_dev.js?v=20261102-1935'; // ?dev=cmb…: S-combo / ひらめき tests (src/combo.js)
 import './sys.js?v=20261102-1935'; // 第二批 sys: 神龍的願望, the shop's added cards, Z3 / Z4 的概況 (docs/sys.md)
+import './viz.js?v=20261102-1935'; // the battle's skill names, the cover scene, the Great Ape's face (docs/batch2-plan.md viz)
 
 // testing in a hidden browser pane (no animation frames there): ?timer drives every frame with timers instead
 if (new URLSearchParams(location.search).has('timer')) window.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16);

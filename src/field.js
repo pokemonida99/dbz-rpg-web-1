@@ -165,8 +165,15 @@ export class Field {
     for (const e of this.evAt.values()) {
       if (!e.gfx || (e.pri === 2) !== above) continue;
       if (typeof e.gfx === 'number') { drawTile(c, bm, e.gfx, e.x * 32 - cx, e.y * 32 - cy, 0); continue; }
-      const [sheet, k, dir, pat] = e.gfx, im = img(`Graphics/Characters/${sheet}.png`);
-      if (im.ok) c.drawImage(im.im, ((k % 4) * 3 + pat) * 32, (Math.floor(k / 4) * 4 + dir / 2 - 1) * 32, 32, 32, e.x * 32 - cx, e.y * 32 - cy, 32, 32);
+      const [sheet, k, dir, pat0, speed] = e.gfx, im = img(`Graphics/Characters/${sheet}.png`);
+      if (!im.ok) continue;
+      // frames: a '$' sheet holds one character (3×4), others eight (12×8) — 32×32, or 96×64 for '!bigsize_anime';
+      // drawn bottom-centre on the tile. Step animation (Game_Character#update_animation): the pattern moves on every
+      // 19 − 2 × speed frames, 0 1 2 1 …
+      const one = /^!?\$/.test(sheet), fw = im.im.width / (one ? 3 : 12), fh = im.im.height / (one ? 4 : 8);
+      const pat = speed ? [0, 1, 2, 1][(pat0 + Math.floor(performance.now() / (1000 / 60) / (19 - 2 * speed))) % 4] : pat0;
+      const kx = one ? 0 : k % 4, ky = one ? 0 : Math.floor(k / 4);
+      c.drawImage(im.im, (kx * 3 + pat) * fw, (ky * 4 + dir / 2 - 1) * fh, fw, fh, e.x * 32 + 16 - fw / 2 - cx, e.y * 32 + 32 - fh - cy, fw, fh);
     }
   }
 
@@ -317,5 +324,6 @@ export function holds(s, c) {
   if (c[0] === 'any') return c.slice(1).some((x) => holds(s, x)); // ['any', a, b …]: one of them
   if (Array.isArray(c[0])) return c.every((x) => holds(s, x)); // several: all of them
   if (c[0] === 'sw') return !!(s.sw || {})[c[1]] === c[2];
+  if (c[0] === 'flag') return !!(s.flags || {})[c[1]] === c[2]; // (a state.flags entry: map 1's EV009, tools/build_viz.py)
   return CMP[c[3] || 0]((s.var || {})[c[1]] || 0, c[2]);
 }

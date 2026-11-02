@@ -450,7 +450,7 @@ async function boot() {
   if (dev && dev.startsWith('ch6')) { title.hidden = true; devChapter6(game, dev); requestAnimationFrame(frame); return; }
   if (dev && ['z2ginyu', 'z2frieza', 'z2last', 'z2turles'].includes(dev)) { title.hidden = true; devZ2b(game, dev); requestAnimationFrame(frame); return; } // Z2 second half
   if (dev && dev.startsWith('willow')) { title.hidden = true; devWillow(game, dev); requestAnimationFrame(frame); return; } // ?dev=willow / willow51 / willowboss
-  if (dev && /^(z3|z4|tr|zg|csq|cda|cdb|cst|tac|pas|etf|ovw|flg|cmb|grw|sys|viz|skc|cos|anga|anpv|anzb)/.test(dev)) { title.hidden = true; if (devZ3(game, dev)) { requestAnimationFrame(frame); return; } title.hidden = false; } // Z3 (src/z3*.js)
+  if (dev && /^(z3|z4|tr|zg|csq|cda|cdb|cst|tac|pas|etf|ovw|flg|cmb|grw|sys|viz|skc|cos|anga|anpv|anzb|ancb|ancc|andt|anda)/.test(dev)) { title.hidden = true; if (devZ3(game, dev)) { requestAnimationFrame(frame); return; } title.hidden = false; } // Z3 (src/z3*.js)
   if (dev && dev.startsWith('z2')) { title.hidden = true; devZ2a(game, dev); requestAnimationFrame(frame); return; } // ?dev=z2 / z2b / z2c / z2d
   if (!options.skipOp) await playOpening(); // the title animation, like the original plays before its title screen
   showTitle();

@@ -54,38 +54,6 @@ BATTLES = {9704: (2015, 2), 9713: (2153, 1), 9723: (2256, 1), 9733: (2736, 0), 9
 FLAGS = {25: 'alone', 26: 'hp30', 27: 'hp40', 28: 'two', 29: 'hp50'}
 
 
-def bmid(tile, top, ev):
-    """set_battle_map (scenario_progress >= 2, all.rb 165998; src/z3.js battleMapId): the Z3_戦闘_背景 row of a square;
-    -1 the sea, -2 a cliff (both by variable 101 in the game)"""
-    if tile == 1550:
-        return 29
-    if tile in (1543, 1551):
-        return 0
-    if tile == 1575:
-        return 32
-    if tile in (1552, 1555):
-        if top in (274, 275):
-            return 4
-        if ev and ev[0] == 'animap1' and ev[1] == 0 and ev[2] == 2:
-            return 2
-        if ev and ev[0] == 'animap1' and ev[1] == 1 and ev[2] == 6:
-            return 9
-        return 1
-    if tile == 1553:
-        return 29 if top in (556, 553, 544, 540, 536, 552, 512, 516, 522, 524, 548) else 5
-    if tile == 1554:
-        return 7 if top == 276 else 6
-    if 1600 <= tile <= 1602:
-        return -2
-    if tile == 1591:
-        return 33
-    if tile == 1583:
-        return 28
-    if tile in (1541, 1549):
-        return 34
-    return -1
-
-
 def add(world, h, z3, tr):
     build_map, D = h['build_map'], h['D']
     pages = {p['condition']['variable_value']: p['list'] for p in D('map007')['events']['21']['pages']
@@ -116,7 +84,7 @@ def add(world, h, z3, tr):
         bosses[str(no)] = b
 
     # ---------- the areas ----------
-    doors, backdrops = {}, {}
+    doors = {}
     for a in AREAS:
         mid = a['map']
         m = build_map(mid, rows=a['rows'])
@@ -145,27 +113,16 @@ def add(world, h, z3, tr):
         world['pois'][str(mid)] = pois
         doors[str(a['door'])] = {'map': str(mid), 'x': a['at'][0], 'y': a['at'][1], 'v43': a['v43']}
 
-        # the field battles' backgrounds: the row of each ground tile, and the squares where the top tile or a map
-        # event makes it another (src/tr_z4.js backdrop)
-        src = D('map%03d' % mid)
-        t = src['data']
-        data, w, hh = t['data'], t['x'], t['y']
+        # the field battles' backgrounds: src/z3.js z3BackdropAt (set_battle_map) reads the map events by square
+        # (get_event_id_and_graphic: the highest id there, its first page) for the forest / grove rows
         evs = {}
-        for k, e in src['events'].items():
+        for k, e in D('map%03d' % mid)['events'].items():
             g = e['pages'][0]['graphic']
             if int(k) == 2 or not g.get('character_name'):
                 continue
-            key = (e['x'], e['y'])
-            if key not in evs or int(k) > evs[key][0]:  # get_event_id_and_graphic: the highest id there
+            key = f"{e['x']},{e['y']}"
+            if key not in evs or int(k) > evs[key][0]:
                 evs[key] = (int(k), [g['character_name'], g['character_index'], g['direction']])
-        tiles, spots = {}, {}
-        for y in range(a['rows']):
-            for x in range(w):
-                tile = data[x + y * w]
-                base = tiles.setdefault(tile, bmid(tile, 0, None))
-                row = bmid(tile, data[x + y * w + 2 * w * hh], evs.get((x, y), (0, None))[1])
-                if row != base:
-                    spots[f'{x},{y}'] = row
-        backdrops[str(mid)] = {'tiles': {k: v for k, v in tiles.items() if v != -1}, 'at': spots}  # (missing: the sea)
+        world['z3']['tileEvents'][str(mid)] = {k: v[1] for k, v in evs.items()}
 
-    world['trZ4'] = {'doors': doors, 'bosses': bosses, 'backdrops': backdrops}
+    world['trZ4'] = {'doors': doors, 'bosses': bosses}

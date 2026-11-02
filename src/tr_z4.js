@@ -6,10 +6,10 @@
 //   z4warp   map 94's squares between the androids (9761-9766)
 //   z4card40 map 95 カード特殊 (variable 44 = 40)
 import { audio, toast, sleep } from './core.js?v=20261102-1141';
-import { registerZ3, member, party } from './z3.js?v=20261102-1141';
+import { registerZ3, member, party, z3BackdropAt } from './z3.js?v=20261102-1141';
 import { cardSquare } from './cardgames.js?v=20261102-1141';
 import { spotTally } from './fieldmenu.js?v=20261102-1141';
-import { registerArea, registerTrSpot, enterArea, leaveArea, trBattle, goTo, inTimeRoom } from './timeroom.js?v=20261102-1141';
+import { registerArea, registerTrSpot, enterArea, leaveArea, trBattle, goTo, registerBackdrop } from './timeroom.js?v=20261102-1141';
 
 const T = (game) => game.world.trZ4;
 const DOORS = [9702, 9711, 9721, 9731, 9741, 9751, 9771];
@@ -47,25 +47,9 @@ registerTrSpot('z4card40', async (game, poi) => {
   toast('已存檔');
 });
 
-// the field battles' background on these maps: set_battle_map (scenario_progress = variable 301 = 2 in the time room,
-// as src/z3.js battleMapId): the ground tile's row, a square's own (forest, the ring …), the sea / cliffs by variable 101
-function backdrop(game) {
-  const s = game.state, t = T(game) && T(game).backdrops[s.map];
-  if (!t || !inTimeRoom(s)) return null;
-  const m = game.world.maps[s.map], tx = Math.floor(s.x / 32), ty = Math.floor(s.y / 32);
-  let row = t.at[`${tx},${ty}`] ?? t.tiles[m.layers[0][tx + ty * m.w]] ?? -1;
-  const v = (s.var && s.var[101]) || 0;
-  if (row === -1) row = v === 0 ? 3 : 8;
-  if (row === -2) row = v === 0 ? 1 : v === 1 ? 6 : 5;
-  return `bg/z3_battle_${row}.png`;
-}
-// (src/main.js sets game.backdrop after the imports have run: chained to it then)
-setTimeout(() => {
-  const g = window.__game;
-  if (!g) return;
-  const prev = g.backdrop;
-  g.backdrop = () => backdrop(g) || (prev ? prev() : null);
-});
+// the field battles' background on these maps: set_battle_map (scenario_progress = variable 301 = 2 in the time room),
+// the Z3 tile rules (the map events by square: world.z3.tileEvents, tools/build_tr_z4.py)
+for (const m of ['87', '88', '89', '91', '92', '94', '95']) registerBackdrop(m, (game) => z3BackdropAt(game));
 
 // ?dev=trz4 (&timer): a Z4-end save in the Z4 hall (map 85); ?dev=trz4willow / cell1 / cell2 / metal / core / android /
 // cellgame: next to that area's boss; ?dev=trz4before: the hall before the clear (map 86)

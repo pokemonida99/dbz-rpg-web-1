@@ -62,11 +62,10 @@
 - 地圖 94 的六個捷徑格（9761～9766）：15 號旁 (11,23)↔13 號旁 (62,17)、15 號旁 (11,25)↔14 號旁 (31,21)、14 號旁 (34,21)↔13 號旁 (62,19)（各自兩頁）。原版是直接移動（沒有音效）。
 - 頭目的站姿：地圖事件的圖（地圖 87 enemy6、88／89／95 enemy1、91 enemy5、94 三個 enemy5）。地圖 92 的核心在原版是 animap1 拼成的裝飾，和主線地圖 90 一樣不畫（主線複製的地圖都不畫 animap1 的樹、岩石）。
 
-## 野外戰鬥背景（新增的小掛鉤）
+## 野外戰鬥背景
 
-`game.backdrop`（`src/main.js`）只認主線章節的地圖（`z3Backdrop` 要 `isZ3Map`），時之間區域會拿到 Z1 的隨機背景。
-所以 `src/tr_z4.js` 在載入後把 `game.backdrop` 包一層：時之間裡、地圖 87～95 時照 `set_battle_map` 算（每種地面圖塊的列＋上層圖塊／地圖事件造成不同的格子，資料在 `world.trZ4.backdrops`；海、崖照變數 101），其他情況交回原本的。
-**給主 session**：Z1／Z2／Z3 的區域也會遇到同樣的事，合併時可以考慮改成 `src/timeroom.js` 的共用掛鉤（例如 `registerTrBackdrop`），這裡的包法就可以拿掉。
+用共用的 `registerBackdrop`（`src/timeroom.js`，main 的 commit 6c811eb）：地圖 87～95 交給 `z3BackdropAt`（`src/z3.js`，Z3 起的 `set_battle_map` 地形規則，時之間裡變數 301 = 2）。
+森林／林要看格子上的地圖事件，所以 `tools/build_tr_z4.py` 把這幾張地圖的事件寫進 `world.z3.tileEvents`（和主線地圖同一套：該格 id 最大的事件、第一頁的圖）。海、崖照變數 101。
 
 ## 和原版不同、沒做的地方
 

@@ -15,7 +15,7 @@ import { audio, toast } from './core.js?v=20261102-1554';
 import * as items from './items.js?v=20261102-1554';
 import * as growth from './growth.js?v=20261102-1554';
 import { KI_CARD } from './battle.js?v=20261102-1554';
-import { menuEntries, pickMember, memberChange } from './partymenu.js?v=20261102-1554';
+import { pickMember, memberChange } from './partymenu.js?v=20261102-1554';
 import { registerZ3, member, party } from './z3.js?v=20261102-1554';
 import { candidates } from './timeroom.js?v=20261102-1554';
 
@@ -55,8 +55,8 @@ fieldCards[38] = async ({ game, battle }) => {
   for (const v of [311, 312, 313]) s.var[v] = (s.var[v] || 0) + 1; // EXP / CAP / SP up
   for (const c of s.hand) { c.a = 7; c.g = 7; c.s = KI_CARD; } // every card Z / Z, 「氣」
   for (const m of s.party) {
-    const f = items.memberFx && items.memberFx(m); // ($cha_power_up / $cha_defense_up: src/items.js hook)
-    if (f) { f.pow = true; f.def = true; }
+    const f = items.memberFx(m); // $cha_power_up / $cha_defense_up
+    f.pow = true; f.def = true;
     m.hp = m.maxhp; m.ki = m.maxki; growth.revive(m); // full, $chadead false
   }
   toast('使用了「波倫加」');
@@ -113,7 +113,6 @@ fieldCards[171] = async ({ game }) => {
   gainCard(game.world, s, 74, 2); // たべもの
   gainCard(game.world, s, 75, 2); // ごちそう
   trim(game.world, s); // set_max_item_card: copies over the limit are sold
-  remaining(s);
   audio.se('Z3 アイテム取得', 80);
   toast('使用了「恐龍」');
   return true;
@@ -148,52 +147,37 @@ fieldCards[78] = async ({ game, battle }) => {
   party(game, ids);
   s.var[42] = s.party[0].id;
   if (s.party.length === 1 && s.party[0].hp <= 0) { s.party[0].hp = 1; growth.revive(s.party[0]); } // one member, KO'd: HP 1
-  if (battle) {
-    battle.party = s.party; // (setParty makes a new list; keepPlans re-pairs the picks)
-    // keepPlans leaves cur at -1 when the member choosing was taken out: back to "nobody" before choosing resumes
-    // (once; drop this when src/battle.js keepPlans does it itself)
-    const proto = Object.getPrototypeOf(battle);
-    battle.resume = function resume() { delete this.resume; if (this.cur === -1) this.cur = null; return proto.resume.call(this); };
-  }
+  if (battle) battle.party = s.party; // (setParty makes a new list; keepPlans re-pairs the picks)
   return 'close';
 };
 
-// ---------- the card screen: \V[381] / \V[382] (set_card_remaining) and 波倫加's rank (chg_card_rank) ----------
-function remaining(s) {
-  s.var[381] = s.cardMax.C - (s.cards[74] || 0); // 食物
-  s.var[382] = s.cardMax.C - (s.cards[75] || 0); // 宴席
-}
-const openCards = menuEntries.card;
-menuEntries.card = (ctx) => {
-  const s = cardState(ctx.game.state), p = ctx.game.world.items[38];
-  if (p) p.rank = s.sw && s.sw[491] ? 'S' : null; // 神龍の願い「ポルンガをSランクに」(switch 491)
-  remaining(s);
-  return openCards(ctx);
-};
-
-// ---------- skills from the skill cards (src/growth.js skillHooks, when it has them) ----------
+// ---------- skills from the skill cards (src/growth.js extra / cardHooks) ----------
 const fx = (world, id) => world.growth.skills[id].fx;
 const inSlot = (m, id) => { growth.ensure(m); return m.typ.includes(id) || m.add.includes(id); }; // temp_cha_skill.index
 const MIKUDASU = [401, 400, 399, 398, 397, 396, 395, 394, 393]; // 見下す 9 … 1
 const sum = (c) => c.a + c.g;
-const hooks = growth.skillHooks;
-if (hooks) {
-  // 422 さかさま (get_battle_skill, all.rb 6863): the card played has its stars turned over
-  hooks.card.push((world, m, c) => { if (growth.has(world, m, 422)) { c.a = 7 - c.a; c.g = 7 - c.g; } });
+let cardWorld = null; // cardMid gets no world: cardHooks run earlier in the same cardFor call and keep it
+growth.cardHooks.push((world) => { cardWorld = world; });
+growth.extra.push({
+  // 422 さかさま (get_battle_skill, all.rb 6863): the card played has its stars turned over (after ミラクル全開パワー)
+  cardMid: (c, m) => {
+    if (cardWorld && growth.has(cardWorld, m, 422)) { c.a = 7 - c.a; c.g = 7 - c.g; }
+    return c;
+  },
   // 見下す (set_damage_add, all.rb 14480 / 15850): own card's stars above the enemy's → more damage dealt, less taken
-  hooks.dealt.push((b, m, skill, d, x) => {
-    const id = x.card && x.foeCard && sum(x.card) > sum(x.foeCard) && MIKUDASU.find((k) => inSlot(m, k));
+  dealt: (d, b, m, skill, x) => {
+    const id = x && x.card && x.foeCard && sum(x.card) > sum(x.foeCard) && MIKUDASU.find((k) => inSlot(m, k));
     return id ? d * Number(fx(b.world, id).a) : d;
-  });
-  hooks.taken.push((b, m, d, x) => {
-    const id = x.card && x.foeCard && sum(x.card) > sum(x.foeCard) && MIKUDASU.find((k) => growth.has(b.world, m, k));
+  },
+  taken: (d, b, m, x) => {
+    const id = x && x.card && x.foeCard && sum(x.card) > sum(x.foeCard) && MIKUDASU.find((k) => growth.has(b.world, m, k));
     return id ? d * Number(fx(b.world, id).g) : d;
-  });
+  },
   // get_attack_hit_skill (all.rb 17309 / 17330): 取替え swaps the whole card with the enemy's unless the member moved
   // first (少年); 吸収(攻撃) takes one attack star
-  hooks.hit.push((b, m, foe, card) => {
-    if (!card || !foe.card) return;
-    const f = items.memberFx && items.memberFx(m);
+  hit: (v, b, m, foe, card) => {
+    if (!card || !foe.card) return v;
+    const f = items.memberFx(m);
     if (growth.has(b.world, m, 421) && !(f && f.sente)) {
       for (const k of ['a', 'g', 's']) [card[k], foe.card[k]] = [foe.card[k], card[k]];
     }
@@ -201,8 +185,9 @@ if (hooks) {
       foe.card.a = Math.max(0, foe.card.a - 1);
       card.a = Math.min(7, card.a + 1);
     }
-  });
-}
+    return v;
+  },
+});
 
 // ---------- ?dev=cst: a Z4 (メタルクウラ編, variable 43 = 90) save with every card of this file ----------
 registerZ3('cst', {

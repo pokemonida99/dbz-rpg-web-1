@@ -651,3 +651,4 @@ export const ZF_SOUNDS = ['Z1 必殺技', 'Z3 変身', 'Z1 ブン', 'Z1 エネ�
   'ZG 光線系ヒット3', 'Z1 爆発1', 'Z1 ザー', 'Z1 ゴー', 'Z3 超能力', 'Z3 避ける', 'Z3 跳ね返し', 'Z1 気を溜める', 'Z1 繰気弾', 'Z1 高速移動', 'Z1 逃げる',
   'Z1 強打', 'DB3 狼牙風風拳', 'Z1 打撃', 'ZG 打撃4', 'Z3 打撃', 'DB3 SE041', 'DB3 ダッシュ', 'DB3 刀', 'Z1 エネルギー波3', 'Z1 気を溜める3',
   'Z1 気を溜める4', 'Z1 衝撃波', 'Z1 飛ぶ', 'ZG 打撃3'];
+export { Stage as ZfStage, FILMS as ZF_FILMS, ALL as ZF_ALL, ACTOR as ZF_ACTOR, SMALL as ZF_SMALL, AGAIN as ZF_AGAIN, blt as zfBlt }; // (the other move films use this stage too: docs/anim-cd-plan.md)

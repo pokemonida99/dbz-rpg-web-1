@@ -166,15 +166,15 @@ battleHooks.dealt = (b, m, skill, d) => (m.cdaApe ? Math.trunc(d * 1.5) : d); //
 battleHooks.taken = (b, m, d) => (m.cdaApe ? Math.trunc(d * 0.7) : d); // (68743)
 
 // 大猿変身 (51 悟飯, 251 / 262 / 270 / 278 the crew): no attack, the member becomes the Great Ape (anime 151 / 1351:
-// the full moon, then the ape)
+// the full moon, then the ape; the crew's film is src/anime_bardock_crew.js crApe)
 battleHooks.act = async (b, i, skill) => {
   const m = b.party[i];
   if (!skill || !APES[m.id] || skill.id !== APES[m.id].move || m.cdaApe) return false;
   b.say(`${m.name} 的${skill.name}！`);
   const foe = b.foes.find((f) => f.hp > 0), cd = cardOf(b, m);
-  if (m.id === 5 && foe) { // 悟飯: the film (src/anime.js gohanApe: the full moon, the face)
+  if (foe) { // the film (src/anime.js gohanApe: the full moon, the face; the crew's 1351: the flicker into the ape)
     if (foe.card && cd) b.duel = { m, mc: cd, f: foe, fc: foe.card };
-    await b.play(m, foe, true, 51, -1, foe);
+    await b.play(m, foe, true, skill.id, -1, foe);
     apeOn(b.game.state, m);
   } else {
     audio.se('Z1 満月', 80);

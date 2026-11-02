@@ -49,6 +49,10 @@ files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", pv.split('export
 zf = open(os.path.join(root, 'src', 'anime_zfighters.js'), encoding='utf-8').read()
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", zf)}
 files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", zf.split('export const ZF_SOUNDS')[1])}
+# バーダック一味's move films (src/anime_bardock_crew.js, docs/anim-cd-plan.md ancc): its pic('…') and CR_SOUNDS
+cr = open(os.path.join(root, 'src', 'anime_bardock_crew.js'), encoding='utf-8').read()
+files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", cr)}
+files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", cr.split('export const CR_SOUNDS')[1])}
 # the opening (src/opening.js): its pictures and sounds, and the faces / sounds named in world.opening
 opening = open(os.path.join(root, 'src', 'opening.js'), encoding='utf-8').read()
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\(`?'?([^'`$]+\.(?:PNG|png))", opening)}

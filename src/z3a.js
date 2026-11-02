@@ -19,7 +19,8 @@ const MAPS = ['33', '34', '35'];
 // ---------- the scenes (z1field 1100-1220, 1591: 143_Event_Main.rb all.rb 173505-173870) ----------
 // The Z3 scene pictures are 512×128 (drawn at @z1_scrollscenex like the Z1 scroll scenes).
 const pic = (n) => `Graphics/Pictures/${n}.PNG`;
-const BG = (n) => ({ big: [pic(`Z3_背景_${n}`), 64, 46, [0, 0, 512, 128]] });
+const LOWER = new Set(["ナメック星崩壊", "洞窟", "草原", "街"]); // (these files end in .png)
+const BG = (n) => ({ big: [LOWER.has(n) ? `Graphics/Pictures/Z3_背景_${n}.png` : pic(`Z3_背景_${n}`), 64, 46, [0, 0, 512, 128]] });
 const P3 = pic('Z3_顔味方'), E3 = pic('Z3_顔イベント'), F3 = pic('Z3_顔敵'), CARD = pic('顔カード');
 const GOKU_SS = 11, GOKU = 0, PICCOLO = 1, GOHAN = 2, KRILLIN = 3, VEGETA = 9, CHICHI = 7, ROSHI = 21; // Z3_顔味方 rows
 const FRIEZA = [F3, 1];

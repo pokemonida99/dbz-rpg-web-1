@@ -45,12 +45,13 @@ import './tr_bardock.js?v=20261102-1935';
 import './training_more.js?v=20261102-1935';
 import './cards_square.js?v=20261102-1935';
 import './cards_a.js?v=20261102-1935';
-import './cards_b.js?v=20261102-1935';
+import { favLoad } from './cards_b.js?v=20261102-1935';
 import './cards_story.js?v=20261102-1935';
 import './skills_a.js?v=20261102-1935';
 import './skills_b.js?v=20261102-1935';
 import './skills_c.js?v=20261102-1935';
 import './flg.js?v=20261102-1935'; // ?dev=flg… test battles for the move flags (docs/batch2-plan.md flg)
+import './grw.js?v=20261102-1935'; // batch 2 grw: CE64, 地球育ちのサイヤ人 at S-combos, dev jumps ?dev=grw…
 // 時之間 phase 3 / ZG: the stories (docs/zg-plan.md)
 import './tr_future.js?v=20261102-1935';
 import './zg_broly.js?v=20261102-1935';
@@ -303,6 +304,7 @@ function load(key = SAVE_KEY) {
     game.state = s;
     s.sw = s.sw || {};
     s.var = s.var || { 42: 3 };
+    favLoad(s); // variable 228 = 20 (set_start_val)
     startField();
     resumeChapter(game);
     resumeZ3(game) || resumeZ2b(game) || resumeChapter3(game) || resumeChapter4(game) || resumeChapter5(game) || resumeChapter6(game) || resumeWillow(game) || resumeZ2a(game);

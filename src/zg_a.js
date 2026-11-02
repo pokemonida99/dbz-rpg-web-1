@@ -256,7 +256,8 @@ function crewSkills(game) {
   const late = (sw[598] || sw[586] || sw[860]) && (s.var[40] || 0) === 2;
   for (const [id, list] of Object.entries(t.crew)) {
     const m = member(game, +id), best = t.best[id];
-    for (const k of list) if (!m.skills.includes(k)) m.skills.push(k);
+    const ape = sw[{ 27: 364, 28: 365, 29: 366, 30: 367 }[id]]; // (the Great Ape: src/cards_a.js)
+    list.forEach((k, x) => { if ((x < 2 || !ape) && !m.skills.includes(k)) m.skills.push(k); });
     if (late && sw[{ 27: 629, 28: 631, 29: 633, 30: 635 }[id]] && !m.skills.includes(best)) m.skills.push(best);
   }
 }

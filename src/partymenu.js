@@ -50,8 +50,9 @@ const BIG = new Set([29, 36, 47, 63, 64, 73, 83, 84, 92, 93]);
 const TRANSFORM = new Set([29, 51, 59, 133, 158, 185, 245, 251, 262, 270, 278]); // 26 = 變身技 (超サイヤ人／大猿変身)
 
 // KI a move really costs (get_mp_cost, 008_Share_Sub_skill.rb:4601); other systems replace it,
-// e.g. the 必殺技 item card makes the next move free (src/items.js sets hooks.kiNeed)
-export const hooks = { kiNeed: (m, ki) => ki };
+// e.g. the 必殺技 item card makes the next move free (src/items.js sets hooks.kiNeed).
+// badge(state, m) → an element on the member's button of the party list, or null (the favourite: src/cards_b.js)
+export const hooks = { kiNeed: (m, ki) => ki, badge: null };
 
 // the special move 自動 picks for a member whose card allows one (null = no move: a normal attack)
 export function autoSkill(world, state, m) {
@@ -188,6 +189,8 @@ function screen(title, game, battle, body) {
     const row = el('div', 'pm-members');
     party.forEach((m, i) => {
       const b = el('button', 'pm-mem' + (i === cur ? ' on' : '') + (swapFrom === i ? ' from' : ''), digits(i + 1, 3), faceOf(m, 44), el('span', '', m.name));
+      const badge = hooks.badge && hooks.badge(s, m);
+      if (badge) b.append(badge);
       b.onclick = () => {
         if (swapFrom != null) { // 並び替え: the two swap places (Scene_Db_Status update, $window_state 1)
           if (swapFrom !== i) {

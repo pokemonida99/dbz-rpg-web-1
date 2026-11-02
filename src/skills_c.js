@@ -34,8 +34,8 @@ let pickTime = false; // battle.js asks 'school' at the card pick (see the patch
 
 // ---------- Pエネルギー炉 ----------
 const P_RO = [423, 424, 425];
-const HP_CHAIN = [10, 12, 35, 248, 249, 423, 424, 425]; // 18620-18651 (10 / 12 / 35 are growth.recover's regen)
-const KI_CHAIN = [11, 12, 248, 249, 423, 424, 425]; // 18921-18942
+const HP_CHAIN = [10, 12, 35, 248, 249, 423, 424, 425]; // 18620-18651 (10 / 12 / 35 / 248 / 249: growth.recover)
+const KI_CHAIN = [11, 12, 248, 249, 423, 424, 425]; // 18921-18942 (11 / 12 / 248 / 249: growth.recover)
 const pct = (max, p) => Math.ceil((max * p) / 100);
 
 // recover runs before the other entries' (練氣 in src/cards_b.js): 気を練る comes after these in turn_recover_hpki (19096)

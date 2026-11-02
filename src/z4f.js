@@ -13,7 +13,7 @@ import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261102-1935';
 import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261102-1935';
 import { addMoves, ANIME_IMAGES } from './anime.js?v=20261102-1935';
 import { makeMember, applyLevel } from './party.js?v=20261102-1935';
-import { superSaiyan, syncSuperSaiyan, afterBattle, offHooks } from './supersaiyan.js?v=20261102-1935';
+import { superSaiyan, syncSuperSaiyan, afterBattle, offHooks, onHooks, changeHooks } from './supersaiyan.js?v=20261102-1935';
 import { applyEra } from './era.js?v=20261102-1935';
 import { newHand } from './battle.js?v=20261102-1935';
 import { cardSquare } from './cardgames.js?v=20261102-1935';
@@ -284,21 +284,27 @@ function restore(t) {
 }
 // on_off_super_saiyazin 5 (all.rb 12824): 超サイヤ人2 悟飯 is the same actor (18) — on: the 固有技能 真の力 (38) in place
 // of his first one, the ZG battle sheets; off: back to the first one, and to the normal Gohan (switch 2 off too)
-function ss5(on) {
-  const s = G.state, c = C(G);
+function ss5(on, world = G.world, s = G.state) {
+  const c = world.z3.z4f;
   s.ss = s.ss || {};
   if (on) {
     if (s.ss[5]) return;
+    const was = { ...s.ss };
     const m = s.party.find((x) => x.id === 18) || (s.bench || {})[18];
     s.ss[5] = true;
-    if (!m) return;
-    if (m.typ) { s.flags.z4fTyp = m.typ[0]; m.typ[0] = 38; m.got = m.got || {}; m.set = m.set || {}; m.got[38] = m.set[38] = true; }
-    m.sprite = c.ss2.sprite;
-    m.special = c.ss2.special;
-  } else ssOff5();
+    if (m) {
+      m.typ = m.typ || [0, 0, 0]; // (one who has not fought yet: src/growth.js ensure)
+      s.flags.z4fTyp = m.typ[0]; m.typ[0] = 38; m.got = m.got || {}; m.set = m.set || {}; m.got[38] = m.set[38] = true;
+      (m.sp = m.sp || {})[38] = (world.growth.skills[38] || {}).sp || 0; // (取得済み状態にする)
+      m.sprite = c.ss2.sprite;
+      m.special = c.ss2.special;
+    }
+    for (const f of changeHooks) f(world, s, 5, true, was); // CE64, variables 450 / 451 (src/grw.js)
+  } else ssOff5(world, s);
 }
 function ssOff5(world = G.world, s = G.state) {
   if (!s.ss || !s.ss[5]) return;
+  const was = { ...s.ss };
   s.ss[5] = false;
   const m = s.party.find((x) => x.id === 18) || (s.bench || {})[18];
   if (m) {
@@ -306,9 +312,11 @@ function ssOff5(world = G.world, s = G.state) {
     delete m.sprite;
     delete m.special;
   }
+  for (const f of changeHooks) f(world, s, 5, false, was);
   superSaiyan(world, s, 2, false);
 }
 offHooks[5] = ssOff5; // (off_super_saiyazin_all after a battle, src/supersaiyan.js)
+onHooks[5] = (world, s) => ss5(true, world, s); // (超2 悟飯's 超サイヤ人変身 59 in battle: src/grw.js)
 let me = null; // the ME playing (249: ZSSD 戦いの終わり)
 function stopMe() { if (me) { try { me.stop(); } catch (e) { /* ended */ } me = null; } }
 addNodes({

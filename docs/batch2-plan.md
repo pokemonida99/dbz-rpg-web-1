@@ -38,6 +38,12 @@
 6. 大猿變回後照原版學會魔閃光（cards-a.md:71）；巴達克一夥的大猿招式 251／262／270／278（zg-a.md:56、zg-b.md:57，可延伸悟飯的大猿系統）。
 7. 喜歡的角色：重力室、界王、古雷格利、Z3 修行的經驗值也走 `growth.expFor`（cards-b.md:46）；讀檔時變數 228 重設成 20（cards-b.md:45）；隊伍畫面的喜歡角色記號（`partymenu.hooks.badge`，cards-b.md:50）。
 
+> **grw 完成**（分支 worktree-agent-a5c537bd387d0d31b）：1～6 照原版做好（`src/growth.js`、`src/grw.js`、`src/cards_a.js`、`src/z4f.js`、
+> `src/supersaiyan.js` 的 `changeHooks`／`onHooks`、`tools/build_growth.py` EXTRA 加 38／678、`tools/build_zg_a.py` 放回大猿變身）。
+> 7：原版的重力室、界王、古雷格利、Z3 修行本來就不經過 `get_exp_add`（只有戰鬥與速度／琪琪／冷笑話／波波修行），所以不改；
+> 變數 228 讀檔重設、隊伍畫面記號已做。地球育ちのサイヤ人的組合技加星用既有的 `growth.ext('combo')`，沒有改 `src/combo.js`、`src/battle.js`。
+> 跳關：`?dev=grwpic`、`grwkami`、`grwearth`、`grwss1`、`grwss2`、`grwape`、`grwfav`（`src/grw.js`）。
+
 ## sys：劇情與系統的小缺口
 1. 神龍的願望效果（z3cd.md:83-84）：490 神探測器、494／495 卡片上限 8／9、496～499 ZP ×2～5、1320 所有卡片移動 8 格。
 2. 時之間 Z1／Z2 的特別卡片格（變數 44 = 10／20，cards-square.md:48、tr-z2.md:70）。

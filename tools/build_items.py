@@ -22,7 +22,9 @@ BASE = list(range(1, 27)) + [28, 29, 30, 32, 33, 34, 40, 41, 45, 49, 50, 51, 52,
         # every other card the original hands out after Z1: the era card squares (Scene_Shop z2～zG_cardlist, create_get_card
         # card_id_z2～zg), drops, the story's gifts and key items (docs/cards-plan.md: their effects are in src/cards_*.js)
         38, 48, 57, 58, 59, 62, 63, 68, 78, 90, 103, 119, 125, 126, 127, 128, 129, 131, 132, 133, 140, 145, 155, 157, 168, 171,
-        198, 199, 200, 202, 211, 212]
+        198, 199, 200, 202, 211, 212,
+        # the card shop's 「打倒 X 後追加」 cards (tools/build_cards_square.py BONUS; effects: src/sys.js, world.growth.cards)
+        194, 187, 207, 184, 195, 180, 179, 181, 201, 162, 165, 166, 167]
 # create_get_card: card_id_z1[rand(size - 1)] — the last entry (197) can never come up
 LOTTERY = [9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 32, 34, 49, 50, 51, 52, 64, 70,
            75, 80, 82, 83, 84, 87, 88, 106, 121]

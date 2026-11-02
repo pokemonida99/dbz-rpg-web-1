@@ -55,6 +55,7 @@ import './zg_a.js?v=20261102-1935';
 import './zg_b.js?v=20261102-1935';
 import './zg_c.js?v=20261102-1935';
 import './zg_recap.js?v=20261102-1935'; // ZG 的概況 (前情提要: src/fieldmenu.js)
+import './sys.js?v=20261102-1935'; // 第二批 sys: 神龍的願望, the shop's added cards, Z3 / Z4 的概況 (docs/sys.md)
 
 // testing in a hidden browser pane (no animation frames there): ?timer drives every frame with timers instead
 if (new URLSearchParams(location.search).has('timer')) window.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16);
@@ -128,7 +129,7 @@ const game = {
     else if (poi.lines) await say(poi.lines);
     if (poi.effect === 'rest') for (const m of s.party) { m.hp = m.maxhp; m.ki = m.maxki; m.ko = false; }
     if (poi.effect === 'ki') for (const m of s.party) m.ki = m.maxki;
-    if (poi.effect === 'shop') await cardSquare(this); // a Z mark: the original's card square (also saves)
+    if (poi.effect === 'shop') await cardSquare(this, poi); // a Z mark: the original's card square (also saves; poi.v44: カード特殊)
     if (poi.effect === 'rest' || poi.effect === 'save' || poi.effect === 'shop') { save(true); toast('已存檔'); }
     renderHud();
     this.busy = false;
@@ -411,7 +412,7 @@ async function boot() {
   if (dev && dev.startsWith('ch6')) { title.hidden = true; devChapter6(game, dev); requestAnimationFrame(frame); return; }
   if (dev && ['z2ginyu', 'z2frieza', 'z2last', 'z2turles'].includes(dev)) { title.hidden = true; devZ2b(game, dev); requestAnimationFrame(frame); return; } // Z2 second half
   if (dev && dev.startsWith('willow')) { title.hidden = true; devWillow(game, dev); requestAnimationFrame(frame); return; } // ?dev=willow / willow51 / willowboss
-  if (dev && /^(z3|z4|tr|zg|csq|cda|cdb|cst|tac|pas|etf|ovw)/.test(dev)) { title.hidden = true; if (devZ3(game, dev)) { requestAnimationFrame(frame); return; } title.hidden = false; } // Z3 (src/z3*.js)
+  if (dev && /^(z3|z4|tr|zg|csq|cda|cdb|cst|tac|pas|etf|ovw|sys)/.test(dev)) { title.hidden = true; if (devZ3(game, dev)) { requestAnimationFrame(frame); return; } title.hidden = false; } // Z3 (src/z3*.js)
   if (dev && dev.startsWith('z2')) { title.hidden = true; devZ2a(game, dev); requestAnimationFrame(frame); return; } // ?dev=z2 / z2b / z2c / z2d
   if (!options.skipOp) await playOpening(); // the title animation, like the original plays before its title screen
   showTitle();

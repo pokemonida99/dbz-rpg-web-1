@@ -110,6 +110,10 @@ def boxes(lines):
         b[1] = b[1].rstrip('　 ')
         if b[0] and b[1].endswith('」'):
             b[1] = b[1][:-1]
+    # 「\^」: the window closes by itself once its text is out (after its \| 1 s / \. ¼ s waits): kept at the end of the
+    # last box as those codes (src/opening.js / src/core.js say); a window of codes only is dropped as before
+    if out and any('\\^' in raw for raw in lines):
+        out[-1][1] += ''.join(re.findall(r'\\[|.]', ''.join(lines))) + '\\^'
     return out
 
 

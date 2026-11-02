@@ -452,6 +452,8 @@ export async function say(ui, faces, [who, text, faceOf]) {
     if (e.ok) paint(); else e.p.then(paint);
   }
   d.querySelector('.who').textContent = who;
+  const auto = text.includes('\\^'); // 「\^」: closes by itself once the text (and its waits) is out
+  if (auto) text = text.replace(/\\\^/g, '');
   const out = d.querySelector('.text');
   out.textContent = '';
   d.hidden = false;
@@ -470,7 +472,7 @@ export async function say(ui, faces, [who, text, faceOf]) {
     if (!rush) await pause(ui, 1, () => rush);
   }
   d.classList.remove('busy');
-  if (!ui.skipped) await new Promise((res) => { ui.onTap = res; ui.onSkip.push(res); });
+  if (!ui.skipped && !auto) await new Promise((res) => { ui.onTap = res; ui.onSkip.push(res); });
   ui.onTap = null;
 }
 

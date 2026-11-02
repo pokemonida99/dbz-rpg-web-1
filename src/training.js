@@ -186,10 +186,13 @@ async function speedTraining(game) {
     const divide = [1, 0.5][era] || 0.2;
     await trainingRewards(game, m, {
       exp: half(count ? exp : 0), cap: half(Math.ceil(count / divide)), sp: half(Math.ceil(count / divide)),
-      zp: half(Math.ceil(count / 2)), tec: half(Math.ceil(count / 5)), pool: 'after',
+      zp: half(Math.ceil(count / 2) * zpRate(s)), tec: half(Math.ceil(count / 5)), pool: 'after',
     }, SPEED_TEXT, async (lines) => { setMsg(lines); await wait(); audio.se(SE_OK); });
   }
 }
+
+// get_zp_bairitu (all.rb 9148): the training's ZP ×2-5 by the wishes of switches 496-499 (神龍, src/sys.js)
+export const zpRate = (s) => { const w = (s && s.sw) || {}; return w[499] ? 5 : w[498] ? 4 : w[497] ? 3 : w[496] ? 2 : 1; };
 
 const SPEED_TEXT = { exp: '修行終了！　　獲得{n}經驗值！', level: '{name}升到了{n}級！', cap: '獲得CAP　{n}　！', sp: '獲得SP　{n}　！',
   zp: '獲得ZP　{n}　！', tec: '隨機必殺技的使用回數增加　{n}　回！' };

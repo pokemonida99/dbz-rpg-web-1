@@ -252,7 +252,7 @@ export function beforeExp(b, exp) {
   const s = b.game.state;
   s.var = s.var || {};
   s.var[305] = (s.var[305] || 0) + exp;
-  for (const m of b.party) ensure(m).zp += b.foes.length;
+  for (const m of b.party) ensure(m).zp += b.foes.length * ext('zpRate', 1, s); // get_zp_bairitu (50754): ×2-5 by the wishes (src/sys.js)
 }
 
 // SP for every member's 追加技能, then the 固有技能 their level now allows. Returns the message pages

@@ -257,7 +257,11 @@ export async function say(lines, keep = false) {
   dlg.hidden = false;
   dlgChoices.hidden = true;
   for (const line of lines) {
-    const [who, text, face] = Array.isArray(line) ? line : ['', line]; // face: whose face, when not the speaker's
+    let [who, text, face] = Array.isArray(line) ? line : ['', line]; // face: whose face, when not the speaker's
+    // 「\^」 (tools/build_data.py boxes): the window closes by itself after its \| (1 s) / \. (¼ s) waits
+    text = String(text ?? '');
+    const auto = text.includes('\\^'), hold = (text.match(/\\\|/g) || []).length * 1000 + (text.match(/\\\./g) || []).length * 250;
+    text = text.replace(/\\[|.^]/g, '');
     dlgWho.textContent = who;
     showFace(face || who);
     dlgText.textContent = '';
@@ -275,6 +279,7 @@ export async function say(lines, keep = false) {
     });
     dlg.classList.remove('busy');
     if (keep && line === lines[lines.length - 1]) break;
+    if (auto) { await new Promise((res) => { dlgAdvance = res; setTimeout(res, hold); }); continue; } // (a tap goes on at once)
     await new Promise((res) => { dlgAdvance = res; });
   }
   dlgAdvance = null;

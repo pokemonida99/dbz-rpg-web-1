@@ -23,7 +23,7 @@ import { z2aGoal, startZ2a, resumeZ2a, z2aSpot, storyScenes, z2aBackdrop, devZ2a
 import { applyEra } from './era.js?v=20261103-0319'; // the Z2 art while variable 40 is 1
 import { syncCostume } from './costume.js?v=20261103-0319'; // 換裝: the pictures follow the clothes' variables
 import { z2bGoal, startZ2Ginyu, startZ2b, resumeZ2b, z2bSpot, isZ2bMap, z2bBoss, devZ2b } from './z2b.js?v=20261103-0319'; // Z2 second half: the Ginyu Force, Frieza
-import { startZ3, resumeZ3, z3Spot, isZ3Map, z3Boss, z3Goal, z3Backdrop, devZ3 } from './z3.js?v=20261103-0319'; // Z3 (the chapters below register themselves there)
+import { startZ3, resumeZ3, z3Spot, isZ3Map, z3Boss, z3Goal, z3Backdrop, z3BackdropAt, devZ3 } from './z3.js?v=20261103-0319'; // Z3 (the chapters below register themselves there)
 import './z3a.js?v=20261103-0319';
 import './z3b.js?v=20261103-0319';
 import './z3c.js?v=20261103-0319';
@@ -343,7 +343,30 @@ function startField() {
 // the chapter that follows, by name (a later part calls game.nextChapter('ch6') …); false when it isn't there
 const CHAPTERS = { ch4: startChapter4, ch5: startChapter5, ch6: startChapter6, willow: startWillow };
 const nextChapter = (k) => (typeof k !== 'string' ? startChapter3(game) : CHAPTERS[k] ? CHAPTERS[k](game) : false);
-Object.assign(game, { startZ2a, storyScenes, backdrop: () => trBackdrop(game) || z3Backdrop(game) || z2aBackdrop(game), startZ3: () => startZ3(game) }); // Z2 (src/z2a.js); the Willow chapter calls game.startZ2a
+// battle backgrounds where no chapter picks one (set_battle_map, all.rb 165938): a strip of Z1_戦闘_背景 (scenario progress
+// 0, tools/build_z1bg.py) / Z2_戦闘_背景 (1) / Z3_戦闘_背景 (2+, src/z3.js) under a black sky, by the ground tile under the
+// player; a Z1 tile with no rule keeps the last one, like $Battle_MapID
+function z1Backdrop(game) {
+  const s = game.state, m = s && game.world.maps[s.map];
+  if (!m) return null;
+  const t = m.layers[0][Math.floor(s.y / 32) * m.w + Math.floor(s.x / 32)], era = (s.var && s.var[40]) || 0;
+  if (era === 1) return `bg/z2_battle_${(game.world.z2a && game.world.z2a.backdrops[t]) ?? 0}.png`; // scenario progress 1: else 0
+  if (era >= 2) return z3BackdropAt(game);
+  let row = null;
+  if (t === 1537 || t === 1545) row = 0; // the first field
+  else if ((t >= 1576 && t <= 1579) || (t >= 1584 && t <= 1586) || (t >= 1592 && t <= 1594)) row = 5; // Snake Way
+  else if (t === 1538 || t === 1546) row = Math.random() < 0.5 ? 2 : 6; // the Sansho area, the Willow snowfield
+  else if (t === 1539 || t === 1547) row = 3; // the Nikki area
+  else if (t === 1540 || t === 1548) row = 4; // the Ginger area
+  else if (t === 1541 || t === 1549) row = 7; // the Garlic area
+  else if (t === 1542) row = Number(s.map) !== 65 ? 8 : 11; // the Vegeta area (variable 13: the map)
+  else if (t >= 1560 && t <= 1574) row = 1; // the sea
+  else if (t === 1556) row = 10; // the Willow area
+  if (row != null) s.z1Bd = row;
+  return `bg/z1_battle_${s.z1Bd || 0}.png`;
+}
+
+Object.assign(game, { startZ2a, storyScenes, backdrop: () => trBackdrop(game) || z3Backdrop(game) || z2aBackdrop(game) || z1Backdrop(game), startZ3: () => startZ3(game) }); // Z2 (src/z2a.js); the Willow chapter calls game.startZ2a
 Object.assign(game, { startField, save, renderHud: () => renderHud(), showTitle: (sub, notes) => showTitle(sub, notes), nextChapter, startChapter4, startChapter5, startChapter6, startWillow, devChapter5: () => devChapter5(game), devChapter6: () => devChapter6(game), startZ2Ginyu: () => startZ2Ginyu(game), startZ2b: () => startZ2b(game) }); // for src/chapter*.js
 
 // ---------- title ----------

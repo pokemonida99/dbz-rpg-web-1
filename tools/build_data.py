@@ -352,6 +352,8 @@ import build_viz  # noqa: E402  (batch 2 viz: the era's card faces, the Great Ap
 build_viz.add(world, globals())
 import build_costume  # noqa: E402  (換裝: the clothes' map sprites, the faces / battle sheets src/costume.js names)
 build_costume.add(world, globals())
+import build_z1bg  # noqa: E402  (Z1 battle backgrounds: the original's strips under a black sky, src/main.js z1Backdrop)
+build_z1bg.add(world, globals())
 # SP reward = the enemy's max MP (docs/battle-rules.md §6), here at the end so it covers the enemies every chapter added
 # (build_growth runs early and only sees the Z1 chapters' first ones)
 for eid, e in world['enemies'].items():

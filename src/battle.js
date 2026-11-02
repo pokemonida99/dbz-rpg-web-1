@@ -32,7 +32,7 @@ const PURPLE = '#9040f0', CREAM = '#ffd8a0', INK = '#301808', RUST = '#d0480c';
 const FONT = 'Cubic11, system-ui, sans-serif';
 // portrait battle backgrounds made for this version (pixel art in the style of the Z1 field strip), 400×600;
 // one is picked per battle and kept for the whole fight. Film row 0 sits on image row BACKDROP_TOP.
-const BACKDROPS = ['bg/battle_night.png', 'bg/battle_dusk.png', 'bg/battle_day.png'];
+const BACKDROPS = ['bg/z1_battle_0.png']; // (a battle no map picks a background for: the original's black sky over the first field)
 const BACKDROP_TOP = 205;
 // 設定「選完直接出招」(src/fieldmenu.js keeps it in sync): resolve as soon as everyone has picked, like the original
 export const battleOpts = { quick: false };

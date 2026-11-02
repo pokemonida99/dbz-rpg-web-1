@@ -14,11 +14,16 @@
 //
 // Game state: state.skillLv = { skillId: uses } ($cha_skill_level, shared with src/partymenu.js tally(): moves and
 // combos alike), state.combos = [learned ids]. The battle 菜單's 組合技 entry opens the list (menuEntries.combo).
-import { VERSION, view, img, audio, rand } from './core.js?v=20261102-1935';
-import { SW } from './anime.js?v=20261102-1935';
+//
+// ひらめき (閃き必殺技, data/tecspark.json → world.tecspark, tools/build_tecspark.py) is checked here too, just before the
+// combos (chk_tecspark, all.rb 53813): see spark() below.
+import { VERSION, view, img, audio, rand, sleep } from './core.js?v=20261102-1935';
+import { SW, moveFilm, addMoves } from './anime.js?v=20261102-1935';
 import { ComboDuel } from './combo-anime.js?v=20261102-1935';
 import { menuEntries } from './partymenu.js?v=20261102-1935';
-import { ext } from './growth.js?v=20261102-1935';
+import * as growth from './growth.js?v=20261102-1935';
+import * as items from './items.js?v=20261102-1935';
+import * as battle from './battle.js?v=20261102-1935'; // battleHooks (used at run time only: battle.js imports this file)
 
 let DATA = { combos: [], moves: {}, sync: {} };
 export const comboData = fetch(`data/combos.json?v=${VERSION}`).then((r) => r.json()).then((d) => (DATA = d)).catch(() => DATA);
@@ -91,7 +96,11 @@ function findCombo(b, i) {
 }
 
 // ---------- damage (102:16062-16190; docs/battle-rules.md §4.2) ----------
-function comboDamage(b, combo, who, foe, foeCard) {
+// Then as damage_calculation does for any special move (all.rb 68616-68707): ×1.3 when any participant is a Super
+// Saiyan (class 9, $tmp_btl_ani_scombo_cha), ×1.3 for the school match (the lead's card is of his own school), the
+// passive skills (set_damage_add with the combo, element 33: the skills of every participant together, the lead's card
+// for the card checks — withSkills), 敵必ず回避 (switch 18) and variable 81. Combos never miss (element 29).
+function comboDamage(b, combo, who, lead, foe, foeCard) {
   const state = b.game.state, n = who.length;
   let P = combo.power, A = 0, star = 0;
   who.forEach((i, x) => {
@@ -102,24 +111,115 @@ function comboDamage(b, combo, who, foe, foeCard) {
   });
   const k = n > 2 ? 1 + (n - 2) * 0.2 : 1;
   P += Math.ceil(uses(state, combo.id) * (n / 2) * k);
-  star = Math.min(7, star + (n - 2) + ext('combo', 0, b, who)); // (連攜: src/cards_b.js)
+  star = Math.min(7, star + (n - 2) + growth.ext('combo', 0, b, who)); // (連攜: src/cards_b.js)
   let d = Math.floor(((A + P) * 8 * (star + 7 + rand(2) + 1)) / Math.floor((foe.def * (foeCard.g + 7)) / 3));
-  d = Math.floor(d * 1.3); // every participant's card is their own school; combos never miss (element 29)
-  return d;
+  if (who.some((i) => b.party[i].school === 8)) d = Math.floor(d * 1.3); // a participant of class 9 (68622-68641)
+  d = Math.floor(d * 1.3); // the school match (68655)
+  const skill = { id: combo.id, name: combo.name, power: combo.power, combo: true };
+  const card = b.hand[b.plans[b.party.indexOf(lead)].card];
+  d = withSkills(b, lead, who.map((i) => b.party[i]), () => growth.dealt(b, lead, skill, d, { card, foe, foeCard })); // (68664)
+  const hooks = battle.battleHooks;
+  if (hooks.dealt) d = hooks.dealt(b, lead, skill, d);
+  if (b.foesEvade) return -1; // switch 18 敵必ず回避 (68695)
+  return b.dmgRate ? Math.trunc(d * b.dmgRate) : d; // variable 81 (68701)
+}
+// set_damage_add for a combo (all.rb 14376-14410): temp_cha_skill is every participant's 固有技能 and learned 追加技能;
+// the lead (cha_no) is still the one compared with the others (激怒) and whose card counts (様子見, 見下す). Here the
+// lead carries all of them while fn runs.
+function withSkills(b, lead, members, fn) {
+  const keep = { typ: growth.ensure(lead).typ, add: lead.add, sp: lead.sp };
+  const typ = [], add = [], sp = { ...lead.sp };
+  for (const m of members) {
+    growth.ensure(m);
+    typ.push(...m.typ);
+    for (const id of m.add) if (id && growth.has(b.world, m, id)) { add.push(id); sp[id] = Math.max(sp[id] || 0, m.sp[id] || 0); }
+  }
+  Object.assign(lead, { typ, add, sp });
+  try { return fn(); } finally { Object.assign(lead, keep); }
+}
+
+// ---------- ひらめき (閃き必殺技: chk_tecspark / chk_tecspark_flag, all.rb 53656-53790) ----------
+// When a member's turn comes with a special move, before the combos, each world.tecspark row for that move is tried
+// in order. A row goes off when its member (cha) is in the party, played a card, is up, not stopped and has not acted,
+// picked that move with a card of their own school (a 必 card does not count) whose stars reach the row's minimum, and
+// has used the move skill_level_num times; the row's switch / variable condition holds, variable 40 ≥ its scenario
+// progress, it is not learned yet (switch get_flag), rand(100)+1 ≤ its rate, and it is not the 戦闘練習. Then the
+// member whose turn it is uses the new move instead, without KI (@new_tecspark_flag, 54590), and the combos are checked
+// with it. After the scene the move is learned (new_flag → get_flag, learn_skill) with 「恭喜！」 (chk_new_tecspark 50383).
+const freeKi = new WeakSet(); // the member whose move this action is a new ひらめき one
+growth.extra.push({ ki: (v, m) => (freeKi.has(m) ? 0 : v) }); // (get_mp_cost: growth.kiCost)
+const sparks = (b) => b.world.tecspark || [];
+
+function sparkOk(b, r) {
+  const s = b.game.state, sw = s.sw || {}, v = s.var || {};
+  const j = b.party.findIndex((m) => m.id === r.cha);
+  const m = b.party[j], p = b.plans[j];
+  if (!p) return false; // not in the party / played no card
+  if (r.chk) {
+    const [kind, no, how, val] = r.chk;
+    if (kind === 1 && !sw[no]) return false;
+    if (kind === 2) { const x = v[no] || 0, k = Number(val); if (how === 0 ? x !== k : how === 1 ? x < k : x > k) return false; }
+  }
+  if (r.era > (v[40] || 0)) return false;
+  if (rand(100) + 1 > r.rate) return false;
+  if (sw[r.get]) return false;
+  if (m.ko || m.hp <= 0 || m.stop > 0 || b.acted.has(j)) return false;
+  if (!p.skill || p.skill.id !== r.tec) return false;
+  const cd = b.hand[p.card];
+  if (cd.s !== m.school || cd.a < r.atk || cd.g < r.grd) return false;
+  if (uses(s, r.tec) < r.uses) return false;
+  return !b.practice; // (switch 1305)
+}
+
+function spark(b, i) {
+  const p = b.plans[i];
+  if (!p || !p.skill) return;
+  for (const r of sparks(b)) {
+    if (r.tec !== p.skill.id || !sparkOk(b, r)) continue;
+    const sk = b.world.skills[r.no];
+    if (!sk) return;
+    if (!moveFilm(r.no) && moveFilm(r.tec)) addMoves({ [r.no]: moveFilm(r.tec) }); // (a move without a film of its own yet)
+    p.skill = sk;
+    freeKi.add(b.party[i]);
+    const sw = b.game.state.sw;
+    if (!sw[r.get]) sw[r.new] = true; // chk_new_get_tecspark
+    return;
+  }
+}
+
+// learn_skill: the actor's move list, in the party, on the bench, or the form not in use (state.forms)
+function learnMove(b, id, no) {
+  const s = b.game.state;
+  const m = b.party.find((x) => x.id === id) || s.party.find((x) => x.id === id) || (s.bench || {})[id];
+  if (!m && !b.world.actors[id]) return;
+  s.forms = s.forms || {};
+  const list = m ? m.skills : (s.forms[id] = s.forms[id] || { skills: [...b.world.actors[id].skills] }).skills;
+  if (!list.includes(no)) list.push(no);
 }
 
 // ---------- battle hook: called when party member i's turn comes; true = a combo was played instead ----------
 export async function tryCombo(b, i) {
+  for (const m of b.party) freeKi.delete(m);
+  spark(b, i);
   const found = findCombo(b, i);
   if (!found) return false;
   const { combo, who } = found;
-  const state = b.game.state, lead = b.party[i];
+  const state = b.game.state, lead = b.party[i], hooks = battle.battleHooks;
   let foe = b.foes[b.plans[i].target];
   if (!foe || foe.hp <= 0) foe = b.foes.filter((f) => f.hp > 0).reduce((a, c) => (c.hp < a.hp ? c : a));
   foe.card = foe.card || { a: rand(8), g: rand(8), s: 0 };
-  // everyone pays KI and is done for the turn (102:944-985)
-  for (const j of who) { const m = b.party[j]; m.ki = Math.max(0, m.ki - b.plans[j].skill.ki); b.acted.add(j); }
-  const dmg = comboDamage(b, combo, who, foe, foe.card);
+  // everyone pays the KI of their move (get_mp_cost: passive skills, the 必殺技 card; none while practising) and is
+  // done for the turn (all.rb 53389-53405)
+  freeKi.delete(lead);
+  for (const j of who) {
+    const m = b.party[j], sk = b.plans[j].skill;
+    let ki = growth.kiCost(b.world, m, sk);
+    if (hooks.kiCost) ki = hooks.kiCost(b, m, sk, ki, b.hand[b.plans[j].card]);
+    items.payKi(m, b.practice ? 0 : ki);
+    m.ki = Math.max(0, m.ki);
+    b.acted.add(j);
+  }
+  const dmg = comboDamage(b, combo, who, lead, foe, foe.card);
   if (!b.practice) { // (戦闘練習: no use counts, all.rb 53385)
     levels(state)[combo.id] = Math.min(LEVEL_MAX, uses(state, combo.id) + 1);
     who.forEach((j, x) => noteSkillUse(state, combo.tec[combo.cha.indexOf(b.party[j].id)]));
@@ -130,25 +230,51 @@ export async function tryCombo(b, i) {
   for (const j of who) { const a = b.world.actors[b.party[j].id]; crew[b.party[j].id] = { normal: a.sprite, special: a.special }; }
   b.duel = { m: lead, mc: b.hand[b.plans[i].card], f: foe, fc: foe.card };
   b.say(`${who.map((j) => b.party[j].name).join('＋')}的組合技！`, `「${combo.name}」`);
-  const before = foe.hp;
+  const before = foe.hp, hit = Math.max(0, dmg);
   b.anim = new ComboDuel({
     party: crew[lead.id], foe: { normal: foe.portrait, special: foe.sprite, size: foe.size }, combo: combo.id, crew, lead: lead.id,
     tecs: Object.fromEntries(combo.cha.map((id, x) => [id, combo.tec[x]])),
-    damage: dmg, margin: Math.max(0, (SW - view.w) / 2),
-    onHit: () => { if (b.practice) b.practice.dmg = (b.practice.dmg || 0) + dmg; else foe.hp = Math.max(0, foe.hp - dmg); },
+    damage: hit, margin: Math.max(0, (SW - view.w) / 2),
+    onHit: () => { if (b.practice) b.practice.dmg = (b.practice.dmg || 0) + hit; else foe.hp = Math.max(0, foe.hp - hit); },
   });
   await b.anim.finished;
   b.anim = null;
   if (before > 0 && foe.hp <= 0) { const d = (state.defeats = state.defeats || {}); d[lead.id] = Math.min(99999, (d[lead.id] || 0) + 1); }
+  if (dmg >= 0) {
+    // get_attack_hit_skill with the combo (all.rb 17127-17577): each participant's hit skills, on their own card
+    for (const j of who) {
+      const m = b.party[j];
+      growth.onHit(b, m, foe, b.hand[b.plans[j].card]); // かなしばり, the skill cards' hit effects
+      if (hooks.hit) hooks.hit(b, m, foe, dmg); // いたずら …
+    }
+    if (combo.stun) foe.stop = (foe.stop || 0) + 2; // element 12, +1 more for the school match (chk_battle_damage 68866)
+    if (combo.tail && foe.hp > 0 && foe.apeOf) { // 尻尾切る: the Great Ape is himself again (element 25, 68895)
+      b.transform(foe, foe.apeOf);
+      b.say(`${foe.name} 的尾巴被切斷，變回原狀了！`);
+      await sleep(900);
+    }
+  }
   return true;
 }
 
-// after the scene: newly learned combos (chk_new_scombo, 101:3988)
+// after the scene: moves learned by ひらめき (chk_new_tecspark, 101:47800 / all.rb 50383 — every row whose new_flag is
+// on, so one left from a lost battle is learned at the next), then newly learned combos (chk_new_scombo, 101:3988)
 export async function announceCombos(b) {
+  for (const m of b.party) freeKi.delete(m);
+  const state = b.game.state, sw = state.sw || {};
+  for (const r of sparks(b)) {
+    if (!sw[r.new]) continue;
+    sw[r.get] = true;
+    sw[r.new] = false;
+    learnMove(b, r.cha, r.no);
+    audio.se('ZG 技取得', 80);
+    b.say('恭喜！', `「${(b.world.skills[r.no] || {}).name}」能使用了！`);
+    await new Promise((res) => { b.cont = res; });
+    b.cont = null;
+  }
   const ids = b.newCombos || [];
   b.newCombos = [];
   for (const id of ids) {
-    const state = b.game.state;
     if (learned(state).includes(id)) continue;
     learned(state).push(id);
     audio.se('ZG 技取得', 80);

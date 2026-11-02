@@ -193,7 +193,31 @@ card star conditions), the first one triggers a combined move (`chk_scombo_flag*
 pay their KI, are marked as having acted, and damage uses the sum formula in §4.2. Conditions per participant: own-school
 card (必 does not count), attack/guard ≥ the combo's minimum, the exact move, move used ≥ `scombo_skill_level_num` times,
 alive, not yet acted, combos not switched off ("Y"). Unlearned combos are checked first and become learned when they first
-fire. ひらめき (tecspark.json) can teach a new move mid-battle (that use costs no KI). Not implemented yet.
+fire. Every participant pays `get_mp_cost` of their move (passives, 必殺技 card; nothing in 戦闘練習). The combo's hit runs
+every participant's hit skills on their own card (`get_attack_hit_skill` with element 33, all.rb 17127: かなしばり,
+いたずら, 挑発 …), its element 12 stops the enemy (+1 for the school match, so 2: 超能力気功砲) and element 25 cuts a
+Great Ape's tail (繰気円斬 707: 達列斯(大猿) → 達列斯(強), all.rb 68895).
+
+**ひらめき** (閃き必殺技, `data/tecspark.json` 17 rows → `world.tecspark` by `tools/build_tecspark.py`; all.rb 53656-53790,
+implemented in `src/combo.js`): when a member's turn comes with a special move, before the combo check, each row whose
+`flag_tec` is that move is tried in order. It fires when its member (`cha`) is in the party, played a card, is alive, not
+stopped, has not acted, chose `flag_tec` with an own-school card whose stars reach `card_attack/gard_num`, has used
+`flag_tec` ≥ `skill_level_num` times, the row's switch / variable condition holds, `var40 ≥ scenario_progress` (all rows: 2,
+so Z3 and later), the move is not learned yet (switch `get_flag`), `rand(100)+1 ≤ acquisition_rate` (8–25 %), and it is not
+戦闘練習. The acting member then uses `tecspark_no` instead **without paying KI** (`@new_tecspark_flag`, 54590); combos are
+checked with the new move. After the scene (`chk_new_tecspark`, 50383) the move is learned (`new_flag` → `get_flag`,
+`learn_skill`) with 「恭喜！」「○○」能使用了！. Rows (flag_tec → new move, actor): 魔貫光殺砲 36 → フルパワー 41 (比克, needs
+99999 uses), 気円斬 64 → 気円裂斬 65 (克林), 繰気弾 73 → 超繰気弾 74 / 狼牙風風拳 71 → 新狼牙風風拳 75 (雅木茶), 超能力 92 → 94 /
+どどんぱ 91 → 95 (餃子), 216 → 216 (16號), スーパーかめはめ波 26 → 瞬間移動かめはめ波 27 (超悟空 14), 229 → 魔封波 230 (龜仙人,
+switch 554), 104 → 芭蕉扇 107 (琪琪, switch 557), 145 → ミスティックフラッシャー 146 (15), 強力エネルギー波 193 / 203 →
+エネルギーウェイブ 198 / 208 (18號 / 17號), 巴達克一夥 249 / 259 / 268 / 276 → 250 / 260 / 269 / 277.
+
+Remake differences (cmb): Z戦士の絆 in a combo counts the mates of the lead, not of the participant who holds it (the
+original excludes the holder); the original's quirks in `get_attack_hit_skill` (the skill list growing participant by
+participant, the かなしばり turns adding up) are not copied — each participant's hit skills run on their own.
+The Super Saiyan ×1.3 for
+any participant is in place, but the remake's 10 combos only list the base forms (actors 3 / 5), so it does not come up
+yet. A move learned by ひらめき that has no film yet borrows its `flag_tec` move's film (41, 27, 198, 208).
 
 ---
 
@@ -223,7 +247,13 @@ Example (Goku Lv1 atk 17, normal attack, card ★4 (=3) vs 甜菜人 def 15 with
 ### 4.2 S-combo damage (`102:16062-16190`, simplified)
 `P = combo.base_damage + Σ participants' skill power (with proficiency) + ceil(comboLevel * n/2 * k)`,
 `k = 1 + 0.2*(n-2)` for n > 2; `A = Σ (atk + level)` of participants; star = `min(7, max participant carda + (n-2) + passive)`.
-`dmg = ((A + P) * 8 * (star + 7 + rand(2) + 1)) / (E.def * (enecardg + 7) / 3)`, then steps 1-8 above.
+`dmg = ((A + P) * 8 * (star + 7 + rand(2) + 1)) / (E.def * (enecardg + 7) / 3)`, then steps 1-8 above (68616-68707):
+×1.3 when **any participant** is of class 9 (`$tmp_btl_ani_scombo_cha`); giant ×1.5 and the school match look at the lead
+(@chanum, whose card is always own school → ×1.3); `set_damage_add` gets the combo id, and element 33 makes it use the
+**skills of every participant together** (`temp_cha_skill`, 14376) while the card checks (様子見, 見下す) use the lead's card and
+激怒 compares the others with the lead. Combos have element 29 (never miss); switch 18 and variable 81 still apply.
+In the remake (`src/combo.js` `comboDamage` / `withSkills`): `growth.dealt` and `battleHooks.dealt` run with the lead carrying
+the union of the participants' 固有技能 and learned 追加技能 (so 連撃, 最終決戦 / 征服, 鋼鉄の拳, 必殺の一撃 … all count).
 
 ### 4.3 Enemy → player (`damage_calculation(1)`, `102:16287-16400`)
 `x` = the **defender's own card slot** (the card the targeted character played this turn), `e` = attacking enemy.
@@ -366,7 +396,7 @@ Z1 normal **1/5**, few 1/7, many 1/2.
 | Items | `data/items.json` | item cards (drops, shop); `element_set` 5-8 = card rank S/A/B/C. |
 | Passive skills | `_chaskill.csv` → `data/chaskill.json` | `cha_skill_No`, `cha_skill_get_val` (SP needed), effects implemented in code. |
 | S-combos | `_scombo.csv` → `data/scombo.json` | participants, required moves, card conditions. |
-| ひらめき | `_tecspark.csv` → `data/tecspark.json` | sparks (new moves learned in battle). |
+| ひらめき | `_tecspark.csv` → `data/tecspark.json` → `world.tecspark` | sparks (new moves learned in battle, §3.4). |
 | Card synthesis | `_card_compo.csv` → `data/cardcompo.json` | menu feature, not battle. |
 | Constants | `139_Public.rb` | `$Cardmaxnum=5`, `$turn_recover_hp=3`, `$turn_recover_ki=2.5`, `$levelup_add_zp=50`, `$cha_add_dmg_skill_level_max=999`, `$cha_add_dmg_atk_ratio=5`, `$cha_skill_level_max=99999`, `$expup_lv/$expup_num`. |
 

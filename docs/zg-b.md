@@ -81,8 +81,8 @@ zga 在頁 6171 最後呼叫 `startTrStory(game, 'zgb')`。`start(game)` 照頁 
 - 程式：`src/battle.js` 的 `FOE_FORMS`（招式 → 誰變成誰、是不是大猿）取代原本只給貝吉塔 373 的特例，`transform` 通用；
   資料在 `tools/build_zg_b.py`（`FORMS`）。
 
-和原版不同：原版的「必殺技發動畫面」切入（`@chr_cutin_flag`、`@tec_output_back_no`）重製版的影片沒有；S 組合技（技能屬性 25 的組合技）打中不會切尾巴
-（組合技資料沒有這個屬性）；`*PARAM_HPRECOVER` 重製版目前只有這兩個形態和 Z1 的貝吉塔(大猿)／17 號有（史拉格(強) 等 50 多個敵人原版也有，還沒套用）。
+和原版不同：原版的「必殺技發動畫面」切入（`@chr_cutin_flag`、`@tec_output_back_no`）重製版的影片沒有；（S 組合技「操氣氣圓斬」707 有技能屬性 25，
+第二批 cmb 起打中大猿達列斯也照原版切尾巴）；`*PARAM_HPRECOVER` 重製版目前只有這兩個形態和 Z1 的貝吉塔(大猿)／17 號有（史拉格(強) 等 50 多個敵人原版也有，還沒套用）。
 
 ## 跳關（開發用，`&timer`）
 

@@ -67,6 +67,8 @@ python3 tools/serve.py 8790                   # http://localhost:8790/index.html
 - 系統：隊伍與作戰、特殊卡片（掉落、贈送、卡片商店含購買回饋、抽獎、神經衰弱、卡林合成）、S 組合技、成長（SP 技能、ZP、共有經驗值、熟練度、復活規則）、修行格與速度修行、地圖選單（概況・情報・設定・地圖）、龍珠雷達、勝利自動存檔、觸控出招與取消、選敵音效與 ▼ 游標、章節過場
 - 2026-11-01 已完成一輪過場檢查（開場～Z2 結局），台詞、場景、略過、銜接、存讀檔都已比對原版。
 - **Z3 全篇**（2026-11-02，五章平行開發後合併）：集龍珠 → 魔凶星篇 → 弗利薩復仇・特蘭克斯 → 古拉來襲（含流派一致修行、Z3 重力修行）→ 人造人間（到沙魯第一形態、「Z3 完」）。原版順序、各章檔案與交接約定在 `docs/z3-plan.md`，各章細節在 `docs/z3b.md`、`docs/z3cd.md`、`docs/z3e.md`、`docs/z3-training.md`。
+- **Z4 全篇**（2026-11-02，同樣平行開發後合併）：賽魯誕生的秘密 → 悄悄接近的賽魯 → 新生貝吉塔父子出擊 → 金屬古拉 → 人造人間 13 號 → 賽魯遊戲（到「Z4 完」）。原版順序與分工在 `docs/z4-plan.md`，各章細節在 `docs/z4bc.md`、`docs/z4d.md`、`docs/z4e.md`、`docs/z4f.md`。
+- 圖檔副檔名：原版混用 `.PNG`／`.png`，GitHub Pages 會區分大小寫（Mac 本機不會），`src/core.js` 的 `img()` 讀不到時會改試另一種大小寫；寫程式時仍盡量用磁碟上的實際檔名。
 
 各章的細節與開發用跳關入口都寫在 `README.md`。
 
@@ -75,7 +77,7 @@ python3 tools/serve.py 8790                   # http://localhost:8790/index.html
 1. ~~**Z3（人造人間篇）**~~（已完成，2026-11-02）：分工與原版順序見 `docs/z3-plan.md`（2026-11-02 開始，共用基礎在 z3-base 分支）。原版地圖 32～40、78～83（集龍珠、貝吉塔登場、魔凶星東西南北＋卡林、貝吉塔出擊、救布瑪、古拉到達、人造人間）。先從 `Event_Main` 的 Z3 段落（`$game_variables[40] = 2` 之後）整理出劇情步驟，分章後再做；Z2 結局目前顯示「待續」交給 Z3。
 2. **時之間**：原版的練功／重玩地圖（回到以前各區、重新挑戰頭目、特殊卡片掉落、用「時之間移動卡」進出，第一個入口在 Z1 貝吉塔區）。做好後才能接：
 3. **巴達克篇**（Z1／Z2 版）、**巴達克一味外傳**、**複製拉蒂茲洞窟**：原版只能從時之間進入，主線和外傳的隊伍／技能變數是整組交換的（`main_z1bar_varchange` 等）。
-4. **Z4（賽魯篇）**：原版 Map007 事件 7「Z4_セル編」，Z3 結尾交接變數 41 = 2001。之後：ZG（外傳：波傑克、達列斯、史拉格等）。
+4. ~~**Z4（賽魯篇）**~~（已完成，2026-11-02）。接下來：ZG（外傳：波傑克、達列斯、史拉格等）。
 
 已知但暫不處理：Z2 部分必殺技動畫借用 Z1 的；威洛篇的武泰斗教誨、換裝教學、琪琪／龜仙人 S 連擊未做。
 
@@ -87,7 +89,7 @@ python3 tools/serve.py 8790                   # http://localhost:8790/index.html
   - 手機尺寸 390×844 和 375×667。
   - 畫面要真的在畫：內建瀏覽器面板隱藏時 requestAnimationFrame 不會跑，用網址加 `&timer`（例如 `index.html?dev=z2&timer`），或自己跑 update+draw 迴圈。曾經有「每場戰鬥一開始就黑畫面」的 bug 就是因為沒畫到而漏測。
   - 戰鬥要用正常遇敵的方式進入：`__game.state.nextEnc = 1; __game.onStep()`，確認主控台沒有錯誤。
-  - 開發用跳關：`?dev=ch5 ch6 ch6earth ch6vegeta willow willow51 willowboss z2 z2b z2c z2d z2ginyu z2frieza z2last z2turles z3 z3a33 z3a34 z3b… z3c… z3d… z3e… z3pair z3gravity`（新章節也照樣加；Z3 各章的完整清單見 README）。
+  - 開發用跳關：`?dev=ch5 ch6 ch6earth ch6vegeta willow willow51 willowboss z2 z2b z2c z2d z2ginyu z2frieza z2last z2turles z3 z3a33 z3a34 z3b… z3c… z3d… z3e… z3pair z3gravity z4 z4a… z4b… z4c… z4d… z4e… z4f…`（新章節也照樣加；Z3 各章的完整清單見 README）。
 - **上線**：推之前一定先跑 `python3 tools/bump.py`（更新版本號，手機才會自動換新版），推上 `main` 後用 `gh api repos/pokemonida99/dbz-rpg-web-1/pages/builds/latest` 確認部署，並看 `https://pokemonida99.github.io/dbz-rpg-web-1/version.json`。
 - **GitHub Pages 部署卡住**（出現 "in progress deployment"）：**不要** `gh run rerun`（會卡在 queued 取消不掉），改用 `gh api -X POST repos/pokemonida99/dbz-rpg-web-1/pages/builds` 重新觸發。
 - Commit 訊息結尾加：`Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`

@@ -20,7 +20,7 @@ import { applyEra } from './era.js?v=20261102-0836';
 import { newHand } from './battle.js?v=20261102-0836';
 
 export const Z3 = (game) => game.world.z3;
-export const ORDER = ['z3a', 'z3b', 'z3c', 'z3d', 'z3e'];
+export const ORDER = ['z3a', 'z3b', 'z3c', 'z3d', 'z3e', 'z4a', 'z4b', 'z4c', 'z4d', 'z4e', 'z4f']; // (Z4 too: docs/z4-plan.md)
 
 // ---------- the chapters ----------
 // registerZ3('z3a', { maps: ['33', …], start(game), spot(game, poi), boss(game, b), resume(game, at), dev(game, step),
@@ -39,9 +39,9 @@ export async function nextZ3(game, key) {
   s.flags.z3At = null;
   game.save(true);
   game.busy = false;
-  const t = (Z3(game).titles || {})[k];
-  await card(t ? `${t}　待續` : 'Ｚ３　待續', 2400);
-  game.showTitle(t ? `${t}（待續）` : 'Ｚ３（待續）');
+  const t = (Z3(game).titles || {})[k], part = String(k || key).startsWith('z4') ? 'Ｚ４' : 'Ｚ３';
+  await card(t ? `${t}　待續` : `${part}　待續`, 2400);
+  game.showTitle(t ? `${t}（待續）` : `${part}（待續）`);
   return false;
 }
 
@@ -60,9 +60,11 @@ export async function startZ3(game) {
   chapters.z3a.start(game); // (not awaited: true = Z3 has taken over)
   return true;
 }
+// is that chapter there (Z3's ending hands over to Z4 once its first chapter is built)
+export const hasChapter = (key) => !!chapters[key];
 export const isZ3Map = (s) => !!(cur(s) && (cur(s).maps || []).includes(s.map));
 export function z3Spot(game, poi) {
-  const ch = chapters[poi.chapter] || (String(poi.chapter).startsWith('z3') && cur(game.state));
+  const ch = chapters[poi.chapter] || (/^z[34]/.test(String(poi.chapter)) && cur(game.state));
   return ch && ch.spot ? ch.spot(game, poi) : null;
 }
 export function z3Boss(game, b) { const ch = cur(game.state); return ch && ch.boss ? ch.boss(game, b) : null; }

@@ -179,11 +179,11 @@ def script_nodes(t):
         m = re.match(r'\$partyc\s*=\s*\[([\d,\s]*)\]$', x)
         if m:
             ids = [int(v) for v in re.findall(r'\d+', m.group(1))]
-            out += [{'partyc': ids}, {'x': 'zgbParty', 'ids': ids}]
+            out += [{'partyc': ids}, {'x': 'zgbrParty', 'ids': ids}]
         elif x == 'all_charecter_recovery':
             out.append({'x': 'recover', 'id': 0})
         elif re.match(r'on_super_saiyazin (\d+)$', x):
-            out.append({'x': 'zgbSs', 'no': int(x.split()[1]), 'on': True})
+            out.append({'x': 'zgbrSs', 'no': int(x.split()[1]), 'on': True})
     return out  # ($eve = Event_Main.new, dispose_main_window, the $chadead loop, variable 42: nothing to do here)
 
 
@@ -216,11 +216,11 @@ def add(world, h, z3, tr):
         if n == 36:  # 悟空瞬間移動: the flash and the sound
             return script(cdb[36]['list'])
         if n in FORMS:  # CE59 / 60 ブロリー変身, CE66 バーダック超サイヤ人変身 (CE45)
-            return [{'x': 'zgbForm', 'n': n}]
+            return [{'x': 'zgbrForm', 'n': n}]
         if n == 159:  # 超サイヤ人全解除
-            return [{'x': 'zgbSsOff'}]
+            return [{'x': 'zgbrSsOff'}]
         if n in (166, 167, 168, 61):  # the party aside / back / swapped; Trunks' moves by his clothes
-            return [{'x': 'zgbCE', 'n': n}]
+            return [{'x': 'zgbrCE', 'n': n}]
         return []  # CE39 (the lead's sprite: the field does it)
 
     def code355(p):
@@ -228,9 +228,9 @@ def add(world, h, z3, tr):
     EXTRA.update({
         355: code355, 117: ce,
         221: lambda p: [{'fadeout': 30}], 222: lambda p: [{'x': 'fadein'}],
-        251: lambda p: [{'x': 'zgbSeStop'}],
+        251: lambda p: [{'x': 'zgbrSeStop'}],
         318: lambda p: [{'x': 'skill', 'id': p[0], 'learn': p[1] == 0, 'skill': p[2]}],
-        122: lambda p: [{'x': 'zgbVarVar', 'a': p[0], 'b': p[4]}] if p[3] == 1 else [],  # variable = variable
+        122: lambda p: [{'x': 'zgbrVarVar', 'a': p[0], 'b': p[4]}] if p[3] == 1 else [],  # variable = variable
     })
     OPTS.update(bgm=True, shakeSw=True)
     raw8 = {p['condition']['variable_value']: p['list'] for p in ev7['8']['pages'] if p['condition']['variable_valid']}
@@ -239,17 +239,17 @@ def add(world, h, z3, tr):
 
     broly = {}  # Broly's face as he is at that point of the page: 50, 51 超 (after CE59), 52 full power (after CE60)
 
-    def own(ns, v):  # the speakers' faces under this part's own keys ('zgb:' / 'zgb5701:' …), not the shared 'z3:' ones
+    def own(ns, v):  # the speakers' faces under this part's own keys ('zgbr:' / 'zgb5701:' …), not the shared 'z3:' ones
         for n in ns:
-            if n.get('x') == 'zgbForm' and n['n'] in (59, 60):
+            if n.get('x') == 'zgbrForm' and n['n'] in (59, 60):
                 broly[v] = 51 if n['n'] == 59 else 52
             if 'say' in n and n['say'][0]:
                 who = n['say'][0]
                 f = PAGE_SPEAKERS.get(v, {}).get(who)
-                key = f'zgb{v}:{who}' if f else f'zgb:{who}'
+                key = f'zgbr{v}:{who}' if f else f'zgbr:{who}'
                 if who == '布羅利':
                     row = broly.setdefault(v, {5101: 51, 5121: 51}.get(v, 50))
-                    f, key = [F3, row], f'zgb:{who}{row}'
+                    f, key = [F3, row], f'zgbr:{who}{row}'
                 f = f or faces.get(who)
                 n['say'] = n['say'][:2] + ([key] if f else [])
                 if f:

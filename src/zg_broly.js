@@ -28,9 +28,9 @@ function stop(game) { G = game; ensure(game); begin(game); }
 // (below), ported from the original's anime_pattern 2624 / 2630-2633
 addMoves({
   519: 'foeWave', // 戦闘員
-  521: 'foeWave', 522: 'raditzWave', 523: 'raditzBigWave', 524: 'zgbEraserCannon', // ブロリー(超)
+  521: 'foeWave', 522: 'raditzWave', 523: 'raditzBigWave', 524: 'zgbrEraserCannon', // ブロリー(超)
   526: 'foeWave', 527: 'raditzWave', 528: 'raditzBigWave', 529: 'nappaBlast', // ブロリー(フルパワー)
-  530: 'zgbEraserBlow', 531: 'zgbEraserCannonFull', 532: 'zgbThrowingBlaster', 533: 'zgbOmegaBlaster',
+  530: 'zgbrEraserBlow', 531: 'zgbrEraserCannonFull', 532: 'zgbrThrowingBlaster', 533: 'zgbrOmegaBlaster',
   155: 'galickGun', // 超バーダック スーパーファイナルリベンジャー (the film 5801; ファイナルリベンジャー 151 is this one too)
 });
 const FP = (n) => `Graphics/Pictures/${n}`;
@@ -84,7 +84,7 @@ function* charge(d, st, at, colors, aura) {
   }
 }
 Object.assign(Duel.prototype, {
-  * zgbEraserCannon() { // 2624 ブロ超)イレイザーキャノン: he flies off, comes back for the defender, throws him, then the cannon
+  * zgbrEraserCannon() { // 2624 ブロ超)イレイザーキャノン: he flies off, comes back for the defender, throws him, then the cannon
     const A = this.A, G = this.G, st = stage(this);
     this.pose(A, 4, true); this.se('Z1 飛ぶ'); yield;
     for (let f = 1; f <= 39; f++) { A.x -= 24; yield; }
@@ -124,7 +124,7 @@ Object.assign(Duel.prototype, {
     for (let t = 1; t <= 26; t++) { st.ball = { f: FX.bigBlue, k: 3, x: 640 - t * RAY_SPEED, y: 140 }; yield; } // 361-386
     st.ball = null;
   },
-  * zgbEraserBlow() { // 2630 ブロフル)イレイザーブロウ: he flies off, comes back right in front of the defender, a ball in his hand
+  * zgbrEraserBlow() { // 2630 ブロフル)イレイザーブロウ: he flies off, comes back right in front of the defender, a ball in his hand
     const A = this.A, G = this.G, st = stage(this);
     this.pose(A, 3, true); this.se('Z1 飛ぶ'); yield;
     for (let f = 1; f <= 39; f++) { A.x -= 24; yield; }
@@ -135,19 +135,19 @@ Object.assign(Duel.prototype, {
     A.y = -200;
     st.ball = null;
   },
-  * zgbEraserCannonFull() { // 2631 ブロフル)イレイザーキャノン
-    yield* this.zgbBlaster([268, 154], [FX.small, FX.mid, FX.big], 4, 5, true);
-    for (let t = 1; t <= 26; t++) { this.zgbSt.ball = { f: FX.sokidan, k: 5, x: 640 - t * RAY_SPEED, y: 140 }; yield; } // 234-259
-    this.zgbSt.ball = null;
+  * zgbrEraserCannonFull() { // 2631 ブロフル)イレイザーキャノン
+    yield* this.zgbrBlaster([268, 154], [FX.small, FX.mid, FX.big], 4, 5, true);
+    for (let t = 1; t <= 26; t++) { this.zgbrSt.ball = { f: FX.sokidan, k: 5, x: 640 - t * RAY_SPEED, y: 140 }; yield; } // 234-259
+    this.zgbrSt.ball = null;
   },
-  * zgbThrowingBlaster() { // 2632 ブロフル)スローイングブラスター: the charge, then the Z3 エネルギー弾4 thrown
-    yield* this.zgbBlaster([348, 136], [FX.small, FX.mid, FX.big], 4, 6, true, true);
-    for (let t = 1; t <= 26; t++) { this.zgbSt.ball = { big: true, x: 640 - t * RAY_SPEED, y: 110 }; yield; } // 234-259: 266
-    this.zgbSt.ball = null;
+  * zgbrThrowingBlaster() { // 2632 ブロフル)スローイングブラスター: the charge, then the Z3 エネルギー弾4 thrown
+    yield* this.zgbrBlaster([348, 136], [FX.small, FX.mid, FX.big], 4, 6, true, true);
+    for (let t = 1; t <= 26; t++) { this.zgbrSt.ball = { big: true, x: 640 - t * RAY_SPEED, y: 110 }; yield; } // 234-259: 266
+    this.zgbrSt.ball = null;
   },
   // 2631 / 2632 frames 0-233: the charge with the blue aura, the ball thrown (252 flying left, or 293), the cut
-  * zgbBlaster(at, colors, p0, p1, aura, thrown = false) {
-    const A = this.A, st = this.zgbSt = stage(this);
+  * zgbrBlaster(at, colors, p0, p1, aura, thrown = false) {
+    const A = this.A, st = this.zgbrSt = stage(this);
     this.pose(A, p0, true); audio.se('Z1 気を溜める', 80); this.se('Z3 変身'); yield; // 0
     yield* charge(this, st, at, colors, aura);
     audio.seStop(); this.se('Z1 エネルギー波'); // 181-222
@@ -162,7 +162,7 @@ Object.assign(Duel.prototype, {
     cut(this); // 233
     yield;
   },
-  * zgbOmegaBlaster() { // 2633 ブロフル)オメガブラスター: the green ball, his power-up, then the Omega Blaster itself
+  * zgbrOmegaBlaster() { // 2633 ブロフル)オメガブラスター: the green ball, his power-up, then the Omega Blaster itself
     const A = this.A, G = this.G, st = stage(this);
     this.pose(A, 0, true); audio.se('Z1 気を溜める', 80); yield; // 0
     const green = [FX.smallGreen, FX.midGreen, FX.bigGreen];
@@ -346,7 +346,7 @@ async function formFilm(st, ui, f) {
 }
 
 // ---------- the party kept aside (CE166 / CE167 / CE168: $tmp_partyc[variable 22], with the Super Saiyans) ----------
-const K = (s) => (s.flags.zgb = s.flags.zgb || { tmp: {} });
+const K = (s) => (s.flags.zgbr = s.flags.zgbr || { tmp: {} });
 const noForms = (ss = {}) => Object.fromEntries(Object.keys(FORMS).map((no) => [no, !!ss[no]]));
 const snapshot = (s) => ({ ids: s.party.map((m) => m.id), ss: { ...(s.ss || {}) } });
 function restore(game, t) {
@@ -387,7 +387,7 @@ function trunksMoves(game) {
 }
 
 addNodes({
-  zgbCE: async (node, { ctx }) => {
+  zgbrCE: async (node, { ctx }) => {
     if (!G) return;
     if (node.n === 166) keep(G);
     else if (node.n === 167) back(G);
@@ -395,16 +395,16 @@ addNodes({
     else if (node.n === 61) trunksMoves(G);
     ctx.partyc = G.state.party.map((m) => m.id);
   },
-  zgbParty: async (node, { ctx }) => { if (G) { party(G, node.ids); ctx.partyc = G.state.party.map((m) => m.id); } }, // $partyc = [...]
-  zgbSs: async (node, { ctx }) => { // on_super_saiyazin n (7: Bardock — the remake has no 超バーダック actor yet: the scenes show his face)
+  zgbrParty: async (node, { ctx }) => { if (G) { party(G, node.ids); ctx.partyc = G.state.party.map((m) => m.id); } }, // $partyc = [...]
+  zgbrSs: async (node, { ctx }) => { // on_super_saiyazin n (7: Bardock — the remake has no 超バーダック actor yet: the scenes show his face)
     if (!G) return;
     superSaiyan(G.world, G.state, node.no, node.on);
     ctx.partyc = G.state.party.map((m) => m.id);
   },
-  zgbSsOff: async (node, { ctx }) => { if (G) { syncSuperSaiyan(G.world, G.state, noForms()); ctx.partyc = G.state.party.map((m) => m.id); } }, // CE159
-  zgbForm: async (node, { stage, ui, quiet }) => { if (!quiet && G) await formFilm(stage, ui, C(G).forms[node.n]); },
-  zgbSeStop: async () => audio.seStop(),
-  zgbVarVar: async (node, { s }) => { s.var[node.a] = s.var[node.b] || 0; },
+  zgbrSsOff: async (node, { ctx }) => { if (G) { syncSuperSaiyan(G.world, G.state, noForms()); ctx.partyc = G.state.party.map((m) => m.id); } }, // CE159
+  zgbrForm: async (node, { stage, ui, quiet }) => { if (!quiet && G) await formFilm(stage, ui, C(G).forms[node.n]); },
+  zgbrSeStop: async () => audio.seStop(),
+  zgbrVarVar: async (node, { s }) => { s.var[node.a] = s.var[node.b] || 0; },
 });
 
 // ---------- the story ----------

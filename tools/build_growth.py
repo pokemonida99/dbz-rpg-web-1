@@ -44,7 +44,8 @@ TYPICAL[16] = TYPICAL[32] = [
 # The original sets actor 16 only; here 32 is the same member (src/supersaiyan.js), so both.
 FIRST = {16: [8, 7, 49], 32: [8, 7, 49]}
 # the other members' tables, read from get_typical_skill (all.rb 3554-6695; levels up to 99 like the ones above —
-# above 99 needs the second lap; Goku's 地球育ちのサイヤ人 alternative under switch 1312 is left out like in TYPICAL[3])
+# above 99 needs the second lap; Goku's 地球育ちのサイヤ人 678-686 under switch 1312 replaces slot 2's Z戦士の絆 at run
+# time: src/growth.js typicalRun, all.rb 3598-3787)
 TYPICAL[10] = [  # チチ
     (4, 77, 0), (8, 70, 1), (13, 78, 0), (17, 71, 1), (22, 79, 0), (27, 72, 1), (31, 197, 0), (33, 34, 2),
     (41, 185, 1), (49, 198, 0), (56, 186, 1), (63, 199, 0), (70, 187, 1), (77, 200, 0), (83, 188, 1), (89, 201, 0),
@@ -112,7 +113,8 @@ TYPICAL[30] = [  # パンブーキン
 FIRST.update({10: [77, 70, 0], 24: [687, 14, 39], 12: [9, 3, 31], 27: [7, 82, 49], 28: [7, 82, 33], 29: [7, 82, 49],
               30: [7, 82, 49], 17: [339, 90, 102], 21: [424, 33, 34], 22: [424, 33, 34], 23: [426, 425, 151],
               25: [358, 91, 103]})
-EXTRA = [280, 22, 618, 670, 538]  # 必殺の一撃, 激怒, 一か八か (skill cards), 最終決戦改 (ZG 6131), 征服 (card 167 チルド)
+EXTRA = [280, 22, 618, 670, 538,  # 必殺の一撃, 激怒, 一か八か (skill cards), 最終決戦改 (ZG 6131), 征服 (card 167 チルド)
+         38, 678]  # 真の力 (超2 悟飯, on_off_super_saiyazin 5), 地球育ちのサイヤ人 1-9 (悟空, switch 1312)
 FX = {  # effect columns (get_cha_skill_manual shows them under ＊＊ 效果詳細 ＊＊)
     'cha_skill_a_kouka': 'a', 'cha_skill_g_kouka': 'g', 'cha_skill_hp_kaihuku': 'hp', 'cha_skill_hp_kaihuku_mozi': 'hpm',
     'cha_skill_ki_kaihuku': 'ki', 'cha_skill_ki_kaihuku_mozi': 'kim', 'cha_skill_hatudouritu': 'rate',

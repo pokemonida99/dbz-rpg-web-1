@@ -15,6 +15,7 @@ import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261102-1935';
 import { addMoves } from './anime.js?v=20261102-1935';
 import { makeMember, applyLevel } from './party.js?v=20261102-1935';
 import { superSaiyan } from './supersaiyan.js?v=20261102-1935';
+import { setTypical } from './growth.js?v=20261102-1935';
 import { eventCard } from './items.js?v=20261102-1935';
 import { applyEra } from './era.js?v=20261102-1935';
 import { newHand } from './battle.js?v=20261102-1935';
@@ -119,7 +120,7 @@ const D = {
   1384: async (st, ctx, q) => {
     uses(ctx, 'uses1384');
     const p = member(G, 4); // set_typical_skill 4,0,249: 神との融合
-    if (p.typ) { p.typ[0] = 249; p.got = p.got || {}; p.set = p.set || {}; p.got[249] = p.set[249] = true; }
+    setTypical(G.world, G.state, p, 0, 249); // (all.rb 175032)
     const draw = (bg, k) => { st.clear(); if (bg) wide(st, bg); face(st, CARD, 10, -64 + k, 0, 2); face(st, P3, 1, 64 - k); };
     draw(BG.天界, 0);
     if (q) return;

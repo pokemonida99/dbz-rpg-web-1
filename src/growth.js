@@ -49,7 +49,8 @@ function best(world, m, fam) {
 }
 const F = {
   blood: [2, 3, 4, 89, 90, 91, 92, 93, 94], // サイヤ人の血 (checked lowest first, like get_exp_add)
-  kizuna: [106, 105, 104, 103, 102, 101, 15, 14, 13], // Z戦士の絆
+  // Z戦士の絆, with 地球育ちのサイヤ人 678-686 counted as the same (all.rb 14737-14771 / 16112: 686, 106, 685, 105 … 678, 13)
+  kizuna: [686, 106, 685, 105, 684, 104, 683, 103, 682, 102, 681, 101, 680, 15, 679, 14, 678, 13],
   kicon: [124, 123, 122, 121, 120, 119, 27, 26, 25], // 気のコントロール
   hissatsu: [288, 287, 286, 285, 284, 283, 282, 281, 280], // 必殺の一撃
   wakideru: [166, 165, 164, 163, 162, 161, 60, 59, 58], // 湧き出る力
@@ -57,7 +58,8 @@ const F = {
   muda: [112, 111, 110, 109, 108, 107, 18, 17, 16], // ムダのない動き
   koutetsu: [154, 153, 152, 151, 150, 149, 50, 49, 48], // 鋼鉄の拳
   kanashi: [39, 40, 41, 131, 132, 133, 134, 135, 136], // かなしばり
-  regen: [10, 12, 35], // 再生能力 / 魔族の力: +5 % HP a turn
+  regen: [10, 12, 35, 248, 249], // turn_recover_hpki HP (18620-18639): 再生能力, 魔族の力 +5 %, ネイルと同化 +7, 神と融合 +8
+  regenKi: [11, 12, 248, 249], // the KI part (18929-18938): 再生能力 +5 %, ネイルと同化 +3, 神と融合 +5
   soul: [100, 99, 98, 97, 96, 95, 7, 6, 5], // サイヤ人魂 (超サイヤ人's サイヤ人の血: all.rb 14589 / 15903)
   seifuku: [546, 545, 544, 543, 542, 541, 540, 539, 538], // 征服
 };
@@ -118,6 +120,16 @@ function typicalFix(w, s, m) {
     m.firstTyp = 1;
   }
   if ((m.id === 16 || m.id === 32) && s.sw && (s.sw[598] || s.sw[586]) && m.typ[0] !== 670) setTypical(w, s, m, 0, 670);
+  // CE34 フラグ / スキル付け替え: once Goku is back on Namek (switch 531) → switch 1312, and his slot 2's Z戦士の絆 becomes
+  // 地球育ちのサイヤ人 of the same level (3 and 14; Map007 event 2 page 486 does the same for 3)
+  if (s.sw && s.sw[531]) s.sw[1312] = true;
+  if (s.sw && s.sw[1312] && (m.id === 3 || m.id === 14)) earthSaiyan(w, s, m);
+}
+// set_typical_skill chano, 2, 678 + x where slot 2 holds Z戦士の絆 [13, 14, 15, 101 … 106][x]
+const KIZUNA_LV = [13, 14, 15, 101, 102, 103, 104, 105, 106];
+export function earthSaiyan(w, s, m) {
+  const k = KIZUNA_LV.indexOf(ensure(m).typ[2]);
+  if (k >= 0) setTypical(w, s, m, 2, 678 + k);
 }
 
 // set_damage_add: is the enemy treated as a boss ($data_enemies[id].element_ranks[22] == 1)? 戦闘練習 sets the
@@ -154,6 +166,8 @@ export function cardFor(world, m, cd) {
   const mp = best(world, m, F.miracle);
   if (mp && (m.mz || 101) < num(mp.fx.rate)) { c.a = 7; c.g = 7; }
   ext('cardMid', c, m); // (さかさま 422: src/cards_story.js)
+  // 真の力 38 (超2 悟飯, all.rb 6978-6996): a star below 4 is raised to 4 (added with ムダのない動き's, clamped below)
+  if (has(world, m, 38)) { c.a = Math.max(c.a, 4); c.g = Math.max(c.g, 4); }
   const md = best(world, m, F.muda);
   if (md) {
     c.a = Math.max(0, Math.min(7, c.a + num(md.fx.ah)));
@@ -236,7 +250,8 @@ export function knockOut(m, turn) { m.ko = true; m.koTurn = turn; m.hp = 0; }
 export function revive(m) { m.ko = false; }
 
 // turn_recover_hpki (from the second turn): HP +3 %, a KO'd member +7.5 % (not in the turn it fell) and back on its
-// feet only at full HP; 魔族の力 / 再生 +5 %; KI +2.5 % for the members still up
+// feet only at full HP; 再生 / 魔族の力 / ネイルと同化 / 神と融合 (fx.hp %); KI +2.5 % for the members still up, + 再生 /
+// ネイルと同化 / 神と融合 (fx.ki %). (Pエネルギー炉 later in the same elsif chains: src/skills_c.js)
 export function recover(b) {
   for (const m of b.party) {
     ensure(m);
@@ -246,6 +261,8 @@ export function recover(b) {
     if (rg && !fresh) m.hp = Math.min(m.maxhp, m.hp + Math.ceil((m.maxhp * num(rg.fx.hp)) / 100));
     if (m.ko && m.hp >= m.maxhp) revive(m);
     if (!m.ko) m.ki = Math.min(m.maxki, m.ki + Math.ceil((m.maxki * 2.5) / 100));
+    const rk = !m.ko && best(b.world, m, F.regenKi);
+    if (rk) m.ki = Math.min(m.maxki, m.ki + Math.ceil((m.maxki * num(rk.fx.ki)) / 100));
   }
   ext('recover', null, b); // (練氣: src/cards_b.js)
 }
@@ -312,8 +329,10 @@ function spRun(w, s, m, gain) {
 function typicalRun(w, s, m) {
   const out = [];
   const table = w.growth.typical[m.id] || [];
+  const earth = (m.id === 3 || m.id === 14) && s.sw && s.sw[1312]; // all.rb 3598-3787: 地球育ちのサイヤ人 for Z戦士の絆
   const picks = [];
-  for (const [lv, id, col] of table) {
+  for (const [lv, id0, col] of table) {
+    const id = earth && KIZUNA_LV.includes(id0) ? 678 + KIZUNA_LV.indexOf(id0) : id0;
     if (m.level < lv) continue;
     const old = sk(w, id).old;
     if (old.length ? old.includes(m.typ[col]) && m.typ[col] !== id : m.typ[col] === 0) picks.push([id, col]);

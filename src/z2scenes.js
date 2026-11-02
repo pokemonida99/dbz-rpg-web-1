@@ -8,6 +8,7 @@ import { audio, img, sleep } from './core.js?v=20261102-1935';
 import { addScenes, addNodes } from './cutscene.js?v=20261102-1935';
 import { SCENE_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261102-1935';
 import { superSaiyan } from './supersaiyan.js?v=20261102-1935';
+import { setTypical, earthSaiyan } from './growth.js?v=20261102-1935';
 
 const pic = (n) => `Graphics/Pictures/${n}`;
 const BG = (n) => pic(`Z2_背景_${n}.PNG`);
@@ -95,7 +96,7 @@ const D = {
   477: (st, ctx) => { // ネイル同化後: healed, moves up, the skill ネイルと同化 (248) unless he has 神との融合 (249)
     bg(st, 'ナメック星_地上'); face(st, FP, 1); next(ctx); heal(); uses(['piccolo', 'uses477']);
     const p = env && env.member(4);
-    if (p && p.typ && p.typ[0] !== 249) p.typ[0] = 248;
+    if (p && p.typ && p.typ[0] !== 249) setTypical(env.game.world, env.game.state, p, 0, 248); // (all.rb 171942)
   },
   478: (st, ctx) => { next(ctx); party(ctx, [4, 5, 6, 7, 8, 9, 12]); heal(); },
   479: (st, ctx) => { bg(st, 'ナメック星_地上'); frieza(st, ctx, 24); out(st, ctx); dende(st); next(ctx); },
@@ -209,11 +210,9 @@ addNodes({
   recover: async (node) => env && env.heal(node.id),
   skill: async (node) => env && env.learn(node.id, node.skill, node.learn),
   ss: async (node, { ctx }) => { if (env) { superSaiyan(env.game.world, ctx.s, node.on, true); ctx.partyc = ctx.s.party.map((m) => m.id); } },
-  typical: async (node) => { // 地球育ちのサイヤ人 in place of サイヤ人の血 (same level)
+  typical: async (node) => { // 地球育ちのサイヤ人 in place of Z戦士の絆 (same level): set_typical_skill 3, 2, 678 + x
     const m = env && env.member(node.id);
-    if (!m || !m.typ) return;
-    const k = node.from.indexOf(m.typ[node.slot]);
-    if (k >= 0) m.typ[node.slot] = node.to + k;
+    if (m) earthSaiyan(env.game.world, env.game.state, m);
   },
   leave: async (node, { ctx }) => { if (env) { env.leave(node.id); ctx.partyc = ctx.s.party.map((m) => m.id); } },
   revive: async (node) => { const m = env && env.member(node.id); if (m) { m.ko = false; m.hp = Math.max(1, m.hp); } },

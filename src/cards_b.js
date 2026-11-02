@@ -11,7 +11,7 @@
 //   173 氣墊車  15 more card moves at double distance (variable 420, shared with 76 飛機)
 //   197 修行之石  every special move of one member +5 uses (add_actor_all_tec_level)
 //   203 重力裝置  CAP → ZP for one member, 15 CAP a point ($captozp_rate); never used up
-import { audio, say, choose } from './core.js?v=20261102-1935';
+import { audio, say, choose, img } from './core.js?v=20261102-1935';
 import * as items from './items.js?v=20261102-1935';
 import * as battle from './battle.js?v=20261102-1935';
 import * as partymenu from './partymenu.js?v=20261102-1935';
@@ -37,6 +37,27 @@ const wins = (s) => (s.stats && s.stats.wins) || 0;
 export const favBattles = (s) => (s.flags && s.flags.cdbFavWins != null ? wins(s) - s.flags.cdbFavWins : FAV_BATTLES + wins(s));
 // the card shop offers card 141 (Scene_Shop: variable 228 ≥ 229 and switch 469, King Kai beaten in Z1)
 export const favOnSale = (s) => favBattles(s) >= FAV_BATTLES && !!((s.sw && s.sw[469]) || (vars(s)[40] || 0) >= 1 || (s.var[41] || 0) >= 132);
+// set_start_val (all.rb 13870, at a new game and every load): variable 228 = $okiniiri_btlnum (20) — src/main.js load()
+export function favLoad(s) {
+  if (!s) return;
+  s.flags = s.flags || {};
+  if (s.flags.cdbFavWins != null) s.flags.cdbFavWins = wins(s) - FAV_BATTLES;
+}
+// Scene_Db_Status output_party (all.rb 45434): the favourite's mark, アイコン (29 × 16, 0), next to the face
+partymenu.hooks.badge = (s, m) => {
+  if (!isFav(s, m)) return null;
+  const c = document.createElement('canvas');
+  c.width = c.height = 16;
+  c.className = 'pm-badge';
+  const im = img(ICONS);
+  const paint = () => c.getContext('2d').drawImage(im.im, 29 * 16, 0, 16, 16, 0, 0, 16, 16);
+  if (im.ok) paint(); else im.p.then(() => im.ok && paint());
+  return c;
+};
+const ICONS = 'Graphics/Pictures/アイコン.PNG';
+const badgeCss = document.createElement('style');
+badgeCss.textContent = '.pm-mem > .pm-badge { position: absolute; right: 2px; top: 2px; width: 16px; height: 16px; }';
+document.head.appendChild(badgeCss);
 
 // card 141: Map007 event 1 page 23 → Scene_Db_Status call_state 5 → page 25
 fieldCards[141] = async ({ game }) => {
@@ -274,8 +295,6 @@ const passive = {
 if (growth.extra) growth.extra.push(passive);
 // the card shop: 141 first once 20 battles are won (Scene_Shop: $favorite_card_no swapped to the top)
 if (items.shopHooks) items.shopHooks.push((world, s, ids) => (favOnSale(s) && !ids.includes(141) ? [141, ...ids] : ids));
-// the 隊伍 screen's favourite mark (output_party: アイコン.PNG cell 29)
-if (partymenu.hooks) partymenu.hooks.badge = (m) => isFav(G().state, m);
 
 const css = document.createElement('style');
 css.textContent = `

@@ -7,11 +7,14 @@
 //   55 月亮和尾巴 (run_card all.rb 46065): 悟飯 only, once (switch 70): Z1 大猿変身 (skill 51), later 爆裂ラッシュ (52)
 //   76 飛機 (all.rb 147041): 5 more card moves of double reach (variable 420; src/field.js fieldHooks)
 //   79 老鼠 (Scene_Db_Status window 13, all.rb 43585): the 自由 slot set by 假面男 goes back to 自由
-// The Great Ape (on_off_oozaru 5, all.rb 13109): 悟飯 forgets 魔閃光 / 大猿変身 and fights as the 192×192 ape — special
-// moves ×2 power (once used), damage dealt ×1.5, taken ×0.7, 必 cards count as his school, more recovery, no S-combos;
-// a tail-cutting move turns him back. After the battle he stays an ape if his 作戰「變身狀態」is 保持 (off_oozaru_all
-// all.rb 13089, $cha_tactics[3][5]; by default 不保持: back), and the story turns him back after the Z1 bosses and Willow
-// (Map007 #ゴハン大猿OFF: the tacApeOff node, tools/build_data.py), as does CE160 in the 時之間 (apeOffAll).
+// The Great Ape (on_off_oozaru, all.rb 13109): 悟飯 (51) and バーダック一味 (トーマ 251, セリパ 262, トテッポ 270,
+// パンブーキン 278) forget the moves of on_off_skill and fight as the 192×192 ape — special moves ×2 power (once used),
+// damage dealt ×1.5, taken ×0.7, 必 cards count as their school, more recovery, no S-combos; a tail-cutting move turns
+// them back, and back they learn on_off_skill again (悟飯 always 魔閃光; 大猿変身 only in Z1 once he has it, switch 70).
+// After the battle one stays an ape if its 作戰「變身狀態」is 保持 (off_oozaru_all all.rb 13083, $cha_tactics[3][id]; by
+// default 不保持: back), and the story turns 悟飯 back after the Z1 bosses and Willow (Map007 #ゴハン大猿OFF: the
+// tacApeOff node, tools/build_data.py), as does CE160 in the 時之間 (apeOffAll). Switches 364-368 are $oozaru_flag (CE9
+// reads them); the 作戰 move is kept apart for the ape (variables 442-453, tacgvar).
 import { audio, say, choose, sleep, toast, rand } from './core.js?v=20261102-1935';
 import { fieldCards, cardState } from './items.js?v=20261102-1935';
 import * as battle from './battle.js?v=20261102-1935';
@@ -25,6 +28,20 @@ import { ssOff } from './supersaiyan.js?v=20261102-1935';
 
 const SE_ERR = 'Z3 エラー';
 const APE = { sprite: 'Graphics/Pictures/Z1_戦闘_ゴハン(大猿)96×96.png', special: 'Graphics/Pictures/Z1_戦闘_必殺技_ゴハン(大猿)96×96.png', size: 192 };
+// on_off_oozaru no → actor: the move, on_off_skill, oozaru_flag switch, tacgvar, the sheet name ($btl_top_file_name Z2_ / Z3_)
+const APES = {
+  5: { move: 51, skills: [47, 51], sw: 368, tac: [452, 453] },
+  27: { move: 251, skills: [247, 249, 251], sw: 364, tac: [442, 443], jp: 'トーマ' },
+  28: { move: 262, skills: [256, 259, 262], sw: 365, tac: [444, 445], jp: 'セリパ' },
+  29: { move: 270, skills: [266, 268, 270], sw: 366, tac: [446, 447], jp: 'トテッポ' },
+  30: { move: 278, skills: [274, 276, 278], sw: 367, tac: [448, 449], jp: 'パンブーキン' },
+};
+const apeSheets = (s, a) => { // 悟飯's are Z1's; the crew's Z2_ / Z3_ by variable 40 (Z3 from ZG's Frieza part on)
+  if (!a.jp) return APE;
+  const z = (s.var && s.var[40]) >= 2 ? 'Z3' : 'Z2';
+  return { sprite: `Graphics/Pictures/${z}_戦闘_${a.jp}(大猿)96×96.png`, special: `Graphics/Pictures/${z}_戦闘_必殺技_${a.jp}(大猿)96×96.png`, size: 192 };
+};
+const learnSkill = (m, id) => { if (!m.skills.includes(id)) { m.skills.push(id); m.skills.sort((a, b) => a - b); } }; // (learn_skill sorts)
 const AIR_MOVE = 128; // one card move = 4 tiles (as for バブルス, src/items.js)
 // the hook objects of the shared files (src/battle.js, src/combo.js, src/field.js); while one is missing its rules just don't run
 const battleHooks = battle.battleHooks || {}, comboHooks = combo.comboHooks || {}, fieldHooks = field.fieldHooks || {};
@@ -87,20 +104,35 @@ fieldCards[79] = async ({ game }) => {
 };
 
 // ---------- the Great Ape ----------
-function apeOn(m) {
-  m.cdaApe = { had47: m.skills.includes(47), sprite: m.sprite, special: m.special, size: m.spriteSize };
-  m.skills = m.skills.filter((x) => x !== 47 && x !== 51);
-  m.sprite = APE.sprite;
-  m.special = APE.special;
-  m.spriteSize = APE.size;
+// the 作戰 move: the one before is kept in tac[0], the ape's comes from tac[1] (on) and the other way round (off)
+// ($cha_tactics[7] as it is: partymenu.js tactics() puts a move it doesn't know back to its first one when read)
+function apeTactics(s, m, a, on) {
+  s.var = s.var || {};
+  s.tactics = s.tactics || {};
+  const t = (s.tactics[m.id] = s.tactics[m.id] || {}), [keep, put] = on ? a.tac : [a.tac[1], a.tac[0]];
+  s.var[keep] = t.tecId || 0;
+  t.tecId = s.var[put] || 0;
+}
+function apeOn(s, m) {
+  const a = APES[m.id];
+  if (!a || m.cdaApe) return;
+  const sh = apeSheets(s, a);
+  m.cdaApe = { sprite: m.sprite, special: m.special, size: m.spriteSize };
+  m.skills = m.skills.filter((x) => !a.skills.includes(x));
+  m.sprite = sh.sprite;
+  m.special = sh.special;
+  m.spriteSize = sh.size;
+  (s.sw = s.sw || {})[a.sw] = true;
+  apeTactics(s, m, a, true);
 }
 function apeOff(s, m) {
-  const was = m.cdaApe;
+  const was = m.cdaApe, a = APES[m.id];
   if (!was) return;
   delete m.cdaApe;
-  if (was.had47 && !m.skills.includes(47)) m.skills.push(47);
-  if (!(s.var && s.var[40]) && s.sw && s.sw[70] && !m.skills.includes(51)) m.skills.push(51); // (all.rb 13177)
+  // all.rb 13176: 51 only in Z1 once card 55 taught it (switch 70); the rest always
+  for (const id of a ? a.skills : []) if (!(id === 51 && ((s.var && s.var[40]) || !(s.sw && s.sw[70])))) learnSkill(m, id);
   for (const [k, v] of [['sprite', was.sprite], ['special', was.special], ['spriteSize', was.size]]) { if (v === undefined) delete m[k]; else m[k] = v; }
+  if (a) { (s.sw = s.sw || {})[a.sw] = false; apeTactics(s, m, a, false); }
 }
 
 // ---------- battle hooks (src/battle.js battleHooks) ----------
@@ -133,16 +165,17 @@ battleHooks.power = (b, m, skill, P) => (m.cdaApe && skill && (b.game.state.skil
 battleHooks.dealt = (b, m, skill, d) => (m.cdaApe ? Math.trunc(d * 1.5) : d); // (68654)
 battleHooks.taken = (b, m, d) => (m.cdaApe ? Math.trunc(d * 0.7) : d); // (68743)
 
-// 大猿変身 (skill 51): no attack, 悟飯 becomes the Great Ape (anime 151: the full moon, then the ape)
+// 大猿変身 (51 悟飯, 251 / 262 / 270 / 278 the crew): no attack, the member becomes the Great Ape (anime 151 / 1351:
+// the full moon, then the ape)
 battleHooks.act = async (b, i, skill) => {
   const m = b.party[i];
-  if (!skill || skill.id !== 51 || m.cdaApe) return false;
+  if (!skill || !APES[m.id] || skill.id !== APES[m.id].move || m.cdaApe) return false;
   b.say(`${m.name} 的${skill.name}！`);
   audio.se('Z1 満月', 80);
   await sleep(1400);
   audio.se('Z1 パワーアップ', 80);
   await sleep(700);
-  apeOn(m);
+  apeOn(b.game.state, m);
   audio.se('Z1 大猿', 80);
   b.say(`${m.name} 變成了大猿！`);
   await sleep(1200);
@@ -195,7 +228,7 @@ battleHooks.recover = (b) => {
     m.ki = Math.min(m.maxki, m.ki + ki);
   }
 };
-battleHooks.end = (b) => { const s = b.game.state; if (ssOff(s, 5)) for (const m of s.party) apeOff(s, m); };
+battleHooks.end = (b) => { const s = b.game.state; for (const m of s.party) if (ssOff(s, m.id)) apeOff(s, m); }; // (13085-13089)
 // CE160 大猿全解除 / #ゴハン大猿OFF: back to himself, wherever he is (the 時之間 calls it going in and out, src/timeroom.js)
 export function apeOffAll(s) { for (const m of [...s.party, ...Object.values(s.bench || {})]) apeOff(s, m); }
 addNodes({ tacApeOff: async (node, { s }) => apeOffAll(s) });

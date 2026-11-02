@@ -17,6 +17,9 @@ FX = {
     'cha_skill_bairitu_mozi': 'bm'}
 SE = ['Z1 満月', 'Z1 大猿', 'Z1 パワーアップ', 'DB3 エネルギー波2', 'DB2 アイテム取得', 'Z3 アイテム取得']
 PICTURES = ['Graphics/Pictures/Z1_戦闘_ゴハン(大猿)96×96.png', 'Graphics/Pictures/Z1_戦闘_必殺技_ゴハン(大猿)96×96.png']
+# バーダック一味's Great Apes (src/cards_a.js APES): Z2_ / Z3_ by variable 40
+PICTURES += [f'Graphics/Pictures/{z}_戦闘_{k}{jp}(大猿)96×96.png' for z in ('Z2', 'Z3') for k in ('', '必殺技_')
+             for jp in ('トーマ', 'セリパ', 'トテッポ', 'パンブーキン')]
 
 
 def ids(v):

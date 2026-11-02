@@ -18,8 +18,17 @@ const SOUL = [5, 6, 7, 95, 96, 97, 98, 99, 100]; // サイヤ人魂
 export const formOf = (id) => Number(Object.keys(FORMS).find((no) => FORMS[no][0] === id || FORMS[no][1] === id) || 0);
 export const isSuper = (s, no) => !!(s.ss && s.ss[no]);
 
+// run after every on_off_super_saiyazin, changed or not: f(world, s, no, on, was) — was = state.ss before it
+// (CE64 超悟飯の技設定 at all.rb 13031 and the 作戰 move of 超2 悟飯, variables 450 / 451: src/grw.js)
+export const changeHooks = [];
 // on_off_super_saiyazin(no, on ? 0 : 1); returns the member now in the party (or bench), or null if nothing changed
 export function superSaiyan(world, s, no, on = true) {
+  const was = { ...(s.ss || {}) };
+  const to = swapForm(world, s, no, on);
+  for (const f of changeHooks) f(world, s, no, on, was);
+  return to;
+}
+function swapForm(world, s, no, on) {
   const [base, sup, slot] = FORMS[no];
   s.ss = s.ss || {};
   if (!!s.ss[no] === on || !world.actors[sup]) return null;
@@ -71,6 +80,7 @@ export function syncSuperSaiyan(world, s, want) {
 export const ssOff = (s, id) => { const t = s.tactics && s.tactics[id]; return !t || t.ssOff == null || t.ssOff === 1; };
 // a form's own way back (5: src/z4f.js — 超2 悟飯 is the same actor), instead of superSaiyan(…, false)
 export const offHooks = {}; // no → (world, s) => …
+export const onHooks = {}; // the same for on (5: src/z4f.js)
 
 // off_super_saiyazin_all (all.rb 12766), after a battle: back to normal those whose 作戰 says 不保持, each checked on the
 // actor the original looks at (the base form; 18 for 5 — the 作戰 screen keeps both forms the same); 5 before 2

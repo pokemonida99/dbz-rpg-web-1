@@ -18,6 +18,7 @@ import { applyEra } from './era.js?v=20261102-1750';
 import { addMoves } from './anime.js?v=20261102-1750';
 import { screenPic } from './z3c.js?v=20261102-1750';
 import { eventCard } from './items.js?v=20261102-1750';
+import { setTypical } from './growth.js?v=20261102-1750';
 
 const T = (game) => Z3(game).zga;
 const MAPS = ['100', '101', '102'];
@@ -239,6 +240,7 @@ addNodes({
   zgaKi0: async (node) => { if (G) member(G, node.id).ki = 0; }, // 演出としてKIを0にしておく
   zgaCardi: async (node) => { if (G) G.state.cardiMax = node.n; },
   zgaEra: async () => { if (G) await applyEra(G); }, // chk_scenario_progress
+  zgaTypical: async (node) => { if (G) setTypical(G.world, G.state, member(G, node.id), node.slot, node.skill); }, // 6131 最終決戦改
   zgaLead: async () => { const s = G && G.state; if (s && s.party[0]) s.var[42] = s.party[0].id; }, // CE39
   zgaSkills: async () => { if (G) crewSkills(G); }, // CE9
   zgaBardockSs: async (node, { stage, ui, quiet }) => { if (!quiet) await transformFilm(stage, ui); }, // CE66

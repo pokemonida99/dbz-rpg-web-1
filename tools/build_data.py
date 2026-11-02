@@ -321,5 +321,10 @@ import build_z3  # noqa: E402  (Z3: the shared part — Z3 art, enemies, battles
 build_z3.add(world, globals())
 import build_cards_ext  # noqa: E402  (cards and training squares: docs/cards-plan.md)
 build_cards_ext.add(world, globals())
+# SP reward = the enemy's max MP (docs/battle-rules.md §6), here at the end so it covers the enemies every chapter added
+# (build_growth runs early and only sees the Z1 chapters' first ones)
+for eid, e in world['enemies'].items():
+    if 'sp' not in e and int(eid) < len(enemies_db) and enemies_db[int(eid)]:
+        e['sp'] = int(enemies_db[int(eid)]['maxmp'])
 json.dump(world, open(os.path.join(root, 'data', 'world.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 print('world.json written')

@@ -1581,4 +1581,4 @@ export const ANIME_SOUNDS = ['Z1 打撃', 'Z3 打撃', 'Z3 避ける', 'Z1 必�
   'Z1 飛ぶ', 'DB3 残像拳', 'DB3 SE041', 'DB3 気を溜める1', 'DB3 エネルギー波1', 'DB3 エネルギー波2', 'DB3 SE091', 'DB3 キラーン',
   'Z1 怪しい気', 'Z1 吹っ飛ぶ', 'Z1 爆発1', 'Z1 満月'];
 // for the S-combo films (src/combo-anime.js)
-export { draw, spark, BALL, RAY, BACKS, MAKANKO_BALL, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED };
+export { draw, spark, BALL, RAY, BACKS, MAKANKO_BALL, POWER_BALL, BOOM, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED };

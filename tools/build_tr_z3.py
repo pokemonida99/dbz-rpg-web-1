@@ -74,7 +74,6 @@ def add(world, h, z3, tr):
     TRAIN = {'label': '修行', 'effect': 'training'}
 
     # ---------- the maps: flying (copies of the story maps), the bosses standing there (their map events) ----------
-    tile_events = {}
     for mid, rows in ROWS.items():
         m = build_map(mid, rows=rows)
         # only the boss sprites (enemy sheets): the story maps they copy do not draw the rest (animap1 woods …)
@@ -86,7 +85,8 @@ def add(world, h, z3, tr):
         world['areas'][str(mid)] = {'pool': pool, 'n': n}
         sq = SQUARES[mid]
         world['pois'][str(mid)] = at(sq['card'], CARD_SQ) + at(sq['inn'], INN) + at(sq['train'], TRAIN)
-        # the map events' graphics by square (set_battle_map: get_event_id_and_graphic), for the field battles' backdrops
+        # the map events' graphics by square (set_battle_map: get_event_id_and_graphic), for the field battles'
+        # backdrops (src/z3.js z3BackdropAt reads world.z3.tileEvents)
         best = {}
         for k, e in D('map%03d' % mid)['events'].items():
             g = e['pages'][0]['graphic']
@@ -95,7 +95,7 @@ def add(world, h, z3, tr):
             key = f"{e['x']},{e['y']}"
             if key not in best or int(k) > best[key][0]:
                 best[key] = (int(k), [g['character_name'], g['character_index'], g['direction']])
-        tile_events[str(mid)] = {k: v[1] for k, v in best.items()}
+        world['z3']['tileEvents'][str(mid)] = {k: v[1] for k, v in best.items()}
 
     for no, a in AREAS.items():
         world['pois'][str(a['map'])].append(T(*a['exit'], '回 Z3 時之間', 'trz3Leave', area=no))
@@ -119,7 +119,6 @@ def add(world, h, z3, tr):
     world['trZ3'] = {
         'areas': {str(no): {'to': tr['GO'](a['map'], *a['at']), 'v43': a['v43'], 'back': tr['GO'](72, *a['back'])} for no, a in AREAS.items()},
         'bosses': bosses,
-        'tileEvents': tile_events,
     }
     world['extraBgm'] = sorted(set(world['extraBgm']) | {b['bgm'] for b in bosses.values() if b['bgm']}
                                | {world['maps'][str(m)]['bgm'] for m in ROWS})

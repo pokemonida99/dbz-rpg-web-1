@@ -8,8 +8,8 @@
 //   trz3Card30 map 77's special card square (variable 44 = 30)    trz3Warp  map 77: 9545 / 9546 (No. 20 ↔ Nos. 16-18)
 //   trz3Ball   map 76's seven balls (page 1431 of the story: src/z3d.js), while not held and switch 446 is off
 import { audio, toast } from './core.js?v=20261102-1141';
-import { registerZ3, begin, party, z3Spot } from './z3.js?v=20261102-1141';
-import { registerArea, registerTrSpot, enterArea, leaveArea, trBattle, goTo, inTimeRoom } from './timeroom.js?v=20261102-1141';
+import { registerZ3, begin, party, z3Spot, z3BackdropAt } from './z3.js?v=20261102-1141';
+import { registerArea, registerTrSpot, registerBackdrop, enterArea, leaveArea, trBattle, goTo } from './timeroom.js?v=20261102-1141';
 import { cardSquare } from './cardgames.js?v=20261102-1141';
 import { spotTally } from './fieldmenu.js?v=20261102-1141';
 
@@ -18,7 +18,7 @@ const MAPS = ['73', '74', '75', '76', '77', '83'];
 
 // ---------- the doors of map 72 and the way back ----------
 for (const no of [9502, 9511, 9521, 9531, 9541, 9551]) {
-  registerArea(no, (game) => { const a = T(game).areas[no]; hook(game); enterArea(game, a.to, a.v43); });
+  registerArea(no, (game) => { const a = T(game).areas[no]; enterArea(game, a.to, a.v43); });
 }
 registerTrSpot('trz3Leave', (game, poi) => leaveArea(game, T(game).areas[poi.area].back));
 
@@ -67,45 +67,10 @@ function patchBalls(game) {
 }
 
 // ---------- the field battles' backgrounds ----------
-// set_battle_map in the 時の間 (switch 466: scenario_progress = variable 301, the Z3 hall's era 2): the same rules as
-// src/z3.js z3Backdrop, which only answers on the story chapters' maps. Until the shared files have a hook for it
-// (asked: docs/tr-z3.md), game.backdrop is wrapped here, on these maps only.
-function hook(game) {
-  if (!game) return;
-  patchBalls(game);
-  if (game.trz3Backdrop) return;
-  const prev = game.backdrop;
-  game.trz3Backdrop = true;
-  game.backdrop = () => backdrop(game) || (prev ? prev() : null);
-}
-// (once src/main.js has made the game and loaded the world: a save loaded inside an area does not pass a door)
-const wait = setInterval(() => { const g = window.__game; if (g && g.world) { clearInterval(wait); hook(g); } }, 500);
-function backdrop(game) {
-  const s = game.state;
-  if (!inTimeRoom(s) || !MAPS.includes(s.map) || !T(game)) return null;
-  const m = game.world.maps[s.map];
-  const tx = Math.floor(s.x / 32), ty = Math.floor(s.y / 32), i = ty * m.w + tx;
-  return `bg/z3_battle_${battleMapId(m.layers[0][i], (m.layers[2] || [])[i] || 0, (T(game).tileEvents[s.map] || {})[`${tx},${ty}`], s)}.png`;
-}
-// (src/z3.js battleMapId, all.rb 166004: scenario_progress >= 2)
-function battleMapId(tile, top, ev, s) {
-  if (tile === 1550) return 29; // セルゲームリング
-  if (tile === 1543 || tile === 1551) return 0; // ナメック星エリア
-  if (tile === 1575) return 32; // ナメック星海エリア
-  if (tile === 1552 || tile === 1555) { // 平原
-    if (top === 274 || top === 275) return 4;
-    if (ev && ev[0] === 'animap1' && ev[1] === 0 && ev[2] === 2) return 2; // 森
-    if (ev && ev[0] === 'animap1' && ev[1] === 1 && ev[2] === 6) return 9; // 林
-    return 1;
-  }
-  if (tile === 1553) return [556, 553, 544, 540, 536, 552, 512, 516, 522, 524, 548].includes(top) ? 29 : 5; // 砂漠
-  if (tile === 1554) return top === 276 ? 7 : 6; // 雪原
-  if (tile >= 1600 && tile <= 1602) { const v = (s.var || {})[101] || 0; return v === 0 ? 1 : v === 1 ? 6 : 5; } // 崖
-  if (tile === 1591) return 33; // ビッグゲテスター内
-  if (tile === 1583) return 28; // 新惑星ベジータエリア
-  if (tile === 1541 || tile === 1549) return 34; // ボージャックエリア(ガーリックエリア)
-  return ((s.var || {})[101] || 0) === 0 ? 3 : 8; // the rest: sea (variable 101)
-}
+// set_battle_map in the 時の間 (switch 466: scenario_progress = variable 301, the Z3 hall's era 2): the Z3 tile rules
+for (const map of MAPS) registerBackdrop(map, (game) => z3BackdropAt(game));
+// (the ball squares: once src/main.js has made the game and loaded the world, for a save loaded inside an area too)
+const wait = setInterval(() => { const g = window.__game; if (g && g.world) { clearInterval(wait); patchBalls(g); } }, 500);
 
 // ---------- ?dev=trz3 (the Z3 hall), ?dev=trz3kuraz / trz3pilaf / trz3kaiz / trz3cooler / trz3android / trz3garlic
 // (straight into that area): a Z4-end save already in the 時之間 ----------
@@ -123,7 +88,7 @@ registerZ3('trz3', {
     Object.assign(s.var, { 43: 999, 17: 2, 23: 2, 308: 64, 309: 13 });
     s.map = '72'; s.x = 15 * 32 + 16; s.y = 10 * 32 + 16;
     game.startField();
-    hook(game);
+    patchBalls(game);
     if (m[1]) { const a = T(game).areas[DEV[m[1]]]; enterArea(game, a.to, a.v43); } else { begin(game); goTo(game, { map: '72', x: 15, y: 10 }); }
     return true;
   },

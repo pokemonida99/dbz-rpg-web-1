@@ -60,8 +60,7 @@
 
 ## 和原版不同／沒做的地方
 
-- **雜兵戰的戰鬥背景**：共用的 `game.backdrop`（`z3Backdrop`）在時之間不回答，所以 `src/tr_z3.js` 暫時自己包一層
-  `game.backdrop`（只在時之間的地圖 73～77、83 生效，規則抄 `src/z3.js` 的 `battleMapId`）。已請主 session 決定是否在
-  `src/timeroom.js`／`src/main.js` 加正式的掛鉤；加了之後把 `hook()` 換成註冊即可。
+- （雜兵戰的戰鬥背景：用主 session 加的共用掛鉤 `registerBackdrop`＋`z3BackdropAt`（main 的 6c811eb，本分支 cherry-pick），
+  地形規則同主線 Z3；地圖事件的圖（樹林等）放在 `world.z3.tileEvents['73']` 等。和原版相同，列在這裡備查。）
 - 進區域給的舞空術卡（37）與帶路人卡（124）：共用的 `enterArea` 會給，但本版 `world.items` 沒有這兩張卡，所以目前實際上沒有給。
 - 按鈕：原版踩上格子就觸發，本版照其他格子用「!」＋按鈕（頭目可以重打，避免一直誤觸）。

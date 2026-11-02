@@ -96,6 +96,13 @@ export function resumeZ3(game) {
 export function z3Backdrop(game) {
   const s = game.state, z = Z3(game);
   if (!z || !isZ3Map(s)) return null;
+  return z3BackdropAt(game);
+}
+// the same for whatever map the player is on (the 時之間 areas, src/tr_z3.js / src/tr_z4.js: set_battle_map with
+// variable 301 ≥ 2 follows these tile rules); world.z3.backdrops[map] and tileEvents[map] apply when set
+export function z3BackdropAt(game) {
+  const s = game.state, z = Z3(game);
+  if (!z) return null;
   const m = game.world.maps[s.map];
   const tx = Math.floor(s.x / 32), ty = Math.floor(s.y / 32), i = ty * m.w + tx;
   const t = z.backdrops[s.map];

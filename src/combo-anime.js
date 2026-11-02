@@ -41,8 +41,8 @@ const DOUBLE_KAME = { 786: [2, 3, 0, [4, -126]], 787: [11, 12, -18, [-10, -122]]
   789: [2, 3, -2, [6, -130]], 790: [5, 1, -2, [22, -134]] };
 
 // moves without a film of their own yet borrow the one they come from (as ひらめき does, src/combo.js): 超元気玉 19 →
-// 元気玉 18, 瞬間移動かめはめ波 27 → スーパーかめはめ波 26, 18 號 / 17 號's エネルギーウェイブ 198 / 208 → 193 / 203
-const BORROW = { 19: 18, 27: 26, 198: 193, 208: 203 };
+// 元気玉 18, 瞬間移動かめはめ波 27 → スーパーかめはめ波 26
+const BORROW = { 19: 18, 27: 26 };
 
 export class ComboDuel extends Duel {
   constructor(opts) {

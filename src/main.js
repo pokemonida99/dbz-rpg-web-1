@@ -86,6 +86,7 @@ import './anime_zfighters.js?v=20261103-0338'; // the Z fighters' Z3 move films 
 import './anime_bardock.js?v=20261103-0338'; // 巴達克・超巴達克's move films (docs/anim-cd-plan.md ancb; ?dev=ancb…)
 import './anime_bardock_crew.js?v=20261103-0338'; // バーダック一味's move films (docs/anim-cd-plan.md ancc; ?dev=ancc…)
 import './anime_future.js?v=20261103-0338'; // 特蘭克斯・未來悟飯・龜仙人's Z3 move films (docs/anim-cd-plan.md andt; ?dev=andt…)
+import './anime_androids.js?v=20261103-0338'; // 人造人 18・17・16號's Z3 move films (docs/anim-cd-plan.md anda; ?dev=anda)
 
 // testing in a hidden browser pane (no animation frames there): ?timer drives every frame with timers instead
 if (new URLSearchParams(location.search).has('timer')) window.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16);

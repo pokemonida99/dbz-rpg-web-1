@@ -187,6 +187,8 @@ const MINE = new Set(Object.keys(FILM_PICTURES));
 export function agRegister(films) {
   for (const [name, cfg] of Object.entries(films)) { MINE.add(name); FILM_PICTURES[name] = cfg.pics || (() => []); LAUNCH[name] = cfg; }
 }
+// other files' films on this stage (src/anime_androids.js): film → its pictures, film → its pattern 32 settings
+export function agFilms(pictures, launch) { Object.assign(FILM_PICTURES, pictures); Object.assign(LAUNCH, launch); for (const k in pictures) MINE.add(k); }
 const baseLaunch = Duel.prototype.launch, baseRender = Duel.prototype.render;
 Object.assign(Duel.prototype, {
   // what these films draw besides the fighters: the strips and pictures behind them, effects in front, the cut-in on top

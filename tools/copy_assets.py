@@ -63,6 +63,10 @@ dt = open(os.path.join(root, 'src', 'anime_future.js'), encoding='utf-8').read()
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", dt)}
 files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", dt.split('export const DT_SOUNDS')[1].split(']')[0])}
 files |= {f'Audio/BGS/{n}.ogg' for n in re.findall(r"'([^']+)'", dt.split('export const DT_BGS')[1].split(']')[0])}
+# 人造人's Z3 move films (src/anime_androids.js): its pic('…') and ANDA_SOUNDS
+anda = open(os.path.join(root, 'src', 'anime_androids.js'), encoding='utf-8').read()
+files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", anda)}
+files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", anda.split('export const ANDA_SOUNDS')[1])}
 # the opening (src/opening.js): its pictures and sounds, and the faces / sounds named in world.opening
 opening = open(os.path.join(root, 'src', 'opening.js'), encoding='utf-8').read()
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\(`?'?([^'`$]+\.(?:PNG|png))", opening)}

@@ -130,6 +130,7 @@ export const enemyCard = (foe = null, first = true) => {
 export function newHand() { return Array.from({ length: HAND }, newCard); }
 // 「氣」 (school 16, the 時之間's 戦闘練習): it becomes the school of whoever plays it (all.rb 48888)
 export const KI_CARD = 16;
+const FAST_HINT = ['（點一下畫面可以加速）', '（加速中・再點一下恢復原速）'];
 const ownSchool = (cd, m) => cd.s === m.school || cd.s === KI_CARD;
 
 export function rollEncounter(world) {
@@ -309,7 +310,12 @@ export class Battle {
   say(...lines) { this.msg = lines; }
 
   // ---------- canvas ----------
-  // the battle film runs at the original's 60 frames a second (×3 after a tap)
+  // the battle film runs at the original's 60 frames a second (×3 after a tap, for the rest of the battle until tapped again)
+  toggleFast() {
+    this.fast = !this.fast;
+    audio.se('Z3 カーソル移動', 60);
+    if (this.msg[1] === FAST_HINT[0] || this.msg[1] === FAST_HINT[1]) this.msg = [this.msg[0], FAST_HINT[this.fast ? 1 : 0]];
+  }
   update(dt) {
     if (!this.anim) { this.acc = 0; return; }
     this.acc = Math.min(0.25, (this.acc || 0) + dt);
@@ -345,7 +351,7 @@ export class Battle {
   hit(x, y, w, h, fn, tag) { this.hits.unshift({ x, y, w, h, fn, tag }); }
 
   onTap(e) {
-    if (this.phase === 'fight' && this.anim && !this.cont) { this.fast = true; return; } // tap to speed the film up
+    if (this.phase === 'fight' && !this.cont) { this.toggleFast(); return; } // tap: the rest of the battle ×3, tap again for the normal speed
     const r = view.canvas.getBoundingClientRect();
     const x = (e.clientX - r.left) / view.cssPerPx, y = (e.clientY - r.top) / view.cssPerPx;
     const st = this.L && this.L.status;
@@ -376,7 +382,7 @@ export class Battle {
     if (!ok && !back && !n) return;
     e.preventDefault();
     audio.unlock();
-    if (this.phase === 'fight' && this.anim && !this.cont) { this.fast = true; return; }
+    if (this.phase === 'fight' && !this.cont) { this.toggleFast(); return; }
     if (this.cont) { if (ok) this.cont(); return; }
     if (this.phase !== 'plan') return;
     if (n) { if (this.mode === 'move' || this.mode === 'target') this.cancelPending(); this.tapCard(Number(n[2]) - 1); return; }
@@ -644,7 +650,6 @@ export class Battle {
 
   startPlanning() {
     this.phase = 'plan';
-    this.fast = false;
     this.duel = null;
     this.plans = this.party.map(() => null);
     this.history = [];
@@ -902,7 +907,7 @@ export class Battle {
         if (!playerAttacks && target.hp <= 0) growth.knockOut(target, this.turn);
       },
     });
-    if (!this.fast && !this.msg[1]) this.msg = [this.msg[0], '（點一下畫面可以加速）'];
+    if (!this.msg[1] || this.msg[1] === FAST_HINT[0] || this.msg[1] === FAST_HINT[1]) this.msg = [this.msg[0], FAST_HINT[this.fast ? 1 : 0]];
     return this.anim.finished.then(() => { this.anim = null; });
   }
 

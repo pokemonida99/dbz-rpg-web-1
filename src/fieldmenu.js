@@ -81,9 +81,9 @@ Battle.prototype.resolveTurn = function (...a) {
   return resolveTurn.apply(this, a);
 };
 audio.se = (name, vol, pitch) => playSe(name === 'Z1 敵発見' ? ENC_SE[options.encSe] : name, vol, pitch);
-// 戰鬥速度 高速化: the battle film always runs as if tapped
+// 戰鬥速度 高速化: a battle starts sped up (a tap still switches it, src/battle.js toggleFast)
 Object.defineProperty(Battle.prototype, 'fast', {
-  get() { return this._fast || !!options.battleFast; },
+  get() { return this._fast != null ? this._fast : !!options.battleFast; },
   set(v) { this._fast = v; },
   configurable: true,
 });

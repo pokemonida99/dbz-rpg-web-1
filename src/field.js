@@ -1,6 +1,6 @@
 // Field: free flight over the map, random encounters, the boss marker.
-import { view, img, input, audio, rand } from './core.js?v=20261102-1344';
-import { renderMap, drawTile, tileSheetPaths } from './tiles.js?v=20261102-1344';
+import { view, img, input, audio, rand } from './core.js?v=20261102-1554';
+import { renderMap, drawTile, tileSheetPaths } from './tiles.js?v=20261102-1554';
 
 const SPEED = 150; // art pixels per second (~4.7 tiles/s)
 const FLY = 'Graphics/Characters/chara_fly1.png'; // 48×48 frames, Goku = character 0

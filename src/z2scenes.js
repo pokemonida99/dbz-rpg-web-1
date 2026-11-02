@@ -4,10 +4,10 @@
 // (the Ginyu Force pose, Porunga, the fusion with Nail, Frieza's transformations), EXP, recovery, moves learned,
 // BGM changes, the Super Saiyan (src/supersaiyan.js) and the Super Spirit Bomb film (CE147).
 // What happens to the party goes through `env` (src/z2b.js setZ2Env), so it changes the game state, not just the picture.
-import { audio, img, sleep } from './core.js?v=20261102-1344';
-import { addScenes, addNodes } from './cutscene.js?v=20261102-1344';
-import { SCENE_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261102-1344';
-import { superSaiyan } from './supersaiyan.js?v=20261102-1344';
+import { audio, img, sleep } from './core.js?v=20261102-1554';
+import { addScenes, addNodes } from './cutscene.js?v=20261102-1554';
+import { SCENE_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261102-1554';
+import { superSaiyan } from './supersaiyan.js?v=20261102-1554';
 
 const pic = (n) => `Graphics/Pictures/${n}`;
 const BG = (n) => pic(`Z2_背景_${n}.PNG`);

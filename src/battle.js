@@ -744,7 +744,7 @@ export class Battle {
     audio.se(SE_OK);
     const alive = this.foes.filter((f) => f.hp > 0);
     if (this.aim == null || !alive.some((f) => f.slot === this.aim)) this.aim = autoTarget(this.game.state, m, this.foes); // framed already
-    if ((cd.s === m.school || cd.s === 0) && m.skills.length) {
+    if ((cd.s === m.school || cd.s === 0) && m.skills.length && !growth.ext('normalOnly', false, this, m)) { // (剛腕: src/skills_d.js)
       this.mode = 'move';
       this.buttons = [];
       this.say(`${m.name}：選一個招式。`, '點視窗外面可以取消這張卡。');
@@ -816,7 +816,7 @@ export class Battle {
       if (k != null && this.hand[k].s === 0 && growth.ext('pick', false, this, m, this.hand[k])) this.hand[k].s = m.school; // (喜歡的角色)
       if (k == null && free.length && growth.ext('school', false, this, m, this.hand[free[0]])) { k = free[0]; this.hand[k].s = m.school; } // 絶望への反抗 (all.rb 49625)
       let skill = null;
-      if (k != null) skill = autoSkill(this.world, this.game.state, m); // 作戰 (src/partymenu.js)
+      if (k != null && !growth.ext('normalOnly', false, this, m)) skill = autoSkill(this.world, this.game.state, m); // 作戰 (src/partymenu.js); 剛腕 (src/skills_d.js)
       else k = free[rand(free.length)];
       usedCards.add(k);
       this.plans[i] = { card: k, skill, target: autoTarget(this.game.state, m, this.foes) };

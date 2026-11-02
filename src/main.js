@@ -50,6 +50,7 @@ import './cards_story.js?v=20261102-2217';
 import './skills_a.js?v=20261102-2217';
 import './skills_b.js?v=20261102-2217';
 import './skills_c.js?v=20261102-2217';
+import './skills_d.js?v=20261102-2217'; // 大工程 skc: the skill cards' passive skills (docs/skc.md)
 import './flg.js?v=20261102-2217'; // ?dev=flg… test battles for the move flags (docs/batch2-plan.md flg)
 import './grw.js?v=20261102-2217'; // batch 2 grw: CE64, 地球育ちのサイヤ人 at S-combos, dev jumps ?dev=grw…
 // 時之間 phase 3 / ZG: the stories (docs/zg-plan.md)

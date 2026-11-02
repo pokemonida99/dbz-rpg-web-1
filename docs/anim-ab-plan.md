@@ -1,5 +1,7 @@
 # 招式動畫 A／B 組：分工（照原版逐格移植）
 
+> **2026-11-03 三個分工都已完成並合併上線**：25 招（悟空・悟飯 `src/anime_goku_gohan.js`、比克・貝吉塔 `src/anime_piccolo_vegeta.js`、Z 戰士等 `src/anime_zfighters.js`）。Z3 時期的招式 pattern 是「技能編號 +2100」。兩邊各有一份必殺技背景條與 cut-in，之後可收成一份放進 `src/anime.js`。以下是開工時的說明。
+
 做法和既有的 96 招一樣：讀原版 `research/all.rb` 的 Scene_Db_Battle_Anime（102_Scene_Db_Battle_Anime.rb）裡這一招的
 anime_pattern／effect_pattern／back_anime_pattern（招式的攻擊 pattern 是「技能編號 +10」，再追它呼叫的子 pattern），逐格寫成網頁程式，
 用原版的圖與音效（`game/Graphics/Pictures`、`game/Audio`），不重畫、不自創。照 `src/anime.js` 的寫法（`Duel`、`draw`、`spark`、`BALL`、`RAY`、`BACKS`…）。

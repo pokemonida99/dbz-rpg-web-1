@@ -9,15 +9,15 @@
 //   z3e 第五章 人造人間        map 40                 1326-1420 → Z4 (variable 41 = 2001)
 // state.flags.z3: the chapter being played ('z3a' … 'z3e', 'done'); state.flags.z3At: { ch, at } a story step to pick
 // up again after loading (saved right before a story battle, as Z2 does). Variable 40 = 2 (the Z3 art, src/era.js).
-import { input, setFaces } from './core.js?v=20261102-2311';
-import { playScenes, addNodes } from './cutscene.js?v=20261102-2311';
-import { setParty, moveTo, enterMap, card } from './chapter2.js?v=20261102-2311';
-import { makeMember, levelUp } from './party.js?v=20261102-2311';
-import { eventCard } from './items.js?v=20261102-2311';
-import { setZ2Env } from './z2scenes.js?v=20261102-2311';
-import { FORMS, isSuper } from './supersaiyan.js?v=20261102-2311';
-import { applyEra } from './era.js?v=20261102-2311';
-import { newHand } from './battle.js?v=20261102-2311';
+import { input, setFaces } from './core.js?v=20261103-0319';
+import { playScenes, addNodes } from './cutscene.js?v=20261103-0319';
+import { setParty, moveTo, enterMap, card } from './chapter2.js?v=20261103-0319';
+import { makeMember, levelUp } from './party.js?v=20261103-0319';
+import { eventCard } from './items.js?v=20261103-0319';
+import { setZ2Env } from './z2scenes.js?v=20261103-0319';
+import { FORMS, isSuper } from './supersaiyan.js?v=20261103-0319';
+import { applyEra } from './era.js?v=20261103-0319';
+import { newHand } from './battle.js?v=20261103-0319';
 
 export const Z3 = (game) => game.world.z3;
 export const ORDER = ['z3a', 'z3b', 'z3c', 'z3d', 'z3e', 'z4a', 'z4b', 'z4c', 'z4d', 'z4e', 'z4f']; // (Z4 too: docs/z4-plan.md)

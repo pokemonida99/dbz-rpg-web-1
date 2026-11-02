@@ -7,20 +7,20 @@
 //   Z2 (door 9351 of the Z2 hall): page 3000 → CE163 (Bardock alone, the main story's Bardock) → 3001-3111 (the film of
 //     set_battle_event 12, the pods passing on maps 53 / 52) → map 54 → the goal 3161 (film 13) → 3181 → CE164.
 // The pages run one after another the way Map007 does (variable 41; a transfer to map 7 = the next page).
-import { registerArea, registerTrSpot, registerBackdrop, goTo, healAll } from './timeroom.js?v=20261102-2311';
-import { registerZ3, begin, party, member, heal, leave } from './z3.js?v=20261102-2311';
-import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261102-2311';
-import { ENE, PLAY_X } from './opening.js?v=20261102-2311';
-import { audio, view, img, loadImages, setFaces } from './core.js?v=20261102-2311';
-import { eventCard } from './items.js?v=20261102-2311';
-import { makeMember, applyLevel } from './party.js?v=20261102-2311';
-import { applyEra } from './era.js?v=20261102-2311';
-import { newHand } from './battle.js?v=20261102-2311';
-import { syncSuperSaiyan, FORMS } from './supersaiyan.js?v=20261102-2311';
-import { moveTo } from './chapter2.js?v=20261102-2311';
-import { drawTile, tileSheetPaths } from './tiles.js?v=20261102-2311';
-import { duelFilm } from './z3c.js?v=20261102-2311';
-import { ANIME_IMAGES, addMoves } from './anime.js?v=20261102-2311';
+import { registerArea, registerTrSpot, registerBackdrop, goTo, healAll } from './timeroom.js?v=20261103-0319';
+import { registerZ3, begin, party, member, heal, leave } from './z3.js?v=20261103-0319';
+import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261103-0319';
+import { ENE, PLAY_X } from './opening.js?v=20261103-0319';
+import { audio, view, img, loadImages, setFaces } from './core.js?v=20261103-0319';
+import { eventCard } from './items.js?v=20261103-0319';
+import { makeMember, applyLevel } from './party.js?v=20261103-0319';
+import { applyEra } from './era.js?v=20261103-0319';
+import { newHand } from './battle.js?v=20261103-0319';
+import { syncSuperSaiyan, FORMS } from './supersaiyan.js?v=20261103-0319';
+import { moveTo } from './chapter2.js?v=20261103-0319';
+import { drawTile, tileSheetPaths } from './tiles.js?v=20261103-0319';
+import { duelFilm } from './z3c.js?v=20261103-0319';
+import { ANIME_IMAGES, addMoves } from './anime.js?v=20261103-0319';
 
 const T = (game) => game.world.trBardock;
 let G = null; // the game, for the scene and node handlers

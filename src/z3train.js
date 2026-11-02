@@ -17,12 +17,12 @@
 //   cleared = false: HP 0 (variable 41 stays 1309 → page 41: Vegeta's line, all_charecter_recovery, variable 41 − 1,
 //   and page 40 runs the training again from 100×). EXP for 100× / 200× is kept even then, as in the original.
 // Both play their BGM and leave it playing (the original's next page sets its own); they fade in 10 / out 20 frames.
-import { img, audio, rand, loadImages } from './core.js?v=20261102-2311';
-import { newCard } from './battle.js?v=20261102-2311';
-import { levelUp, EXP_RATE, makeMember, applyLevel } from './party.js?v=20261102-2311';
-import { el, overlay, button } from './fieldmenu.js?v=20261102-2311';
-import { registerZ3, member, heal } from './z3.js?v=20261102-2311';
-import { applyEra } from './era.js?v=20261102-2311';
+import { img, audio, rand, loadImages } from './core.js?v=20261103-0319';
+import { newCard } from './battle.js?v=20261103-0319';
+import { levelUp, EXP_RATE, makeMember, applyLevel } from './party.js?v=20261103-0319';
+import { el, overlay, button } from './fieldmenu.js?v=20261103-0319';
+import { registerZ3, member, heal } from './z3.js?v=20261103-0319';
+import { applyEra } from './era.js?v=20261103-0319';
 
 const P = (n) => `Graphics/Pictures/${n}.PNG`;
 const CARDS = P('カード関係'), DIGITS = P('数字英語'), ICONS = P('アイコン'), FACES = P('Z3_顔味方');

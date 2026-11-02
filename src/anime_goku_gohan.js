@@ -58,6 +58,14 @@ const TEC2 = { top: pic('Z2_戦闘_必殺技_背景_上.png'), low: pic('Z2_戦�
 const TEC3 = { top: pic('Z3_戦闘_必殺技_背景_上.png'), low: pic('Z3_戦闘_必殺技_背景_下(加工).PNG'), left: pic('Z3_戦闘_必殺技_背景_左(加工).PNG'),
   right: pic('Z3_戦闘_必殺技_背景_右(加工).PNG') };
 const KAME_SIDES = [pic('ZG_戦闘_必殺技_背景_超カメハメ波_左.PNG'), pic('ZG_戦闘_必殺技_背景_超カメハメ波_右.PNG')]; // 3 frames of 176×320
+// @tec_back_color 1: the red strips; no 2 / 3 the corners (3 frames of 238×238 / 222×222, the next every frame); no 6
+// バーニングアタック's red strip (672×110, at the top and lower down)
+const TEC3_RED = { top: pic('Z3_戦闘_必殺技_背景_上(赤).png'), low: pic('Z3_戦闘_必殺技_背景_下(加工)(赤).PNG') };
+const CORNER = { tl: pic('Z3_戦闘_必殺技_背景_左上.PNG'), br: pic('Z3_戦闘_必殺技_背景_右下.PNG'), tr: pic('Z3_戦闘_必殺技_背景_右上.PNG'),
+  bl: pic('Z3_戦闘_必殺技_背景_左下.PNG') };
+const CORNER_RED = { tl: pic('Z3_戦闘_必殺技_背景_左上(赤).PNG'), br: pic('Z3_戦闘_必殺技_背景_右下(赤).PNG'),
+  tr: pic('Z3_戦闘_必殺技_背景_右上(赤).PNG'), bl: pic('Z3_戦闘_必殺技_背景_左下(赤).PNG') };
+const BURNING_BAR = pic('ZG_戦闘_必殺技_背景(赤)_バーニングアタック上.PNG');
 // output_cutin: 640×64 a row (味方: actor id − 3, 敵: enemy id − 31 (Z2) / − 101 (Z3))
 const CUT = { 1: pic('Z2_味方カットイン.PNG'), 2: pic('Z3_味方カットイン.PNG'), zg: pic('ZG_味方カットイン.PNG') };
 const FOE_CUT = { 1: pic('Z2_敵カットイン.PNG'), 2: pic('Z3_敵カットイン.PNG') };
@@ -133,8 +141,15 @@ function tecBack(c, d, st) {
     return;
   }
   if (st.tecNo === 1) { down(c, TEC3.left, 94, 360, 0, t * 16); down(c, TEC3.right, 92, 360, SW - 94, t * 16); return; }
-  across(c, TEC3.top, 648, st.small ? 64 : 110, 0, t * 8);
-  across(c, TEC3.low, 648, st.small ? 60 : 114, st.small ? 296 : 242, t * 8);
+  if (st.tecNo === 2 || st.tecNo === 3) {
+    const k = t % 3, P = st.red ? CORNER_RED : CORNER, [a, b] = st.tecNo === 2 ? [P.tl, P.br] : [P.tr, P.bl];
+    draw(c, a, k * 238, 0, 238, 238, st.tecNo === 2 ? 0 : SW - 238, 0);
+    draw(c, b, k * 222, 0, 222, 222, st.tecNo === 2 ? SW - 222 : 0, 480 - 222 - 124);
+    return;
+  }
+  if (st.tecNo === 6) { across(c, BURNING_BAR, 672, 110, 4, t * 8); across(c, BURNING_BAR, 672, 110, 242, t * 8); return; }
+  across(c, st.red ? TEC3_RED.top : TEC3.top, 648, st.small ? 64 : 110, 0, t * 8);
+  across(c, st.red ? TEC3_RED.low : TEC3.low, 648, st.small ? 60 : 114, st.small ? 296 : 242, t * 8);
 }
 // set_battle_cutin_name (all.rb 19240) / the enemy's row
 function cutIn(c, d, st) {
@@ -150,6 +165,13 @@ function cutIn(c, d, st) {
     if (st.era === 2 && id === 18 && s.ss && s.ss[5]) [sheet, row] = [CUT.zg, 2]; // 超サイヤ人2
     if ((id === 16 || id === 32) && v(175) === 1) [sheet, row] = [CUT.zg, id === 16 ? 8 : 9]; // バーダック(超) スカウターなし
     draw(c, sheet, 0, row * 64, 640, 64, 0, 292);
+    let sx = 0;
+    if (id === 24 && sw(363)) [sheet, row, sx] = [CUT[2], 21, 2 * 640]; // 亀仙人普段着
+    if (id === 17 && v(173) === 1) [sheet, row] = [CUT.zg, 5]; // トランクスバトルスーツ
+    if (id === 20 && v(173) === 1) [sheet, row] = [CUT.zg, 4];
+    if (id === 17 && (v(173) === 3 || v(173) === 4)) [sheet, row] = [CUT.zg, 7]; // 長髪
+    if (id === 20 && (v(173) === 3 || v(173) === 4)) [sheet, row] = [CUT.zg, 4];
+    draw(c, sheet, sx, row * 64, 640, 64, 0, 292);
   } else {
     const id = duel.f && duel.f.id;
     if (!id || id < 31) return; // a Z1 enemy has none
@@ -160,6 +182,11 @@ function cutIn(c, d, st) {
 
 // ---------- the Duel side ----------
 const MINE = new Set(Object.keys(FILM_PICTURES));
+// another file's films on this stage: { film: { pics: () => [pictures], cut, small: true | 'z3', red } } (the move
+// switch's @chr_cutin_flag / @tec_back_small / @tec_back_color before pattern 32)
+export function agRegister(films) {
+  for (const [name, cfg] of Object.entries(films)) { MINE.add(name); FILM_PICTURES[name] = cfg.pics || (() => []); LAUNCH[name] = cfg; }
+}
 const baseLaunch = Duel.prototype.launch, baseRender = Duel.prototype.render;
 Object.assign(Duel.prototype, {
   // what these films draw besides the fighters: the strips and pictures behind them, effects in front, the cut-in on top
@@ -185,6 +212,7 @@ Object.assign(Duel.prototype, {
         st.tecFrom = this.t + 29;
         if (cfg.cut) st.cutFrom = this.t + 29;
         if (cfg.small === true || (cfg.small === 'z3' && st.era >= 2)) st.small = true;
+        if (cfg.red && st.era >= 2) st.red = true;
       }
     }
     yield* baseLaunch.call(this);

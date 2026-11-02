@@ -7,7 +7,7 @@
 //   Z2 (door 9351 of the Z2 hall): page 3000 → CE163 (Bardock alone, the main story's Bardock) → 3001-3111 (the film of
 //     set_battle_event 12, the pods passing on maps 53 / 52) → map 54 → the goal 3161 (film 13) → 3181 → CE164.
 // The pages run one after another the way Map007 does (variable 41; a transfer to map 7 = the next page).
-import { registerArea, registerTrSpot, goTo, healAll } from './timeroom.js?v=20261102-1141';
+import { registerArea, registerTrSpot, registerBackdrop, goTo, healAll } from './timeroom.js?v=20261102-1141';
 import { registerZ3, begin, party, member, heal, leave } from './z3.js?v=20261102-1141';
 import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261102-1141';
 import { ENE, PLAY_X } from './opening.js?v=20261102-1141';
@@ -116,7 +116,6 @@ async function film(st, s) {
 let ready = false;
 function ensure(game) {
   G = game;
-  installBackdrop(game);
   if (ready) return;
   ready = true;
   const t = T(game);
@@ -352,13 +351,7 @@ function backdrop(game) {
   const row = T(game).tiles[m.layers[0][i]];
   return row == null ? null : `bg/trbd_z1_${row}.png`;
 }
-function installBackdrop(game) {
-  if (!game || game.trbdBackdrop || !game.backdrop) return;
-  const prev = game.backdrop;
-  game.backdrop = () => backdrop(game) || prev();
-  game.trbdBackdrop = true;
-}
-setTimeout(() => installBackdrop(window.__game), 0); // (a save loaded on these maps)
+for (const m of ['31', '65', '54']) registerBackdrop(m, backdrop);
 
 // ---------- the doors ----------
 // 9151: variable 41 = 800 (page 800: 「在通关之前无法回到时之间　要移动吗？」), 9351: 3000

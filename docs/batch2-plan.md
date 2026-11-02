@@ -1,5 +1,7 @@
 # 小功能補齊：分工（照原版）
 
+> **2026-11-02 五個分工都已完成並合併到 main**（flg：`docs/battle-rules.md` §9；cmb：§3.4；grw：本檔 grw 段；sys：`docs/sys.md`；viz：`docs/viz.md`）。合併後 38 個跳關入口兩種尺寸實測無錯誤。以下是開工時的說明。
+
 原則同前：**總之參照原版**（`research/all.rb`、`game/Data`、`data/*.json`），台詞全文保留（`tools/s2t.py`），不確定先查原版再決定手機版怎麼做；跟使用者說話用繁體中文。
 先讀 `docs/HANDOFF.md`、`docs/battle-rules.md`。從 `main` 開自己的 worktree 分支，**不要合併 main、不要 push**；做完在自己分支提交，回報分支名與測試結果。
 `data/world.json` 衝突由主 session 合併時重建；worktree 裡的 `game`、`research` 要從主資料夾重新連結；不要用不帶名字的 `git stash`。

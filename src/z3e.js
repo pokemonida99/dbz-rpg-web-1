@@ -122,7 +122,7 @@ const D = {
     uses(ctx, 'uses1384');
     const p = member(G, 4); // set_typical_skill 4,0,249: 神との融合
     setTypical(G.world, G.state, p, 0, 249); // (all.rb 175032)
-    const op = (v) => { st.sprites[st.sprites.length - 1].op = v; };
+    const op = (v) => { const sp = st.sprites; if (sp && sp.length) sp[sp.length - 1].op = v; }; // (a recap's stage may have no sprites)
     const draw = (bg, k, kami = 255, pic = 255) => { st.clear(); if (bg) wide(st, bg); face(st, CARD, 10, -64 + k, 0, 2); op(kami); face(st, P3, 1, 64 - k); op(pic); };
     draw(BG.天界, 0);
     if (q) { draw(null, 64, 95); return; }

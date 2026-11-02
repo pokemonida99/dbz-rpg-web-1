@@ -41,6 +41,13 @@ import './tr_z2.js?v=20261102-1344';
 import './tr_z3.js?v=20261102-1344';
 import './tr_z4.js?v=20261102-1344';
 import './tr_bardock.js?v=20261102-1344';
+// 時之間 phase 3 / ZG: the stories (docs/zg-plan.md)
+import './tr_future.js?v=20261102-1344';
+import './zg_broly.js?v=20261102-1344';
+import './zg_bojack.js?v=20261102-1344';
+import './zg_a.js?v=20261102-1344';
+import './zg_b.js?v=20261102-1344';
+import './zg_c.js?v=20261102-1344';
 
 // testing in a hidden browser pane (no animation frames there): ?timer drives every frame with timers instead
 if (new URLSearchParams(location.search).has('timer')) window.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16);
@@ -397,7 +404,7 @@ async function boot() {
   if (dev && dev.startsWith('ch6')) { title.hidden = true; devChapter6(game, dev); requestAnimationFrame(frame); return; }
   if (dev && ['z2ginyu', 'z2frieza', 'z2last', 'z2turles'].includes(dev)) { title.hidden = true; devZ2b(game, dev); requestAnimationFrame(frame); return; } // Z2 second half
   if (dev && dev.startsWith('willow')) { title.hidden = true; devWillow(game, dev); requestAnimationFrame(frame); return; } // ?dev=willow / willow51 / willowboss
-  if (dev && (dev.startsWith('z3') || dev.startsWith('z4') || dev.startsWith('tr'))) { title.hidden = true; if (devZ3(game, dev)) { requestAnimationFrame(frame); return; } title.hidden = false; } // Z3 (src/z3*.js)
+  if (dev && (dev.startsWith('z3') || dev.startsWith('z4') || dev.startsWith('tr') || dev.startsWith('zg'))) { title.hidden = true; if (devZ3(game, dev)) { requestAnimationFrame(frame); return; } title.hidden = false; } // Z3 (src/z3*.js)
   if (dev && dev.startsWith('z2')) { title.hidden = true; devZ2a(game, dev); requestAnimationFrame(frame); return; } // ?dev=z2 / z2b / z2c / z2d
   if (!options.skipOp) await playOpening(); // the title animation, like the original plays before its title screen
   showTitle();

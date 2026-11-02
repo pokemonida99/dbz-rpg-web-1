@@ -62,6 +62,15 @@ export async function startZ3(game) {
 }
 // is that chapter there (Z3's ending hands over to Z4 once its first chapter is built)
 export const hasChapter = (key) => !!chapters[key];
+// a chapter by its key, outside ORDER (the 時之間 stories: src/timeroom.js startTrStory); false while it isn't built
+export function startChapter(game, key) {
+  const s = game.state;
+  if (!chapters[key]) return false;
+  s.flags.z3 = key;
+  s.flags.z3At = null;
+  chapters[key].start(game);
+  return true;
+}
 export const isZ3Map = (s) => !!(cur(s) && (cur(s).maps || []).includes(s.map));
 export function z3Spot(game, poi) {
   const ch = chapters[poi.chapter] || (/^z[34]/.test(String(poi.chapter)) && cur(game.state));

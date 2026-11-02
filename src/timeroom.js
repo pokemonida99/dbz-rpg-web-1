@@ -9,7 +9,7 @@
 // state.flags.tr = what page 15 kept for the way back (variables 231-235, $story_partyc, $story_sp_saiya); variable 43 is
 // 999 inside, the story's value comes back on leaving.
 import { audio, say, choose, sleep } from './core.js?v=20261102-1344';
-import { registerZ3, begin, play, heal, member, party } from './z3.js?v=20261102-1344';
+import { registerZ3, begin, play, heal, member, party, startChapter } from './z3.js?v=20261102-1344';
 import { moveTo, enterMap } from './chapter2.js?v=20261102-1344';
 import { syncSuperSaiyan, FORMS } from './supersaiyan.js?v=20261102-1344';
 import { eventCard, fieldCards } from './items.js?v=20261102-1344';
@@ -70,6 +70,29 @@ export async function trBattle(game, foes, opts = {}) {
   return won ? 'win' : game.lastResult;
 }
 export { goTo, healAll };
+
+// ---------- phase 3: the stories behind the doors (絶望への反抗, the ZG hall …: docs/zg-plan.md) ----------
+// A story is a chapter of src/z3.js (registerZ3(key, { maps, start, spot, boss, resume, dev, goal })): while it runs
+// it takes state.flags.z3 (so a load resumes it, its bosses and goal show), and the main story's chapter comes back
+// when it ends. startTrStory(game, 'zga') starts one (the original sets variable 41 and runs Map007); a story that
+// hands over to the next calls startTrStory again; endTrStory(game, {map, x, y}) ends it back in the time room.
+export function startTrStory(game, key) {
+  const s = game.state;
+  if (!s.flags.trStory) s.flags.trStory = { main: s.flags.z3 ?? null };
+  if (startChapter(game, key)) return true;
+  // not built yet: say so and stay where the player is
+  endTrStory(game, null);
+  begin(game);
+  say([['', '這段劇情本版尚未製作，之後會照原版加入。']]).then(() => goTo(game, { map: s.map, x: Math.floor(s.x / 32), y: Math.floor(s.y / 32) }));
+  return false;
+}
+export function endTrStory(game, back) {
+  const s = game.state, k = s.flags.trStory;
+  if (k) { s.flags.z3 = k.main; delete s.flags.trStory; }
+  s.flags.z3At = null;
+  if (back) { begin(game); goTo(game, back); }
+}
+export const inTrStory = (s) => !!(s.flags && s.flags.trStory);
 
 // all_charecter_recovery: every actor, in the party or not
 function healAll(game) {
@@ -304,7 +327,7 @@ registerZ3('tr', {
 
 // the goal line on the HUD (src/main.js renderHud)
 export function trGoal(world, s) {
-  if (!inTimeRoom(s)) return undefined;
+  if (!inTimeRoom(s) || inTrStory(s)) return undefined; // (a story run from here shows its own goal)
   return s.map === '58' ? '時之間：從下方出口回到主線' : '時之間';
 }
 

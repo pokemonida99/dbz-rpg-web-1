@@ -247,6 +247,19 @@ def add(world, h, z3):
     build_tr_z4.add(world, h, z3, tr)
     import build_tr_bardock  # noqa: E402  (巴達克篇 Z1 / Z2: maps 31, 54, 65)
     build_tr_bardock.add(world, h, z3, tr)
+    # ---------- phase 3: the stories (docs/zg-plan.md), each part in its own file ----------
+    import build_tr_future  # noqa: E402
+    build_tr_future.add(world, h, z3, tr)
+    import build_zg_broly  # noqa: E402
+    build_zg_broly.add(world, h, z3, tr)
+    import build_zg_bojack  # noqa: E402
+    build_zg_bojack.add(world, h, z3, tr)
+    import build_zg_a  # noqa: E402
+    build_zg_a.add(world, h, z3, tr)
+    import build_zg_b  # noqa: E402
+    build_zg_b.add(world, h, z3, tr)
+    import build_zg_c  # noqa: E402
+    build_zg_c.add(world, h, z3, tr)
 
     world['fieldPictures'] = sorted(set(world['fieldPictures']) | {f'Graphics/Characters/{n}.png' for n in sheets})
     world['extraBgm'] = sorted(set(world['extraBgm']) | {'DB3 イベント06', 'FCJ1 イベント1'})

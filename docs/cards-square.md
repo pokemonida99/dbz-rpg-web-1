@@ -13,8 +13,8 @@
   4・40 → +ZG；5・50 → +ZG 追加（波倫加）。清單是 `z1_cardlist`（第一個重複的 9 照原版跳過）＋ `z2`… `zG_add_cardlist`，
   再加上原版的「打倒某人後追加」：144 比克（開關 67）、173 氣墊車（開關 533）、155 弗利薩(S)（鬥技場 rank 28）、73 皮拉夫
   （鬥技場 rank 32）、140 芭蕉扇（變數 40 ≥ 2 且琪琪擊破數 ≥ 100）；依 Items 的 speed 排序（原版的排序）。
-  數量：Z1 41、Z2 58、Z3 69、Z4 80、ZG 87、ZG 追加 88。`src/items.js` 的 `openShop` 讀 `world.cardShop`，所以卡片格開店時暫時把
-  `world.cardShop` 換成這個時代的清單，關店後還原（不用改 items.js）。
+  數量：Z1 41、Z2 58、Z3 69、Z4 80、ZG 87、ZG 追加 88。清單經過 `src/items.js` 的 `shopHooks`：`cards_square.js` 第一個登記
+  （換成這個時代的清單，`cardgames.js` 的 `shopGoods`），後面的 `cards_b.js` 再加 141 喜歡角色變更；`world.cardShop` 不再用到。
 - **連線抽獎／神經衰弱的卡池**（`create_get_card` 20594）：`card_id_z1` 加上到那個時代的 `card_id_z2`… `card_id_zg`
   （變數 44：0・10 → Z1，1・20 → +Z2，2・30 → +Z3，3・40 → +Z4，4・50・5 → +ZG；重複的卡照原版保留＝機率加倍），
   `rand(size - 1)` 永遠抽不到最後一張也照原版。數量：39／48／62／70／76。

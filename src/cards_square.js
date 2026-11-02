@@ -1,6 +1,7 @@
 // 卡片格依時代換商品（Scene_Shop 的 z1～zG_cardlist、create_get_card 的 card_id_z1～zg、神經衰弱，變數 44）＋卡片 198／199／200、90／103／157 村人、119 基朗、202 界王星 — docs/cards-plan.md; the data is built by tools/build_cards_square.py.
 // Card effects register in src/items.js fieldCards[id] = async ({ game, battle }) => used | 'close' | false.
-// The goods / prizes by part of the story are in src/cardgames.js (cardSquare, shopGoods, prizePool); here:
+// The goods / prizes by part of the story are in src/cardgames.js (cardSquare, shopGoods, prizePool; the shop's list goes
+// through items.shopHooks, registered here before src/cards_b.js adds 141); here:
 //   198 卡片商店 / 199 卡片抽籤 / 200 卡片連線   Scene_Db_Card other_card_run (all.rb 147224): the next card square is the
 //        shop (switch 866) / the concentration game (867) / the lottery (868); refused while it already is. The note's
 //        \N[2] (actor 2's name, set_cardmas_name 145117) says which one is set now.
@@ -17,9 +18,13 @@ import * as growth from './growth.js?v=20261102-1554';
 import { pickMember } from './partymenu.js?v=20261102-1554';
 import { newCard } from './battle.js?v=20261102-1554';
 import { registerZ3 } from './z3.js?v=20261102-1554';
+import { shopGoods } from './cardgames.js?v=20261102-1554';
 
 const { fieldCards } = items;
 const SE_ERR = 'Z3 エラー';
+
+// ---------- the card shop's goods: this part of the story's lists (variable 44), first of items.shopHooks ----------
+items.shopHooks.push((world, s) => shopGoods(world, s));
 
 // ---------- 198 / 199 / 200: the next card square ----------
 const FORCE = { 198: 866, 199: 867, 200: 868 };

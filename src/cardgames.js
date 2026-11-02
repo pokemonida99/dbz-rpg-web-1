@@ -143,12 +143,8 @@ export async function cardSquare(game) {
   if (!s.var[44]) s.var[44] = eraOf(s);
   backAt = backOf(s);
   try {
-    if (n === 0) { // Scene_Shop with this part's goods (src/items.js openShop reads world.cardShop)
-      const keep = game.world.cardShop;
-      game.world.cardShop = shopGoods(game.world, s);
-      audio.playBgm('DB3 メニュー');
-      try { await openShop(game); } finally { game.world.cardShop = keep; }
-    } else if (n === 1) await lottery(game);
+    if (n === 0) { audio.playBgm('DB3 メニュー'); await openShop(game); } // the goods: shopGoods (src/cards_square.js shopHooks)
+    else if (n === 1) await lottery(game);
     else await memory(game);
   } finally { s.var[44] = 0; } // (the scenes' terminate / page 21's last command)
   game.field.enter(); // the map's music again

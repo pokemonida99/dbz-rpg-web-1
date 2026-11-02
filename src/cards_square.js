@@ -8,7 +8,7 @@
 //   90 村人A / 103 村人B / 157 村人C / 119 基朗   skill cards (Items element 32): src/growth.js useSkillCard teaches
 //        効果UP(HP) 431 / 効果UP(KI) 440 / 効果UP(H・K) 449 / 気まぐれ 390 (world.growth, tools/build_cards_square.py);
 //        their effects: get_recovery_hpki_skill_par (all.rb 19395, items.healBonus) and get_battle_skill's きまぐれ
-//        (all.rb 6794, growth.cardHooks) — the two hooks are used once src/items.js / src/growth.js have them.
+//        (all.rb 6794, growth.cardHooks).
 // ?dev=csq / csqz2 / csqz3 / csqz4 / csqzg: a save of that part of the story next to a card square (map 1), with CAP
 // and these cards.
 import { audio, rand, toast } from './core.js?v=20261102-1554';

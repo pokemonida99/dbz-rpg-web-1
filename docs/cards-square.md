@@ -34,9 +34,8 @@
   - 効果UP（`get_recovery_hpki_skill_par` 19395）：道具卡回復量 = ceil(最大值 ×（卡的回復率＋加成%）/ 100)；HP l1～l9 +10・11・12・13・14・15・16・17・20，
     KI 同，H・K 兩邊各 +5・5.5・6・6.5・7・7.5・8・8.5・10；學會的全部加總。`cards_square.js` 的 `healBonus`。
   - 隨心所欲（`get_battle_skill` 6794，在ミラクル全開パワー之前）：l1 出的卡攻防星數隨機，l2 流派隨機，l3 都隨機。`kimagure`。
-  - 這兩個要接到 `src/items.js` 的 `heal` 與 `src/growth.js` 的 `cardFor`，已請主 session 加掛鉤（`items.healBonus`、
-    `growth.cardHooks` 兩個空陣列，見共用筆記 `csq-hooks.md`）；`cards_square.js` 會在掛鉤存在時自己登記，現在沒有掛鉤時技能
-    學得到、設得上，但還沒有效果。
+  - 接在 `src/items.js` 的 `healBonus`（`heal` 裡）與 `src/growth.js` 的 `cardHooks`（`cardFor` 開頭）兩個掛鉤（主 session 的 commit 5a83755）；
+    `cards_square.js` 載入時登記。實測：悟空設効果UP(HP) l1、HP 10/80，用布爾瑪（25%）回到 38（沒有技能是 30）；設隨心所欲 l1 出牌攻防星數隨機、流派不變。
 
 ## 跳關
 `?dev=csq`（Z1）、`csqz2`、`csqz3`、`csqz4`、`csqzg`：那個時代的存檔，站在地圖 1 的 Z 標記旁，99999 CAP，帶著上面這幾張卡。

@@ -11,7 +11,7 @@
 import { audio, img, say, choose, loadImages } from './core.js?v=20261102-1344';
 import { addScenes, addNodes } from './cutscene.js?v=20261102-1344';
 import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261102-1344';
-import { addMoves, ANIME_IMAGES } from './anime.js?v=20261102-1344';
+import { addMoves, ANIME_IMAGES, Duel, draw, STD_Y, CENTER_CHAX, RAY_SPEED } from './anime.js?v=20261102-1344';
 import { syncSuperSaiyan, superSaiyan, FORMS } from './supersaiyan.js?v=20261102-1344';
 import { duelFilm, screenPic } from './z3c.js?v=20261102-1344';
 import { registerZ3, Z3, begin, play, fight, toField, party, member, heal, z3BackdropAt } from './z3.js?v=20261102-1344';
@@ -23,13 +23,186 @@ const BATTLES = [5111, 5131], FILM = 5801;
 let G = null; // the game, for the scene and node handlers (set whenever one of these stories takes over)
 function stop(game) { G = game; ensure(game); begin(game); }
 
-// ---------- the battle films of the moves met here (src/anime.js): the closest of the earlier films ----------
+// ---------- the battle films of the moves met here (src/anime.js) ----------
+// the soldiers' and Broly's plain waves: the closest of the earlier films; Broly's own four moves are his own films
+// (below), ported from the original's anime_pattern 2624 / 2630-2633
 addMoves({
   519: 'foeWave', // 戦闘員
-  521: 'foeWave', 522: 'raditzWave', 523: 'raditzBigWave', 524: 'raditzBigWave', // ブロリー(超)
+  521: 'foeWave', 522: 'raditzWave', 523: 'raditzBigWave', 524: 'zgbEraserCannon', // ブロリー(超)
   526: 'foeWave', 527: 'raditzWave', 528: 'raditzBigWave', 529: 'nappaBlast', // ブロリー(フルパワー)
-  530: 'raditzBigWave', 531: 'raditzBigWave', 532: 'raditzBigWave', 533: 'raditzBigWave',
+  530: 'zgbEraserBlow', 531: 'zgbEraserCannonFull', 532: 'zgbThrowingBlaster', 533: 'zgbOmegaBlaster',
   155: 'galickGun', // 超バーダック スーパーファイナルリベンジャー (the film 5801; ファイナルリベンジャー 151 is this one too)
+});
+const FP = (n) => `Graphics/Pictures/${n}`;
+const STD_ENEX = 602;
+// effect_pattern 237 / 235 / 252 (the blinking balls of ki: 16 / 32 / 64 px frames, the next every 4 frames), 261 / 262
+// (the 64 px ball thrown / hitting: 繰気弾 frame 5, 元気玉 frame 3), 293 / 266 (Z3 エネルギー弾4, 190×126, the lower half
+// for an enemy), back_anime_pattern 201 (気を溜める(Z3), 136×142, the next every 16 frames) and 106 (the super
+// kamehameha's lines, mirrored for an enemy)
+const FX = {
+  small: [FP('Z3_必殺技_超カメハメ波(球点滅小).png'), 16, 5], smallBlue: [FP('Z3_必殺技_超カメハメ波(球点滅小)(青).png'), 16, 5],
+  smallGreen: [FP('Z3_必殺技_超カメハメ波(球点滅小)(緑).png'), 16, 5],
+  mid: [FP('Z3_必殺技_超カメハメ波(球点滅).png'), 32, 5], midBlue: [FP('Z3_必殺技_超カメハメ波(球点滅)(青).png'), 32, 5],
+  midGreen: [FP('Z3_必殺技_超カメハメ波(球点滅)(緑).png'), 32, 5],
+  big: [FP('Z3_必殺技_元気玉(球点滅中).PNG'), 64, 4], bigBlue: [FP('Z3_必殺技_元気玉(球点滅中)(青).PNG'), 64, 4],
+  bigGreen: [FP('Z3_必殺技_元気玉(球点滅中)(緑).PNG'), 64, 4], sokidan: [FP('Z3_必殺技_繰気弾(球点滅中).PNG'), 64, 6],
+};
+const BALL4 = FP('Z3_戦闘_必殺技_エネルギー弾4.PNG'), AURA = FP('Z3_戦闘_必殺技_気を溜める(青).png');
+const OMEGA = FP('Z3_必殺技_オメガブラスター(ブロリーフルパワー).png');
+const LINES = [FP('Z3_必殺技_超カメハメ波(バック上)_反転.png'), FP('Z3_必殺技_超カメハメ波(バック下)_反転.png')];
+export const FILM_IMAGES = [...Object.values(FX).map((f) => f[0]), BALL4, AURA, OMEGA, ...LINES];
+// what a film shows besides the fighters, frame by frame: an aura behind them, a ball (or a still picture) in front
+function stage(d) {
+  const st = { aura: null, at: 0, ball: null, bt: 0, pic: null, lines: 0, flash: false };
+  d.behind((c) => {
+    if (st.lines) { const k = Math.floor(st.lines / 4) % 3; draw(c, LINES[0], 0, 128 * k, 384, 128, 640 - 384, 0); draw(c, LINES[1], 0, 64 * k, 192, 64, 640 - 192, 292); }
+    if (st.pic) draw(c, ...st.pic);
+    if (st.aura) draw(c, AURA, 136 * (Math.floor(st.at / 16) % 2), 0, 136, 142, st.aura[0], st.aura[1]);
+  });
+  d.effect((c) => {
+    const b = st.ball;
+    if (b && b.f) { const [sheet, z, n] = b.f; draw(c, sheet, z * (b.k != null ? b.k : Math.floor(st.bt / 4) % n), 0, z, z, b.x, b.y); }
+    if (b && b.big) draw(c, BALL4, 0, 126, 190, 126, b.x, b.y);
+    if (st.flash) { c.fillStyle = '#fff'; c.fillRect(0, 0, 640, 296); }
+  });
+  st.tick = () => { st.at++; st.bt++; if (st.lines) st.lines++; };
+  return st;
+}
+// the cut to the defender (set_chr_display_out, an enemy attacking): the attacker leaves, the defender in the middle
+function cut(d) { d.A.y = -200; d.G.x = CENTER_CHAX; d.G.y = STD_Y; }
+// the charge of 2631 / 2632 / 2633 (frames 1-180): the small ball, the bigger one from 41, the biggest from 81
+function* charge(d, st, at, colors, aura) {
+  const [x, y] = at;
+  for (let f = 1; f <= 180; f++) {
+    if (f <= 128) {
+      st.aura = aura ? [242, 88] : null;
+      st.ball = f >= 81 ? { f: colors[2], x: x - 24, y: y - 24 } : f >= 41 ? { f: colors[1], x: x - 8, y: y - 8 } : { f: colors[0], x, y };
+      if (colors.pose && f >= 41) d.pose(d.A, colors.pose, true);
+    } else { st.aura = null; st.ball = { f: colors[2], x: x - 24, y: y - 24 }; }
+    st.tick();
+    yield;
+  }
+}
+Object.assign(Duel.prototype, {
+  * zgbEraserCannon() { // 2624 ブロ超)イレイザーキャノン: he flies off, comes back for the defender, throws him, then the cannon
+    const A = this.A, G = this.G, st = stage(this);
+    this.pose(A, 4, true); this.se('Z1 飛ぶ'); yield;
+    for (let f = 1; f <= 39; f++) { A.x -= 24; yield; }
+    G.x = CENTER_CHAX; G.y = STD_Y; this.pose(G, 0, false); A.x = STD_ENEX + 12; A.y = STD_Y; yield; // 40
+    for (let f = 41; f <= 54; f++) { this.vel(24, 0, 0, 0); yield; }
+    this.pose(A, 5, true); G.y -= 16; this.pose(G, 16); this.se('Z1 強打'); yield; // 55: he has him
+    for (let f = 56; f <= 120; f++) { if (f % 4 === 0) G.x += 4; else if (f % 2 === 0) G.x -= 4; yield; }
+    // 121-140: up and over, the defender sinking a little
+    const path = [[0, -16, 2], [0, -16, 2], [0, -16, 2], [16, -16, 2], [16, -8, 2], [24, 0, 2], [24, 0, 2], [16, 8, 0], [16, 8, 0],
+      [16, 16, 0], [0, 16, 0], [0, 16, 0], [0, 16, 0]];
+    this.se('Z1 飛ぶ');
+    this.pose(A, 0, true);
+    for (let f = 121; f <= 140; f++) {
+      const p = path[f - 121];
+      if (p) { A.x += p[0]; A.y += p[1]; G.y += p[2]; }
+      yield;
+    }
+    for (let f = 141; f <= 148; f++) { A.x -= 16; this.pose(A, 16, false); yield; }
+    this.se('ZG 打撃2'); // 149-180: thrown away
+    for (let f = 149; f <= 180; f++) { G.x -= 20; this.pose(A, 3, false); this.pose(G, 17); yield; }
+    audio.se('Z1 気を溜める', 80); this.se('Z3 変身'); // 181-308: the charge
+    this.pose(A, 2, true);
+    for (let f = 181; f <= 308; f++) {
+      st.aura = [258, 88];
+      st.ball = f >= 241 ? { f: FX.midBlue, x: 340, y: 118 } : { f: FX.smallBlue, x: 348, y: 134 };
+      st.tick();
+      yield;
+    }
+    audio.seStop(); this.se('Z1 エネルギー波'); // 309-350: the cannon flies off after him
+    st.aura = null;
+    this.pose(A, 3, true);
+    for (let f = 309; f <= 350; f++) { st.ball = { f: FX.bigBlue, k: 0, x: 230 - 16 * (f - 309), y: 140 }; yield; }
+    st.ball = null;
+    yield* this.wait(9);
+    cut(this); this.pose(G, 16); // 360
+    yield;
+    for (let t = 1; t <= 26; t++) { st.ball = { f: FX.bigBlue, k: 3, x: 640 - t * RAY_SPEED, y: 140 }; yield; } // 361-386
+    st.ball = null;
+  },
+  * zgbEraserBlow() { // 2630 ブロフル)イレイザーブロウ: he flies off, comes back right in front of the defender, a ball in his hand
+    const A = this.A, G = this.G, st = stage(this);
+    this.pose(A, 3, true); this.se('Z1 飛ぶ'); yield;
+    for (let f = 1; f <= 39; f++) { A.x -= 24; yield; }
+    G.x = CENTER_CHAX; G.y = STD_Y; this.pose(G, 0, false); A.x = STD_ENEX + 20; A.y = STD_Y; yield; // 40
+    for (let f = 41; f <= 54; f++) { this.vel(24, 0, 0, 0); yield; }
+    this.pose(A, 2, true); this.se('Z1 気を溜める'); yield; // 55
+    for (let f = 56; f <= 130; f++) { st.ball = { f: FX.smallBlue, x: 288, y: 164 }; st.tick(); yield; }
+    A.y = -200;
+    st.ball = null;
+  },
+  * zgbEraserCannonFull() { // 2631 ブロフル)イレイザーキャノン
+    yield* this.zgbBlaster([268, 154], [FX.small, FX.mid, FX.big], 4, 5, true);
+    for (let t = 1; t <= 26; t++) { this.zgbSt.ball = { f: FX.sokidan, k: 5, x: 640 - t * RAY_SPEED, y: 140 }; yield; } // 234-259
+    this.zgbSt.ball = null;
+  },
+  * zgbThrowingBlaster() { // 2632 ブロフル)スローイングブラスター: the charge, then the Z3 エネルギー弾4 thrown
+    yield* this.zgbBlaster([348, 136], [FX.small, FX.mid, FX.big], 4, 6, true, true);
+    for (let t = 1; t <= 26; t++) { this.zgbSt.ball = { big: true, x: 640 - t * RAY_SPEED, y: 110 }; yield; } // 234-259: 266
+    this.zgbSt.ball = null;
+  },
+  // 2631 / 2632 frames 0-233: the charge with the blue aura, the ball thrown (252 flying left, or 293), the cut
+  * zgbBlaster(at, colors, p0, p1, aura, thrown = false) {
+    const A = this.A, st = this.zgbSt = stage(this);
+    this.pose(A, p0, true); audio.se('Z1 気を溜める', 80); this.se('Z3 変身'); yield; // 0
+    yield* charge(this, st, at, colors, aura);
+    audio.seStop(); this.se('Z1 エネルギー波'); // 181-222
+    this.pose(A, p1, true);
+    for (let t = 0; t <= 41; t++) {
+      st.ball = thrown ? { big: true, x: 78 - t * RAY_SPEED, y: 110 } : { f: colors[2], x: at[0] - 24 - 16 * t, y: at[1] - 24 };
+      st.tick();
+      yield;
+    }
+    st.ball = null; // 223
+    yield* this.wait(9);
+    cut(this); // 233
+    yield;
+  },
+  * zgbOmegaBlaster() { // 2633 ブロフル)オメガブラスター: the green ball, his power-up, then the Omega Blaster itself
+    const A = this.A, G = this.G, st = stage(this);
+    this.pose(A, 0, true); audio.se('Z1 気を溜める', 80); yield; // 0
+    const green = [FX.smallGreen, FX.midGreen, FX.bigGreen];
+    green.pose = 4;
+    // (frames 1-40 the small ball at (318,154); from 41 his arm goes up and the ball is at the others' places)
+    for (let f = 1; f <= 180; f++) {
+      if (f <= 128) {
+        st.ball = f >= 81 ? { f: green[2], x: 324, y: 112 } : f >= 41 ? { f: green[1], x: 340, y: 128 } : { f: green[0], x: 318, y: 154 };
+        if (f === 41) this.pose(A, 4, true);
+      } else st.ball = { f: green[2], x: 324, y: 112 };
+      st.tick();
+      yield;
+    }
+    audio.seStop(); this.se('Z1 エネルギー波'); // 181-222
+    this.pose(A, 5, true);
+    for (let t = 0; t <= 41; t++) { st.ball = { f: green[2], x: 244 - 16 * t, y: 130 }; st.tick(); yield; }
+    st.ball = null;
+    yield* this.wait(9);
+    cut(this); yield; // 233
+    for (let f = 234; f <= 289; f++) { // the ball comes down on the defender and stays there
+      st.ball = { f: FX.bigGreen, k: 3, x: 640 - Math.min(f - 233, 26) * RAY_SPEED, y: 140 };
+      if (f === 258) this.pose(G, 16);
+      yield;
+    }
+    st.ball = null; // 290-417: he powers up (the defender out of sight)
+    audio.seStop(); this.se('Z3 変身');
+    this.pose(A, 0, true); G.y = -200; A.y = STD_Y;
+    for (let f = 290; f <= 417; f++) { st.aura = [242, 88]; st.tick(); yield; }
+    st.aura = null; // 418-530: the Omega Blaster picture, the lines of the super kamehameha
+    audio.seStop(); this.se('Z1 気を溜める5');
+    A.y = -200;
+    st.pic = [OMEGA, 0, 0, 412, 208, 82, 88];
+    st.lines = 1;
+    for (let f = 418; f <= 530; f++) { st.tick(); yield; }
+    st.pic = null; st.lines = 0;
+    this.se('Z1 エネルギー波'); // 531-630: it lands — the defender under the ball, the screen flashing every 12 frames
+    G.y = STD_Y;
+    for (let f = 531; f <= 630; f++) { st.ball = { f: FX.bigGreen, x: 290, y: 140 }; st.flash = f % 12 === 0; st.tick(); yield; }
+    st.ball = null; st.flash = false;
+  },
 });
 
 // ---------- the scenes (data: world.z3.zgbroly.scenes, z1field 5001-5143 / 5701-5816 from all.rb) ----------
@@ -243,6 +416,7 @@ async function run(game, v) {
   const s = game.state;
   for (;;) {
     if (BATTLES.includes(v)) {
+      await loadImages(FILM_IMAGES);
       const r = await fight(game, v, String(v), { backdrop: Z3(game).battles[v].backdrop });
       G = game;
       if (r !== 'win') return null;

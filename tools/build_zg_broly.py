@@ -237,12 +237,19 @@ def add(world, h, z3, tr):
     raw25 = {p['condition']['variable_value']: p['list'] for p in ev7['25']['pages'] if p['condition']['variable_valid']}
     pages, said = {}, {}
 
+    broly = {}  # Broly's face as he is at that point of the page: 50, 51 超 (after CE59), 52 full power (after CE60)
+
     def own(ns, v):  # the speakers' faces under this part's own keys ('zgb:' / 'zgb5701:' …), not the shared 'z3:' ones
         for n in ns:
+            if n.get('x') == 'zgbForm' and n['n'] in (59, 60):
+                broly[v] = 51 if n['n'] == 59 else 52
             if 'say' in n and n['say'][0]:
                 who = n['say'][0]
                 f = PAGE_SPEAKERS.get(v, {}).get(who)
                 key = f'zgb{v}:{who}' if f else f'zgb:{who}'
+                if who == '布羅利':
+                    row = broly.setdefault(v, {5101: 51, 5121: 51}.get(v, 50))
+                    f, key = [F3, row], f'zgb:{who}{row}'
                 f = f or faces.get(who)
                 n['say'] = n['say'][:2] + ([key] if f else [])
                 if f:
@@ -277,7 +284,7 @@ def add(world, h, z3, tr):
     TRAINING = {'label': '修行', 'effect': 'training'}
     at = lambda spots, kind: [dict(kind, x=x, y=y) for x, y in spots]
     world['pois'][str(MAP)] = at(CARDS, SHOP) + at(INNS, INN) + at(TRAIN, TRAINING) \
-        + [{'x': x, 'y': y, 'label': '前往帕拉伽斯和布羅利那裡', 'chapter': 'zgbroly', 'page': 'boss'} for x, y in BOSS] \
+        + [{'x': x, 'y': y, 'label': '前往布羅利那裡', 'chapter': 'zgbroly', 'page': 'boss'} for x, y in BOSS] \
         + [{'x': BACK[0], 'y': BACK[1], 'label': '回到時之間', 'chapter': 'zgbroly', 'page': 'back'}]
 
     # ---------- enemies, battles ----------
@@ -344,7 +351,10 @@ def add(world, h, z3, tr):
     for f in forms.values():
         pics |= {f['back'], *f['auras'], *f['bodies']}
     pics |= set(world['z3']['zgbroly']['film']['party'].values()) | set(film_foe.values())
-    assert None not in pics
+    # Broly's own battle films (src/zg_broly.js FP('…'), their sounds)
+    js = open(os.path.join(root, 'src', 'zg_broly.js'), encoding='utf-8').read()
+    pics |= {P(n) for n in re.findall(r"FP\('([^']+)'\)", js)}
+    assert None not in pics and all(os.path.exists(os.path.join(root, 'game', x)) for x in pics), [x for x in pics if not x or not os.path.exists(os.path.join(root, 'game', x))]
     world['z3']['zgbroly']['pictures'] = sorted(pics)
     se, bgm = set(), set()
 
@@ -360,7 +370,7 @@ def add(world, h, z3, tr):
                 walk(b)
     for p in pages.values():
         walk(p)
-    se |= {'Z3 変身', 'Z1 高速移動', 'Z1 入る', 'Z1 出る'}
+    se |= {'Z3 変身', 'Z1 高速移動', 'Z1 入る', 'Z1 出る'} | set(re.findall(r"se\('([^']+)'", js))
     bgm |= {b['bgm'] for n, b in world['z3']['battles'].items() if int(n) in BATTLES and 'bgm' in b} | {'DB3 イベント06', m_bgm(world)}
     if film_bgm:
         bgm.add(film_bgm)

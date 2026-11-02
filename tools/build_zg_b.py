@@ -54,7 +54,7 @@ SPOTS = {
           'train': [(4, 28), (29, 32), (32, 13), (53, 11), (55, 39)],
           'inn': [(16, 18), (23, 4), (38, 28), (48, 9), (54, 40)]},
 }
-BEFORE_LINIUM = ['var', 43, 173, 4]  # map 105 is zgc's too: these squares run other pages once variable 43 = 173
+BEFORE_LINIUM = ['var', 43, 173, 5]  # map 105 is zgc's too: these squares run zgc's pages while variable 43 == 173
 STORY = [  # [map, squares, label, page, when]
     (103, SQ4(22, 20), '進入村子', 6181, None),
     (103, SQ4(4, 3), '調查岩山', 6201, None),
@@ -217,7 +217,7 @@ def add(world, h, z3, tr):
                 if isinstance(pg[1], list) and pg[1][0] == '!bigsize_anime':
                     pg[1] = 0
         m['ev'] = evs
-        world['maps'][str(mid)] = m
+        world['maps'].setdefault(str(mid), m)  # (map 105: zgc builds the same; whoever comes first)
         # set_battle_map: the graphic of the event standing on a tile (the highest event id there, its first page)
         best = {}
         for k, e in md['events'].items():
@@ -228,7 +228,7 @@ def add(world, h, z3, tr):
             if key not in best or int(k) > best[key][0]:
                 best[key] = (int(k), [g['character_name'], g['character_index'], g['direction']])
         tile_events[str(mid)] = {k: v[1] for k, v in best.items()}
-        world['areas'][str(mid)] = {'pool': AREAS[mid][0], 'n': AREAS[mid][1]}
+        world['areas'].setdefault(str(mid), {'pool': AREAS[mid][0], 'n': AREAS[mid][1]})
 
     # ---------- the squares ----------
     INN = {'label': '進入旅館', 'event': 'z2inn', 'effect': 'rest'}
@@ -236,7 +236,7 @@ def add(world, h, z3, tr):
     TRAIN = {'label': '修行', 'effect': 'training'}
     at = lambda spots, kind: [dict(kind, x=x, y=y) for x, y in spots]
     for mid, sp in SPOTS.items():
-        world['pois'][str(mid)] = at(sp['card'], CARD_SQ) + at(sp['inn'], INN) + at(sp['train'], TRAIN)
+        world['pois'].setdefault(str(mid), at(sp['card'], CARD_SQ) + at(sp['inn'], INN) + at(sp['train'], TRAIN))
     for mid, squares, label, page, when in STORY:
         for x, y in squares:
             world['pois'][str(mid)].append(dict({'x': x, 'y': y, 'label': label, 'chapter': 'zgb', 'page': page},

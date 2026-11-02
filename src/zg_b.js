@@ -250,6 +250,13 @@ function toHall(game) {
   eventCard(s, 37, -99);
   eventCard(s, 124, -99);
   s.flags.zgBack = { key: 'zgb', map: s.map, x: 51, y: 3, v43: s.var[43], v17: s.var[17] };
+  // CE168: the story's party out, the 時之間's back (state.flags.zgParty, kept by zga at page 6001 as CE166 does)
+  const zp = s.flags.zgParty;
+  if (zp && zp.party) {
+    zp.story = { party: s.party.map((m) => m.id), ss: { ...(s.ss || {}) } };
+    for (const no of [1, 2, 3, 4, 5, 6, 7]) superSaiyan(game.world, s, no, !!(zp.ss || {})[no]);
+    party(game, zp.party);
+  }
   s.var[43] = 999;
   s.var[17] = 0;
   s.sw[78] = false;
@@ -351,6 +358,13 @@ async function start(game) {
   const back = s.flags.zgBack;
   if (back && back.key === 'zgb') { // from the ZG hall's door (page 6000 with switch 850): where page 9932 left
     delete s.flags.zgBack;
+    const zp = s.flags.zgParty; // (CE168 the other way, when the door has not done it)
+    if (zp && zp.story) {
+      for (const no of [1, 2, 3, 4, 5, 6, 7]) superSaiyan(game.world, s, no, !!(zp.story.ss || {})[no]);
+      party(game, zp.story.party);
+      delete zp.story;
+    }
+    for (const m of s.party) heal(m); // (page 6000: everyone up and recovered)
     s.var[43] = back.v43;
     s.var[17] = back.v17;
     s.sw[19] = true;

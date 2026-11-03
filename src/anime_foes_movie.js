@@ -1340,12 +1340,14 @@ globalThis.aen3Use = async (skill, dmg = 1) => {
   const f = b.foes.find((x) => x.actions.some((a) => a.skill === skill)) || b.foes[0];
   const targets = b.party.filter((m) => !m.ko), phase = b.phase;
   b.phase = 'fight'; // (the film in place of the enemies' faces, the duel bar below)
+  b.feAct = { n: 0 }; // (one enemy action: the films after the first are the further targets)
   for (const m of sk && sk.all ? targets : [targets[0]]) {
     b.duel = { m, mc: b.hand[0], f, fc: f.card || b.hand[0] };
     b.say(`${f.name} 的${sk ? sk.name : '攻擊'}！`);
     await b.play(m, f, false, skill, dmg, m);
   }
   b.phase = phase;
+  b.feAct = null;
   return 'done';
 };
 

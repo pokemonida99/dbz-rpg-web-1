@@ -388,6 +388,8 @@ import build_skc  # noqa: E402  (大工程 skc: the enemies' second drops for �
 build_skc.add(world, globals())
 # ？ (someone not named yet) after the opening: a black face, an unknown person (the opening's ？ stays Raditz's shadow there)
 world['faces']['？'] = ['ui/face_unknown.png', 0]
+import build_bossrow  # noqa: E402  (boss markers: the original's direction row picks the character on enemy*.png)
+build_bossrow.add(world, globals())
 import build_bgext  # noqa: E402  (battle backgrounds: the generated ground under each original strip, for the tall layout)
 build_bgext.add(world, globals())
 json.dump(world, open(os.path.join(root, 'data', 'world.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))

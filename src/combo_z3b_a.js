@@ -165,7 +165,7 @@ function kienSpin(g, kx = -6, ky = 2) {
   const k = g >= 10 && g <= 24 ? g - 9 : g >= 26 && g <= 40 ? g - 25 : 0;
   return [kx * KIEN_X[k], -ky * KIEN_Y[k]];
 }
-const BOOM3 = pic('戦闘アニメ_爆発3.PNG');
+const BOOM3 = pic('戦闘アニメ_爆発3.PNG'), SPARK = pic('戦闘アニメ.PNG');
 
 // ======================================================================================================
 // 807 俺たちに不可能はない (2907 超悟空＋超貝吉塔, all.rb 63349). 貝吉塔 leading steps aside for 悟空. 悟空 charges a
@@ -249,3 +249,181 @@ Object.assign(ComboDuel.prototype, {
   },
 });
 films({ 807: ['cmdImpossible', 44] }, { cmdImpossible: () => COMMON });
+
+// the two-member intro of many films (1-59): `main` ends up the member, up there, `other` below him (effects 90 / 89 /
+// 92: whichever of them leads rises or sinks while the other flies in)
+function pairIn(z, f, main, other) {
+  const A = z.d.A;
+  if (f <= 39) {
+    const m = z.lead !== other;
+    z.c2 = m ? other : main; z.efp = m ? 90 : 89;
+    z.ay = f <= 10 ? (m ? -5 : 5) : 0;
+  } else {
+    if (z.lead === other && f === 40) A.y -= 100;
+    z.chg = main; z.c2 = other; z.efp = 92;
+  }
+}
+
+// ======================================================================================================
+// 808 ダブルロイヤルアタック (2908 超貝吉塔＋餃子, all.rb 111760). 餃子 below 貝吉塔 (pairIn); both charge (back 201 blue /
+// white, 餃子 on back 118, his ball 237 → 235); their close-ups slide in (ファイナルフラッシュ and どどん波) and fire the
+// two half-round waves; on the enemy (369), damage 44.
+// ======================================================================================================
+const FF_VEGETA = pic('ZG_必殺技_ファイナルフラッシュ(発動)_ベジータ.PNG'), DODON1 = pic('Z3_必殺技_どどん波(チャオズ1).png');
+const HALF_ZG = pic('ZG_戦闘_必殺技_エネルギー波_半円.PNG'), HALF_ZG_BLUE = pic('ZG_戦闘_必殺技_エネルギー波_半円(青).PNG');
+Object.assign(ComboDuel.prototype, {
+  * cmdRoyalAttack() {
+    const z = this.cmd, A = this.A, wake = 'rgb(188,188,188)';
+    for (;;) {
+      const f = z.top();
+      let rx = 340, ry = 200;
+      if (f === 0) { z.se('Z1 逃げる'); z.otype = 1; z.pose(0); }
+      else if (f <= 59) pairIn(z, f, 19, 9);
+      else if (f <= 259) { // both charge
+        const g = f - 60;
+        if (g === 0) { z.se('Z3 変身'); z.otype = 1; z.pose(12); }
+        z.color = 3; z.back(201, 228, 88 - 50); z.bf--;
+        z.color = 0; z.back(201, 228, 88 + 50); z.bf--;
+        z.back(118, TEC_CENTER_CHAX, STANDARD_CHAY + 50);
+        rx = 290; ry = 132 + 50;
+        if (g >= 30 && g <= 74) { if (g === 30) { z.se('Z1 気を溜める'); z.se('Z1 気を溜める6'); } z.t2 = 7; z.efp = 237; }
+        else if (g >= 75) { rx -= 8; ry -= 16; z.efp = 235; }
+      } else if (f <= 290) { // their close-ups slide in
+        const g = f - 260, x = 16 * g;
+        if (g === 0) { z.seStop(); z.efp = 0; A.y = -200; }
+        z.blt(FF_VEGETA, 0, 8, 232, 116, 640 - x, 62);
+        z.blt(DODON1, 24, 28, 160, 112, 640 + 72 - x - 50, 60 + 134 - 14);
+        z.fill(0, 62 + 116, 640, 4, wake);
+      } else if (f <= 380) { // and fire
+        const g = f - 291;
+        if (g === 0) { z.seStop(); z.se('ZG 光線1'); z.se('Z1 エネルギー波2'); }
+        z.blt(FF_VEGETA, 0, 8, 232, 116, 160, 62);
+        z.blt(DODON1, 24, 28, 160, 112, 232 - 50, 60 + 134 - 14);
+        z.blt(HALF_ZG_BLUE, 0, 0, g * 16, 116, 232 + 160 - 48, 62);
+        z.blt(HALF_ZG, 0, 0, g * 16, 102, 232 + 160 - 48, 128 + 62);
+        z.fill(0, 62 + 116, 640, 4, wake);
+      } else if (f === 390) { z.displayOut(); z.eff = 0; z.eft = 0; }
+      else if (f >= 391 && f <= 415) { ry = 110; z.efp = 369; }
+      else if (f === 416) return yield* z.finish();
+      yield* z.out(rx, ry);
+    }
+  },
+});
+films({ 808: ['cmdRoyalAttack', 44] }, { cmdRoyalAttack: () => [...COMMON, FF_VEGETA, DODON1, HALF_ZG, HALF_ZG_BLUE] });
+
+// ======================================================================================================
+// 810 やっぱり息の合う二人 (2910 雅木茶＋青年, all.rb 111920). 青年 below 雅木茶 (pairIn); both vanish (back 48); the
+// double 狼牙風風拳 on the enemy (effect 332) knocks it down; they leap at it from both sides (back 118) and fire the two
+// half-round waves at each other through it (damage 44).
+// ======================================================================================================
+Object.assign(ComboDuel.prototype, {
+  * cmdIkiGaau() {
+    const z = this.cmd, A = this.A, G = this.G, wake = 'rgb(188,188,188)';
+    let x2 = 0; // @scom2x
+    for (;;) {
+      const f = z.top();
+      let [rx, ry] = f <= 500 ? [325, 70] : [340, 200];
+      if (f === 0) { z.se('Z1 逃げる'); z.otype = 1; z.pose(0); }
+      else if (f <= 59) pairIn(z, f, 7, 15);
+      else if (f <= 100) { // both gone at high speed
+        A.y = -120; z.efp = 0;
+        if (f === 60) z.se('Z1 高速移動');
+        z.back(48, TEC_CENTER_CHAX + 6, STANDARD_CHAY + 76); z.bf--;
+        z.back(48, TEC_CENTER_CHAX + 6, STANDARD_CHAY + 76 - 100);
+      } else if (f === 110) {
+        z.eff = 0; G.x = CENTER_ENEX; G.y = STANDARD_ENEY; z.chg = 7; A.x = CENTER_CHAX + 16; z.otype = 0; z.pose(0);
+        z.c2 = 15; z.t2 = 19; z.se('Z1 逃げる'); z.displayOut();
+      } else if (f >= 111 && f <= 202) z.efp = 332;
+      else if (f >= 203 && f <= 220) { if (f === 203) z.se('ZG 打撃4'); G.y += 16; z.gpose(17); }
+      else if (f >= 221 && f <= 274) { // they leap in from both sides
+        if (f === 221) { x2 = A.x + 134; A.y = STANDARD_CHAY; z.se('Z1 飛ぶ'); }
+        if (f === 261) { z.t2 = 32; z.otype = 1; z.pose(14); A.y = -104; A.x = 294 - 72; x2 = 320; }
+        z.efp = 0;
+        A.x += 20; A.y += 16; x2 -= 20;
+        if (f <= 260) z.t2 = 19;
+        z.back(118, x2, A.y);
+        if (f >= 261) z.fill(320, 64, 6, 228, wake);
+      } else if (f >= 275 && f <= 339) { // the two waves
+        const g = f - 275, t = Math.min(12, g);
+        if (g === 0) { z.t2 = 33; z.otype = 1; z.pose(15); z.se('DB3 SE041'); z.se('DB3 SE041'); z.se('Z1 エネルギー波2'); z.se('DB3 エネルギー波2'); }
+        z.back(118, x2, A.y);
+        z.blt(HALF_ZG_BLUE, 0, 0, t * 16, 128, 128, 98);
+        z.blt(HALF_ZG, 700 - t * 16, 128, t * 16, 128, 640 - 124 - t * 16, 98);
+        z.fill(320, 64, 6, 228, wake);
+      } else if (f === 340) { z.displayOut(); G.x = CENTER_ENEX - 56; z.eff = 0; z.eft = 0; }
+      else if (f >= 341 && f <= 361) {
+        const t = f - 341;
+        z.blt(HALF_ZG_BLUE, 0, 128, 700, 128, -700 + t * 16, 98);
+        z.blt(HALF_ZG, 0, 0, t * 16, 128, 640 - t * 16, 98);
+      } else if (f === 362) return yield* z.finish();
+      yield* z.out(rx, ry);
+    }
+  },
+});
+films({ 810: ['cmdIkiGaau', 44] }, { cmdIkiGaau: () => [...COMMON, HALF_ZG, HALF_ZG_BLUE] });
+
+// ======================================================================================================
+// 811 足元がお留守だぜ！ (2911 比克＋雅木茶, all.rb 112088). 雅木茶 below 比克 (pairIn); 雅木茶 vanishes while 比克 charges
+// green; 比克's 激烈光弾 close-up (235 → 252); 雅木茶's 狼牙風風拳 on the shock-wave backdrop (effect 39), the flurry,
+// the kick up; 比克 and 雅木茶 fire half-round waves at the enemy from both sides (damage 44).
+// ======================================================================================================
+const GEKIRETSU_P = pic('Z3_必殺技_激烈光弾(ピッコロ).png'), YAMCHA_CLOSE = pic('DB3_ヤムチャ(Z3化).PNG');
+const HALF_ZG_GREEN = pic('ZG_戦闘_必殺技_エネルギー波_半円(緑).PNG');
+Object.assign(ComboDuel.prototype, {
+  * cmdAshimoto() {
+    const z = this.cmd, A = this.A, G = this.G, wake = 'rgb(188,188,188)';
+    const R = 124, K = 4, hit = (g, ...ks) => ks.some((k) => g === R + K * k);
+    for (;;) {
+      const f = z.top();
+      let [rx, ry] = f <= 500 ? [325, 70] : [340, 200];
+      if (f === 0) { z.se('Z1 逃げる'); z.otype = 1; z.pose(0); }
+      else if (f <= 59) pairIn(z, f, 4, 7);
+      else if (f <= 149) { // 雅木茶 gone, 比克 charges
+        if (f === 60) { z.efp = 0; z.se('Z1 高速移動'); z.se('Z3 変身'); z.color = 1; z.otype = 1; z.pose(13); }
+        z.back(201, 234, -18 + 54 + 50 - 50);
+        if (f <= 109 && f % 4 === 0) z.blt(SPARK, 0, 48, 64, 64, TEC_CENTER_CHAX + 6, STANDARD_CHAY + 76);
+      } else if (f <= 310) { // 比克's close-up, the ball
+        const s = 150;
+        z.blt(GEKIRETSU_P, 0, 0, 218, 230, 190, 66);
+        if (f === s) { A.y = -160; z.small = true; z.seStop(); }
+        if (f >= s + 90) { z.efp = 252; rx = 322 - 16; ry = 164 - 16; if (f === s + 90) z.rt = 0; }
+        else if (f >= s + 30) { z.efp = 235; rx = 322; ry = 164; if (f === s + 30) z.se('Z1 気を溜める2'); }
+      } else if (f === 311) {
+        z.fxReset(); z.chg = 7; A.y = -200; A.x -= 26; z.bars = false; z.se('Z1 逃げる'); G.x = CENTER_ENEX; G.y = STANDARD_ENEY;
+      } else if (f <= 403) { z.back(1); z.efp = 39; }
+      else if (f <= 584) { // the flurry on the enemy
+        const g = f - 404;
+        z.back(1);
+        if (g === 0) { z.se('Z1 強打'); z.gpose(16); }
+        if (g <= 9) z.gx = -16; else if (g <= 19) z.gx = 16; else if (g === 20) { z.gx = 0; z.gpose(0); }
+        else if (g === 50) { z.efp = 0; z.se('DB3 狼牙風風拳'); z.pose(0); }
+        else if (g >= 51 && g <= 120) { if (f % 2 === 0) { z.blt(YAMCHA_CLOSE, 0, 0, 64, 64, A.x + 16, STANDARD_CHAY + 24); A.y = -200; } else A.y = STANDARD_CHAY; }
+        else if (g === 121) A.y = STANDARD_CHAY;
+        else if (hit(g, 0, 6, 8)) { z.otype = 0; z.gpose(16); z.pose(1); z.se('Z1 打撃'); }
+        else if (hit(g, 1, 5, 10, 12)) { z.pose(4); z.se('Z1 打撃'); }
+        else if (hit(g, 2, 4, 9, 13)) { z.pose(3); z.se('Z1 打撃'); }
+        else if (hit(g, 3, 7, 11)) { z.pose(2); z.se('Z1 打撃'); }
+        else if (g >= R + K * 14 && g <= R + K * 20) { z.otype = 0; z.pose(4); if (g === R + K * 14) z.se('ZG 打撃3'); z.gpose(17); }
+        if (g >= R && g <= R + K * 13 + 3) { const k = (g - R) % K; z.gx = k <= 1 ? -8 : 8; }
+      } else if (f <= 589) { z.gx = 0; A.x += 20; }
+      else if (f <= 593) { if (f === 592) { z.otype = 1; z.pose(12); } if (f >= 592) A.x += 16; }
+      else if (f <= 605) { if (f === 594) { z.se('ZG 打撃6'); z.otype = 1; z.pose(15); } G.x -= 12; G.y -= 16; }
+      else if (f <= 629) { if (f === 606) { z.se('Z1 飛ぶ'); z.otype = 1; z.pose(12); } A.x += 8; A.y -= 24; G.x -= 12; G.y -= 16; }
+      else if (f <= 694) { // the two waves
+        const g = f - 630, t = Math.min(12, g);
+        if (g === 0) { z.chg = 4; z.t2 = 15; z.otype = 1; z.pose(14); A.x = 40; A.y = STANDARD_CHAY; z.se('Z1 エネルギー波2'); z.se('DB3 エネルギー波2'); }
+        z.back(118, 640 - 138, A.y);
+        z.blt(HALF_ZG_GREEN, 0, 0, t * 16, 128, 128, 98);
+        z.blt(HALF_ZG, 700 - t * 16, 128, t * 16, 128, 640 - 124 - t * 16, 98);
+        z.fill(320, 64, 6, 228, wake);
+      } else if (f === 695) { z.displayOut(); G.x = CENTER_ENEX - 56; z.eff = 0; z.eft = 0; }
+      else if (f <= 716) {
+        const t = f - 696;
+        z.blt(HALF_ZG_GREEN, 0, 128, 700, 128, -700 + t * 16, 98);
+        z.blt(HALF_ZG, 0, 0, t * 16, 128, 640 - t * 16, 98);
+      } else if (f === 717) return yield* z.finish();
+      yield* z.out(rx, ry);
+    }
+  },
+});
+films({ 811: ['cmdAshimoto', 44] }, { cmdAshimoto: () => [...COMMON, GEKIRETSU_P, YAMCHA_CLOSE, HALF_ZG, HALF_ZG_GREEN] });

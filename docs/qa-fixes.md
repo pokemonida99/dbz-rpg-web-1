@@ -50,3 +50,4 @@
 
 - **片頭文字框沒有框線**：`src/opening.js` 插入的 CSS 寫 `../assets/ui/frame.png`，CSS 插在頁面裡時路徑從 `index.html` 算，線上變成網站根目錄而 404。改成 `assets/ui/frame.png`。
 - **GitHub Pages 偶爾回 503**：一次要抓一百多個程式檔，碰到一個 503 整個遊戲就開不起來；圖片則會試另一種大小寫後放棄，永遠缺圖。現在程式或資料載入失敗會自動重新載入（最多 3 次，`index.html` `__boot.fail`）；`fetchRetry`（`core.js`）重試資料與音效；`img()` 和頁面裡的 `<img>` 隔一下再試。CSS 裡的框線圖碰到 503 沒辦法重試，重新整理才會好。
+- **一開遊戲就抓約 2,000 張圖**（這才是 503／429 的主因）：`setFieldGame` 把 `world.fieldPictures`（給 `copy_assets.py` 用的全遊戲清單，1,500 張，光 ZG 哈奇亞克登場就 778 格）全部載入。現在只在背景載入目前篇章和下一篇的圖（`fieldmenu.js` `warmPart`），每次最多 6 張（`core.js` `warmImages`），招式動畫的圖也走同一條；其他的第一次用到才載入。新遊戲開始時的請求從約 2,000 降到約 550。

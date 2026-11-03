@@ -1,6 +1,6 @@
 // Shared runtime: canvas scaling, assets, input, audio, dialogue, toast.
 
-export const VERSION = '20261104-0734'; // stamped by tools/bump.py on each deploy
+export const VERSION = '20261104-0742'; // stamped by tools/bump.py on each deploy
 export const ASSET_ROOT = 'assets/';
 export const assetUrl = (p) => (ASSET_ROOT + p).split('/').map(encodeURIComponent).join('/');
 
@@ -81,6 +81,21 @@ export function img(path) {
   return e;
 }
 export const loadImages = (paths) => Promise.all(paths.map((p) => img(p).p));
+// pictures fetched behind the game a few at a time: a first visit asking GitHub Pages for everything at once gets 429 / 503
+const warmQueue = [];
+let warming = 0;
+function warmNext() {
+  while (warming < 6 && warmQueue.length) {
+    const [p, done] = warmQueue.shift();
+    warming++;
+    img(p).p.then(() => { warming--; done(); warmNext(); });
+  }
+}
+export function warmImages(paths) {
+  const all = paths.map((p) => new Promise((done) => warmQueue.push([p, done])));
+  warmNext();
+  return Promise.all(all);
+}
 // a picture made at run time (a canvas) under a name img() and the aliases can use (src/costume.js: the faces in clothes)
 export function putImage(path, im) { images.set(path, { im, ok: true, p: Promise.resolve(im) }); }
 

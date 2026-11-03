@@ -10,10 +10,10 @@
 // goldGot, goldSpent, cardBuy, cardSell, chaMax [actor, enemy, damage], eneMax [enemy, actor, damage];
 // state.foeKills[enemy] ($ene_defeat_num), state.foeSeen[enemy] ($ene_enc_history_flag),
 // state.foeScouted[enemy] ($ene_sco_history_flag: HP and drops shown), state.cardUses[item] ($card_run_num).
-import { view, img, audio, say, choose, textSpeed } from './core.js?v=20261104-0734';
-import { Battle, battleOpts } from './battle.js?v=20261104-0734';
-import { fieldCards } from './items.js?v=20261104-0734';
-import { holds } from './field.js?v=20261104-0734';
+import { view, img, audio, say, choose, textSpeed, warmImages } from './core.js?v=20261104-0742';
+import { Battle, battleOpts } from './battle.js?v=20261104-0742';
+import { fieldCards } from './items.js?v=20261104-0742';
+import { holds } from './field.js?v=20261104-0742';
 
 const SE_OK = 'Z3 決定', SE_MOVE = 'Z3 カーソル移動', SE_ERR = 'Z3 エラー';
 const FOE_FACES = 'Graphics/Pictures/Z1_顔敵.PNG', FACES = 'Graphics/Pictures/Z1_顔味方.PNG', CARDS = 'Graphics/Pictures/カード関係.PNG';
@@ -50,7 +50,22 @@ let game = null;
 export function setFieldGame(g) {
   game = g;
   startClock();
-  for (const p of g.world.fieldPictures || []) img(p); // warm the radar / recap / fortune-teller art
+}
+// the story's pictures, ahead of the scenes that draw them: those of the part being played and the next one, not the
+// whole game's 1500 (the ZG film hatc_touzyo, 778 frames, loads itself: src/zg_c.js); the rest come when first drawn.
+// Called with every HUD update, works only when the part changes.
+const PIC_PART = /^(z1|z2|z3|zg)[_ ]/i;
+let warmed = '';
+export function warmPart(g) {
+  const s = g.state, v = (s.var || {})[40] || 0, done = (s.flags || {}).z3 === 'done';
+  const parts = done ? ['Z3', 'ZG', 'Z2', 'Z1'] /* (the time room goes everywhere) */ : v >= 2 ? ['Z3'] : v === 1 ? ['Z2', 'Z3'] : ['Z1', 'Z2'], key = parts.join();
+  if (key === warmed) return;
+  warmed = key;
+  warmImages((g.world.fieldPictures || []).filter((p) => {
+    if (!/\.png$/i.test(p) || p.includes('hatc_touzyo')) return false;
+    const m = p.split('/').pop().match(PIC_PART);
+    return !m || parts.includes(m[1].toUpperCase());
+  }));
 }
 
 // set_battle_bgm_name 0 (默認): the song of the part of the story (variable 43)

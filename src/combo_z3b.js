@@ -12,14 +12,14 @@
 // the @scombo_cha* and their anime types. The strips and pattern 32 are src/anime_zfighters.js's stage (ZfStage, this
 // class extends it), the cut-in src/anime_goku_gohan.js's (its render draws d.agSt). Frame numbers in the comments
 // are the original's.
-import { audio, img, rand, view } from './core.js?v=20261104-0734';
-import { RAY_SPEED, ANIME_IMAGES, SW } from './anime.js?v=20261104-0734';
-import { ComboDuel, addComboFilms } from './combo-anime.js?v=20261104-0734';
-import { ZfStage, ZF_IMAGES, zfBlt } from './anime_zfighters.js?v=20261104-0734';
-import { registerZ3, party, heal } from './z3.js?v=20261104-0734';
-import { applyLevel } from './party.js?v=20261104-0734';
-import { superSaiyan } from './supersaiyan.js?v=20261104-0734';
-import { comboData } from './combo.js?v=20261104-0734';
+import { audio, img, rand, view } from './core.js?v=20261104-0742';
+import { RAY_SPEED, ANIME_IMAGES, SW } from './anime.js?v=20261104-0742';
+import { ComboDuel, addComboFilms } from './combo-anime.js?v=20261104-0742';
+import { ZfStage, ZF_IMAGES, zfBlt } from './anime_zfighters.js?v=20261104-0742';
+import { registerZ3, party, heal } from './z3.js?v=20261104-0742';
+import { applyLevel } from './party.js?v=20261104-0742';
+import { superSaiyan } from './supersaiyan.js?v=20261104-0742';
+import { comboData } from './combo.js?v=20261104-0742';
 
 const pic = (n) => `Graphics/Pictures/${n}`;
 const STANDARD_CHAX = -70, STANDARD_CHAY = 120, STANDARD_ENEX = 602, STANDARD_ENEY = 120, CENTER_CHAX = 240, CENTER_ENEX = 304,

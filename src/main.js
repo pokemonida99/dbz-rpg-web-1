@@ -451,9 +451,10 @@ function showTitle(sub, notes) {
   const balls = Array.from({ length: 7 }, (_, k) => `<i style="--k:${k};background-position:${-40 * k}px 0"></i>`).join('');
   // the one big button is what most people want: carry on when there is a save, a new game when there isn't
   const card = (a, label, info, big) => `<button class="tb${big ? ' big' : ''}" data-a="${a}"><span class="tl">${label}</span>${info ? `<span class="ti">${info}</span>` : ''}</button>`;
-  title.innerHTML = `<div class="t-stars"></div>
-    <img class="t-art" src="${assetUrl(`Graphics/System/${main ? savePic(last) : 'Title'}.png`)}" alt="DRAGON BALL Z">
-    <div class="sub">${sub || '重製版・Z1～Z4・時之間・ZG'}</div>
+  // the original's title picture for the save's part, made a full-height cover (assets/ui/cover: the original kept as
+  // it is in the middle, the rest painted around it), raised so the menu sits on its lower part
+  title.innerHTML = `<div class="t-hero"><img src="${assetUrl(`ui/cover/${main ? savePic(last) : 'Title'}.png`)}" alt="DRAGON BALL Z"></div>
+    ${sub ? `<div class="sub">${sub}</div>` : ''}
     <div class="t-balls">${balls}</div>
     ${notes ? `<div class="note unlocks">接下來開放：<br>${notes.join('<br>')}</div>` : ''}
     <div class="actions">

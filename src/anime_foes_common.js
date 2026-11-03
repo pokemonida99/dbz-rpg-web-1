@@ -17,9 +17,9 @@
 // @effect_anime_pattern in front and counts its frames on. The strips (output_back, 67772: an enemy's scroll the other
 // way) are drawn here; the cut-in is src/anime_goku_gohan.js's (its render draws this.agSt: the enemy's 敵カットイン
 // row, after set_chr_display_out the member's).
-import { audio, img, rand } from './core.js?v=20261104-0520';
-import { Duel, addMoves, moveFilm, draw, spark, STD_Y, CENTER_CHAX, CENTER_ENEX, RAY_SPEED, BACK_Y } from './anime.js?v=20261104-0520';
-import { Battle } from './battle.js?v=20261104-0520';
+import { audio, img, rand } from './core.js?v=20261104-0709';
+import { Duel, addMoves, moveFilm, draw, spark, STD_Y, CENTER_CHAX, CENTER_ENEX, RAY_SPEED, BACK_Y } from './anime.js?v=20261104-0709';
+import { Battle } from './battle.js?v=20261104-0709';
 
 const pic = (n) => `Graphics/Pictures/${n}`;
 const STD_ENEX = 602;

@@ -12,20 +12,20 @@
 //   map 107 西の都: the Tongari tower 6401 → battle 6411 (the ghost warriors) → 6421 → zgc; the 時の間 square 9932
 // A page runs as the original's does: it ends with a transfer (201), kept here as state.flags.zgbGo — map 7 means the
 // next page (variable 41) or, with switch 128, the battle variable 41 names and then the page of variable 95.
-import { audio, img, loadImages } from './core.js?v=20261104-0520';
-import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261104-0520';
-import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261104-0520';
-import { addMoves, Duel, draw, BACKS, SW, SH, STD_Y, TEC_CENTER } from './anime.js?v=20261104-0520';
-import { makeMember, applyLevel } from './party.js?v=20261104-0520';
-import { superSaiyan } from './supersaiyan.js?v=20261104-0520';
-import { applyEra } from './era.js?v=20261104-0520';
-import { newHand } from './battle.js?v=20261104-0520';
-import { eventCard } from './items.js?v=20261104-0520';
-import { Field } from './field.js?v=20261104-0520';
-import { registerZ3, Z3, begin, fight, toField, party, member, heal, moveTo, z3BackdropAt } from './z3.js?v=20261104-0520';
-import { startTrStory, endTrStory, registerBackdrop } from './timeroom.js?v=20261104-0520';
+import { audio, img, loadImages } from './core.js?v=20261104-0709';
+import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261104-0709';
+import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261104-0709';
+import { addMoves, Duel, draw, BACKS, SW, SH, STD_Y, TEC_CENTER } from './anime.js?v=20261104-0709';
+import { makeMember, applyLevel } from './party.js?v=20261104-0709';
+import { superSaiyan } from './supersaiyan.js?v=20261104-0709';
+import { applyEra } from './era.js?v=20261104-0709';
+import { newHand } from './battle.js?v=20261104-0709';
+import { eventCard } from './items.js?v=20261104-0709';
+import { Field } from './field.js?v=20261104-0709';
+import { registerZ3, Z3, begin, fight, toField, party, member, heal, moveTo, z3BackdropAt } from './z3.js?v=20261104-0709';
+import { startTrStory, endTrStory, registerBackdrop } from './timeroom.js?v=20261104-0709';
 // zga's shared ZG helpers (leaveZg / backToZg); a namespace import, so this part still runs where zga is not there yet
-import * as zga from './zg_a.js?v=20261104-0520';
+import * as zga from './zg_a.js?v=20261104-0709';
 
 const MAPS = ['103', '104', '105', '106', '107'];
 const C = (game) => Z3(game).zgb;

@@ -1,89 +1,89 @@
 // Boot, game state, scene switching, story beats, HUD, menu, save/load.
-import { TEST, showTestMenu, startTestBoost } from './testmode.js?v=20261104-0520'; // 測試模式 (index.html?test)
-import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261104-0520';
-import { tileSheetPaths } from './tiles.js?v=20261104-0520';
-import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261104-0520';
-import { ANIME_IMAGES } from './anime.js?v=20261104-0520';
-import { Battle, battleImages, newHand, rollEncounter, setCardGame } from './battle.js?v=20261104-0520';
-import { makeMember, levelUp } from './party.js?v=20261104-0520';
-import { runEvent } from './events.js?v=20261104-0520';
-import { playOpening, playStory, openingImages } from './opening.js?v=20261104-0520'; // the original's title animation and opening story
-import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapterBoss } from './chapter2.js?v=20261104-0520';
-import { fieldMenuHtml, openEntry } from './partymenu.js?v=20261104-0520'; // 隊伍・卡牌・組合技・作戰
-import { setItemsWorld, bubbles } from './items.js?v=20261104-0520'; // item cards (its 卡牌 menu entry registers itself)
-import { setGrowthWorld } from './growth.js?v=20261104-0520'; // skill cards and the other growth cards
-import { cardSquare, compo } from './cardgames.js?v=20261104-0520'; // card squares (shop / lottery / memory), 合成
-import { fieldExtraHtml, openFieldEntry, setFieldGame, encounterSteps, battleTally, spotTally, storySoFar, hasRecap, options } from './fieldmenu.js?v=20261104-0520'; // 概況・情報・設定・地圖, records, options
-import { training } from './training.js?v=20261104-0520'; // training squares
-import { chapter3Goal, startChapter3, resumeChapter3, chapter3Spot, isChapter3Map, chapter3Boss } from './chapter3.js?v=20261104-0520';
-import { chapter4Goal, startChapter4, resumeChapter4, chapter4Spot, isChapter4Map, chapter4Boss } from './chapter4.js?v=20261104-0520';
-import { playEvent, setCutsceneWorld, raditzOutcome } from './cutscene.js?v=20261104-0520'; // story scenes staged like the original
-import { chapter5Goal, startChapter5, resumeChapter5, isChapter5Map, chapter5Boss, devChapter5 } from './chapter5.js?v=20261104-0520';
-import { chapter6Goal, startChapter6, resumeChapter6, chapter6Spot, isChapter6Map, chapter6Boss, devChapter6 } from './chapter6.js?v=20261104-0520'; // King Kai, the Saiyans, the end of Z1
-import { willowGoal, startWillow, resumeWillow, willowSpot, isWillowMap, willowBoss, devWillow } from './willow.js?v=20261104-0520'; // after Z1: the Willow chapter, up to the hand-over to Z2
-import { z2aGoal, startZ2a, resumeZ2a, z2aSpot, storyScenes, z2aBackdrop, devZ2a } from './z2a.js?v=20261104-0520'; // Z2 first half: Namek, Goku's training, the Grand Elder
-import { applyEra } from './era.js?v=20261104-0520'; // the Z2 art while variable 40 is 1
-import { syncCostume } from './costume.js?v=20261104-0520'; // 換裝: the pictures follow the clothes' variables
-import { z2bGoal, startZ2Ginyu, startZ2b, resumeZ2b, z2bSpot, isZ2bMap, z2bBoss, devZ2b } from './z2b.js?v=20261104-0520'; // Z2 second half: the Ginyu Force, Frieza
-import { startZ3, resumeZ3, z3Spot, isZ3Map, z3Boss, z3Goal, z3Backdrop, z3BackdropAt, devZ3 } from './z3.js?v=20261104-0520'; // Z3 (the chapters below register themselves there)
-import './z3a.js?v=20261104-0520';
-import './z3b.js?v=20261104-0520';
-import './z3c.js?v=20261104-0520';
-import './z3d.js?v=20261104-0520';
-import './z3e.js?v=20261104-0520';
-import './z3train.js?v=20261104-0520'; // the training mini-games (its ?dev=z3pair / z3gravity)
-import './z4a.js?v=20261104-0520'; // Z4 (セル編): its chapters register in src/z3.js too
-import './z4b.js?v=20261104-0520';
-import './z4c.js?v=20261104-0520';
-import './z4d.js?v=20261104-0520';
-import './z4e.js?v=20261104-0520';
-import { afterZ4 } from './z4f.js?v=20261104-0520';
-import { trGoal, trBackdrop } from './timeroom.js?v=20261104-0520'; // 時之間 (registers its spots in src/z3.js too)
-import './tr_z1.js?v=20261104-0520'; // 時之間 phase 2: the areas (docs/timeroom-plan.md)
-import './tr_z2.js?v=20261104-0520';
-import './tr_z3.js?v=20261104-0520';
-import './tr_z4.js?v=20261104-0520';
-import './tr_bardock.js?v=20261104-0520';
+import { TEST, showTestMenu, startTestBoost } from './testmode.js?v=20261104-0709'; // 測試模式 (index.html?test)
+import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261104-0709';
+import { tileSheetPaths } from './tiles.js?v=20261104-0709';
+import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261104-0709';
+import { ANIME_IMAGES } from './anime.js?v=20261104-0709';
+import { Battle, battleImages, newHand, rollEncounter, setCardGame } from './battle.js?v=20261104-0709';
+import { makeMember, levelUp } from './party.js?v=20261104-0709';
+import { runEvent } from './events.js?v=20261104-0709';
+import { playOpening, playStory, openingImages } from './opening.js?v=20261104-0709'; // the original's title animation and opening story
+import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapterBoss } from './chapter2.js?v=20261104-0709';
+import { fieldMenuHtml, openEntry } from './partymenu.js?v=20261104-0709'; // 隊伍・卡牌・組合技・作戰
+import { setItemsWorld, bubbles } from './items.js?v=20261104-0709'; // item cards (its 卡牌 menu entry registers itself)
+import { setGrowthWorld } from './growth.js?v=20261104-0709'; // skill cards and the other growth cards
+import { cardSquare, compo } from './cardgames.js?v=20261104-0709'; // card squares (shop / lottery / memory), 合成
+import { fieldExtraHtml, openFieldEntry, setFieldGame, encounterSteps, battleTally, spotTally, storySoFar, hasRecap, options } from './fieldmenu.js?v=20261104-0709'; // 概況・情報・設定・地圖, records, options
+import { training } from './training.js?v=20261104-0709'; // training squares
+import { chapter3Goal, startChapter3, resumeChapter3, chapter3Spot, isChapter3Map, chapter3Boss } from './chapter3.js?v=20261104-0709';
+import { chapter4Goal, startChapter4, resumeChapter4, chapter4Spot, isChapter4Map, chapter4Boss } from './chapter4.js?v=20261104-0709';
+import { playEvent, setCutsceneWorld, raditzOutcome } from './cutscene.js?v=20261104-0709'; // story scenes staged like the original
+import { chapter5Goal, startChapter5, resumeChapter5, isChapter5Map, chapter5Boss, devChapter5 } from './chapter5.js?v=20261104-0709';
+import { chapter6Goal, startChapter6, resumeChapter6, chapter6Spot, isChapter6Map, chapter6Boss, devChapter6 } from './chapter6.js?v=20261104-0709'; // King Kai, the Saiyans, the end of Z1
+import { willowGoal, startWillow, resumeWillow, willowSpot, isWillowMap, willowBoss, devWillow } from './willow.js?v=20261104-0709'; // after Z1: the Willow chapter, up to the hand-over to Z2
+import { z2aGoal, startZ2a, resumeZ2a, z2aSpot, storyScenes, z2aBackdrop, devZ2a } from './z2a.js?v=20261104-0709'; // Z2 first half: Namek, Goku's training, the Grand Elder
+import { applyEra } from './era.js?v=20261104-0709'; // the Z2 art while variable 40 is 1
+import { syncCostume } from './costume.js?v=20261104-0709'; // 換裝: the pictures follow the clothes' variables
+import { z2bGoal, startZ2Ginyu, startZ2b, resumeZ2b, z2bSpot, isZ2bMap, z2bBoss, devZ2b } from './z2b.js?v=20261104-0709'; // Z2 second half: the Ginyu Force, Frieza
+import { startZ3, resumeZ3, z3Spot, isZ3Map, z3Boss, z3Goal, z3Backdrop, z3BackdropAt, devZ3 } from './z3.js?v=20261104-0709'; // Z3 (the chapters below register themselves there)
+import './z3a.js?v=20261104-0709';
+import './z3b.js?v=20261104-0709';
+import './z3c.js?v=20261104-0709';
+import './z3d.js?v=20261104-0709';
+import './z3e.js?v=20261104-0709';
+import './z3train.js?v=20261104-0709'; // the training mini-games (its ?dev=z3pair / z3gravity)
+import './z4a.js?v=20261104-0709'; // Z4 (セル編): its chapters register in src/z3.js too
+import './z4b.js?v=20261104-0709';
+import './z4c.js?v=20261104-0709';
+import './z4d.js?v=20261104-0709';
+import './z4e.js?v=20261104-0709';
+import { afterZ4 } from './z4f.js?v=20261104-0709';
+import { trGoal, trBackdrop } from './timeroom.js?v=20261104-0709'; // 時之間 (registers its spots in src/z3.js too)
+import './tr_z1.js?v=20261104-0709'; // 時之間 phase 2: the areas (docs/timeroom-plan.md)
+import './tr_z2.js?v=20261104-0709';
+import './tr_z3.js?v=20261104-0709';
+import './tr_z4.js?v=20261104-0709';
+import './tr_bardock.js?v=20261104-0709';
 // cards and training squares (docs/cards-plan.md)
-import './training_more.js?v=20261104-0520';
-import './cards_square.js?v=20261104-0520';
-import './cards_a.js?v=20261104-0520';
-import { favLoad } from './cards_b.js?v=20261104-0520';
-import './cards_story.js?v=20261104-0520';
-import './skills_a.js?v=20261104-0520';
-import './skills_b.js?v=20261104-0520';
-import './skills_c.js?v=20261104-0520';
-import './skills_d.js?v=20261104-0520'; // 大工程 skc: the skill cards' passive skills (docs/skc.md)
-import './flg.js?v=20261104-0520'; // ?dev=flg… test battles for the move flags (docs/batch2-plan.md flg)
-import './grw.js?v=20261104-0520'; // batch 2 grw: CE64, 地球育ちのサイヤ人 at S-combos, dev jumps ?dev=grw…
+import './training_more.js?v=20261104-0709';
+import './cards_square.js?v=20261104-0709';
+import './cards_a.js?v=20261104-0709';
+import { favLoad } from './cards_b.js?v=20261104-0709';
+import './cards_story.js?v=20261104-0709';
+import './skills_a.js?v=20261104-0709';
+import './skills_b.js?v=20261104-0709';
+import './skills_c.js?v=20261104-0709';
+import './skills_d.js?v=20261104-0709'; // 大工程 skc: the skill cards' passive skills (docs/skc.md)
+import './flg.js?v=20261104-0709'; // ?dev=flg… test battles for the move flags (docs/batch2-plan.md flg)
+import './grw.js?v=20261104-0709'; // batch 2 grw: CE64, 地球育ちのサイヤ人 at S-combos, dev jumps ?dev=grw…
 // 時之間 phase 3 / ZG: the stories (docs/zg-plan.md)
-import './tr_future.js?v=20261104-0520';
-import './zg_broly.js?v=20261104-0520';
-import './zg_bojack.js?v=20261104-0520';
-import './zg_a.js?v=20261104-0520';
-import './zg_b.js?v=20261104-0520';
-import './zg_c.js?v=20261104-0520';
-import './zg_recap.js?v=20261104-0520'; // ZG 的概況 (前情提要: src/fieldmenu.js)
-import './combo_dev.js?v=20261104-0520'; // ?dev=cmb…: S-combo / ひらめき tests (src/combo.js)
-import './combo_z2.js?v=20261104-0520'; // the S-combo films of Z2 and later, part cmb (docs/anim-f-cmb.md; ?dev=cmbxb…)
-import './combo_z3a.js?v=20261104-0520'; // the S-combo films of anime 28xx (docs/anim-f-plan.md cmc; ?dev=cmc…)
-import './combo_z3b.js?v=20261104-0520'; // S-combo films of the Z3 switch, anime 29xx (docs/anim-f-plan.md cmd)
-import './sys.js?v=20261104-0520'; // 第二批 sys: 神龍的願望, the shop's added cards, Z3 / Z4 的概況 (docs/sys.md)
-import './viz.js?v=20261104-0520'; // the battle's skill names, the cover scene, the Great Ape's face (docs/batch2-plan.md viz)
-import './cos.js?v=20261104-0520'; // ?dev=cos…: 換裝 and the DB3 staff roll (docs/costume.md)
-import './anime_goku_gohan.js?v=20261104-0520'; // 悟空・悟飯's move films, ?dev=anga… (docs/anim-ab-plan.md anga)
-import './anime_piccolo_vegeta.js?v=20261104-0520'; // 比克・貝吉塔's Z3 move films (docs/anim-ab-plan.md anpv; after the chapters' addMoves)
-import './anime_zfighters.js?v=20261104-0520'; // the Z fighters' Z3 move films (docs/anim-ab-plan.md anzb; ?dev=anzb…)
-import './anime_bardock.js?v=20261104-0520'; // 巴達克・超巴達克's move films (docs/anim-cd-plan.md ancb; ?dev=ancb…)
-import './anime_bardock_crew.js?v=20261104-0520'; // バーダック一味's move films (docs/anim-cd-plan.md ancc; ?dev=ancc…)
-import './anime_future.js?v=20261104-0520'; // 特蘭克斯・未來悟飯・龜仙人's Z3 move films (docs/anim-cd-plan.md andt; ?dev=andt…)
-import './anime_androids.js?v=20261104-0520'; // 人造人 18・17・16號's Z3 move films (docs/anim-cd-plan.md anda; ?dev=anda)
-import './anime_foes_z2.js?v=20261104-0520'; // the Z2 enemies' move films (docs/anim-e-plan.md aen1; ?dev=aen1)
-import './anime_foes_movie.js?v=20261104-0520'; // the movie / ZG enemies' move films (docs/anim-e-plan.md aen3; ?dev=aen3…)
-import './anime_foes_common.js?v=20261104-0520'; // the enemies' shared move films (docs/anim-e-plan.md, aen3's common file)
-import './anime_foes_z34.js?v=20261104-0520'; // the Z3 / Z4 enemies' move films (docs/anim-e-plan.md aen2; ?dev=aen2…)
-import './anime_foes_zg.js?v=20261104-0520'; // the 「強」 rematches' and the later ZG enemies' move films (docs/anim-e-plan.md aen4; ?dev=aen4…)
-import './combo_os.js?v=20261104-0520'; // the OS / FOS / ダブルエクスプロージョン / サイヤンアタック combo films (docs/anim-f-plan.md cma; ?dev=cma…)
+import './tr_future.js?v=20261104-0709';
+import './zg_broly.js?v=20261104-0709';
+import './zg_bojack.js?v=20261104-0709';
+import './zg_a.js?v=20261104-0709';
+import './zg_b.js?v=20261104-0709';
+import './zg_c.js?v=20261104-0709';
+import './zg_recap.js?v=20261104-0709'; // ZG 的概況 (前情提要: src/fieldmenu.js)
+import './combo_dev.js?v=20261104-0709'; // ?dev=cmb…: S-combo / ひらめき tests (src/combo.js)
+import './combo_z2.js?v=20261104-0709'; // the S-combo films of Z2 and later, part cmb (docs/anim-f-cmb.md; ?dev=cmbxb…)
+import './combo_z3a.js?v=20261104-0709'; // the S-combo films of anime 28xx (docs/anim-f-plan.md cmc; ?dev=cmc…)
+import './combo_z3b.js?v=20261104-0709'; // S-combo films of the Z3 switch, anime 29xx (docs/anim-f-plan.md cmd)
+import './sys.js?v=20261104-0709'; // 第二批 sys: 神龍的願望, the shop's added cards, Z3 / Z4 的概況 (docs/sys.md)
+import './viz.js?v=20261104-0709'; // the battle's skill names, the cover scene, the Great Ape's face (docs/batch2-plan.md viz)
+import './cos.js?v=20261104-0709'; // ?dev=cos…: 換裝 and the DB3 staff roll (docs/costume.md)
+import './anime_goku_gohan.js?v=20261104-0709'; // 悟空・悟飯's move films, ?dev=anga… (docs/anim-ab-plan.md anga)
+import './anime_piccolo_vegeta.js?v=20261104-0709'; // 比克・貝吉塔's Z3 move films (docs/anim-ab-plan.md anpv; after the chapters' addMoves)
+import './anime_zfighters.js?v=20261104-0709'; // the Z fighters' Z3 move films (docs/anim-ab-plan.md anzb; ?dev=anzb…)
+import './anime_bardock.js?v=20261104-0709'; // 巴達克・超巴達克's move films (docs/anim-cd-plan.md ancb; ?dev=ancb…)
+import './anime_bardock_crew.js?v=20261104-0709'; // バーダック一味's move films (docs/anim-cd-plan.md ancc; ?dev=ancc…)
+import './anime_future.js?v=20261104-0709'; // 特蘭克斯・未來悟飯・龜仙人's Z3 move films (docs/anim-cd-plan.md andt; ?dev=andt…)
+import './anime_androids.js?v=20261104-0709'; // 人造人 18・17・16號's Z3 move films (docs/anim-cd-plan.md anda; ?dev=anda)
+import './anime_foes_z2.js?v=20261104-0709'; // the Z2 enemies' move films (docs/anim-e-plan.md aen1; ?dev=aen1)
+import './anime_foes_movie.js?v=20261104-0709'; // the movie / ZG enemies' move films (docs/anim-e-plan.md aen3; ?dev=aen3…)
+import './anime_foes_common.js?v=20261104-0709'; // the enemies' shared move films (docs/anim-e-plan.md, aen3's common file)
+import './anime_foes_z34.js?v=20261104-0709'; // the Z3 / Z4 enemies' move films (docs/anim-e-plan.md aen2; ?dev=aen2…)
+import './anime_foes_zg.js?v=20261104-0709'; // the 「強」 rematches' and the later ZG enemies' move films (docs/anim-e-plan.md aen4; ?dev=aen4…)
+import './combo_os.js?v=20261104-0709'; // the OS / FOS / ダブルエクスプロージョン / サイヤンアタック combo films (docs/anim-f-plan.md cma; ?dev=cma…)
 
 // testing in a hidden browser pane (no animation frames there): ?timer drives every frame with timers instead
 if (new URLSearchParams(location.search).has('timer')) window.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16);
@@ -450,10 +450,9 @@ function showTitle(sub, notes) {
   const last = latest(), main = last ? saveInfo(last) : '', many = [...SLOTS, AUTO_KEY].filter((k) => localStorage.getItem(k)).length > 1;
   // the one big button is what most people want: carry on when there is a save, a new game when there isn't
   const card = (a, label, info, big) => `<button class="tb${big ? ' big' : ''}" data-a="${a}"><span class="tl">${label}</span>${info ? `<span class="ti">${info}</span>` : ''}</button>`;
-  // the original's title picture for the save's part, made a full-height cover (assets/ui/cover: the original kept as
-  // it is in the middle, the rest painted around it); its lower edge melts into the black under the menu
-  title.innerHTML = `<div class="t-hero"><img src="${assetUrl(`ui/cover/${main ? savePic(last) : 'Title'}.png`)}" alt="DRAGON BALL Z"></div>
-    ${sub ? `<div class="sub">${sub}</div>` : ''}
+  title.innerHTML = `<div class="t-stars"></div>
+    <img class="t-art" src="${assetUrl(`Graphics/System/${main ? savePic(last) : 'Title'}.png`)}" alt="DRAGON BALL Z">
+    <div class="sub">${sub || '重製版・Z1～Z4・時之間・ZG'}</div>
     ${notes ? `<div class="note unlocks">接下來開放：<br>${notes.join('<br>')}</div>` : ''}
     <div class="actions">
       ${main ? card('cont', '繼續遊戲', main, true) : card('new', '新的開始', '從 Z1 拉蒂茲篇開始冒險', true)}
@@ -575,7 +574,7 @@ async function boot() {
   window.addEventListener('resize', () => view.resize());
   const B = window.__boot || { set() {}, ready: async () => {}, done() {} }; // the dragon-ball loading screen (index.html)
   B.set(0.3);
-  game.world = await (await fetch('data/world.json?v=20261104-0520')).json();
+  game.world = await (await fetch('data/world.json?v=20261104-0709')).json();
   B.set(0.45);
   setCutsceneWorld(game.world);
   setFaces(game.world.faces);

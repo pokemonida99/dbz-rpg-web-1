@@ -448,14 +448,12 @@ function showTitle(sub, notes) {
   hud.hidden = true;
   audio.playBgm(game.world.titleBgm);
   const last = latest(), main = last ? saveInfo(last) : '', many = [...SLOTS, AUTO_KEY].filter((k) => localStorage.getItem(k)).length > 1;
-  const balls = Array.from({ length: 7 }, (_, k) => `<i style="--k:${k};background-position:${-40 * k}px 0"></i>`).join('');
   // the one big button is what most people want: carry on when there is a save, a new game when there isn't
   const card = (a, label, info, big) => `<button class="tb${big ? ' big' : ''}" data-a="${a}"><span class="tl">${label}</span>${info ? `<span class="ti">${info}</span>` : ''}</button>`;
   // the original's title picture for the save's part, made a full-height cover (assets/ui/cover: the original kept as
-  // it is in the middle, the rest painted around it), raised so the menu sits on its lower part
+  // it is in the middle, the rest painted around it); its lower edge melts into the black under the menu
   title.innerHTML = `<div class="t-hero"><img src="${assetUrl(`ui/cover/${main ? savePic(last) : 'Title'}.png`)}" alt="DRAGON BALL Z"></div>
     ${sub ? `<div class="sub">${sub}</div>` : ''}
-    <div class="t-balls">${balls}</div>
     ${notes ? `<div class="note unlocks">接下來開放：<br>${notes.join('<br>')}</div>` : ''}
     <div class="actions">
       ${main ? card('cont', '繼續遊戲', main, true) : card('new', '新的開始', '從 Z1 拉蒂茲篇開始冒險', true)}

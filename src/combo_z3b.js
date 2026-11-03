@@ -63,6 +63,7 @@ const Z2 = {
 };
 // (Z3_戦闘_必殺技_気を溜める(四身の拳気功砲) is not among the original's pictures; back 8 shows the Z1 one)
 const KAME_SIDES = [pic('ZG_戦闘_必殺技_背景_超カメハメ波_左.PNG'), pic('ZG_戦闘_必殺技_背景_超カメハメ波_右.PNG')]; // strips no 4: 3 frames of 176×320
+const BURNING_BAR = pic('ZG_戦闘_必殺技_背景(赤)_バーニングアタック上.PNG'); // strips no 6: 672×110, at the top and lower down
 const SHISHIN_AURA = pic('Z1_戦闘_必殺技_気を溜める(四身の拳気功砲).PNG');
 const GENKI_FULL = pic('Z2_戦闘_必殺技_気を溜める(超元気玉全開).PNG'); // back 129: 3 frames of 816×320
 const BLINK = {
@@ -93,11 +94,15 @@ class CmdStage extends ZfStage {
     d.agSt = { foe: false, get era() { return z.era; }, get cutFrom() { return z.cut && z.cutFlag ? 0 : Infinity; }, get mirror() { return z.mirror; } };
   }
   drawCut() {} // (drawn by src/anime_goku_gohan.js)
-  tick() { // ZfStage's strips, and no 4 (the ZG super kamehameha's side panels, on @tec_back_anime_type like the corners)
+  tick() { // ZfStage's strips, and no 4 (the ZG super kamehameha's side panels, on @tec_back_anime_type like the corners) / 6
     const k = this.corner;
     super.tick();
     if (this.bars && this.no === 4) {
       this.barList = [(c) => { zfBlt(c, KAME_SIDES[0], k * 176, 0, 176, 320, 0, 18); zfBlt(c, KAME_SIDES[1], k * 176, 0, 176, 320, 640 - 176, 18); }];
+    } else if (this.bars && this.no === 6) { // (バーニングアタック's red strip, 8 a frame)
+      const x = -(((this.tb6 || 0) % 672) + 672) % 672;
+      this.tb6 = (this.tb6 || 0) + 8;
+      this.barList = [(c) => { for (const y of [4, 242]) { zfBlt(c, BURNING_BAR, 0, 0, 672, 110, x, y); zfBlt(c, BURNING_BAR, 0, 0, 672, 110, x + 672, y); } }];
     }
   }
 
@@ -409,7 +414,7 @@ function films(table, pics) {
 
 // the pictures every film may use (the stage's effects and backs)
 const COMMON = [SPARK, KIRAN, ...Object.values(BOOM).map((b) => b[0]), ...Object.values(Z3).flatMap((x) => (typeof x === 'string' ? [x] : Object.values(x))),
-  ...Object.values(Z2).flatMap((x) => (typeof x === 'string' ? [x] : Object.values(x))), SHISHIN_AURA, GENKI_FULL, ...KAME_SIDES,
+  ...Object.values(Z2).flatMap((x) => (typeof x === 'string' ? [x] : Object.values(x))), SHISHIN_AURA, GENKI_FULL, ...KAME_SIDES, BURNING_BAR,
   ...Object.values(BLINK).flatMap((x) => Object.values(x))];
 
 export { CmdStage, films, COMMON, pic, STANDARD_CHAX, STANDARD_CHAY, STANDARD_ENEX, STANDARD_ENEY, CENTER_CHAX, CENTER_ENEX, TEC_CENTER_CHAX,

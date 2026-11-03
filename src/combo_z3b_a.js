@@ -1,6 +1,7 @@
 // (cmd part a: films ported by a helper, merged into src/combo_z3b.js at the end)
 import { ComboDuel } from './combo-anime.js?v=20261103-1518';
 import { rand } from './core.js?v=20261103-1518';
+import { RAY_SPEED as RS } from './anime.js?v=20261103-1518';
 import { films, COMMON, pic, STANDARD_CHAX, STANDARD_CHAY, STANDARD_ENEX, STANDARD_ENEY, CENTER_CHAX, CENTER_ENEX, TEC_CENTER_CHAX,
   FLASH_Y_SIZE_CUTIN_ON, FLASH_Y_SIZE_CUTIN_OFF, by, Z3, BLINK, v } from './combo_z3b.js?v=20261103-1518';
 
@@ -677,3 +678,212 @@ Object.assign(ComboDuel.prototype, {
   },
 });
 films({ 815: ['cmdRessen', 44] }, { cmdRessen: () => COMMON });
+
+// ======================================================================================================
+// 818 Dポコペンダーレガツツイタ / ダブルポコペン (2918 比克＋青年, all.rb 113328). 青年 below 比克 (pairIn); both fire a
+// green ball (the Z3 green ball's second picture), which flies on at the enemy (damage 41).
+// ======================================================================================================
+const BALL_GREEN = pic('Z3_戦闘_必殺技_エネルギー弾(緑).PNG');
+Object.assign(ComboDuel.prototype, {
+  * cmdPokopen() {
+    const z = this.cmd, A = this.A;
+    for (;;) {
+      const f = z.top();
+      z.color = 0;
+      if (f === 0) { z.se('Z1 逃げる'); z.otype = 1; z.pose(0); }
+      else if (f <= 59) pairIn(z, f, 4, 15);
+      else if (f === 60) {
+        z.se('Z1 怪光線'); z.otype = 1; z.pose(4); z.efp = 0; z.t2 = 12;
+        z.back(118, TEC_CENTER_CHAX, STANDARD_CHAY + 50); z.eff = 0;
+      } else if (f <= 104) {
+        const x = A.x + 2 + (f - 61) * RS;
+        z.back(118, TEC_CENTER_CHAX, STANDARD_CHAY + 50);
+        z.blt(BALL_GREEN, 128, 0, 128, 128, x, STANDARD_CHAY - 84);
+        z.blt(BALL_GREEN, 128, 0, 128, 128, x, STANDARD_CHAY + 16);
+      } else if (f === 105) { z.displayOut(); z.eff = 0; }
+      else if (f <= 127) {
+        const x = -16 + (f - 106) * RS;
+        z.blt(BALL_GREEN, 128, 0, 128, 128, x, STANDARD_CHAY - 30);
+        z.blt(BALL_GREEN, 128, 0, 128, 128, x, STANDARD_CHAY - 4);
+      } else if (f === 128) return yield* z.finish();
+      yield* z.out(328, 148);
+    }
+  },
+});
+films({ 818: ['cmdPokopen', 41] }, { cmdPokopen: () => COMMON });
+
+// ======================================================================================================
+// 820 超能力きこうほう改 (2920 天津飯＋餃子, all.rb 113402). The other one flies in (back 39, 天津飯 below and 餃子 above,
+// back 40), both charge (back 105 ×2) — 餃子 holding the enemy with his mind (back 44); 天津飯's 新気功砲 close-up with
+// four flashes, the 気功砲 column on the enemy (back 9) with four more; the enemy shakes and blows up (damage 82).
+// ======================================================================================================
+Object.assign(ComboDuel.prototype, {
+  * cmdPsychoKikouKai() {
+    const z = this.cmd, A = this.A;
+    const flashAt = (g, ...at) => { if (at.some((a) => g >= a && g <= a + 3)) { z.flash(); if (at.includes(g)) z.se('Z1 エネルギー波'); } };
+    for (;;) {
+      const f = z.top();
+      if (f === 0) { z.color = 0; z.se('Z1 逃げる'); z.otype = 1; z.pose(0); }
+      else if (f <= 39) {
+        z.back(39);
+        if (z.lead === 8) z.ay = f <= 10 ? 5 : 0; else if (z.lead === 9) z.ay = f <= 10 ? -5 : 0;
+      } else if (f <= 59) { A.y = -120; z.ax = 0; z.ay = 0; z.back(40); }
+      else if (f === 60) { z.back(40); z.se('Z2 気を溜める'); }
+      else if (f <= 149) { z.back(105, 222, 60 - 50); z.bf--; z.back(105, 218, 60 + 50); z.bf--; z.back(44); }
+      else if (f === 150) { z.seStop(); A.y = -200; z.no = 3; z.bars = true; }
+      else if (f <= 359) { z.blt(KIKOU_TIEN, 0, 0, 170, 160, 208, 98); flashAt(f, 191, 231, 271, 311); }
+      else if (f === 360) { z.seStop(); z.bars = false; z.fxReset(); z.no = 0; z.displayOut(); z.se('Z1 ザー'); z.se('Z1 ゴー'); }
+      else if (f <= 561) { z.back(9); flashAt(f, 391, 431, 471, 511); }
+      else if (f === 562) return yield* z.finish();
+      yield* z.out(328, 148);
+    }
+  },
+});
+films({ 820: ['cmdPsychoKikouKai', 82] }, { cmdPsychoKikouKai: () => [...COMMON, KIKOU_TIEN] });
+
+// ======================================================================================================
+// 821 激烈魔閃光弾 (2921 比克＋超悟飯, all.rb 113496). 悟飯 below 比克 (pairIn); both charge green; 比克's 激烈光弾
+// close-up (235 → 252); 悟飯's 激烈魔閃光 close-up with the rocks rising, grey / light / white flashes; both fire (295
+// green) and the huge green wave on the enemy (48), damage 44.
+// ======================================================================================================
+const GEKIRETSU_G = [pic('ZG_必殺技_激烈魔閃光1(悟飯).PNG'), pic('ZG_必殺技_激烈魔閃光1(悟飯)_赤道着.png')]; // 80×176
+const ROCK = pic('ZG_必殺技_岩.PNG');
+const ROCKS = { x: [166, 230, 260, 364, 420, 480, 200, 440, 400], y: [560, 540, 480, 480, 480, 500, 580, 600, 520], big: [1, 0, 1, 1, 0, 1, 0, 1, 0] };
+Object.assign(ComboDuel.prototype, {
+  * cmdGekiretsuKoudan() {
+    const z = this.cmd, A = this.A, gohan = this.crew[18] ? 18 : 5, bx = 234, by_ = -18 + 54 + 50;
+    for (;;) {
+      const f = z.top();
+      let rx = 324, ry = 80;
+      if (f === 0) { z.se('Z1 逃げる'); z.otype = 1; z.pose(0); }
+      else if (f <= 59) pairIn(z, f, 4, gohan);
+      else if (f === 60) { z.se('Z3 変身'); z.se('Z1 気を溜める'); z.color = 3; }
+      else if (f <= 187) { // both charge green
+        z.efp = 0; z.eff = 0; z.pose(13); z.color = 1;
+        z.back(201, bx - 18, by_ + 50); z.bf--;
+        z.back(201, bx - 12, by_ - 50); z.bf--;
+        z.back(118, TEC_CENTER_CHAX, STANDARD_CHAY + 50);
+      } else if (f <= 348) { // 比克's close-up
+        const s = 188;
+        z.blt(GEKIRETSU_P, 0, 0, 218, 230, 190, 66);
+        if (f === s) { A.y = -200; z.small = true; z.seStop(); }
+        if (f >= s + 90) { z.efp = 252; rx = 322 - 16; ry = 164 - 16; if (f === s + 90) z.rt = 0; }
+        else if (f >= s + 30) { z.efp = 235; rx = 322; ry = 164; if (f === s + 30) z.se('Z1 気を溜める2'); }
+      } else if (f <= 549) { // 悟飯's close-up, the rocks rising, the flashes
+        const s = 349, g = f - s;
+        if (g === 0) { z.efp = 0; z.seStop(); }
+        z.cut = false; z.no = 1;
+        if (g === 30) z.se('ZG SE057');
+        A.y = -200;
+        const k = rand(3);
+        z.blt(GEKIRETSU_G[v(172) === 2 ? 1 : 0], 0, 0, 80, 176, 280 + (k === 2 ? 2 : k === 1 ? -2 : 0), 72);
+        ROCKS.x.forEach((x, i) => {
+          if (ROCKS.big[i]) z.blt(ROCK, 16, 0, 28, 20, x, ROCKS.y[i] - 4 * g); else z.blt(ROCK, 0, 0, 16, 14, x, ROCKS.y[i] - 2 * g);
+        });
+        if (g >= 156 && g <= 159) z.fill(0, 0, 640, FLASH_Y_SIZE_CUTIN_OFF, 'rgb(127,127,127)');
+        else if (g >= 160 && g <= 163) z.fill(0, 0, 640, FLASH_Y_SIZE_CUTIN_OFF, 'rgb(188,188,188)');
+        else if (g >= 164 && g <= 200) z.flash();
+        if (f === 549) z.no = 0;
+      } else if (f <= 659) { // both fire
+        if (f === 550) {
+          A.y = STANDARD_CHAY - 50; z.seStop(); z.cut = true; z.pose(14); z.t2 = 3;
+          z.se('ZG 光線1'); z.se('Z1 ゴー'); z.se('Z1 エネルギー波'); z.se('Z1 エネルギー波2'); z.color = 1;
+        }
+        z.back(118, TEC_CENTER_CHAX, STANDARD_CHAY + 50);
+        z.efp = 295;
+      } else if (f === 660) { z.eff = 0; z.efp = 0; z.displayOut(); }
+      else if (f >= 662 && f <= 687) z.efp = 48;
+      else if (f === 688) return yield* z.finish();
+      yield* z.out(rx, ry);
+    }
+  },
+});
+films({ 821: ['cmdGekiretsuKoudan', 44] }, { cmdGekiretsuKoudan: () => [...COMMON, GEKIRETSU_P, ...GEKIRETSU_G, ROCK] });
+
+// ======================================================================================================
+// 822 ファイナルバスター (2922 超貝吉塔＋超特蘭克斯, all.rb 113699). 特蘭克斯 below 貝吉塔 (pairIn); both charge blue
+// (特蘭克斯's poses by his clothes, variable 173); both fire (295 blue) and the huge wave (48), damage 44.
+// ======================================================================================================
+Object.assign(ComboDuel.prototype, {
+  * cmdFinalBuster() {
+    const z = this.cmd, A = this.A, bx = 234, by_ = -18 + 54 + 50, suit = [1, 2, 3].includes(v(173));
+    for (;;) {
+      const f = z.top();
+      if (f === 0) { z.se('Z1 逃げる'); z.otype = 1; z.pose(0); }
+      else if (f <= 59) pairIn(z, f, 19, 20);
+      else if (f === 60) { z.se('Z3 変身'); z.se('Z1 気を溜める'); z.se('Z1 気を溜める6'); z.color = 3; }
+      else if (f <= 187) {
+        z.efp = 0; z.eff = 0; z.pose(12); z.t2 = suit ? 12 : 10; z.color = 3;
+        z.back(201, bx - 18, by_ + 50); z.bf--;
+        z.back(201, bx - 18, by_ - 50); z.bf--;
+        z.back(118, TEC_CENTER_CHAX, STANDARD_CHAY + 50);
+      } else if (f <= 299) {
+        if (f === 188) {
+          A.y = STANDARD_CHAY - 50; z.seStop(); z.cut = true;
+          z.se('ZG 光線1'); z.se('Z1 ゴー'); z.se('Z1 エネルギー波'); z.se('Z1 エネルギー波2');
+          z.color = 3; z.pose(13); z.t2 = suit ? 13 : 11;
+        }
+        z.back(118, TEC_CENTER_CHAX, STANDARD_CHAY + 50);
+        z.efp = 295;
+      } else if (f === 300) { z.eff = 0; z.efp = 0; z.displayOut(); }
+      else if (f >= 302 && f <= 327) z.efp = 48;
+      else if (f === 328) return yield* z.finish();
+      yield* z.out(324, 80);
+    }
+  },
+});
+films({ 822: ['cmdFinalBuster', 44] }, { cmdFinalBuster: () => COMMON });
+
+// ======================================================================================================
+// 823 ファイナルかめはめ波 (2923 超悟空＋超貝吉塔, all.rb 113836). 貝吉塔 below 悟空 (pairIn); both charge blue; 悟空's ZG
+// kamehameha close-up with the ball (235; the side panels), 貝吉塔's ファイナルフラッシュ close-up shaking (the red
+// strip); both fire the final kamehameha (372) and it hits (365), damage 44.
+// ======================================================================================================
+const KAME2_GOKU = [pic('ZG_必殺技_超カメハメ波2(悟空).PNG'), pic('ZG_必殺技_超カメハメ波2(悟空_ボロボロ).PNG'),
+  pic('ZG_必殺技_超カメハメ波2(悟空_さらにボロボロ).png'), pic('ZG_必殺技_超カメハメ波2(悟空_バトルスーツ).PNG')]; // 122×212
+const FF_CHARGE = [pic('ZG_必殺技_ファイナルフラッシュ(溜め)_ベジータ.PNG'), pic('ZG_必殺技_ファイナルフラッシュ(溜め)_ベジータ(気).PNG')]; // 382×96
+Object.assign(ComboDuel.prototype, {
+  * cmdFinalKame() {
+    const z = this.cmd, A = this.A, bx = 234, by_ = -18 + 54 + 50;
+    for (;;) {
+      const f = z.top();
+      let rx = 324, ry = 80;
+      if (f === 0) { z.se('Z1 逃げる'); z.otype = 1; z.pose(0); }
+      else if (f <= 59) pairIn(z, f, 14, 19);
+      else if (f === 60) { z.se('Z3 変身'); z.se('Z1 気を溜める'); z.color = 3; }
+      else if (f <= 187) {
+        z.efp = 0; z.eff = 0; z.pose(2); z.t2 = 12; z.color = 3;
+        z.back(201, bx - 18, by_ + 50); z.bf--;
+        z.back(201, bx - 12, by_ - 50); z.bf--;
+        z.back(118, TEC_CENTER_CHAX, STANDARD_CHAY + 50);
+        if (f === 187) z.no = 4;
+      } else if (f <= 297) { // 悟空's close-up
+        z.efp = 235;
+        if (f === 188) { z.seStop(); z.se('ZG SE053'); z.cut = false; A.y = -200; z.color = 0; }
+        if (f === 297) z.no = 6;
+        rx = 258 + 16; ry = 46 + 86;
+        const c = v(171);
+        z.blt(KAME2_GOKU[[1, 2, 3].includes(c) ? c : 0], 0, 0, 122, 212, 258, 46);
+      } else if (f <= 399) { // 貝吉塔's close-up
+        const s = 298;
+        if (f === s) { z.seStop(); z.se('Z1 気を溜める6'); z.efp = 0; }
+        if (f === 399) z.no = 0;
+        let x = 130;
+        if (f > s + 10) z.blt(FF_CHARGE[1], 0, 0, 382, 96, x, 130);
+        if (f >= s + 10 && f <= s + 70) x += f % 2 === 1 ? -2 : 2;
+        z.blt(FF_CHARGE[0], 0, 0, 382, 96, x, 130);
+      } else if (f <= 509) { // both fire
+        if (f === 400) {
+          A.y = STANDARD_CHAY - 50; z.seStop(); z.cut = true; z.pose(3); z.t2 = 13;
+          z.se('ZG 光線1'); z.se('Z1 ゴー'); z.se('Z1 エネルギー波'); z.se('Z1 エネルギー波2'); z.color = 0; z.eff = 0;
+        }
+        z.back(118, TEC_CENTER_CHAX, STANDARD_CHAY + 50);
+        z.efp = 372; rx = 328; ry = 84;
+      } else if (f === 510) { z.eff = 0; z.efp = 0; z.displayOut(); }
+      else if (f >= 512 && f <= 537) z.efp = 365;
+      else if (f === 538) return yield* z.finish();
+      yield* z.out(rx, ry);
+    }
+  },
+});
+films({ 823: ['cmdFinalKame', 44] }, { cmdFinalKame: () => [...COMMON, ...KAME2_GOKU, ...FF_CHARGE] });

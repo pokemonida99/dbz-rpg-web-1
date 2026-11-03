@@ -19,6 +19,7 @@
 // row, after set_chr_display_out the member's).
 import { audio, img, rand } from './core.js?v=20261103-0825';
 import { Duel, addMoves, moveFilm, draw, spark, STD_Y, CENTER_CHAX, CENTER_ENEX, RAY_SPEED, BACK_Y } from './anime.js?v=20261103-0825';
+import { Battle } from './battle.js?v=20261103-0825';
 
 const pic = (n) => `Graphics/Pictures/${n}`;
 const STD_ENEX = 602;
@@ -373,8 +374,20 @@ Object.assign(BACKS, {
 const FILMS = new Set(); // the films run on this stage
 const CFG = {}; // film → { cut: @chr_cutin_flag, small: @tec_back_small, no: @tec_output_back_no, again: (z) => … for @all_attack_count >= 2, pics }
 const PREV = {}; // skill → the film it had before (for a party member or an enemy of an earlier part using the same skill)
+// @all_attack_count: the films of one enemy action are counted (a move on everyone plays one film per member, and only
+// the first has 31 / 32 and the charge); a film played some other way falls back to "the same skill just ended"
 const ended = {}; // skill → when its last film ended
 const AGAIN_MS = 500;
+const enemyAct0 = Battle.prototype.enemyAct;
+Battle.prototype.enemyAct = async function (...a) {
+  this.feAct = { n: 0 };
+  try { return await enemyAct0.apply(this, a); } finally { this.feAct = null; }
+};
+function againNow(d) {
+  const sc = globalThis.__game && globalThis.__game.scene, act = sc && sc.feAct;
+  if (act) return ++act.n > 1;
+  return performance.now() - (ended[d.skill] || -1e9) < AGAIN_MS;
+}
 // films: { film: { cut, small, no, again, pics: () => [pictures] } }; skills: { skill: film }
 export function feFilms(films) { for (const [k, cfg] of Object.entries(films)) { FILMS.add(k); CFG[k] = cfg; } }
 export function feRegister(skills) {
@@ -402,7 +415,8 @@ Object.assign(Duel.prototype, {
     z.cutFlag = !!cfg.cut;
     if (cfg.small) z.small = true;
     if (cfg.no != null) z.tecNo = cfg.no;
-    z.again = !!cfg.again && performance.now() - (ended[this.skill] || -1e9) < AGAIN_MS;
+    const again = againNow(this);
+    z.again = !!cfg.again && again;
     this.finished.then(() => { ended[this.skill] = performance.now(); });
     if (z.again) { // the case block's settings, no 31 / 32: the ground already gone
       this.back.y = BACK_Y + 79 * 4;

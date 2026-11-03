@@ -8,7 +8,7 @@
 
 - 敵人招式的 attack pattern ＝ 技能編號 +10，和我方同一個 Z3 分歧（all.rb 59742「when 2 #Z3」，Z3、Z4、ZG 都走這段）。
 - 大部分敵人共用幾個片，依 `@enedatenum`（敵人編號）決定光束位置。這幾個片（2431／2494／2498／2499／2495／2493）用 `src/anime_foes_common.js` 的 feWave／feWaves／feBlast／feBigWave／feDeathBall／feCutter，本檔只 `feRegister` 登記技能。我原本也寫了一份（e2Wave 等），和共用檔逐片比過片長完全一樣，為了不重複已刪掉，改用共用檔。
-- 打全體的招式（連續能量波、爆發波）在 `src/battle.js` 是每個目標各播一片；第 2 片以後就是原版的 `@all_attack_count >= 2`（不播 31／32、直接短片），由共用檔處理（以同一技能 0.5 秒內再播判斷）。
+- 打全體的招式（連續能量波、爆發波）在 `src/battle.js` 是每個目標各播一片；第 2 片以後就是原版的 `@all_attack_count >= 2`（不播 31／32、直接短片），由共用檔處理（共用檔第四版包了 `Battle.prototype.enemyAct`，記同一次出手的第幾片）。
 
 | 片名 | 原版 pattern | 用到的技能（敵人） | 傷害 | 32 之前的設定 |
 |---|---|---|---|---|

@@ -90,6 +90,12 @@ if (new URLSearchParams(location.search).has('timer')) window.requestAnimationFr
 
 const SAVE_KEY = TEST ? 'dbz-portrait-test-save' : 'dbz-portrait-save-v1'; // 測試模式 keeps its own slots (src/testmode.js)
 const AUTO_KEY = TEST ? 'dbz-portrait-test-autosave' : 'dbz-portrait-autosave-v1'; // the original's Save_Auto.rvdata: after each normal battle won
+// three save slots (the first is the old single save, so it carries over); the story's own saves go to the slot in use
+const SLOTS = [SAVE_KEY, `${SAVE_KEY}-2`, `${SAVE_KEY}-3`];
+const SLOT_KEY = `${SAVE_KEY}-slot`;
+let slot = Math.min(2, Math.max(0, Number(localStorage.getItem(SLOT_KEY)) || 0));
+const curKey = () => SLOTS[slot];
+function useSlot(k) { slot = k; try { localStorage.setItem(SLOT_KEY, String(k)); } catch (e) { /* private mode */ } }
 const FACES = 'Graphics/Pictures/Z1_顔味方.PNG'; // the party screen's 64×64 faces; row = actor id - 3; columns: normal, hurt, KO
 
 const game = {
@@ -278,11 +284,11 @@ function openMenu() {
   if (game.busy) return;
   game.field.paused = true;
   game.field.leave();
-  const has = !!localStorage.getItem(SAVE_KEY);
+  const has = !!latest();
   menu.innerHTML = `<div class="box"><h2>選單</h2>${fieldMenuHtml()}${fieldExtraHtml()}
     <button class="btn" data-a="compo">合成<small>請卡林大人把兩張卡片合成一張</small></button>
-    <button class="btn" data-a="save">存檔<small>隨時記錄目前的位置與狀態</small></button>
-    <button class="btn" data-a="load" ${has ? '' : 'disabled'}>讀檔<small>${has ? '回到上次存檔的地方' : '還沒有存檔'}</small></button>
+    <button class="btn" data-a="save">存檔<small>存到三個存檔位置之一（目前用：存檔 ${slot + 1}）</small></button>
+    <button class="btn" data-a="load" ${has ? '' : 'disabled'}>讀檔<small>${has ? '選一個存檔讀取' : '還沒有存檔'}</small></button>
     <button class="btn" data-a="heal">休息<small>回復全員 HP・KI（測試用）</small></button>
     <button class="btn ghost" data-a="close">關閉</button>
     <div class="ver">版本 ${VERSION}</div></div>`;
@@ -305,8 +311,15 @@ function openMenu() {
     if (!a && e.target !== menu) return;
     const act = a ? a.dataset.a : 'close';
     if (act === 'compo') { menu.hidden = true; game.busy = true; compo(game).then(() => { game.busy = false; game.field.paused = false; renderHud(); }); return; }
-    if (act === 'save') { save(); toast('已存檔'); }
-    if (act === 'load') { if (load()) { toast('已讀檔'); recap(); } }
+    if (act === 'save' || act === 'load') {
+      menu.hidden = true;
+      pickSlot(act, (key) => {
+        if (act === 'save') { useSlot(SLOTS.indexOf(key)); save(); toast(`已存到存檔 ${slot + 1}`); }
+        else if (load(key)) { toast('已讀檔'); recap(); return; }
+        game.field.paused = false; game.field.enter();
+      }, () => { game.field.paused = false; game.field.enter(); });
+      return;
+    }
     if (act === 'heal') { for (const m of game.state.party) { m.hp = m.maxhp; m.ki = m.maxki; m.ko = false; } renderHud(); toast('全員回復了'); }
     menu.hidden = true;
     game.field.paused = false;
@@ -314,19 +327,25 @@ function openMenu() {
   };
 }
 
-function save(silent, key = SAVE_KEY) {
+function save(silent, key = curKey()) {
   game.state.savedAt = Date.now();
   try { localStorage.setItem(key, JSON.stringify(game.state)); } catch (e) { if (!silent) toast('無法存檔'); }
 }
 // the save written last: the manual one or the auto-save
 function newest() {
   const at = (k) => { try { return (JSON.parse(localStorage.getItem(k)) || {}).savedAt || 0; } catch (e) { return 0; } };
-  return localStorage.getItem(AUTO_KEY) && at(AUTO_KEY) > at(SAVE_KEY) ? AUTO_KEY : SAVE_KEY;
+  return localStorage.getItem(AUTO_KEY) && at(AUTO_KEY) > at(curKey()) ? AUTO_KEY : curKey();
 }
-function load(key = SAVE_KEY) {
+// the newest of every slot and the auto-save (the title's 繼續遊戲)
+function latest() {
+  const at = (k) => { try { return (JSON.parse(localStorage.getItem(k)) || {}).savedAt || 0; } catch (e) { return 0; } };
+  return [...SLOTS, AUTO_KEY].filter((k) => localStorage.getItem(k)).sort((a, b) => at(b) - at(a))[0] || null;
+}
+function load(key = curKey()) {
   try {
     const s = JSON.parse(localStorage.getItem(key));
     if (!s) return false;
+    if (SLOTS.includes(key)) useSlot(SLOTS.indexOf(key));
     game.state = s;
     s.sw = s.sw || {};
     s.var = s.var || { 42: 3 };
@@ -428,12 +447,12 @@ function showTitle(sub, notes) {
   if (game.field) { game.field.leave(); game.field.paused = true; }
   hud.hidden = true;
   audio.playBgm(game.world.titleBgm);
-  const main = saveInfo(SAVE_KEY), auto = saveInfo(AUTO_KEY);
+  const last = latest(), main = last ? saveInfo(last) : '', many = [...SLOTS, AUTO_KEY].filter((k) => localStorage.getItem(k)).length > 1;
   const balls = Array.from({ length: 7 }, (_, k) => `<i style="--k:${k};background-position:${-40 * k}px 0"></i>`).join('');
   // the one big button is what most people want: carry on when there is a save, a new game when there isn't
   const card = (a, label, info, big) => `<button class="tb${big ? ' big' : ''}" data-a="${a}"><span class="tl">${label}</span>${info ? `<span class="ti">${info}</span>` : ''}</button>`;
   title.innerHTML = `<div class="t-stars"></div>
-    <img class="t-art" src="${assetUrl(`Graphics/System/${main ? savePic(SAVE_KEY) : 'Title'}.png`)}" alt="DRAGON BALL Z">
+    <img class="t-art" src="${assetUrl(`Graphics/System/${main ? savePic(last) : 'Title'}.png`)}" alt="DRAGON BALL Z">
     <div class="sub">${sub || '重製版・Z1～Z4・時之間・ZG'}</div>
     <div class="t-balls">${balls}</div>
     ${notes ? `<div class="note unlocks">接下來開放：<br>${notes.join('<br>')}</div>` : ''}
@@ -442,7 +461,7 @@ function showTitle(sub, notes) {
       <div class="t-row">
         ${main ? card('new', '新的開始', '') : ''}
         ${card('parts', '選擇篇章', '')}
-        ${auto ? card('auto', '自動存檔', auto) : ''}
+        ${many ? card('load', '讀取存檔', '') : ''}
       </div>
     </div>
     <div class="note">下半部拖曳移動・點對話框繼續　版本 ${VERSION}<br>原作：ドラゴンボールZ RPG（同人作品）</div>`;
@@ -451,10 +470,11 @@ function showTitle(sub, notes) {
     const a = e.target.closest('[data-a]');
     if (!a) return;
     audio.unlock();
-    if (a.dataset.a === 'parts') return showParts(main);
-    if (a.dataset.a === 'new' && main && !a.dataset.sure) return askOverwrite(a, () => a.click()); // (a new game saves over it)
+    if (a.dataset.a === 'parts') return showParts();
+    if (a.dataset.a === 'load') return pickSlot('load', (key) => { title.hidden = true; if (load(key)) recap(); });
+    if (a.dataset.a === 'new' && !a.dataset.sure) return pickSlot('new', (key) => { useSlot(SLOTS.indexOf(key)); a.dataset.sure = 1; a.click(); });
     title.hidden = true;
-    if (a.dataset.a === 'cont' || a.dataset.a === 'auto') { if (load(a.dataset.a === 'auto' ? AUTO_KEY : SAVE_KEY)) recap(); return; }
+    if (a.dataset.a === 'cont') { if (load(last)) recap(); return; }
     if (a.dataset.a === 'new') await playStory(game.world); // the opening story, then the field
     game.state = game.newState();
     startField();
@@ -468,7 +488,7 @@ function showTitle(sub, notes) {
 }
 
 // 篇章選擇 over the title: one card per part with its original title picture; back returns to the title
-function showParts(hasSave) {
+function showParts() {
   const el = document.createElement('div');
   el.className = 't-parts';
   el.innerHTML = `<div class="tp-head">選擇篇章</div><div class="tp-note">從各篇的開頭開始，等級與隊伍和照順序玩到那裡差不多</div>
@@ -479,24 +499,45 @@ function showParts(hasSave) {
     const b = e.target.closest('[data-k]');
     if (!b) return;
     if (b.dataset.k === 'back') { el.remove(); return; }
-    const go = () => { el.remove(); if (b.dataset.k === 'z1') { const n = title.querySelector('[data-a=new]'); n.dataset.sure = 1; n.click(); } else startPart(b.dataset.k); };
-    if (hasSave && !b.dataset.sure) askOverwrite(b, go); else go();
+    pickSlot('new', (key) => {
+      useSlot(SLOTS.indexOf(key));
+      el.remove();
+      if (b.dataset.k === 'z1') { const n = title.querySelector('[data-a=new]'); n.dataset.sure = 1; n.click(); } else startPart(b.dataset.k);
+    });
   };
   title.appendChild(el);
 }
-// a save is there: say what starting over does, and start only on a second tap
-function askOverwrite(btn, go) {
-  const bar = document.createElement('div');
-  bar.className = 't-ask';
-  bar.innerHTML = `<div>開始後會蓋掉目前的存檔，確定嗎？</div><div class="t-row"><button class="tb big" data-y="1"><span class="tl">確定開始</span></button><button class="tb" data-y="0"><span class="tl">取消</span></button></div>`;
-  bar.onclick = (e) => {
-    e.stopPropagation();
-    const y = e.target.closest('[data-y]');
-    if (!y) return;
-    bar.remove();
-    if (y.dataset.y === '1') { btn.dataset.sure = 1; go(); }
+// the three slots (and, to load, the auto-save): what each holds; saving over one, or starting a new game in it,
+// asks first. mode: 'save' | 'load' | 'new'; pick(key) when chosen, back() when closed
+function pickSlot(mode, pick, back = () => {}) {
+  const el = document.createElement('div');
+  el.className = 'slots';
+  const when = (k) => { try { const t = (JSON.parse(localStorage.getItem(k)) || {}).savedAt; if (!t) return ''; const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; } catch (e) { return ''; } };
+  const keys = mode === 'load' ? [...SLOTS, AUTO_KEY] : SLOTS;
+  const row = (k) => {
+    const info = saveInfo(k), name = k === AUTO_KEY ? '自動存檔' : `存檔 ${SLOTS.indexOf(k) + 1}`;
+    const off = mode === 'load' && !info;
+    return `<button class="sl${info ? '' : ' empty'}${SLOTS[slot] === k && mode !== 'load' ? ' cur' : ''}" data-k="${k}" ${off ? 'disabled' : ''}>
+      <span class="sl-no">${name}</span><span class="sl-info">${info || '（空）'}</span><span class="sl-at">${when(k)}</span></button>`;
   };
-  title.appendChild(bar);
+  el.innerHTML = `<div class="panel"><div class="sl-head">${{ save: '存到哪裡？', load: '讀取哪個存檔？', new: '新的冒險存在哪裡？' }[mode]}</div>
+    ${keys.map(row).join('')}<button class="btn ghost" data-k="back">返回</button></div>`;
+  el.onclick = (e) => {
+    e.stopPropagation();
+    const b = e.target.closest('[data-k]');
+    if (!b) { if (e.target === el) { el.remove(); back(); } return; }
+    const k = b.dataset.k;
+    if (k === 'back') { el.remove(); back(); return; }
+    if (mode !== 'load' && localStorage.getItem(k) && !b.dataset.sure) { // a second tap on the same slot to overwrite it
+      el.querySelectorAll('.sl').forEach((x) => { delete x.dataset.sure; x.classList.remove('ask'); });
+      b.dataset.sure = 1; b.classList.add('ask');
+      b.querySelector('.sl-at').textContent = '再點一次覆蓋';
+      return;
+    }
+    el.remove();
+    pick(k);
+  };
+  document.getElementById('app').appendChild(el);
 }
 
 // ---------- main loop ----------

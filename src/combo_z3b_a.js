@@ -1264,3 +1264,145 @@ Object.assign(ComboDuel.prototype, {
 });
 films({ 869: ['cmdSewayaku', 44], 870: ['cmdKakarotto', 44] },
   { cmdSewayaku: () => [...COMMON, ...SPIRITS_CANNON], cmdKakarotto: () => [...COMMON, ...SPIRITS_CANNON, ROSHI_KAME, SURPRISE] });
+
+// ======================================================================================================
+// 860 師弟アタック改 (2960 比克＋超未來悟飯, all.rb 120328) and 861 ナメックウォーリアーズ (2961 比克＋青年, 120868): one film,
+// the partner and what he does told apart. The partner below 比克 (pairIn) vanishes (2960) / flies off (2961); 比克
+// fires eight balls round the stage (201); the partner's blows (2961: 青年 kicks it to and fro, back on the
+// screen-blits); the 魔空包囲弾 balls appear round the enemy one by one, sway and close in; the explosion (104); then
+// 2960: 未來悟飯's 魔貫光殺砲 cut-in until all goes white, the drill beam (272 → 255); 2961: two 青年 fire the three
+// waves (331) and the huge one hits (48). Damage 44.
+// ======================================================================================================
+const MAKUU = pic('ZG_戦闘_必殺技_魔空包囲弾.PNG'); // 32×32
+const MAKANKO_FG = [pic('Z3_必殺技_カットイン_魔貫光殺砲(未来ゴハン).png'), pic('Z3_必殺技_カットイン_魔貫光殺砲(未来超ゴハン).png')]; // 648×64
+const MAKUU_AT = { 0: [220, 90], 20: [360, 280], 37: [472, 90], 59: [190, 164], 81: [520, 170], 99: [224, 260], 117: [360, 60], 139: [470, 274] };
+const MAKUU_DIR = [[8, -8], [0, 8], [-8, -8], [8, 0], [-8, 0], [8, 8], [0, -8], [-8, 8]];
+const idiv = (a, b) => Math.floor(a / b); // (Ruby's integer division)
+Object.assign(ComboDuel.prototype, {
+  * cmdShiteiKai() {
+    const z = this.cmd, A = this.A, G = this.G, namek = this.combo === 861;
+    const p2 = namek ? 15 : this.crew[26] ? 26 : 25, youth = () => z.sheet(15, true);
+    const balls = []; // { x, y, k, wx, wy }: @genkityuushin_x / _y, @genkitama_kanri_frame / _x / _y
+    const shift = namek ? 30 : 0; // (2961: everything from 591 on is 30 frames later)
+    for (;;) {
+      const f = z.top();
+      let rx = 342, ry = 68;
+      if (f === 0) { z.se('Z1 逃げる'); z.otype = 1; z.pose(0); }
+      else if (f <= 59) pairIn(z, f, 4, p2);
+      else if (f <= 149) { // the partner goes; 比克 charges green
+        const g = f - 60;
+        if (g === 0) { z.efp = 0; z.se(namek ? 'Z1 飛ぶ' : 'Z1 高速移動'); z.spd = true; z.se('Z3 変身'); z.color = 1; if (namek) z.t2 = 10; }
+        if (!namek && f % 4 === 0 && g <= 20) z.blt(SPARK, 0, 48, 64, 64, TEC_CENTER_CHAX + 16, STANDARD_CHAY + 50 + 20);
+        z.back(201, 228, 88 - 50);
+        if (namek) z.back(118, TEC_CENTER_CHAX + g * 20, STANDARD_CHAY + 50 - g * 2);
+      } else if (f <= 419) { // eight balls round the stage
+        const SHOTS = [[181, 80, 9], [196, 104], [241, 140, 11], [256, 116], [301, 80, 9], [316, 104], [361, 140, 11], [376, 116]];
+        if (!namek && f === 150) { z.seStop(); z.pose(8); }
+        if (f === 211 || f === 331) z.pose(10);
+        if (f === 271) { z.seStop(); z.pose(8); }
+        const sh = SHOTS.find(([s]) => f >= s && f < s + 15);
+        if (sh) {
+          if (f === sh[0]) { z.se('ZG エネルギー弾1'); z.eff = 0; }
+          if (sh[2]) z.pose(sh[2]);
+          z.efp = 201; rx = 320; ry = sh[1] - 50;
+        }
+      } else if (f === 420) {
+        z.chg = p2; z.se('Z1 高速移動'); G.x = CENTER_ENEX; G.y = STANDARD_ENEY;
+        if (namek) { A.x = -140; A.y = STANDARD_CHAY; z.otype = 1; z.pose(10); } else A.y = -200;
+      } else if (f <= 440) {
+        if (namek) A.x += 20;
+        else if (f % 4 === 0) z.blt(SPARK, 0, 48, 64, 64, TEC_CENTER_CHAX + 16, STANDARD_CHAY + 20);
+      } else if (f <= 590 + shift) { // the partner's blows
+        const g = f - 441, x = g - 80;
+        if (g === 0) { A.x = TEC_CENTER_CHAX; A.y = STANDARD_CHAY; z.otype = 0; }
+        if (inR(g, 0, 3, 8, 11, 16, 19, 24, 27)) z.pose(1);
+        else if (inR(g, 4, 7, 12, 15, 20, 23, 28, 31)) z.pose(2);
+        else if (g === 35) { A.x += 48; z.otype = namek ? 0 : 1; z.pose(namek ? 3 : 11); z.se('Z1 強打'); }
+        else if (g === 51) z.pose(0);
+        else if (g === 60) { z.se('Z1 飛ぶ'); z.otype = 0; z.pose(16); A.x -= 20; A.y -= 6; }
+        else if (g >= 61 && g <= 89) { A.x -= 20; if (!namek) A.y -= 6; }
+        else if (!namek && g === 90) { z.otype = 1; A.x = -96; A.y = STANDARD_CHAY + 70; z.pose(10); }
+        else if (!namek && g >= 91 && g <= 126) { A.x += 24; A.y -= 4; }
+        if (namek) { // the other 青年 kicks it to and fro
+          if (g === 79) z.se('Z1 飛ぶ');
+          else if (g >= 80 && g <= 94) { if (x === 11) z.se('ZG 打撃4'); z.blt(youth(), 0, (x < 11 ? 4 : 8) * 96, 96, 96, -96 + x * 24, STANDARD_CHAY + 60 - x * 4); }
+          else if (g >= 95 && g <= 110) z.blt(youth(), 0, 8 * 96, 96, 96, -96 + 15 * 24, STANDARD_CHAY + 60 - 15 * 4);
+          else if (g >= 111) z.blt(youth(), 0, 4 * 96, 96, 96, -96 + 15 * 24 - (g - 111) * 16, STANDARD_CHAY + 60 - 15 * 4);
+          if (g === 119) z.se('Z1 飛ぶ');
+          else if (g >= 120 && g <= 250) { z.blt(youth(), 0, 9 * 96, 96, 96, -96 + (x - 40) * 24, STANDARD_CHAY - 60 + (x - 40) * 2); if (g === 140) z.se('ZG 打撃2'); }
+        }
+        if ([1, 9, 17, 25].includes(g)) { G.x += 8; z.gpose(16); } else if ([3, 11, 19, 27].includes(g)) G.x -= 8;
+        else if ([4, 12, 20, 28].includes(g)) G.x += 8; else if ([6, 14, 22, 30].includes(g)) G.x -= 8;
+        else if (g >= 36 && g <= 44) { G.x += 16; z.gpose(17); } else if (g === 45) z.gpose(16);
+        else if (g >= 61 && g <= (namek ? 90 : 75)) { z.gpose(0); G.x -= 8; }
+        else if (namek && g >= 91 && g <= 105) { G.x += 20; z.gpose(16); }
+        else if (namek && g >= 121 && g <= 140) { z.gpose(0); G.x -= 8; }
+        else if (namek && g >= 141 && g <= 230) { G.x += 30; z.gpose(17); }
+        else if (!namek && g === 107) { z.se('ZG 打撃4'); z.gpose(17); } else if (!namek && g >= 108 && g <= 130) G.x += 32;
+        if (g <= 28 && g % 4 === 0) z.se('Z1 打撃');
+      } else if (f <= 861 + shift) { // the 魔空包囲弾
+        const s = 591 + shift, g = f - s;
+        if (g === 0) { z.fxReset(); z.bars = false; z.cutFlag = false; G.x = -100; }
+        G.x += 16;
+        if (G.x >= CENTER_ENEX) { G.x = CENTER_ENEX; z.gpose(0); }
+        const max = 28;
+        if (f === s + 170) z.se('Z1 怪しい気');
+        balls.forEach((b, i) => {
+          const [dx, dy] = MAKUU_DIR[i];
+          if (f > s + 169 && f < s + 259 && f % 2 === 0) { // the sway
+            if (b.wx === 0) { if (rand(2) === 1) { b.wy = 2; b.wx = 1; } else { b.wy = -2; b.wx = -1; } }
+            else if (b.wy === 0) b.wy = b.wx === 1 ? 2 : -2;
+            else if (b.wy === 2) { if (b.wx === 1) b.wy = 4; else b.wy = 0; }
+            else if (b.wy === 4) { b.wy = 2; b.wx = -b.wx; }
+            else if (b.wy === -2) { if (b.wx === 1) b.wy = 0; else b.wy = -4; }
+            else if (b.wy === -4) { b.wy = -2; b.wx = -b.wx; }
+          }
+          const bx = b.x - dx * max + b.k * dx, top = b.y + dy * max - b.k * dy;
+          if (top < 356) {
+            const h = 356 - top >= 32 ? 32 : 356 - top, by_ = top + b.wy;
+            if (f < s + 259) z.blt(MAKUU, 0, 0, 32, h, bx, by_);
+            else { // closing in on the enemy over 16 frames
+              const n = f - (s + 259);
+              z.blt(MAKUU, 0, 0, 32, h, bx + idiv(CENTER_ENEX + 48 - bx, 16) * n, by_ + idiv(STANDARD_ENEY + 48 - by_, 16) * n);
+            }
+          }
+          if (b.k < max) b.k++;
+        });
+        if (MAKUU_AT[g]) { z.se('ZG 打撃2'); const [x, y] = MAKUU_AT[g]; balls.push({ x, y, k: 1, wx: 0, wy: 0 }); }
+      } else if (f <= 900 + shift) { if (f === 862 + shift) { z.eff = 0; z.eft = 0; z.efp = 104; z.se('Z1 爆発1'); z.gpose(17); } }
+      else if (!namek) { // 未來悟飯's 魔貫光殺砲
+        if (f <= 1030) {
+          const s = 901;
+          if (f === s) { z.otype = 0; z.se('Z1 気を溜める3'); A.x = TEC_CENTER_CHAX; A.y = -200; G.y = -200; z.gpose(16); }
+          const [sx, sy] = shake(4);
+          if (f >= s + 115) z.fill(0, 0, 640, 378);
+          z.blt(MAKANKO_FG[this.crew[26] ? 1 : 0], 0, 0, 648, 64, -4 + sx, 146 + sy);
+          if (f >= s + 117) z.fill(0, 0, 640, 378);
+          if (f === s + 129) { z.otype = 1; z.seStop(); z.bars = true; A.y = STANDARD_CHAY; z.cut = true; z.cutFlag = true; z.pose(9); }
+        } else if (f <= 1120) {
+          A.y = STANDARD_CHAY; rx = 334; ry = 128;
+          if (f === 1041) { z.pose(9); z.se('Z1 エネルギー波3'); z.efp = 272; }
+        } else if (f === 1121) { z.se('Z1 衝撃波'); z.fxReset(); z.cut = true; z.cutFlag = true; z.displayOut(); z.no = 0; }
+        else if (f <= 1147) { ry = 134; z.efp = 255; }
+        else if (f === 1148) return yield* z.finish();
+      } else { // two 青年 and the three waves
+        if (f <= 960) {
+          if (f === 931) { G.y = -200; A.x = CENTER_CHAX; A.y = STANDARD_CHAY; z.bars = true; z.cutFlag = true; }
+          z.pose(0);
+          z.blt(youth(), 0, 96 * 4, 96, 96, 188, STANDARD_CHAY - 64);
+          z.blt(youth(), 0, 96 * 5, 96, 96, 188, STANDARD_CHAY + 64);
+        } else if (f <= 1059) {
+          if (f === 961) z.se('Z1 エネルギー波2');
+          z.pose(1);
+          z.blt(youth(), 0, 96 * 6, 96, 96, 188, STANDARD_CHAY - 64);
+          z.blt(youth(), 0, 96 * 7, 96, 96, 188, STANDARD_CHAY + 64);
+          z.efp = 331;
+        } else if (f === 1060) { z.fxReset(); z.displayOut(); z.color = 0; }
+        else if (f <= 1087) z.efp = 48;
+        else if (f === 1088) return yield* z.finish();
+      }
+      yield* z.out(rx, ry);
+    }
+  },
+});
+films({ 860: ['cmdShiteiKai', 44], 861: ['cmdShiteiKai', 44] }, { cmdShiteiKai: () => [...COMMON, MAKUU, ...MAKANKO_FG] });

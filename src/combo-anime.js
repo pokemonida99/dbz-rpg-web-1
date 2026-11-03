@@ -4,8 +4,8 @@
 // (output_cutin draws nothing while $btl_progress == 0), so neither does this.
 // A ComboDuel is a Duel whose left side can be any of the participants: `crew` = { actorId: { normal, special } }.
 // Frame numbers in the comments are the original's @battle_anime_frame.
-import { audio } from './core.js?v=20261103-0825';
-import { Duel, draw, spark, BALL, RAY, BACKS, MAKANKO_BALL, POWER_BALL, BOOM, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED, SW, moveFilm, ANIME_IMAGES } from './anime.js?v=20261103-0825';
+import { audio } from './core.js?v=20261103-1518';
+import { Duel, draw, spark, BALL, RAY, BACKS, MAKANKO_BALL, POWER_BALL, BOOM, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED, SW, moveFilm, ANIME_IMAGES } from './anime.js?v=20261103-1518';
 
 // combo skill id → [film, damage pattern]
 const FILMS = {
@@ -26,6 +26,8 @@ const FILMS = {
   730: ['kameRyu', 23], // 亀仙流かめはめは (830)
   786: ['doubleKame', 43], 787: ['doubleKame', 43], 788: ['doubleKame', 43], 789: ['doubleKame', 43], 790: ['doubleKame', 43], // ダブルかめはめ波 (2886-2890)
 };
+// the other combo films (docs/anim-f-plan.md): { combo: [film, damage pattern or the name of a method that plays it] }
+export function addComboFilms(more) { Object.assign(FILMS, more); }
 // the Z3 pictures of the ダブルかめはめ波 ($btl_top_file_name Z3_: every one of them opens in Z3 or later)
 const pic = (n) => `Graphics/Pictures/${n}`;
 const AURA_Z3 = pic('Z3_戦闘_必殺技_気を溜める.png'); // back 201: two frames of 136×142
@@ -64,6 +66,7 @@ export class ComboDuel extends Duel {
     else if (dmg === 43) yield* this.bigBoom();
     else if (dmg === 22) yield* this.blownAway(); // shock-wave hit
     else if (dmg === 27) yield* this.blownUpLeft();
+    else if (typeof dmg === 'string') yield* this[dmg]();
     else yield* this.explode(17, 50); // 23
     audio.seStop();
     this.ending = true;

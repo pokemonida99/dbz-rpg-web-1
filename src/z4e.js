@@ -7,17 +7,17 @@
 //   map 93: No. 15 (10,24) 2831 → battle 2832; No. 14 (31,22) 2841 → battle 2842; both beaten → 2846 No. 13 wakes;
 //     No. 13 (65,17) 2851 → battle 2852 → 2861 the merge (CE63) → battle 2871 → 2881 → 2901-2931 → variable 41 = 2991
 //     → the next chapter (セルゲーム).
-import { audio, img, loadImages } from './core.js?v=20261103-0825';
-import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261103-0825';
-import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261103-0825';
-import { addMoves, ANIME_IMAGES } from './anime.js?v=20261103-0825';
-import { makeMember, applyLevel } from './party.js?v=20261103-0825';
-import { superSaiyan } from './supersaiyan.js?v=20261103-0825';
-import { applyEra } from './era.js?v=20261103-0825';
-import { newHand } from './battle.js?v=20261103-0825';
-import { duelFilm, screenPic } from './z3c.js?v=20261103-0825';
-import { ryuhaPairTraining } from './z3train.js?v=20261103-0825';
-import { registerZ3, nextZ3, Z3, begin, fight, toField, party, member, heal, card, moveTo, setParty } from './z3.js?v=20261103-0825';
+import { audio, img, loadImages } from './core.js?v=20261103-1518';
+import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261103-1518';
+import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261103-1518';
+import { addMoves, ANIME_IMAGES } from './anime.js?v=20261103-1518';
+import { makeMember, applyLevel } from './party.js?v=20261103-1518';
+import { superSaiyan } from './supersaiyan.js?v=20261103-1518';
+import { applyEra } from './era.js?v=20261103-1518';
+import { newHand } from './battle.js?v=20261103-1518';
+import { duelFilm, screenPic } from './z3c.js?v=20261103-1518';
+import { ryuhaPairTraining } from './z3train.js?v=20261103-1518';
+import { registerZ3, nextZ3, Z3, begin, fight, toField, party, member, heal, card, moveTo, setParty } from './z3.js?v=20261103-1518';
 
 const MAPS = ['44', '93'];
 const C = (game) => Z3(game).z4e;

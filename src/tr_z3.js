@@ -7,11 +7,11 @@
 //              9534 Cooler → on a win at once 9535 his last form (switch 128)
 //   trz3Card30 map 77's special card square (variable 44 = 30)    trz3Warp  map 77: 9545 / 9546 (No. 20 ↔ Nos. 16-18)
 //   trz3Ball   map 76's seven balls (page 1431 of the story: src/z3d.js), while not held and switch 446 is off
-import { audio, toast } from './core.js?v=20261103-0433';
-import { registerZ3, begin, party, z3Spot, z3BackdropAt } from './z3.js?v=20261103-0433';
-import { registerArea, registerTrSpot, registerBackdrop, enterArea, leaveArea, trBattle, goTo } from './timeroom.js?v=20261103-0433';
-import { cardSquare } from './cardgames.js?v=20261103-0433';
-import { spotTally } from './fieldmenu.js?v=20261103-0433';
+import { audio, toast } from './core.js?v=20261103-0801';
+import { registerZ3, begin, party, z3Spot, z3BackdropAt } from './z3.js?v=20261103-0801';
+import { registerArea, registerTrSpot, registerBackdrop, enterArea, leaveArea, trBattle, goTo } from './timeroom.js?v=20261103-0801';
+import { cardSquare } from './cardgames.js?v=20261103-0801';
+import { spotTally } from './fieldmenu.js?v=20261103-0801';
 
 const T = (game) => game.world.trZ3;
 const MAPS = ['73', '74', '75', '76', '77', '83'];

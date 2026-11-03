@@ -7,12 +7,12 @@
 //   3 Chi-Chi      111_Scene_Db_Chi_Chi_Training  play a hand card with as many attack stars as hers or more
 // All three: Z3 ミニゲーム music, the trainee is picked first (or none), the rewards are src/training.js trainingRewards
 // (EXP × the EXP rate, as the speed training). Frame counts are the original's (60 a second).
-import { img, audio, rand } from './core.js?v=20261103-0433';
-import { newCard } from './battle.js?v=20261103-0433';
-import { makeMember, applyLevel } from './party.js?v=20261103-0433';
-import { el, sprite, overlay, button } from './fieldmenu.js?v=20261103-0433';
-import { addTraining, trainingRewards, drawCard, zpRate } from './training.js?v=20261103-0433';
-import { registerZ3 } from './z3.js?v=20261103-0433';
+import { img, audio, rand } from './core.js?v=20261103-0801';
+import { newCard } from './battle.js?v=20261103-0801';
+import { makeMember, applyLevel } from './party.js?v=20261103-0801';
+import { el, sprite, overlay, button } from './fieldmenu.js?v=20261103-0801';
+import { addTraining, trainingRewards, drawCard, zpRate } from './training.js?v=20261103-0801';
+import { registerZ3 } from './z3.js?v=20261103-0801';
 
 const FACES = 'Graphics/Pictures/Z1_顔味方.PNG', FACE_CARDS = 'Graphics/Pictures/顔カード.PNG';
 const PIC = (n) => `Graphics/Pictures/Z3_修行_${n}.PNG`;

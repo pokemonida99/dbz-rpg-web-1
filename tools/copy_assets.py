@@ -67,6 +67,10 @@ dt = open(os.path.join(root, 'src', 'anime_future.js'), encoding='utf-8').read()
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", dt)}
 files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", dt.split('export const DT_SOUNDS')[1].split(']')[0])}
 files |= {f'Audio/BGS/{n}.ogg' for n in re.findall(r"'([^']+)'", dt.split('export const DT_BGS')[1].split(']')[0])}
+# the F group combo films cma (src/combo_os.js, docs/anim-f-plan.md): its pic('…') and CMA_SOUNDS
+cma = open(os.path.join(root, 'src', 'combo_os.js'), encoding='utf-8').read()
+files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", cma)}
+files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", cma.split('export const CMA_SOUNDS')[1].split(']')[0])}
 # 人造人's Z3 move films (src/anime_androids.js): its pic('…') and ANDA_SOUNDS
 anda = open(os.path.join(root, 'src', 'anime_androids.js'), encoding='utf-8').read()
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", anda)}

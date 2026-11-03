@@ -80,6 +80,7 @@ import './anime_foes_movie.js?v=20261103-1518'; // the movie / ZG enemies' move 
 import './anime_foes_common.js?v=20261103-1518'; // the enemies' shared move films (docs/anim-e-plan.md, aen3's common file)
 import './anime_foes_z34.js?v=20261103-1518'; // the Z3 / Z4 enemies' move films (docs/anim-e-plan.md aen2; ?dev=aen2…)
 import './anime_foes_zg.js?v=20261103-1518'; // the 「強」 rematches' and the later ZG enemies' move films (docs/anim-e-plan.md aen4; ?dev=aen4…)
+import './combo_os.js?v=20261103-1518'; // the OS / FOS / ダブルエクスプロージョン / サイヤンアタック combo films (docs/anim-f-plan.md cma; ?dev=cma…)
 
 // testing in a hidden browser pane (no animation frames there): ?timer drives every frame with timers instead
 if (new URLSearchParams(location.search).has('timer')) window.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16);
@@ -463,7 +464,7 @@ async function boot() {
   if (dev && dev.startsWith('ch6')) { title.hidden = true; devChapter6(game, dev); requestAnimationFrame(frame); return; }
   if (dev && ['z2ginyu', 'z2frieza', 'z2last', 'z2turles'].includes(dev)) { title.hidden = true; devZ2b(game, dev); requestAnimationFrame(frame); return; } // Z2 second half
   if (dev && dev.startsWith('willow')) { title.hidden = true; devWillow(game, dev); requestAnimationFrame(frame); return; } // ?dev=willow / willow51 / willowboss
-  if (dev && /^(z3|z4|tr|zg|csq|cda|cdb|cst|tac|pas|etf|ovw|flg|cmb|grw|sys|viz|skc|cos|anga|anpv|anzb|ancb|ancc|andt|anda|aen1|aen2|aen3|aen4)/.test(dev)) { title.hidden = true; if (devZ3(game, dev)) { requestAnimationFrame(frame); return; } title.hidden = false; } // Z3 (src/z3*.js)
+  if (dev && /^(z3|z4|tr|zg|csq|cda|cdb|cst|tac|pas|etf|ovw|flg|cmb|cma|grw|sys|viz|skc|cos|anga|anpv|anzb|ancb|ancc|andt|anda|aen1|aen2|aen3|aen4)/.test(dev)) { title.hidden = true; if (devZ3(game, dev)) { requestAnimationFrame(frame); return; } title.hidden = false; } // Z3 (src/z3*.js)
   if (dev && dev.startsWith('z2')) { title.hidden = true; devZ2a(game, dev); requestAnimationFrame(frame); return; } // ?dev=z2 / z2b / z2c / z2d
   if (!options.skipOp) await playOpening(); // the title animation, like the original plays before its title screen
   showTitle();

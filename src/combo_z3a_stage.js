@@ -31,7 +31,9 @@ export function cmcFilms(films) {
   for (const [id, [film, dmg, small = true]] of Object.entries(films)) { MINE[id] = { small }; reg[id] = [film, dmg]; }
   addComboFilms(reg);
 }
-export const CMC_PICTURES = [...Object.values(BOOM).map((b) => b[0])];
+// @tec_output_back_no 4 (output_back, all.rb 68095): the ZG super kamehameha's panels down both sides, 176×320 ×3
+const SIDES = [pic('ZG_戦闘_必殺技_背景_超カメハメ波_左.PNG'), pic('ZG_戦闘_必殺技_背景_超カメハメ波_右.PNG')];
+export const CMC_PICTURES = [...Object.values(BOOM).map((b) => b[0]), ...SIDES];
 export function cmcPictures(list) { CMC_PICTURES.push(...list); ANIME_IMAGES.push(...list); }
 
 // ---------- the stage ----------
@@ -42,6 +44,15 @@ export class CmcStage extends ZfStage {
     this.actor = d.lead; // the cut-in is the one who started it ($partyc[@chanum])
     this.small = cfg.small;
     this.v = { ax: 0, ay: 0, gx: 0, gy: 0 };
+  }
+  // the bars of the frame (output_back): ZfStage's 0-3, and 4 the side panels, the next of three every frame
+  tick() {
+    if (!(this.bars && this.no === 4)) return super.tick();
+    this.b = []; this.e = [];
+    if (!this.cutFlag) this.cut = false;
+    const k = this.corner;
+    this.barList = [(c) => { blt(c, SIDES[0], k * 176, 0, 176, 320, 0, 18); blt(c, SIDES[1], k * 176, 0, 176, 320, 640 - 176, 18); }];
+    this.corner = k === 2 ? 0 : k + 1;
   }
   // back_anime_pattern's counter going on without a picture of its own (115-120, 48 …)
   bk() { this.ba.frame++; }
@@ -158,13 +169,15 @@ Object.assign(ComboDuel.prototype, {
 // ---------- ?dev=cmc…: these combos in a fight (like ?dev=cmbx…, src/combo_dev.js) ----------
 // Every combo switch on, variable 40 = 2, Lv 60, every move used 999 times and known, a fight with 甜菜人 ×3 (high HP).
 // __cmc(id) deals the cards for the first open row of combo `id` whose members are in the party and runs the turn.
-const PARTIES = {
-  cmc1: [[3, 6, 24, 8, 9, 7, 10]], // 悟空・克林・龜仙人・天津飯・餃子・雅木茶・琪琪
-  cmc2: [[3, 5, 12, 17, 4, 23], [1, 2, 3, 4]], // 超悟空・超悟飯・超貝吉塔・超特蘭克斯・比克・16 號
-  cmc3: [[5, 17, 25, 4, 15, 6, 10]], // 悟飯・特蘭克斯・未來悟飯・比克・青年・克林・琪琪
-  cmc4: [[21, 22, 23, 6, 5, 8, 9]], // 18・17・16 號・克林・悟飯・天津飯・餃子
-  cmc5: [[7, 12, 8, 24, 9, 17, 4]], // 雅木茶・貝吉塔・天津飯・龜仙人・餃子・特蘭克斯・比克
-  cmc6: [[16, 27, 28, 29, 30, 32]], // 巴達克一夥
+const PARTIES = { // (every one of the 43 combos has a row in one of them; the numbers after: Super Saiyan forms)
+  cmc1: [[3, 6, 24, 8, 9, 7]], // 746 749 729 745 712 799
+  cmc2: [[3, 5, 12, 17, 4, 6], [1, 2, 3, 4]], // 738 740 764 720 726 761 762
+  cmc3: [[5, 17, 25, 4, 15, 10]], // 726 747 760 769 771 772 773 783
+  cmc4: [[21, 22, 23, 6, 5, 8]], // 716 718 719 723 793 794 795
+  cmc5: [[21, 22, 23, 9, 25, 4]], // 796 797 798 792 727 780
+  cmc6: [[16, 27, 28, 29, 30, 24], [7]], // 785
+  cmc7: [[7, 10, 24, 12, 8, 17]], // 741 744 763 784 781
+  cmc8: [[3, 5, 25, 10, 9, 17], [1, 2, 6]], // 791 770 782 754
 };
 registerZ3('cmc', {
   dev(game, step) {

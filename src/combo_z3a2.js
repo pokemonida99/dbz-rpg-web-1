@@ -6,7 +6,7 @@
 import { audio, rand } from './core.js?v=20261103-1518';
 import { STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED } from './anime.js?v=20261103-1518';
 import { ComboDuel } from './combo-anime.js?v=20261103-1518';
-import { pic, blt, cmcFilms, cmcPictures, STD_CHAX, SPARK, CmcStage } from './combo_z3a_stage.js?v=20261103-1518';
+import { pic, blt, cmcFilms, cmcPictures, STD_CHAX, SPARK } from './combo_z3a_stage.js?v=20261103-1518';
 
 const STD_ENEX = 602;
 const P = {
@@ -23,7 +23,6 @@ const P = {
   boom1: pic('戦闘アニメ_爆発1.PNG'), boom3: pic('戦闘アニメ_爆発3.PNG'), // effects 101 (96×96 ×2) / 102 (112×120 ×2)
   bang: pic('戦闘アニメ_ビックリマーク.PNG'), // 16×16
   sword: [pic('Z3_戦闘_必殺技_剣攻撃.PNG'), pic('Z3_戦闘_必殺技_剣攻撃(上下反転).PNG'), pic('Z3_戦闘_必殺技_剣攻撃(縦).PNG')], // effects 267 / 268 / 269
-  sides: [pic('ZG_戦闘_必殺技_背景_超カメハメ波_左.PNG'), pic('ZG_戦闘_必殺技_背景_超カメハメ波_右.PNG')], // @tec_output_back_no 4
   // 3大超サイヤ人 (2838)
   gather: pic('Z3_戦闘_必殺技_超元気玉_溜め.png'), // effect 253: 246×110 rows
   genki: pic('Z3_戦闘_必殺技_超元気玉(元気).png'), // 8×10, the bits of energy flying to him
@@ -43,24 +42,13 @@ const P = {
     '3,0': pic('Z3_必殺技_親子カメハメ波_悟空バトル、悟飯通常.png'), '3,2': pic('Z3_必殺技_親子カメハメ波_悟空バトル、悟飯赤.png') },
 };
 cmcPictures([P.ball, P.ball2, P.ball4, P.small, P.mid, P.midBlue, P.down, P.half, P.huge, P.kien, P.blinkS, P.blink, P.boom1, P.boom3, P.bang,
-  ...P.sword, ...P.sides, P.gather, P.genki, P.genkiBall, P.aura9, ...P.goku, ...P.ssGoku, ...P.absorb, ...Object.values(P.oyako)]);
+  ...P.sword, P.gather, P.genki, P.genkiBall, P.aura9, ...P.goku, ...P.ssGoku, ...P.absorb, ...Object.values(P.oyako)]);
 
 const v = (n) => { const s = window.__game && window.__game.state; return (s && s.var && s.var[n]) || 0; };
 const sw = (n) => { const s = window.__game && window.__game.state; return !!(s && s.sw && s.sw[n]); };
 const fill = (color, x, y, w, h) => (c) => { c.fillStyle = color; c.fillRect(x, y, w, h); };
 const WAKE = 'rgb(188,188,188)'; // the 残像 line of 2863
 
-// @tec_output_back_no 4 (output_back, all.rb 68095): the ZG super-kamehameha panels down both sides, the next of three
-// every frame (ZfStage's own bars know 0-3)
-const tick0 = CmcStage.prototype.tick;
-CmcStage.prototype.tick = function () {
-  if (!(this.bars && this.no === 4)) return tick0.call(this);
-  this.b = []; this.e = [];
-  if (!this.cutFlag) this.cut = false;
-  const k = this.corner;
-  this.barList = [(c) => { blt(c, P.sides[0], k * 176, 0, 176, 320, 0, 18); blt(c, P.sides[1], k * 176, 0, 176, 320, 640 - 176, 18); }];
-  this.corner = k === 2 ? 0 : k + 1;
-};
 
 // ---------- the effects (effect_pattern): each draws with st.ef as it is, then the counters go on ----------
 const FX = {

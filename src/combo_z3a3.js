@@ -40,27 +40,11 @@ const P = {
   dodonpa: pic('Z3_必殺技_どどん波(チャオズ1).png'), // 192×168
   spark: pic('Z3_戦闘_必殺技_超元気玉(元気).png'), // 8×10
   lines: [pic('Z3_必殺技_超カメハメ波(バック上).png'), pic('Z3_必殺技_超カメハメ波(バック下).png')], // back 106
-  sides: [pic('ZG_戦闘_必殺技_背景_超カメハメ波_左.PNG'), pic('ZG_戦闘_必殺技_背景_超カメハメ波_右.PNG')], // @tec_output_back_no 4: 176×320 ×3
 };
 cmcPictures([C.ball4, C.ball4Blue, ...Object.values(C.hugeCut), C.huge, C.mid, C.bigBlue, C.halfBlue, C.sokiBlue, C.kameBlue, C.liquidGreen,
   ...Object.values(C.blink), C.blinkSmall, C.blinkBig, P.surprise, ...P.strike18, P.strike17, P.kikou, ...P.wave18, P.hells, P.thunder,
-  P.beamBlue, P.dodonpa, P.spark, ...P.lines, ...P.sides]);
+  P.beamBlue, P.dodonpa, P.spark, ...P.lines]);
 
-// output_back no 4 (all.rb 68095): the ZG super kamehameha's side panels, the next of three every frame. The shared stage
-// knows no 0-3, so a stage that needs it gets this on top of its tick.
-function sidePanels(st) {
-  if (st.cmcCSides) return;
-  st.cmcCSides = true;
-  const tick = st.tick.bind(st);
-  let k = 0;
-  st.tick = () => {
-    tick();
-    if (!st.bars || st.no !== 4) return;
-    const t = k;
-    k = k === 2 ? 0 : k + 1;
-    st.barList = [(c) => { blt(c, P.sides[0], t * 176, 0, 176, 320, 0, 18); blt(c, P.sides[1], t * 176, 0, 176, 320, 640 - 176, 18); }];
-  };
-}
 // pic_shake_cal 4 (all.rb 20540): one of nine directions
 const shake = () => [(rand(3) - 1) * 4, (rand(3) - 1) * 4];
 
@@ -655,7 +639,6 @@ Object.assign(ComboDuel.prototype, {
   },
   * cmcCWave18(x, y) { // 2893 / 2896 851-: 18 號's energy wave
     const st = this.st, A = this.A, parts = [0, 0, 0, 0, 0, 0, 0, 0];
-    sidePanels(st);
     let eff = 0, rx = 302, ry = 62;
     for (let k = 0; k <= 428; k++) {
       rx = 302; ry = 62;
@@ -710,7 +693,6 @@ Object.assign(ComboDuel.prototype, {
   },
   * cmcCThunder17(x, y) { // 2895 / 2898 851-: 17 號's 電撃地獄玉
     const st = this.st, A = this.A, parts = [0, 0, 0, 0, 0, 0, 0, 0];
-    sidePanels(st);
     let eff = 0, rx = 348, ry = 60;
     for (let k = 0; k <= 368; k++) {
       rx = 348; ry = 60;

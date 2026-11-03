@@ -75,6 +75,7 @@ import './anime_bardock_crew.js?v=20261103-0825'; // バーダック一味's mov
 import './anime_future.js?v=20261103-0825'; // 特蘭克斯・未來悟飯・龜仙人's Z3 move films (docs/anim-cd-plan.md andt; ?dev=andt…)
 import './anime_androids.js?v=20261103-0825'; // 人造人 18・17・16號's Z3 move films (docs/anim-cd-plan.md anda; ?dev=anda)
 import './anime_foes_z2.js?v=20261103-0825'; // the Z2 enemies' move films (docs/anim-e-plan.md aen1; ?dev=aen1)
+import './anime_foes_movie.js?v=20261103-0825'; // the movie / ZG enemies' move films (docs/anim-e-plan.md aen3; ?dev=aen3…)
 
 // testing in a hidden browser pane (no animation frames there): ?timer drives every frame with timers instead
 if (new URLSearchParams(location.search).has('timer')) window.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16);

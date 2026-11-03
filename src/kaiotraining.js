@@ -5,10 +5,10 @@
 // far are kept (variable 431) for the next try. Catching him: 1000 EXP for Goku and +10 uses of all his moves.
 // The film runs at the original's 60 frames a second with its frame counts, positions (shifted 110 px left so the
 // 640-wide scene fits a 440-wide strip) and sprites.
-import { img, audio, rand } from './core.js?v=20261103-1518';
-import { newCard } from './battle.js?v=20261103-1518';
-import { levelUp, EXP_RATE } from './party.js?v=20261103-1518';
-import { el, overlay, button } from './fieldmenu.js?v=20261103-1518';
+import { img, audio, rand } from './core.js?v=20261104-0520';
+import { newCard } from './battle.js?v=20261104-0520';
+import { levelUp, EXP_RATE } from './party.js?v=20261104-0520';
+import { el, overlay, button } from './fieldmenu.js?v=20261104-0520';
 
 const P = (n) => `Graphics/Pictures/${n}.PNG`;
 const CARDS = P('カード関係'), BACK = P('Z1_背景_スクロール_界王星');

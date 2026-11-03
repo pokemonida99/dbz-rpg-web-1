@@ -12,13 +12,13 @@
 //        (all.rb 6794, growth.cardHooks).
 // ?dev=csq / csqz2 / csqz3 / csqz4 / csqzg: a save of that part of the story next to a card square (map 1), with CAP
 // and these cards.
-import { audio, rand, toast } from './core.js?v=20261103-1518';
-import * as items from './items.js?v=20261103-1518';
-import * as growth from './growth.js?v=20261103-1518';
-import { pickMember } from './partymenu.js?v=20261103-1518';
-import { newCard } from './battle.js?v=20261103-1518';
-import { registerZ3 } from './z3.js?v=20261103-1518';
-import { shopGoods } from './cardgames.js?v=20261103-1518';
+import { audio, rand, toast } from './core.js?v=20261104-0520';
+import * as items from './items.js?v=20261104-0520';
+import * as growth from './growth.js?v=20261104-0520';
+import { pickMember } from './partymenu.js?v=20261104-0520';
+import { newCard } from './battle.js?v=20261104-0520';
+import { registerZ3 } from './z3.js?v=20261104-0520';
+import { shopGoods } from './cardgames.js?v=20261104-0520';
 
 const { fieldCards } = items;
 const SE_ERR = 'Z3 エラー';

@@ -23,5 +23,6 @@ for f in (root / 'src').glob('*.js'):
 html = root / 'index.html'
 s = html.read_text()
 s = re.sub(r'src/(main\.js|style\.css)(\?v=[\w-]+)?"', rf'src/\1?v={v}"', s)
+s = re.sub(r'(assets/ui/[\w.-]+\.png)(\?v=[\w-]+)?', rf'\1?v={v}', s)  # (the boot screen's balls and logo)
 html.write_text(s)
 print(v)

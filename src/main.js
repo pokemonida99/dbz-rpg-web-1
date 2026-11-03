@@ -66,6 +66,7 @@ import './zg_recap.js?v=20261103-1518'; // ZG 的概況 (前情提要: src/field
 import './combo_dev.js?v=20261103-1518'; // ?dev=cmb…: S-combo / ひらめき tests (src/combo.js)
 import './combo_z2.js?v=20261103-1518'; // the S-combo films of Z2 and later, part cmb (docs/anim-f-cmb.md; ?dev=cmbxb…)
 import './combo_z3a.js?v=20261103-1518'; // the S-combo films of anime 28xx (docs/anim-f-plan.md cmc; ?dev=cmc…)
+import './combo_z3b.js?v=20261103-1518'; // S-combo films of the Z3 switch, anime 29xx (docs/anim-f-plan.md cmd)
 import './sys.js?v=20261103-1518'; // 第二批 sys: 神龍的願望, the shop's added cards, Z3 / Z4 的概況 (docs/sys.md)
 import './viz.js?v=20261103-1518'; // the battle's skill names, the cover scene, the Great Ape's face (docs/batch2-plan.md viz)
 import './cos.js?v=20261103-1518'; // ?dev=cos…: 換裝 and the DB3 staff roll (docs/costume.md)
@@ -465,7 +466,7 @@ async function boot() {
   if (dev && dev.startsWith('ch6')) { title.hidden = true; devChapter6(game, dev); requestAnimationFrame(frame); return; }
   if (dev && ['z2ginyu', 'z2frieza', 'z2last', 'z2turles'].includes(dev)) { title.hidden = true; devZ2b(game, dev); requestAnimationFrame(frame); return; } // Z2 second half
   if (dev && dev.startsWith('willow')) { title.hidden = true; devWillow(game, dev); requestAnimationFrame(frame); return; } // ?dev=willow / willow51 / willowboss
-  if (dev && /^(z3|z4|tr|zg|csq|cda|cdb|cst|tac|pas|etf|ovw|flg|cmb|cma|cmc|grw|sys|viz|skc|cos|anga|anpv|anzb|ancb|ancc|andt|anda|aen1|aen2|aen3|aen4)/.test(dev)) { title.hidden = true; if (devZ3(game, dev)) { requestAnimationFrame(frame); return; } title.hidden = false; } // Z3 (src/z3*.js)
+  if (dev && /^(z3|z4|tr|zg|csq|cda|cdb|cst|tac|pas|etf|ovw|flg|cmb|cma|cmc|cmd|grw|sys|viz|skc|cos|anga|anpv|anzb|ancb|ancc|andt|anda|aen1|aen2|aen3|aen4)/.test(dev)) { title.hidden = true; if (devZ3(game, dev)) { requestAnimationFrame(frame); return; } title.hidden = false; } // Z3 (src/z3*.js)
   if (dev && dev.startsWith('z2')) { title.hidden = true; devZ2a(game, dev); requestAnimationFrame(frame); return; } // ?dev=z2 / z2b / z2c / z2d
   if (!options.skipOp) await playOpening(); // the title animation, like the original plays before its title screen
   showTitle();

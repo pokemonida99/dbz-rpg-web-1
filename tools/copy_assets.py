@@ -18,7 +18,7 @@ files |= {'Graphics/Characters/chara_fly1.png', 'Graphics/Characters/enemy1.png'
           'Graphics/Pictures/Z1_顔味方.PNG', 'Graphics/Pictures/Z1_顔敵.PNG', 'Graphics/Pictures/数字英語.PNG', 'Graphics/Pictures/アイコン.PNG'}
 for a in world['actors'].values():
     files |= {a['sprite'], a['beam'], a['special']}
-files |= {f[0] for f in world['faces'].values()}  # dialogue faces
+files |= {f[0] for f in world['faces'].values() if not f[0].startswith('ui/')}  # dialogue faces (ui/…: made here, already in assets/)
 for e in world['enemies'].values():
     files |= {e['sprite'], e['portrait']}
 bgm = {m['bgm'] for m in world['maps'].values() if m['bgm']} | set(world.get('extraBgm', [])) | {world['titleBgm'], 'Z1 戦闘1', 'Z1 戦闘ボス1(中ボス)'}
@@ -100,6 +100,12 @@ for js in ('combo_z3a_stage.js', 'combo_z3a.js', 'combo_z3a2.js', 'combo_z3a3.js
     t = open(os.path.join(root, 'src', js), encoding='utf-8').read()
     files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", t)}
     files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", re.split(r'export const CMC\d?_SOUNDS', t)[1].split(']')[0])}
+# the S-combo films of the Z3 switch, anime 29xx (src/combo_z3b.js, docs/anim-f-plan.md cmd): its pic('…') and the
+# sounds its films play (se('…'))
+for js in sorted(f for f in os.listdir(os.path.join(root, 'src')) if f.startswith('combo_z3b')):
+    t = open(os.path.join(root, 'src', js), encoding='utf-8').read()
+    files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", t)}
+    files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"se\('([^']+)'\)", t)}
 # the opening (src/opening.js): its pictures and sounds, and the faces / sounds named in world.opening
 opening = open(os.path.join(root, 'src', 'opening.js'), encoding='utf-8').read()
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\(`?'?([^'`$]+\.(?:PNG|png))", opening)}

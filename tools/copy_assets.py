@@ -79,6 +79,10 @@ for js, key in (('anime_foes_common.js', 'FE_SOUNDS'), ('anime_foes_movie.js', '
 # イレイサーショック / リベンジャーカノン play the original's frame-by-frame pictures (names built at run time)
 for d in ('raichi_ire', 'hatchiyack_cannon'):
     files |= {f'Graphics/Pictures/{d}/{f}' for f in os.listdir(os.path.join(src, 'Graphics', 'Pictures', d)) if f.lower().endswith('.png')}
+# the Z3 / Z4 enemies' move films (src/anime_foes_z34.js, docs/anim-e-plan.md aen2): its pic('…') and E2_SOUNDS
+e2 = open(os.path.join(root, 'src', 'anime_foes_z34.js'), encoding='utf-8').read()
+files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", e2)}
+files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", e2.split('export const E2_SOUNDS')[1])}
 # the opening (src/opening.js): its pictures and sounds, and the faces / sounds named in world.opening
 opening = open(os.path.join(root, 'src', 'opening.js'), encoding='utf-8').read()
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\(`?'?([^'`$]+\.(?:PNG|png))", opening)}

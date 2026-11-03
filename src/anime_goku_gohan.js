@@ -135,7 +135,7 @@ function across(c, sheet, w, h, y, off) { const x = -(((off % w) + w) % w); draw
 function down(c, sheet, w, h, x, off) { const y = -(off % h); draw(c, sheet, 0, 0, w, h, x, y); draw(c, sheet, 0, 0, w, h, x, y + h); }
 function tecBack(c, d, st) {
   if (!st.era || d.t < st.tecFrom) return;
-  const t = d.t, h = st.foe ? -t : t; // (the strips across run the other way when the enemy attacks)
+  const t = d.t, h = st.foe || st.rev ? -t : t; // (the strips across run the other way when the enemy attacks; st.rev from aen2)
   if (st.tecNo === 4) { const k = t % 3; draw(c, KAME_SIDES[0], k * 176, 0, 176, 320, 0, 18); draw(c, KAME_SIDES[1], k * 176, 0, 176, 320, SW - 176, 18); return; }
   if (st.era === 1 && st.tecNo !== 2 && st.tecNo !== 3) { // Z2: 640×64 strips, 12 px a frame (the corners are Z3_ in Z2 too)
     if (st.tecNo === 1) { down(c, TEC2.left, 64, 640, 0, t * 12); down(c, TEC2.right, 64, 640, SW - 64, t * 12); return; }

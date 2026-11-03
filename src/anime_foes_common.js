@@ -104,9 +104,10 @@ export class FeStage {
     this.U = []; this.O = [];
     this.install();
     // src/anime_goku_gohan.js render → cutIn, after the frame's film code as output_cutin is: @chr_cutin goes off with
-    // @chr_cutin_flag, no member's cut-in while variable 40 is 0; cutIn's mirror is the enemy's row
+    // @chr_cutin_flag, no member's cut-in while variable 40 is 0; cutIn's mirror is the enemy's row; the member's
+    // row is on the story's sheet (set_battle_cutin_name: $top_file_name, variable 40)
     const z = this;
-    d.agSt = { era: this.era,
+    d.agSt = { get era() { return z.mirror ? Math.min(2, v(40)) : z.era; },
       get cutFrom() { if (!z.cutFlag) z.cut = false; return z.cut && !(z.mirror && v(40) === 0) ? 0 : Infinity; },
       get mirror() { return !z.mirror; } };
     const step = d.step.bind(d);

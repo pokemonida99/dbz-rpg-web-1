@@ -87,6 +87,12 @@ files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", e2.split('export
 aen4 = open(os.path.join(root, 'src', 'anime_foes_zg.js'), encoding='utf-8').read()
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", aen4)}
 files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", aen4.split('export const AEN4_SOUNDS')[1])}
+# the S-combo films of the Z3 switch, anime 29xx (src/combo_z3b.js, docs/anim-f-plan.md cmd): its pic('…') and the
+# sounds its films play (se('…'))
+for js in sorted(f for f in os.listdir(os.path.join(root, 'src')) if f.startswith('combo_z3b')):
+    t = open(os.path.join(root, 'src', js), encoding='utf-8').read()
+    files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", t)}
+    files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"se\('([^']+)'\)", t)}
 # the opening (src/opening.js): its pictures and sounds, and the faces / sounds named in world.opening
 opening = open(os.path.join(root, 'src', 'opening.js'), encoding='utf-8').read()
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\(`?'?([^'`$]+\.(?:PNG|png))", opening)}

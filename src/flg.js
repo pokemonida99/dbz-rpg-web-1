@@ -10,8 +10,8 @@
 //   flgcell   vs 沙魯(第１形態) — 太陽拳 (14), 吸取生命
 //   flgsw     vs 卡里克 with switches 121 / 122 / 124 / 125 / 137 / 148 on
 //   flgdummy  vs 訓練人偶 — its cards are ★1 / 一 (element_ranks 55)
-import { registerZ3, party, heal } from './z3.js?v=20261103-0801';
-import { applyLevel } from './party.js?v=20261103-0801';
+import { registerZ3, party, heal } from './z3.js?v=20261103-0825';
+import { applyLevel } from './party.js?v=20261103-0825';
 
 const FIGHTS = {
   flgchao: [[8, 9, 3], [3, 3, 3]],

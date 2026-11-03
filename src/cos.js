@@ -8,10 +8,10 @@
 //   cosz2      Z2 era (map 18 on foot): 悟飯・克林 (switch 439: the battle suits), 龜仙人, 超悟空 (variable 171 = 2)
 //   cosz1      Z1 era: 龜仙人 and his everyday clothes
 //   cosed      the DB3 staff roll (every group of enemies shown); a tap on the last card plays 遇見阿拉蕾
-import { registerZ3, party, heal, play } from './z3.js?v=20261103-0801';
-import { applyLevel } from './party.js?v=20261103-0801';
-import { db3ed } from './db3ed.js?v=20261103-0801';
-import { toast } from './core.js?v=20261103-0801';
+import { registerZ3, party, heal, play } from './z3.js?v=20261103-0825';
+import { applyLevel } from './party.js?v=20261103-0825';
+import { db3ed } from './db3ed.js?v=20261103-0825';
+import { toast } from './core.js?v=20261103-0825';
 
 const OPEN = [68, 69, 502, 107, 522, 109, 426, 567, 520, 119, 431, 458, 521, 545, 429, 532, 421, 533, 561, 563, 564, 566, 568];
 function base(game, era, ids, lv = 40) {

@@ -173,7 +173,7 @@ def add(world, h, z3):
         'backdrops': {'1342': 'bg/z3_battle_1.png', '1363': 'bg/z3_battle_4.png', '1372': 'bg/z3_battle_4.png', '1390': 'bg/z3_battle_9.png'},
         'end': 'Z3　完',
         # what the original opens after Z3 (variable 41 = 2001: Z4, CE180): shown on the title screen
-        'unlocks': ['Z4（待續）：人造人間・沙魯篇的後續', '時之間的新區域（「通知！」卡）'],
+        'unlocks': ['Z4：人造人間・沙魯篇的後續', '時之間的新區域（「通知！」卡）'],
         # z1field 1351 / 1384 cha_tec_puls: move counts
         'uses1351': {171: 300, 172: 150, 173: 150, 174: 100, 176: 50, 177: 30, 185: 10},
         'uses1384': {31: 30, 33: 25, 34: 20, 35: 15, 36: 10},

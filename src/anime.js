@@ -80,6 +80,7 @@ const MOVES = {
   308: 'nikkiBigWave', 309: 'swordAttack', // 吉加
   326: 'garlicBall', 328: 'garlicBigWave', 329: 'giantWave', 330: 'blackHole', // 卡里克 / 卡里克(巨大化)
   6: 'kaioken', 7: 'kaiokenKamehameha', 18: 'genkidama', // 悟空 after King Kai's training (CE12)
+  19: 'genkidama', // 超元気玉 (learned at the end of Z2): 元気玉's film until its own is ported
   101: 'shockwave', 102: 'energyWave', 103: 'kienzan', 104: 'kienzan', // 琪琪
   303: 'paralysis', 304: 'selfDestruct', // 栽培人
   312: 'nappaWave', 313: 'nappaBlast', 314: 'nappaMouth', // 那巴

@@ -273,7 +273,7 @@ def add(world, h, z3):
         'backdrop': 'bg/z3_battle_1.png',
         'end': 'Z4　完',
         # what the original opens after Z4 (page 2602: CE180, 2693 Roshi): shown on the title screen
-        'unlocks': ['ZG（待續）：外傳篇（波傑克、達列斯、史拉格……）', '時之間的新區域（「通知！」卡）', '時之間：和賽魯的戰鬥有了變化'],
+        'unlocks': ['ZG：外傳篇（從地圖上的「時之間」進入）', '時之間的新區域（「通知！」卡）', '時之間：和賽魯的戰鬥有了變化'],
         # 超サイヤ人2 悟飯 (switch 388 in the original: ZG_顔グラ(ゴハン超1_2) row 2, the ZG battle sheets)
         'ss2': {'face': [P('ZG_顔グラ(ゴハン超1_2).png'), 2], 'sprite': P('ZG_戦闘_ゴハン(超2).png'),
                 'special': P('ZG_戦闘_必殺技_ゴハン(超2).png')},

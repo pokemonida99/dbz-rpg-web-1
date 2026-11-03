@@ -148,6 +148,19 @@ if not os.path.exists(film):
     frames[0].save(film, save_all=True, append_images=frames[1:], duration=17, quality=82, method=4, loop=1)
 
 total = 0
+# a catch-all for the names the rules above miss (src/z4a.js PIC('…') scenes, story BGM like 'ZSSD 家2'): every quoted
+# picture name in src/*.js that the original has, and every string in world.json that names one of its BGM files
+pics = set(os.listdir(os.path.join(src, 'Graphics', 'Pictures')))
+bgms = {n[:-4] for n in os.listdir(os.path.join(src, 'Audio', 'BGM')) if n.endswith('.ogg')}
+for js in sorted(os.listdir(os.path.join(root, 'src'))):
+    if js.endswith('.js'):
+        t = open(os.path.join(root, 'src', js), encoding='utf-8').read()
+        files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"'([^'/]+\.(?:PNG|png))'", t) if n in pics}
+def strings(o):
+    if isinstance(o, str): yield o
+    elif isinstance(o, dict): yield from (x for v in o.values() for x in strings(v))
+    elif isinstance(o, list): yield from (x for v in o for x in strings(v))
+files |= {f'Audio/BGM/{n}.ogg' for n in set(strings(world)) if n in bgms}
 for f in sorted(files):
     s = os.path.join(src, f)
     if not os.path.exists(s):

@@ -365,6 +365,11 @@ for eid, e in world['enemies'].items():
     rec = edb and re.search(r'\*PARAM_HPRECOVER\[(\d+)%?\]', edb.get('note') or '', re.I)
     if rec and int(rec.group(1)) > 0:
         e['regen'] = int(rec.group(1))
+# every move a story page teaches ({"x": "skill", "learn": true}) needs its entry, or the move window has nothing to
+# draw (超元気玉 19: Goku learns it on Z2 page 486 and keeps it, like the original)
+for sid in sorted({int(m) for m in re.findall(r'"x": "skill", "id": \d+, "learn": true, "skill": (\d+)', json.dumps(world, ensure_ascii=False))}):
+    if str(sid) not in world['skills'] and sid not in world['skills']:
+        world['skills'][sid] = skill(sid)
 # the skills' element flags and the enemies' card flags (element_ranks), here at the end so they cover what every chapter
 # added, whichever way it built the entry (src/battle.js)
 for sid, k in world['skills'].items():
@@ -392,5 +397,19 @@ import build_bossrow  # noqa: E402  (boss markers: the original's direction row 
 build_bossrow.add(world, globals())
 import build_bgext  # noqa: E402  (battle backgrounds: the generated ground under each original strip, for the tall layout)
 build_bgext.add(world, globals())
+# leftovers of the translation the play-through found (docs/qa-fixes.md): Japanese kana / kanji left in names and lines,
+# one name spelled two ways. Story text and speaker / face keys only — never a file name (Z1 吹っ飛ぶ, 恐竜とサバイバル …)
+TEXT_FIXES = [('特蘭克斯ス', '特蘭克斯'), ('特蘭克斯く', '特蘭克斯'), ('賽亞人人', '賽亞人'), ('恐竜', '恐龍'), ('惑星戦士', '惑星戰士'),
+              ('宇宙里', '宇宙裡'), ('布利夫', '布里夫'), ('可能っ', '可能'), ('帕布金', '帕普金')]
+ASSET = re.compile(r'^[A-Za-z][A-Za-z0-9]{0,7}[ _]|\.(?:png|PNG|ogg)$')
+def fix_text(o):
+    if isinstance(o, str):
+        if ASSET.search(o): return o
+        for a, b in TEXT_FIXES: o = o.replace(a, b)
+        return o
+    if isinstance(o, list): return [fix_text(v) for v in o]
+    if isinstance(o, dict): return {fix_text(k) if isinstance(k, str) else k: fix_text(v) for k, v in o.items()}
+    return o
+world = fix_text(world)
 json.dump(world, open(os.path.join(root, 'data', 'world.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 print('world.json written')

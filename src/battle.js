@@ -186,11 +186,13 @@ function win(c, x, y, w, h, fill = CREAM) {
   c.drawImage(im, 64 - k, k, k, 64 - 2 * k, x + w - k, y + k, k, h - 2 * k);
 }
 // a number in the original 16px digits, right-aligned at rx; row 0 = black, row 2 = white
-function num(c, n, rx, y, row = 0) {
+// right-aligned at rx; `fit` (px) narrows the digits so a long number stays inside its column (six or more fighters)
+function num(c, n, rx, y, row = 0, fit = 0) {
   const d = img(DIGITS);
   if (!d.ok) return;
   const s = String(Math.max(0, Math.floor(n)));
-  for (let i = 0; i < s.length; i++) c.drawImage(d.im, 16 * Number(s[i]), 16 * row, 16, 16, rx - 16 * (s.length - i), y, 16, 16);
+  const dw = fit ? Math.max(8, Math.min(16, Math.floor(fit / s.length))) : 16, dy = y + (16 - dw);
+  for (let i = 0; i < s.length; i++) c.drawImage(d.im, 16 * Number(s[i]), 16 * row, 16, 16, rx - dw * (s.length - i), dy, dw, dw);
 }
 const LETTER = { H: 0, P: 1, K: 2, I: 3, L: 4, V: 5 };
 function word(c, w, x, y) {
@@ -463,9 +465,10 @@ export class Battle {
       }
       if (this.held(m) && !m.ko) num(c, this.stops.get(m), fx + fs, y + 30 + fs - 16, 3); // the turns it can't act (50022)
       text(c, `Lv${m.level}`, mid, y + 82, '#7a5230', 14, 'center');
+      const fit = Math.floor(rx - cx - 2); // (a 4-digit HP in a 53 px column: smaller digits instead of running into the next)
       const sl = (n, yy) => { if (rx - 16 * String(n).length - cx >= 16) slash(c, cx, yy); }; // the slash only where it fits
-      num(c, m.hp, rx, y + 116); sl(m.maxhp, y + 132); num(c, m.maxhp, rx, y + 132);
-      num(c, m.ki, rx, y + 152); sl(m.maxki, y + 168); num(c, m.maxki, rx, y + 168);
+      num(c, m.hp, rx, y + 116, 0, fit); sl(m.maxhp, y + 132); num(c, m.maxhp, rx, y + 132, 0, fit);
+      num(c, m.ki, rx, y + 152, 0, fit); sl(m.maxki, y + 168); num(c, m.maxki, rx, y + 168, 0, fit);
       this.hit(cx, y + 20, colW, h - 20, () => this.onFighterTap(i));
     });
   }
@@ -550,7 +553,7 @@ export class Battle {
   drawMoves(c) {
     const { L } = this;
     const m = this.party[this.cur];
-    const skills = m.skills.map((sid) => this.world.skills[sid]);
+    const skills = m.skills.map((sid) => this.world.skills[sid]).filter(Boolean); // (a move with no entry: left out)
     const hints = skills.map((s) => comboHints(this, this.cur, s.id)); // S-combos (src/combo.js)
     const rowH = hints.some((x) => x.length) ? 46 : 30, h = 46 + skills.length * rowH + 50;
     const x = 10, w = view.w - 20, y = Math.max(L.stage.y + 4, L.msg.y - 4 - h);
@@ -652,6 +655,7 @@ export class Battle {
     this.phase = 'plan';
     this.duel = null;
     this.plans = this.party.map(() => null);
+    for (const m of this.party) { m.hp = Math.min(m.hp, m.maxhp); m.ki = Math.min(m.ki, m.maxki); } // (a form change mid-battle could leave HP 1860 / 1700)
     this.history = [];
     for (const f of this.foes) if (f.hp > 0) f.card = enemyCard(f); // §2.1: enemy cards are dealt at turn start
     // turn start (all.rb 47498-47528): a stopped member's count goes down (still above 0: it sits this turn out), and

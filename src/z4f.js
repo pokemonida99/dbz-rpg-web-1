@@ -763,6 +763,7 @@ async function ending(game) {
   const c = C(game), s = game.state;
   s.flags.z3 = 'done';
   s.flags.z3At = null;
+  afterZ4(game);
   for (const m of s.party) heal(m);
   game.save(true);
   game.busy = false;
@@ -894,4 +895,13 @@ async function devState(game, step) {
   return ending(game);
 }
 
+// after the Cell Game (and a save made there before this fix): the ring is done and the party the Cell Game set aside
+// (CE166 → flags.z4fTmp) is back — otherwise a continue stands Piccolo alone by a ring that falls through to chapter 2's boss
+export function afterZ4(game) {
+  const s = game.state;
+  if (!s || s.flags.z3 !== 'done' || !(s.flags.z4fTmp || (s.map === '48' && !s.flags.z4fRing))) return;
+  G = game;
+  s.flags.z4fRing = true;
+  if (s.flags.z4fTmp) { restore(s.flags.z4fTmp); delete s.flags.z4fTmp; }
+}
 registerZ3('z4f', { maps: MAPS, start, spot, boss, resume, dev, goal });

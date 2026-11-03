@@ -269,6 +269,7 @@ export function openParty({ game, battle }) {
     tec.append(el('div', 'pm-th', el('span', '', '必殺技'), el('span', '', showUses ? '使用回數' : 'KI消耗')));
     for (const id of m.skills) {
       const k = world.skills[id];
+      if (!k) continue;
       tec.append(el('div', 'pm-tr', el('span', '', k.name), digits(showUses ? (s.skillLv || {})[id] || 0 : k.ki)));
     }
     if (!m.skills.length) tec.append(el('div', 'pm-tr', el('span', '', '（沒有必殺技）')));
@@ -556,7 +557,7 @@ export function openTactics({ game, battle }) {
       [opt('tec', 0, '自動'), opt('tec', 1, '不使用KI')],
       [opt('tec', 2, '小技能'), opt('tec', 3, '大技能')],
       [opt('tec', 4, '使用指定的招式：')],
-      m.skills.length ? [stepper(t.tec === 4, world.skills[t.tecId].name, (d) => { t.tecId = m.skills[(ix + d + m.skills.length) % m.skills.length]; })] : []);
+      m.skills.length ? [stepper(t.tec === 4, (world.skills[t.tecId] || {}).name || '', (d) => { t.tecId = m.skills[(ix + d + m.skills.length) % m.skills.length]; })] : []);
     group('・指定的招式／KI不足時', [opt('nonki', 0, 'KI不使用'), opt('nonki', 1, '小技能')]);
     group('・KI的消費', [opt('kiheri', 0, '不介意')], [opt('kiheri', 1, `${t.kiPct}％以下不使用KI`)],
       [stepper(t.kiheri === 1, `${t.kiPct}％`, (d) => { t.kiPct = ((((t.kiPct - 1 + d) % 99) + 99) % 99) + 1; }, true)]);

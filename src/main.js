@@ -36,7 +36,7 @@ import './z4b.js?v=20261103-1518';
 import './z4c.js?v=20261103-1518';
 import './z4d.js?v=20261103-1518';
 import './z4e.js?v=20261103-1518';
-import './z4f.js?v=20261103-1518';
+import { afterZ4 } from './z4f.js?v=20261103-1518';
 import { trGoal, trBackdrop } from './timeroom.js?v=20261103-1518'; // 時之間 (registers its spots in src/z3.js too)
 import './tr_z1.js?v=20261103-1518'; // 時之間 phase 2: the areas (docs/timeroom-plan.md)
 import './tr_z2.js?v=20261103-1518';
@@ -164,6 +164,7 @@ const game = {
   },
 
   async onBoss(b) {
+    if (b && b.flag && this.state.flags[b.flag]) return; // (already beaten: never fall through to another chapter's boss)
     if (isZ3Map(this.state)) return z3Boss(this, b);
     if (isZ2bMap(this.state)) return z2bBoss(this, b);
     if (isWillowMap(this.state)) return willowBoss(this, b);
@@ -328,6 +329,7 @@ function load(key = SAVE_KEY) {
     s.sw = s.sw || {};
     s.var = s.var || { 42: 3 };
     favLoad(s); // variable 228 = 20 (set_start_val)
+    afterZ4(game); // (a save from the end of Z4: src/z4f.js)
     startField();
     resumeChapter(game);
     resumeZ3(game) || resumeZ2b(game) || resumeChapter3(game) || resumeChapter4(game) || resumeChapter5(game) || resumeChapter6(game) || resumeWillow(game) || resumeZ2a(game);
@@ -392,8 +394,8 @@ function showTitle(sub, notes) {
   audio.playBgm(game.world.titleBgm);
   const has = !!localStorage.getItem(SAVE_KEY);
   title.innerHTML = `<img src="${assetUrl('Graphics/System/Title.png')}" alt="">
-    <div class="sub">${sub || '重製版・Z1～Z4'}</div>
-    ${notes ? `<div class="note unlocks">原版接下來開放：<br>${notes.join('<br>')}<br>（本版尚未製作）</div>` : ''}
+    <div class="sub">${sub || '重製版・Z1～Z4・時之間・ZG'}</div>
+    ${notes ? `<div class="note unlocks">接下來開放：<br>${notes.join('<br>')}</div>` : ''}
     <div class="actions">
       <button class="btn" data-a="new">新的開始</button>
       ${has ? '<button class="btn" data-a="cont">繼續遊戲</button>' : ''}
@@ -425,11 +427,13 @@ function frame(t) {
   const dt = Math.min(0.05, (t - last) / 1000);
   last = t;
   syncCostume(game);
-  if (game.scene) {
-    game.scene.update(dt);
-    game.scene.draw();
-    game.syncAct();
-  }
+  try {
+    if (game.scene) {
+      game.scene.update(dt);
+      game.scene.draw();
+      game.syncAct();
+    }
+  } catch (e) { console.error(e); } // (logged; the next frame still comes, so one bad draw doesn't freeze the game)
   requestAnimationFrame(frame);
 }
 

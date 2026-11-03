@@ -1,48 +1,42 @@
-// The Z3 / Z4 enemies' special moves (docs/anim-e-plan.md aen2), ported frame by frame from the classic version's
+// The Z3 / Z4 enemies' own special moves (docs/anim-e-plan.md aen2), ported frame by frame from the classic version's
 // Scene_Db_Battle_Anime (102_Scene_Db_Battle_Anime.rb). The enemy's attack pattern is its skill id + 10, in the same
-// Z3 move switch as the party's (all.rb 59742, $btl_progress 2 — Z3, Z4 and ZG). Most enemies share the common films:
-//   2431 (敵汎用)エネルギー波 (65679)   2494 連続エネルギー波 (65741, everyone)   2499 強力エネルギー波 (65901)
-//   2498 爆発波 (65879, everyone)        2495 デスボールとスーパーノヴァ (65758)   2493 フリーザカッター (65721)
-// and some have their own (マシーナリーレイン 2501, ネイズバインドウェーブ 2503, ドーレテリブルラッシュ 2505,
-// ドレインライフ 2510, カタナ攻撃 2272, サウザーブレードスラッシュ 2552, セル's 2530 / 2531 / 2537 / 2544, 13・14・15號's
-// 2573-2586). The common films keep the original's whole table of where each enemy's beam starts, so the other
-// enemies (docs/anim-e-plan.md aen3 / aen4) can point their skills at the same films.
+// Z3 move switch as the party's (all.rb 59742, $btl_progress 2 — Z3, Z4 and ZG). The films the original shares between
+// all the enemies (2431 エネルギー波, 2494 連続エネルギー波, 2499 強力エネルギー波, 2498 爆発波, 2495 デスボール,
+// 2493 フリーザカッター) are src/anime_foes_common.js's (the E groups' common file); this file registers its enemies'
+// skills there and has the films of their own: マシーナリーレイン 2501, ネイズバインドウェーブ 2503,
+// ドーレテリブルラッシュ 2505, ドレインライフ 2510, カタナ攻撃 2272, サウザーブレードスラッシュ 2552, セル's 2530 / 2531 /
+// 2537 / 2544, 13・14・15號's 2573-2586.
 // The strips and the cut-ins are src/anime_goku_gohan.js's stage (agStage); for an enemy the strips across scroll the
 // other way (st.rev) and the cut-in starts with the enemy's row (@chr_cutin_mirror_flag false), the member's after
 // set_chr_display_out. Each film runs like the original: a body per @battle_anime_frame that sets the poses, moves
 // (@ax @gx …, the enemy's @ax mirrored every frame), blts under the fighters and the effect_pattern in front, with the
 // original's effect / ray / back counters. Frame numbers in the comments are @battle_anime_frame.
 import { audio, img } from './core.js?v=20261103-0825';
-import { Duel, addMoves, moveFilm, draw, BACK_Y, RAY_SPEED } from './anime.js?v=20261103-0825';
-import { andaAt as at, AndaGather as Gather, andaShake as shake } from './anime_androids.js?v=20261103-0825';
+import { Duel, addMoves, moveFilm, draw, RAY_SPEED } from './anime.js?v=20261103-0825';
+import { feRegister } from './anime_foes_common.js?v=20261103-0825';
+import { andaAt as at, andaShake as shake } from './anime_androids.js?v=20261103-0825';
 import { registerZ3, party, heal } from './z3.js?v=20261103-0825';
 import { applyLevel } from './party.js?v=20261103-0825';
-import { Battle } from './battle.js?v=20261103-0825';
 
 const STD_CHAX = -70, STD_ENEX = 602, STD_Y = 120, CENTER_CHAX = 240, CENTER_ENEX = 304, TEC_CENTER = 266; // (all.rb 52435)
 const RS = RAY_SPEED, FLASH_ON = 296; // FLASH_Y_SIZE_CUTIN_ON
 const pic = (n) => `Graphics/Pictures/${n}`;
 const SPARK = pic('戦闘アニメ.PNG');
-const SOKI = { 0: pic('Z3_戦闘_必殺技_繰気弾.PNG'), 3: pic('Z3_戦闘_必殺技_繰気弾(青).PNG') }; // effects 10 / 271: 128×128
-const BALL = { 3: pic('Z3_戦闘_必殺技_エネルギー弾(青).PNG'), 4: pic('Z3_戦闘_必殺技_エネルギー弾(赤).PNG') }; // 16 / 201 / 202
+const BALL = { 4: pic('Z3_戦闘_必殺技_エネルギー弾(赤).PNG') }; // effect 16: 128×128 frames
 const BALL2 = pic('Z3_戦闘_必殺技_エネルギー弾2.PNG'); // effects 203 / 204: 96×64 ×2
 const LIQUID = { 3: pic('Z3_戦闘_必殺技_エネルギー液(青).PNG'), 4: pic('Z3_戦闘_必殺技_エネルギー液(桃).PNG') }; // 44 / 283: 400×32 ×2
 const HUGE_BLUE = pic('Z3_戦闘_必殺技_エネルギー波_特大_青.PNG'); // effect 48: 400×192 ×2
 const SMALL_BLUE = pic('Z3_戦闘_必殺技_エネルギー波_小_敵_青.PNG'); // effects 227 / 228: 400×48 ×2
 const MID_BLUE = pic('Z3_戦闘_必殺技_エネルギー波_中_敵_青.PNG'); // effects 233 / 234: 400×80 ×2
-const BIG_BLUE = pic('Z3_戦闘_必殺技_エネルギー波_大_敵_青.PNG'); // effects 239 / 240: 400×122 ×2
 const BLINK = pic('Z3_必殺技_超カメハメ波(球点滅)(青).png'), BLINK_SMALL = pic('Z3_必殺技_超カメハメ波(球点滅小)(青).png'); // 235 / 237
 const KAME_REV = pic('Z3_必殺技_超カメハメ波_青_反転.png'); // effect 236 (the enemy's side): 500×350
 const MAKANKO = pic('Z3_戦闘_必殺技_魔貫光殺砲.PNG'); // effects 255 / 272: 400×64 ×2
-const KIEN = pic('Z3_戦闘_必殺技_気円斬.png'); // 126×30 rows; the thrown disc is row 4
 const BIGBANG_REV = pic('Z3_必殺技_ビッグバンアタック発動(青)_反転.PNG'); // effect 264: 2 frames of 302×200
 const HALF_BLUE = pic('Z3_戦闘_必殺技_エネルギー波_半円(青).PNG'); // effect 265: 700×128 ×2
 const SWORD_REV = pic('Z3_戦闘_必殺技_剣攻撃(左右反転).PNG'); // effect 267 (the enemy's side): 7 frames of 160×96
 const SHOCK = pic('Z3_戦闘_必殺技_背景_衝撃波系.png'); // back 1: 3 frames of 640×180
-const DEMON_V = pic('Z3_戦闘_必殺技_背景_魔族系(縦).png'); // back 2: 3 frames of 640×356 (480 apart)
 const LINES_REV = [pic('Z3_必殺技_超カメハメ波(バック上)_反転.png'), pic('Z3_必殺技_超カメハメ波(バック下)_反転.png')]; // back 106
 const AURA = { 0: pic('Z3_戦闘_必殺技_気を溜める.png'), 3: pic('Z3_戦闘_必殺技_気を溜める(青).png') }; // back 201: 2 frames of 136×142
-const DOT = pic('Z3_戦闘_必殺技_超元気玉(元気).png'); // (AndaGather)
 const BOOM3 = pic('戦闘アニメ_爆発3.PNG'), BOOM4 = pic('戦闘アニメ_爆発4.PNG'); // damage 41 (effect 102) / 42 (effect 103)
 // the films' own pictures
 const METAL = pic('Z3_戦闘_敵_メタルクウラ.png'), METAL_SP = pic('Z3_戦闘_必殺技_敵_メタルクウラ.png'); // 2501's copies
@@ -55,15 +49,8 @@ const DEATH_HUGE_REV = pic('Z2_戦闘_必殺技_デスボール(極大玉)_反�
 
 // the films (only enemies have these moves; on a member they fall back to src/anime.js's foeWave): the damage pattern
 // after them, pattern 32's settings (@chr_cutin_flag, @tec_back_small, @tec_back_color, @tec_output_back_no) and the
-// pictures to load meanwhile; `again`: a move on everyone (the targets after the first
-// skip 31 / 32 and get a short film)
+// pictures to load meanwhile
 const FOE = {
-  e2Wave: { dmg: 23, pics: [SMALL_BLUE] }, // 2431
-  e2Cutter: { dmg: 23, cut: true, tecNo: 3, pics: [KIEN] }, // 2493
-  e2Multi: { dmg: 23, cut: true, again: true, pics: [BALL[3]] }, // 2494
-  e2DeathBall: { dmg: 41, cut: true, tecNo: 1, pics: [SOKI[0], BOOM3] }, // 2495
-  e2Blast: { dmg: 23, cut: true, again: true, pics: [AURA[3], DEMON_V, SHOCK] }, // 2498
-  e2Strong: { dmg: 23, cut: true, small: true, pics: [AURA[3], DOT, BIG_BLUE, MID_BLUE] }, // 2499
   e2Rain: { dmg: 41, cut: true, small: true, pics: [METAL, METAL_SP, SPARK, SHOCK, BOOM3] }, // 2501
   e2Bind: { dmg: 73, cut: true, pics: [AURA[3], LIQUID[4]] }, // 2503
   e2Rush: { dmg: 23, cut: true, pics: [AURA[3], SPARK, MID_BLUE] }, // 2505
@@ -82,29 +69,24 @@ const FOE = {
   e2Charge14: { dmg: 22, cut: true, kyouda: true, pics: [SPARK, RUSH14] }, // 2583
   e2Strike15: { dmg: 22, cut: true, kyouda: true, pics: [] }, // 2586
 };
-// skill → film (the enemies of docs/anim-e-plan.md aen2; 克拉斯 shares 385 / 450 with 艾爾 / 內茲)
+// skill → film (the enemies of docs/anim-e-plan.md aen2): their own films here, the shared ones in
+// src/anime_foes_common.js (克拉斯 shares 385 / 450 with 艾爾 / 內茲)
 addMoves({
-  391: 'e2Wave', 393: 'e2Cutter', 394: 'e2Multi', 395: 'e2DeathBall', // 弗利薩
-  385: 'e2Wave', 386: 'e2Wave', 387: 'e2Wave', 388: 'e2Wave', 389: 'e2Wave', 390: 'e2Wave', // 古拉機甲戰隊・艾爾…弗萊因
-  402: 'e2Multi', 403: 'e2Bind', 450: 'e2Strong', // 內茲
-  404: 'e2Multi', 405: 'e2Rush', 451: 'e2Strong', // 德雷
-  406: 'e2Multi', 407: 'e2Sword', 452: 'e2Blade', // 沙維扎
-  396: 'e2Wave', 398: 'e2Blast', 399: 'e2Strong', 400: 'e2DeathBall', // 古拉
-  401: 'e2Rain', // 金屬古拉
-  408: 'e2Wave', 409: 'e2Strong', 410: 'e2Drain', 411: 'e2Multi', // 20號
-  412: 'e2Wave', 413: 'e2Strong', 414: 'e2Drain', 415: 'e2Multi', // 19號
-  416: 'e2Wave', 417: 'e2Multi', 453: 'e2Strong', // 18號
-  420: 'e2Wave', 421: 'e2Multi', 422: 'e2Strong', // 17號
-  424: 'e2Wave', 425: 'e2Multi', 454: 'e2Strong', // 16號
-  428: 'e2Wave', 429: 'e2Multi', 430: 'e2Kame', 431: 'e2Makanko', 433: 'e2Drain', // 沙魯(第１形態)
-  434: 'e2Wave', 435: 'e2Multi', 436: 'e2Kame', 437: 'e2BigBang', // 沙魯(第２形態)
-  439: 'e2Wave', 440: 'e2Multi', 441: 'e2Kame', 442: 'e2Blast', 444: 'e2SuperKame', // 沙魯(完全體)
-  445: 'e2Wave', 446: 'e2Multi', 447: 'e2Kame', 448: 'e2Makanko', // 小沙魯
-  456: 'e2Multi', // 克拉斯
-  471: 'e2Wave', 472: 'e2Strong', 473: 'e2Assassin', 474: 'e2Assault', 475: 'e2Bomber', 620: 'e2Multi', // 13號
-  476: 'e2Wave', 477: 'e2Strong', 478: 'e2Blast', 479: 'e2Bomber2', 480: 'e2FullBomber', // 13號(合體)
-  481: 'e2Wave', 482: 'e2Strong', 483: 'e2Charge14', 618: 'e2Multi', // 14號
-  484: 'e2Wave', 485: 'e2Strong', 486: 'e2Strike15', 619: 'e2Multi', // 15號
+  403: 'e2Bind', 405: 'e2Rush', 407: 'e2Sword', 452: 'e2Blade', 401: 'e2Rain', // Z3
+  410: 'e2Drain', 414: 'e2Drain', 433: 'e2Drain', 430: 'e2Kame', 436: 'e2Kame', 441: 'e2Kame', 447: 'e2Kame',
+  431: 'e2Makanko', 448: 'e2Makanko', 437: 'e2BigBang', 444: 'e2SuperKame', // 人造人・沙魯
+  473: 'e2Assassin', 474: 'e2Assault', 475: 'e2Bomber', 479: 'e2Bomber2', 480: 'e2FullBomber', 483: 'e2Charge14', 486: 'e2Strike15', // 13・14・15號
+});
+feRegister({
+  391: 'feWave', 385: 'feWave', 386: 'feWave', 387: 'feWave', 388: 'feWave', 389: 'feWave', 390: 'feWave', 396: 'feWave',
+  408: 'feWave', 412: 'feWave', 416: 'feWave', 420: 'feWave', 424: 'feWave', 428: 'feWave', 434: 'feWave', 439: 'feWave',
+  445: 'feWave', 471: 'feWave', 476: 'feWave', 481: 'feWave', 484: 'feWave', // 2431
+  394: 'feWaves', 402: 'feWaves', 404: 'feWaves', 406: 'feWaves', 411: 'feWaves', 415: 'feWaves', 417: 'feWaves', 421: 'feWaves',
+  425: 'feWaves', 429: 'feWaves', 435: 'feWaves', 440: 'feWaves', 446: 'feWaves', 456: 'feWaves', 618: 'feWaves', 619: 'feWaves',
+  620: 'feWaves', // 2494
+  399: 'feBigWave', 409: 'feBigWave', 413: 'feBigWave', 422: 'feBigWave', 450: 'feBigWave', 451: 'feBigWave', 453: 'feBigWave',
+  454: 'feBigWave', 472: 'feBigWave', 477: 'feBigWave', 482: 'feBigWave', 485: 'feBigWave', // 2499
+  398: 'feBlast', 442: 'feBlast', 478: 'feBlast', 395: 'feDeathBall', 400: 'feDeathBall', 393: 'feCutter', // 2498 / 2495 / 2493
 });
 
 const G = () => globalThis.__game;
@@ -122,7 +104,7 @@ class Run {
   constructor(d, st) {
     this.d = d; this.st = st; this.E = d.R; this.C = d.L; this.e = st.e2;
     this.f = 0; this.ef = 0; this.et = 0; this.eff = 0; this.rf = 0; this.rt = 0; this.bf = 0; this.bt = 0;
-    this.ax = 0; this.ay = 0; this.gx = 0; this.gy = 0; this.spd = false; this.color = 3; this.rx = 0; this.ry = 0;
+    this.ax = 0; this.ay = 0; this.gx = 0; this.gy = 0; this.color = 3; this.rx = 0; this.ry = 0;
     this.row = d.R.frame; this.ot = d.R.sp ? 1 : 0; this.grow = d.L.frame; this.U = []; this.O = [];
   }
   a(n) { this.row = n; } // battle_anime_change 0, n
@@ -139,7 +121,6 @@ class Run {
   back(n, bx, by) {
     const t = this.bt;
     if (n === 1) { this.blt(SHOCK, 0, t * 180, 640, 180, 0, 80); this.cyc(4, 2); }
-    else if (n === 2) { this.blt(DEMON_V, 0, t * 480, 640, 356, 0, 0); this.cyc(4, 2); }
     else if (n === 106) { this.blt(LINES_REV[0], 0, 128 * t, 384, 128, 640 - 384, 0); this.blt(LINES_REV[1], 0, 64 * t, 192, 64, 640 - 192, 292); this.cyc(4, 2); }
     else if (n === 201) { this.blt(AURA[this.color] || AURA[0], t * 136, 0, 136, 142, bx, by); this.cyc(16, 1); }
     this.bf++;
@@ -151,11 +132,6 @@ class Run {
   effect() {
     const n = this.eff, ef = this.ef, rx = this.rx, ry = this.ry, E = this.E, C = this.C, o = (...a) => this.O.push(at(...a));
     switch (n) {
-      case 10: { // 繰気弾 (デスボール): the ball grows at 51 / 71 / 91 / 111
-        o(SOKI[this.color] || SOKI[0], this.et * 128, 0, 128, 128, rx || 230, rx ? ry : 66);
-        if (ef === 51 || ef === 71 || ef === 91 || ef === 111) this.et++;
-        break;
-      }
       case 16: o(BALL[this.color], this.et * 128, 0, 128, 128, rx || 249, rx ? ry : 112); if (ef >= 10) { this.et++; this.ef = 0; } break;
       case 44: o(LIQUID[this.color], 0, 32, 400, 32, 640 - ef * RS, 150); break;
       case 48: o(HUGE_BLUE, 0, 192, 400, 192, 640 - ef * RS, 76); break;
@@ -165,8 +141,6 @@ class Run {
         break;
       }
       case 123: o(SPARK, ef <= 4 ? 0 : 32, 16, 32, 32, rx, ry); break; // キャラぶつかる自由位置
-      case 201: o(BALL[3], 2 * 128, 0, 128, 128, rx - ef * (this.spd ? RS + 6 : RS), ry); this.et = 2; break; // (@ray_spd_up_num 6)
-      case 202: o(BALL[3], 2 * 128, 0, 128, 128, 640 - ef * RS, 96); this.et = 2; break;
       case 203: o(BALL2, 0, 64, 96, 64, rx - ef * RS, ry); break;
       case 204: o(BALL2, 0, 64, 96, 64, 640 - ef * RS, 144); break;
       case 227: o(SMALL_BLUE, 352 - ef * RS, 0, 48 + ef * RS, 48, rx - 92 - ef * RS, ry - 10); break;
@@ -176,14 +150,10 @@ class Run {
       case 235: o(BLINK, 32 * this.rt, 0, 32, 32, rx, ry); this.rcyc(4, 4); break;
       case 236: o(KAME_REV, 500 - 54 - ef * RS, 0, 500 - 54 + ef * RS, 350, rx, ry); break;
       case 237: o(BLINK_SMALL, 16 * this.rt, 0, 16, 16, rx, ry); this.rcyc(4, 4); break;
-      case 239: o(BIG_BLUE, 256 - ef * RS, 0, 144 + ef * RS, 122, rx - ef * RS, ry); break;
-      case 240: o(BIG_BLUE, 0, 122, 400, 122, 640 - ef * RS, ry); break;
       case 255: o(MAKANKO, 0, 64, 400, 64, 640 - ef * RS, ry); break;
-      case 260: o(KIEN, 0, 30 * 4, 192, 30, 640 - ef * RS, 160); break;
       case 264: o(BIGBANG_REV, 302 * this.rt, 0, 302, 200, rx, ry); this.rcyc(4, 1); break;
       case 265: o(HALF_BLUE, 0, 0, 700, 128, 640 - ef * RS, ry); break;
       case 267: o(SWORD_REV, 160 * this.rt, 0, 160, 96, rx, ry); this.rcyc(2); break;
-      case 271: o(SOKI[this.color] || SOKI[0], this.et * 128, 0, 128, 128, 640 - ef * RS, 112); break;
       case 272: o(MAKANKO, 400 - 64 - ef * RS, 0, 400 - 64 + ef * RS, 64, rx - ef * RS, ry); break;
       case 283: o(LIQUID[this.color], 400 - ef * RS, 0, ef * RS, 32, rx - ef * RS, ry); break;
       default: break; // (132 and the like: no such effect)
@@ -208,11 +178,7 @@ function syncStage(st) {
   st.cutFrom = e.cut ? 0 : Infinity; st.mirror = !e.mir; // (the stage: mirror = the enemy's row)
 }
 
-// a move on everyone plays one film per member (src/battle.js enemyAct): the films after the first of one action are
-// the original's @all_attack_count >= 2
-const enemyAct0 = Battle.prototype.enemyAct;
-Battle.prototype.enemyAct = function (f) { this.e2Act = { films: 0 }; return enemyAct0.call(this, f); };
-const swoop0 = Duel.prototype.swoopIn, launch0 = Duel.prototype.launch;
+const launch0 = Duel.prototype.launch;
 const film = (d) => !d.p && d.constructor === Duel && FOE[moveFilm(d.skill)] ? moveFilm(d.skill) : null;
 Object.assign(Duel.prototype, {
   // the stage of src/anime_goku_gohan.js, on the enemy's side
@@ -224,24 +190,12 @@ Object.assign(Duel.prototype, {
     }
     return st;
   },
-  * swoopIn() { // 31, unless this is a further target of a move on everyone (@all_attack_count >= 2)
-    const name = film(this), act = name && G() && G().scene && G().scene.e2Act;
-    if (act) act.films++;
-    this.e2Again = !!act && FOE[name].again && act.films > 1;
-    if (!this.e2Again) yield* swoop0.call(this);
-  },
   * launch() { // 32: from its frame 30 the strips and (@chr_cutin_flag) the enemy's cut-in
     const name = film(this);
     if (!name) return yield* launch0.call(this);
     const cfg = FOE[name], st = this.e2Stage(), e = st.e2;
     cfg.pics.forEach((p) => img(p));
     Object.assign(e, { tec: true, tecNo: cfg.tecNo || 0, cut: !!cfg.cut, flag: !!cfg.cut, mir: false, small: !!cfg.small, red: !!cfg.red });
-    if (this.e2Again) { // no 31 / 32 and no ground: the strips (連続エネルギー波 only) and the member's cut-in
-      this.back.y = BACK_Y + 4 * 79;
-      Object.assign(e, { tec: name === 'e2Multi', cut: true, flag: true, mir: true });
-      syncStage(st);
-      return;
-    }
     syncStage(st);
     st.tecFrom = this.t + 29; st.cutFrom = cfg.cut ? this.t + 29 : Infinity;
     yield* launch0.call(this);
@@ -290,183 +244,6 @@ Object.assign(Duel.prototype, {
   * e2(name, body) {
     yield* this.e2Run(body);
     return yield* this.e2End(name);
-  },
-
-  // ---------- the common films ----------
-  * e2Wave() { // 2431 (敵汎用)エネルギー波 (all.rb 124409): the small blue beam from the hand, then on the member
-    if (this.p) return yield* this.foeWave();
-    const id = foeId(), [x0, y0] = waveAt(id);
-    return yield* this.e2('e2Wave', (r) => {
-      r.color = 3; r.rx = x0; r.ry = y0;
-      if (r.f === 0) { r.se('Z1 怪光線'); r.ot = 1; r.a(among(id, 68, 220, 199, 200, 250) ? 2 : 1); if (among(id, 121, 126, 140)) r.ax = 2; }
-      else if (r.f <= 40) { r.eff = 227; if (r.f === 1 && among(id, 121, 126, 140)) r.ax = 0; }
-      else if (r.f === 41) r.clear();
-      else if (r.f === 45) r.out();
-      else if (r.f <= 75) { r.eff = among(id, 70, 222, 71, 223, 259) ? 234 : 228; r.ry = 136; }
-      else return true;
-    });
-  },
-
-  * e2Multi() { // 2494 連続エネルギー波 (124881): four blue balls with a step back each, then the one on the member
-    if (this.p) return yield* this.foeWave();
-    const id = foeId();
-    if (this.e2Again) { // a further target: 0 set_chr_display_out, 1-29 the ball on it
-      return yield* this.e2('e2Multi', (r) => {
-        r.color = 3; r.rx = 180; r.ry = 138;
-        if (r.f === 0) r.out(); else if (r.f <= 29) r.eff = 202; else return true;
-      });
-    }
-    return yield* this.e2('e2Multi', (r) => {
-      const f = r.f;
-      r.color = 3; r.rx = 180; r.ry = 138;
-      if (f === 0) {
-        r.se('Z3 エネルギー波');
-        r.a(2);
-        if (id === 172) { r.ot = 1; r.a(10); }
-        r.spd = true;
-      } else if (f <= 69) {
-        r.eff = 201;
-        const k = f <= 16 ? 0 : f <= 31 ? 1 : f <= 46 ? 2 : f <= 61 ? 3 : -1, b = 15 * k; // the four throws (1 + 15k)
-        if (k >= 1 && f === 2 + b) {
-          r.ef = 0;
-          if (k === 1) { r.a(1); if (id === 172) r.ef = 1; }
-          if (k === 2) { r.a(2); if (id === 172) { r.ef = 1; r.a(10); } }
-          if (k === 3) { r.ot = 1; r.a(1); }
-        }
-        if (k >= 0) {
-          r.ry = [138, 78, 138, 98][k];
-          if (f <= 4 + b) r.ax = -2; else if (f <= 6 + b) { r.a(0); r.ax = 2; } else if (f <= 8 + b) r.ax = 0;
-        }
-      } else if (f === 70) { r.stop(); r.clear(); }
-      else if (f === 80) { r.out(); r.spd = false; }
-      else if (f >= 81 && f <= 109) r.eff = 202;
-      else if (f === 110) return true;
-    });
-  },
-
-  * e2Strong() { // 2499 強力エネルギー波 (125171): the aura (or the ki gathering in), the beam, then on the member
-    if (this.p) return yield* this.foeWave();
-    const id = foeId(), [x0, y0, kita, big, color] = strongAt(id);
-    const dots = new Gather(x0 + 48, y0 + 32, 125);
-    return yield* this.e2('e2Strong', (r) => {
-      const f = r.f;
-      r.rx = x0; r.ry = y0;
-      if (big && f >= 140) { r.rx -= 88; r.ry -= 18; }
-      if (f === 0) {
-        r.ot = 1; r.a(0);
-        if (!kita) { r.se(among(id, 177, 178, 179, 180) ? 'Z1 気を溜める5' : 'Z3 変身'); if (among(id, 238, 252)) r.a(2); }
-        else {
-          r.se('DB3 気を溜める2'); r.a(1);
-          if (id === 145) r.a(2);
-          if (among(id, 191, 192)) r.a(4);
-          if (among(id, 195, 196)) r.a(3);
-          if (id === 126) r.ax = 2;
-        }
-        r.color = color;
-      } else if (f <= 128) {
-        if (id === 126) r.ax = 0;
-        if (!kita) r.back(201, 248, 88); else dots.draw(f, r.U);
-      } else if (f === 129) {
-        r.stop(); r.a(1);
-        if (among(id, 143, 145)) r.a(2);
-        if (among(id, 238, 252)) r.a(3);
-        if (id === 121) r.ax = 2;
-      } else if (f === 130) r.ax = 0;
-      else if (f === 140) {
-        r.stop(); r.se('Z1 エネルギー波2'); r.a(1);
-        if (among(id, 143, 145)) r.a(2);
-        if (among(id, 238, 252)) r.a(3);
-        r.eff = big ? 239 : 233;
-      } else if (f === 179) r.clear();
-      else if (f === 189) r.out();
-      else if (f >= 190 && f <= 215) r.eff = big ? 240 : 234;
-      else if (f === 216) return true;
-    });
-  },
-
-  * e2Blast() { // 2498 爆発波 (125074): the aura, the demon backdrop as it bursts, then the shock behind the member
-    if (this.p) return yield* this.foeWave();
-    const id = foeId(), quiet = among(id, 172, 173, 71, 223);
-    if (this.e2Again) { // a further target: the member in the middle, the shock behind it (@chr_cutin_mirror_flag)
-      return yield* this.e2('e2Blast', (r) => {
-        r.color = 3;
-        if (r.f === 0) { if (id === 152) r.se('Z1 ゴー'); r.se('Z1 ザー'); r.E.y = -200; r.C.x = CENTER_CHAX; r.C.y = STD_Y; }
-        else if (r.f <= 61) { r.back(1); r.e.cut = true; r.e.mir = true; }
-        else return true;
-      });
-    }
-    const ROW = [[[129, 135, 269], 5], [[139, 267], 4], [[152, 270], 7], [[165, 166], 4], [[167, 168], 4], [[172, 273], 2], [[173, 274], 2], [[71, 223, 259], 4]];
-    const STEP = { 167: 8, 168: 8, 172: 10, 273: 10, 173: 8, 274: 8, 71: 8, 223: 8, 259: 8 };
-    return yield* this.e2('e2Blast', (r) => {
-      const f = r.f;
-      r.color = 3;
-      if (f === 0) r.se(quiet ? 'Z1 気を溜める5' : 'Z3 変身');
-      else if (f <= 128) { if (!quiet) r.back(201, 248, 88); }
-      else if (f === 129) { r.e.tec = false; r.stop(); r.se('Z1 エネルギー波'); }
-      else if (f <= 210) {
-        r.back(2);
-        r.ot = 1;
-        const row = ROW.find(([ids]) => ids.includes(id));
-        r.a(row ? row[1] : 3);
-        if (f === 130 && among(id, 152, 270)) r.E.y -= 2;
-        if (f === 130 && STEP[id]) r.E.x += STEP[id];
-      } else if (f === 211) { r.E.y = -200; r.C.x = CENTER_CHAX; r.C.y = STD_Y; }
-      else if (f <= 272) { r.e.cut = true; r.e.mir = true; r.back(1); }
-      else return true;
-    });
-  },
-
-  * e2DeathBall() { // 2495 デスボールとスーパーノヴァ (125014): the ball grows over the head, it is thrown, then on the member
-    if (this.p) return yield* this.foeWave();
-    const id = foeId(), [x0, y0] = among(id, 238, 252) ? [262, 64] : among(id, 120, 239) ? [250, 10] : [242, 20];
-    const top = among(id, 121, 238, 252) ? 4 : 3;
-    return yield* this.e2('e2DeathBall', (r) => {
-      const f = r.f;
-      r.rx = x0; r.ry = y0;
-      if (f === 0) {
-        r.se('DB3 気を溜める2');
-        r.ot = 1; r.a(3);
-        if (among(id, 120, 239)) r.a(11);
-        if (id === 121) r.a(4);
-        if (id === 136 || among(id, 238, 252)) r.a(5);
-        r.color = 0;
-      } else if (f <= 130) {
-        r.eff = 10;
-        if (f % 3 === 0 && id === 121) r.ef++;
-        if (r.et > top) r.et = top;
-      } else if (f <= 170) {
-        r.a(among(id, 238, 252) ? 6 : 1);
-        if (f === 131) { r.e.tecNo = 0; r.se('Z1 繰気弾'); }
-        r.rx -= 12 * (f - 131); r.ry += 2 * (f - 131);
-      } else if (f === 171) r.clear();
-      else if (f === 180) r.out();
-      else if (f >= 181 && f <= 207) { r.eff = 271; r.et = top; }
-      else if (f === 208) return true;
-    });
-  },
-
-  * e2Cutter() { // 2493 フリーザカッター (124742): the disc spins round over his hand, he throws it, then on the member
-    if (this.p) return yield* this.foeWave();
-    const ROUND = [[0, 0], [4, 1], [7, 3], [9, 6], [10, 10], [9, 14], [7, 17], [4, 19], [0, 20], [-4, 19], [-7, 17], [-9, 14], [-10, 10], [-9, 6], [-7, 3], [-4, 1]];
-    return yield* this.e2('e2Cutter', (r) => {
-      const f = r.f, k = f - 20;
-      if (f === 0) { r.se('DB3 気を溜める2'); r.ot = 1; r.a(3); r.color = 0; }
-      else if (f <= 121) {
-        let x = 244, y = 80;
-        if (k >= 0) {
-          const m = k >= 10 && k <= 24 ? k - 9 : k >= 26 && k <= 40 ? k - 25 : 0; // kien_mawarikata
-          x += 6 * ROUND[m][0]; y -= 2 * ROUND[m][1];
-        }
-        if (k >= 50) {
-          if (k === 50) { r.stop(); r.se('Z1 気円斬'); }
-          y -= 8 * (k - 50); x -= 8 * (k - 50);
-          r.a(4);
-        }
-        r.blt(KIEN, 0, 30 * 4, 126, 30, x, y);
-      } else if (f === 130) { r.clear(); r.e.tecNo = 0; r.out(); }
-      else if (f >= 141 && f <= 165) r.eff = 260;
-      else if (f === 166) return true;
-    });
   },
 
   // ---------- 古拉機甲戰隊 ----------
@@ -1030,38 +807,6 @@ function blows(r, t) {
   else if ([0, 1, 2, 3, 4, 5, 6, 7].some((n) => t === k * n + 4)) r.gx = 0;
 }
 
-// 2431's beam by enemy (all.rb 124464; the first row that has it, as the original's case)
-function waveAt(id) {
-  const T = [[[65, 217], 328, 142], [[66, 218], 320, 140], [[67, 219], 314, 138], [[68, 220, 69, 221], 340, 162], [[72, 224], 324, 142],
-    [[73, 225], 308, 142], [[74, 226], 326, 154], [[75, 227], 310, 140], [[76, 228], 314, 154],
-    [[101, 102, 117, 118, 119, 170, 230, 240, 243, 260], 314, 156], [[103, 104, 105, 131, 109, 110, 133], 308, 146],
-    [[111, 112, 113, 114, 115, 116, 231, 232, 241, 242], 310, 142], [[106, 107, 108, 132], 314, 144],
-    [[120, 123, 169, 234, 239, 265], 320, 146], [[121, 261], 306, 142], [[122, 262], 328, 140], [[125, 236], 324, 144],
-    [[126, 127, 128, 237, 264, 268], 306, 144], [[129, 135, 269], 314, 134], [[130], 344, 158], [[138], 320, 136], [[139, 267], 310, 136],
-    [[140], 308, 136], [[141], 344, 160], [[142, 143], 310, 136], [[144], 312, 138], [[145], 342, 142], [[146], 312, 142], [[147], 342, 160],
-    [[148], 312, 154], [[151], 308, 142], [[152, 270], 308, 126], [[154, 275], 308, 134], [[155, 156, 157, 158], 308, 148],
-    [[159, 160, 161, 162, 163, 164, 165, 166, 233], 312, 144], [[167, 168, 255], 308, 138], [[171], 308, 130], [[172, 273], 326, 144],
-    [[173, 274], 314, 138], [[177], 310, 142], [[178], 318, 144], [[179], 310, 142], [[180], 340, 160], [[189, 190, 246], 324, 140],
-    [[191, 192, 245], 328, 142], [[193, 194], 314, 142], [[195, 196, 244], 326, 154], [[197, 198, 251], 340, 162], [[199, 200, 250], 320, 138],
-    [[201, 202, 249], 308, 142], [[203, 204, 248], 322, 142], [[205, 206, 247], 316, 142], [[213], 308, 132], [[215, 277], 316, 142],
-    [[216], 328, 146], [[70, 222], 316, 124], [[71, 223, 259], 260, 120], [[238, 252, 272], 314, 144], [[253, 276], 282, 152],
-    [[254, 278], 326, 142], [[279], 320, 146]];
-  const t = T.find(([ids]) => ids.includes(id));
-  return t ? [t[1], t[2]] : [328, 148];
-}
-// 2499's beam by enemy (125240): [ray_x, ray_y, kitamenasi (the ki gathering in, no aura), ray_big, ray_color]
-function strongAt(id) {
-  const T = [[[111, 112, 113, 114, 115, 116, 241, 242], 210, 116, 0, 0], [[117, 118, 119, 240], 216, 126, 0, 0], [[120, 136, 169, 239], 222, 120, 0, 1],
-    [[121, 261], 208, 116, 0, 1], [[122, 262], 230, 112, 1, 1], [[123, 263], 222, 120, 1, 1], [[124, 125], 230, 120, 1, 1], [[126], 208, 120, 1, 1],
-    [[138], 210, 112, 1, 1], [[139], 200, 112, 1, 1], [[140], 198, 112, 1, 1], [[141], 234, 136, 1, 1], [[142], 200, 112, 1, 1],
-    [[143, 271], 200, 112, 0, 1], [[144], 202, 114, 0, 1], [[145], 232, 118, 1, 0], [[146], 202, 116, 1, 0], [[147], 232, 134, 0, 0],
-    [[151], 202, 116, 0, 1], [[152, 270], 202, 100, 0, 1], [[154, 275], 202, 108, 1, 1], [[172, 273], 224, 118, 1, 1], [[173, 274], 212, 112, 1, 1],
-    [[177], 210, 116, 0, 1], [[178], 218, 118, 0, 1], [[179], 210, 116, 0, 1], [[180], 240, 134, 0, 1], [[213], 206, 108, 1, 1],
-    [[215, 277], 216, 116, 0, 1], [[216], 228, 120, 1, 1], [[70, 222], 216, 98, 1, 1], [[71, 223, 259], 160, 102, 1, 1, 1],
-    [[238, 252, 272], 220, 130, 0, 1], [[253, 276], 180, 124, 1, 1], [[254, 278], 222, 118, 1, 1]];
-  const t = T.find(([ids]) => ids.includes(id));
-  return t ? [t[1], t[2], !!t[3], !!t[4], t[5] == null ? 3 : t[5]] : [210, 120, false, false, 3];
-}
 // the flurry of 2552 / 2573 (strfra, akifra): hits at k × 0 / 2 / 4 / 6 / 8 / 10 with these rows, back to 0 between
 // (rows at 2, 6 and 10 a step lower: raytyouseiy); `s` the sound of each hit
 function flurry(r, t, k, s, rows) {

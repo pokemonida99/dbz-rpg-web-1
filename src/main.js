@@ -74,6 +74,7 @@ import './anime_bardock.js?v=20261103-0825'; // 巴達克・超巴達克's move 
 import './anime_bardock_crew.js?v=20261103-0825'; // バーダック一味's move films (docs/anim-cd-plan.md ancc; ?dev=ancc…)
 import './anime_future.js?v=20261103-0825'; // 特蘭克斯・未來悟飯・龜仙人's Z3 move films (docs/anim-cd-plan.md andt; ?dev=andt…)
 import './anime_androids.js?v=20261103-0825'; // 人造人 18・17・16號's Z3 move films (docs/anim-cd-plan.md anda; ?dev=anda)
+import './anime_foes_common.js?v=20261103-0825'; // the enemies' shared move films (docs/anim-e-plan.md, aen3's common file)
 import './anime_foes_z34.js?v=20261103-0825'; // the Z3 / Z4 enemies' move films (docs/anim-e-plan.md aen2; ?dev=aen2…)
 
 // testing in a hidden browser pane (no animation frames there): ?timer drives every frame with timers instead

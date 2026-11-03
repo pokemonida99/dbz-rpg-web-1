@@ -887,3 +887,152 @@ Object.assign(ComboDuel.prototype, {
   },
 });
 films({ 823: ['cmdFinalKame', 44] }, { cmdFinalKame: () => [...COMMON, ...KAME2_GOKU, ...FF_CHARGE] });
+
+// ======================================================================================================
+// 825 サイコ気円裂斬 (2925 克林＋餃子, all.rb 114966). 餃子 below 克林 (pairIn); 餃子 vanishes, 克林 charges; 克林's 気円烈斬
+// close-up spins the disc and throws it (corner strips); 餃子 clings to the enemy (effect 88) on the shock-wave
+// backdrop and holds it shaking; the disc cuts through it (260), damage 44. (Further targets of a move on everyone:
+// see 814.)
+// ======================================================================================================
+Object.assign(ComboDuel.prototype, {
+  * cmdPsychoKienretsu() {
+    const z = this.cmd, A = this.A, G = this.G, bx = TEC_CENTER_CHAX - 80 + 40, by_ = STANDARD_CHAY - 30;
+    for (;;) {
+      const f = z.top();
+      if (f === 0) { z.se('Z1 逃げる'); z.otype = 1; z.pose(0); }
+      else if (f <= 59) pairIn(z, f, 6, 9);
+      else if (f <= 150) { // 餃子 gone, 克林 charges
+        z.color = 0;
+        if (f === 60) { z.efp = 0; z.se('Z1 高速移動'); z.se('Z3 変身'); z.otype = 1; z.pose(5); }
+        z.back(201, bx, by_ - 50);
+        if (f <= 109 && f % 4 === 0) z.blt(SPARK, 0, 48, 64, 64, TEC_CENTER_CHAX + 6, STANDARD_CHAY + 76);
+      } else if (f <= 271) { // his close-up, the disc spinning, then thrown
+        const k0 = 31 + 151;
+        if (f === 271) z.cutFlag = true;
+        z.no = 2;
+        if (f === 151) z.seStop();
+        A.y = -160;
+        z.blt(KIEN_KRILLIN, 0, 0, 130, 168, 182, 130);
+        const row = f >= k0 + 15 ? 4 : f >= k0 - 15 ? 1 : 0;
+        let [kx, ky] = [250, 80];
+        if (f >= k0) { const [dx, dy] = kienSpin(f - k0, 6, 2); kx += dx; ky += dy; }
+        if (f >= k0 + 50) { if (f === k0 + 50) z.se('Z3 エネルギー波'); ky = 80 - 8 * (f - (k0 + 50)); kx += 12 * (f - (k0 + 50)); }
+        z.blt(Z3.kien, 0, 30 * row, 126, 30, kx, ky);
+      } else if (f === 272) {
+        z.displayOut(); z.chg = 9; A.x = -200; z.eff = 0; z.efp = 0; z.bars = false; z.se('Z1 逃げる'); G.x = CENTER_ENEX; G.y = STANDARD_ENEY;
+      } else if (f <= 334) { // 餃子 clings to it
+        z.back(1); z.efp = 88;
+        if (f === 294) { z.se('Z1 強打'); z.gx = 2; } else if (f === 296) z.gx = -2; else if (f === 298) z.gx = 0;
+      } else if (f <= 395) { // and holds it shaking
+        z.back(1);
+        if (f === 335) { z.efp = 88; z.se('Z3 超能力'); }
+        z.gx = (f - 335) % 2 === 0 ? 6 : -6;
+      } else if (f <= 426) { // the disc through it
+        if (f === 396) { z.se('Z1 エネルギー波2'); z.eff = 0; }
+        z.efp = 260;
+        if (f % 4 === 0) z.blt(SPARK, 0, 48, 64, 64, G.x + 86, STANDARD_ENEY + 28);
+      } else if (f === 427) return yield* z.finish();
+      yield* z.out(340, 200);
+    }
+  },
+});
+films({ 825: ['cmdPsychoKienretsu', 44] }, { cmdPsychoKienretsu: () => [...COMMON, KIEN_KRILLIN] });
+
+// ======================================================================================================
+// 841 信じる心 (2941 克林＋16號, all.rb 117681). 16號 below 克林 (pairIn); 克林 fires a kamehameha ball (203) and vanishes;
+// it hits (204) and 克林 appears behind the enemy (back 48), the explosion (102); 16號's rocket-punch close-up, then his
+// fist flies (273), damage 22.
+// ======================================================================================================
+const PUNCH_16 = pic('Z3_必殺技_ロケットパンチ(16号・左手).png'); // 382×314
+Object.assign(ComboDuel.prototype, {
+  * cmdShinjiru() {
+    const z = this.cmd, A = this.A, G = this.G;
+    for (;;) {
+      const f = z.top();
+      let rx = 0, ry = 0;
+      if (f === 0) { z.se('Z1 逃げる'); z.otype = 1; z.pose(0); }
+      else if (f <= 59) pairIn(z, f, 6, 23);
+      else if (f <= 140) {
+        if (f === 60) { z.se('Z1 気を溜める'); z.otype = 1; z.pose(2); z.color = 0; }
+        if (f >= 101 && f <= 105) z.pose(3);
+        if (f === 106) { z.seStop(); z.se('Z3 エネルギー波'); z.eff = 0; }
+        if (f >= 107) { // the ball
+          z.efp = 203; rx = 340 - 8; ry = 142 - 50;
+          if (f === 107) z.ax = 2; else if (f === 110) z.ax = -2; else if (f === 113) z.ax = 0;
+        }
+        z.back(118, TEC_CENTER_CHAX, STANDARD_CHAY + 50);
+      } else if (f <= 170) { z.efp = 0; if (f === 141) z.se('Z1 高速移動'); z.back(48, TEC_CENTER_CHAX + 12, STANDARD_CHAY + 76); }
+      else if (f === 180) { z.fxReset(); z.displayOut(); }
+      else if (f >= 181 && f <= 209) { // it hits; 克林 behind the enemy
+        z.efp = 204;
+        if (f >= 195) { if (f === 195) z.se('Z1 高速移動'); z.back(48, TEC_CENTER_CHAX - 200, STANDARD_CHAY + 24); }
+      } else if (f >= 210 && f <= 260) {
+        if (f === 210) { z.fxReset(); z.se('ZG 光線系ヒット2'); }
+        z.gx = -8;
+        z.back(48, TEC_CENTER_CHAX - 200, STANDARD_CHAY + 24);
+        z.efp = 102; z.gpose(16);
+        if (f >= 235) { z.gx = 0; z.gpose(0); }
+      } else if (f >= 261 && f <= 320) { // 16號's close-up
+        z.efp = 0; z.eff = 0; G.y = -200;
+        if (f === 261) z.se('DB3 気を溜める2');
+        z.blt(PUNCH_16, 0, 0, 382, 314, TEC_CENTER_CHAX - 148, STANDARD_CHAY - 106);
+      } else if (f >= 321 && f <= 378) { // the fist flies
+        if (f === 321) { z.se('Z1 ゴー'); z.t2 = 3; z.efp = 273; }
+        if (f <= 350) { rx = 138 - 16; ry = 156; z.eff = 0; G.y = STANDARD_CHAY; } else {
+          if (f === 351) { z.seStop(); z.se('DB3 エネルギー波1'); z.se('DB3 エネルギー波2'); }
+          z.t2 = 3; z.efp = 273; rx = 138; ry = 156;
+        }
+        z.back(118, TEC_CENTER_CHAX - 216, STANDARD_CHAY);
+      } else if (f === 379) return yield* z.finish();
+      yield* z.out(rx, ry);
+    }
+  },
+});
+films({ 841: ['cmdShinjiru', 22] }, { cmdShinjiru: () => [...COMMON, PUNCH_16] });
+
+// ======================================================================================================
+// 842 月を破壊する者 (2942 龜仙人＋比克, all.rb 117821). 比克 below 龜仙人 (pairIn); the full moon rises (no strips, no
+// cut-in); both fire half-round waves (white / green) that blow the moon away and go on to the enemy (damage 43).
+// ======================================================================================================
+const MOON = pic('Z1_戦闘_必殺技_満月.PNG'); // 11 frames of 48×48
+Object.assign(ComboDuel.prototype, {
+  * cmdMoonBreaker() {
+    const z = this.cmd, A = this.A;
+    for (;;) {
+      const f = z.top();
+      if (f === 0) { z.se('Z1 逃げる'); z.otype = 1; z.pose(0); }
+      else if (f <= 59) pairIn(z, f, 24, 4);
+      else if (f <= 199) { // the full moon rises
+        if (f === 60) { A.y = -200; z.se('Z1 満月'); z.otype = 1; z.pose(0); z.color = 0; z.bars = false; z.cut = false; z.efp = 0; }
+        const k = Math.min(10, Math.floor(f / 8)), h = Math.min(48, f * 2), up = f > 150 ? 300 : f * 2;
+        z.blt(MOON, 48 * k, 0, 48, h, 596 - up, 354 - up);
+      } else if (f <= 320) { // both charge
+        if (f === 200) {
+          z.seStop(); z.se('Z1 気を溜める'); z.se('Z1 気を溜める2'); z.otype = 1; z.pose(2); z.t2 = 2; z.color = 0;
+          A.y = STANDARD_CHAY - 50; z.bars = true; z.cut = true;
+        }
+        z.back(118, TEC_CENTER_CHAX, STANDARD_CHAY + 50);
+      } else if (f <= 440) { // and fire
+        const t = f - 321, rx = TEC_CENTER_CHAX + 84, ry = STANDARD_CHAY - 8;
+        if (t === 0) { z.pose(3); z.t2 = 3; z.seStop(); z.se('Z1 エネルギー波'); z.se('Z1 エネルギー波2'); z.fxReset(); }
+        z.blt(Z3.half[0], 0, 0, t * RS, 128, rx - 20, ry - 50);
+        z.blt(Z3.half[1], 0, 0, t * RS, 128, rx - 8, ry + 50 - 20);
+        z.back(118, TEC_CENTER_CHAX, STANDARD_CHAY + 50);
+      } else if (f <= 509) { // through the moon
+        const t = f - 441, ry = STANDARD_CHAY - 8;
+        if (t === 0) A.y = -200;
+        z.blt(MOON, 48 * 10, 0, 48, 48, 280, 144);
+        z.blt(Z3.half[0], 60, 0, t * RS, 128, 0, ry - 50);
+        z.blt(Z3.half[1], 60, 0, t * RS, 128, 0, ry + 50 + 2);
+        if (t === 20) { z.se('ZG 光線系ヒット2'); z.se('ZG 光線系ヒット3'); z.se('ZG 光線系ヒット3'); }
+      } else if (f === 510) { z.seStop(); z.fxReset(); z.displayOut(); z.se('Z1 エネルギー波'); z.se('Z1 エネルギー波2'); }
+      else if (f <= 537) { // on the enemy
+        const x = -700 + (f - 511) * RS, ry = STANDARD_CHAY - 8;
+        z.blt(Z3.half[0], 0, 128, 700, 128, x, ry - 50);
+        z.blt(Z3.half[1], 0, 128, 700, 128, x, ry + 50 + 2);
+      } else if (f === 538) return yield* z.finish();
+      yield* z.out();
+    }
+  },
+});
+films({ 842: ['cmdMoonBreaker', 43] }, { cmdMoonBreaker: () => [...COMMON, MOON] });

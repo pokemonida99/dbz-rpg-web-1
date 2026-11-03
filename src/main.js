@@ -388,16 +388,39 @@ Object.assign(game, { startZ2a, storyScenes, backdrop: () => trBackdrop(game) ||
 Object.assign(game, { startField, save, renderHud: () => renderHud(), showTitle: (sub, notes) => showTitle(sub, notes), nextChapter, startChapter4, startChapter5, startChapter6, startWillow, devChapter5: () => devChapter5(game), devChapter6: () => devChapter6(game), startZ2Ginyu: () => startZ2Ginyu(game), startZ2b: () => startZ2b(game) }); // for src/chapter*.js
 
 // ---------- title ----------
+// a save's part of the story: its line on the title, and the original's title picture for it (Scene_Title
+// create_title_graphic: Title / Title2 / Title3 / Title3_2 before perfect Cell, 3_3 after, 3_4 cleared / TitleG)
+function savePart(s) {
+  const z = String((s.flags && s.flags.z3) || '');
+  if (/^(tr|zg)/.test(z)) return ['ZG・時之間', 'TitleG'];
+  if (z === 'done') return ['Z4 之後', 'Title3_4'];
+  if (/^z4[ab]/.test(z)) return ['Z4', 'Title3_2'];
+  if (/^z4/.test(z)) return ['Z4', 'Title3_3'];
+  if (/^z3/.test(z)) return ['Z3', 'Title3'];
+  return (s.var && s.var[40]) >= 1 ? ['Z2', 'Title2'] : ['Z1', 'Title'];
+}
 function saveInfo(key) {
   try {
     const s = JSON.parse(localStorage.getItem(key));
     if (!s || !s.party || !s.party.length) return '';
-    const z = String((s.flags && s.flags.z3) || '');
-    const part = /^tr|^zg/.test(z) || s.trStory ? 'ZG・時之間' : z === 'done' ? 'Z4 之後' : /^z4/.test(z) ? 'Z4' : /^z3/.test(z) ? 'Z3'
-      : (s.var && s.var[40]) >= 1 ? 'Z2' : 'Z1';
     const m = s.party[0];
-    return `${part}　${m.name || ''} Lv${m.level || 1}${s.party.length > 1 ? ` 等 ${s.party.length} 人` : ''}`;
+    return `${savePart(s)[0]}　${m.name || ''} Lv${m.level || 1}${s.party.length > 1 ? ` 等 ${s.party.length} 人` : ''}`;
   } catch (e) { return ''; }
+}
+function savePic(key) { try { const s = JSON.parse(localStorage.getItem(key)); return s && s.party ? savePart(s)[1] : 'Title'; } catch (e) { return 'Title'; } }
+// 篇章選擇: each part from its start (the same hand-over states the chapters' ?dev jumps build), with the original's
+// title picture for it
+const PARTS = [
+  { k: 'z1', no: 'Z1', name: '強襲！賽亞人', pic: 'Title', info: '拉蒂茲來襲，從頭開始' },
+  { k: 'z2', no: 'Z2', name: '激神弗利薩！！', pic: 'Title2', info: '前往那美克星' },
+  { k: 'z3', no: 'Z3', name: '烈戰人造人間', pic: 'Title3', info: '集龍珠、古拉、人造人間' },
+  { k: 'z4', no: 'Z4', name: '激戰賽魯遊戲！！', pic: 'Title3_2', info: '賽魯誕生的秘密' },
+  { k: 'zga', no: 'ZG', name: '外傳 賽亞人絕滅計畫', pic: 'TitleG', info: '巴達克一夥、毀滅瓦斯' },
+];
+function startPart(k) {
+  title.hidden = true;
+  if (k === 'z2') return devZ2a(game, 'z2');
+  devZ3(game, k);
 }
 const title = document.getElementById('title');
 // notes: lines under the subtitle (after Z1: what the original opens next)
@@ -410,7 +433,7 @@ function showTitle(sub, notes) {
   // the one big button is what most people want: carry on when there is a save, a new game when there isn't
   const card = (a, label, info, big) => `<button class="tb${big ? ' big' : ''}" data-a="${a}"><span class="tl">${label}</span>${info ? `<span class="ti">${info}</span>` : ''}</button>`;
   title.innerHTML = `<div class="t-stars"></div>
-    <img class="t-art" src="${assetUrl('Graphics/System/Title.png')}" alt="DRAGON BALL Z 強襲！サイヤ人">
+    <img class="t-art" src="${assetUrl(`Graphics/System/${main ? savePic(SAVE_KEY) : 'Title'}.png`)}" alt="DRAGON BALL Z">
     <div class="sub">${sub || '重製版・Z1～Z4・時之間・ZG'}</div>
     <div class="t-balls">${balls}</div>
     ${notes ? `<div class="note unlocks">接下來開放：<br>${notes.join('<br>')}</div>` : ''}
@@ -418,6 +441,7 @@ function showTitle(sub, notes) {
       ${main ? card('cont', '繼續遊戲', main, true) : card('new', '新的開始', '從 Z1 拉蒂茲篇開始冒險', true)}
       <div class="t-row">
         ${main ? card('new', '新的開始', '') : ''}
+        ${card('parts', '選擇篇章', '')}
         ${auto ? card('auto', '自動存檔', auto) : ''}
       </div>
     </div>
@@ -427,6 +451,8 @@ function showTitle(sub, notes) {
     const a = e.target.closest('[data-a]');
     if (!a) return;
     audio.unlock();
+    if (a.dataset.a === 'parts') return showParts(main);
+    if (a.dataset.a === 'new' && main && !a.dataset.sure) return askOverwrite(a, () => a.click()); // (a new game saves over it)
     title.hidden = true;
     if (a.dataset.a === 'cont' || a.dataset.a === 'auto') { if (load(a.dataset.a === 'auto' ? AUTO_KEY : SAVE_KEY)) recap(); return; }
     if (a.dataset.a === 'new') await playStory(game.world); // the opening story, then the field
@@ -439,6 +465,38 @@ function showTitle(sub, notes) {
     game.field.paused = false;
     save(true);
   };
+}
+
+// 篇章選擇 over the title: one card per part with its original title picture; back returns to the title
+function showParts(hasSave) {
+  const el = document.createElement('div');
+  el.className = 't-parts';
+  el.innerHTML = `<div class="tp-head">選擇篇章</div><div class="tp-note">從各篇的開頭開始，等級與隊伍和照順序玩到那裡差不多</div>
+    ${PARTS.map((p) => `<button class="tp" data-k="${p.k}"><img src="${assetUrl(`Graphics/System/${p.pic}.png`)}" alt=""><span class="tp-bar"><span class="tp-no">${p.no}</span><span class="tp-txt"><span class="tp-name">${p.name}</span><span class="tp-info">${p.info}</span></span></span></button>`).join('')}
+    <button class="tb tp-back" data-k="back"><span class="tl">返回</span></button>`;
+  el.onclick = (e) => {
+    e.stopPropagation();
+    const b = e.target.closest('[data-k]');
+    if (!b) return;
+    if (b.dataset.k === 'back') { el.remove(); return; }
+    const go = () => { el.remove(); if (b.dataset.k === 'z1') { const n = title.querySelector('[data-a=new]'); n.dataset.sure = 1; n.click(); } else startPart(b.dataset.k); };
+    if (hasSave && !b.dataset.sure) askOverwrite(b, go); else go();
+  };
+  title.appendChild(el);
+}
+// a save is there: say what starting over does, and start only on a second tap
+function askOverwrite(btn, go) {
+  const bar = document.createElement('div');
+  bar.className = 't-ask';
+  bar.innerHTML = `<div>開始後會蓋掉目前的存檔，確定嗎？</div><div class="t-row"><button class="tb big" data-y="1"><span class="tl">確定開始</span></button><button class="tb" data-y="0"><span class="tl">取消</span></button></div>`;
+  bar.onclick = (e) => {
+    e.stopPropagation();
+    const y = e.target.closest('[data-y]');
+    if (!y) return;
+    bar.remove();
+    if (y.dataset.y === '1') { btn.dataset.sure = 1; go(); }
+  };
+  title.appendChild(bar);
 }
 
 // ---------- main loop ----------

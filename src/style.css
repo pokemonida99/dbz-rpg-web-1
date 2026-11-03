@@ -119,6 +119,20 @@ button { font: inherit; color: inherit; -webkit-appearance: none; appearance: no
 #title .tb.big .tl { font-size: 26px; letter-spacing: .14em; }
 #title .tb.big .ti { color: #3a1600; font-size: 13px; }
 #title .tb.big:active { transform: translateY(4px); box-shadow: inset 0 3px 0 #ffc04a, inset 0 -4px 0 #c25a10, 0 1px 0 #5a1e00; }
+#title .t-parts, #title .t-ask { position: absolute; inset: 0; z-index: 2; background: #05050c; overflow-y: auto; touch-action: pan-y; padding: calc(var(--safe-t) + 14px) 16px calc(var(--safe-b) + 16px); display: flex; flex-direction: column; gap: 10px; }
+#title .t-ask { justify-content: center; align-items: center; text-align: center; color: var(--gold); font-size: 17px; gap: 16px; background: rgba(5,5,12,.94); }
+#title .t-ask .t-row { width: min(100%, 320px); }
+#title .tp-head { color: var(--gold); font-size: 22px; text-align: center; letter-spacing: .2em; }
+#title .tp-note { color: #8a8aa8; font-size: 12px; text-align: center; margin-top: -4px; }
+#title .tp { position: relative; display: block; width: 100%; padding: 0; border: 3px solid #2a3570; background: #000; font: inherit; text-align: left; flex: none; }
+#title .tp img { display: block; width: 100%; aspect-ratio: 4 / 1.5; object-fit: cover; object-position: top; image-rendering: pixelated; }
+#title .tp .tp-bar { display: flex; align-items: stretch; background: #0b0f2a; border-top: 3px solid #2a3570; }
+#title .tp .tp-no { flex: none; width: 56px; display: flex; align-items: center; justify-content: center; background: #f08a1c; color: #101848; font-size: 20px; border-right: 3px solid #5a1e00; }
+#title .tp .tp-txt { display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: 6px 10px; }
+#title .tp .tp-name { color: #fff4c8; font-size: 16px; }
+#title .tp .tp-info { color: #c9b38a; font-size: 12px; }
+#title .tp:active { border-color: #f08a1c; }
+#title .tp-back { flex: none; margin-top: 4px; }
 #title .note { color: #7d7d9a; font-size: 11px; text-align: center; line-height: 1.6; }
 #title .note.unlocks { color: #c9b38a; font-size: 12px; border: 2px solid #2a3570; padding: 6px 10px; background: #0b0f2a; }
 

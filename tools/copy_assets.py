@@ -11,6 +11,8 @@ src = sys.argv[1]
 world = json.load(open(os.path.join(root, 'data', 'world.json'), encoding='utf-8'))
 
 files = {f'Graphics/System/{n}.png' for n in ['TileA1', 'TileA2', 'TileA3', 'TileA4', 'TileA5', 'TileB', 'TileC', 'TileD', 'TileE', 'Title']}
+# the original's title pictures by progress (Scene_Title create_title_graphic): the title screen and the 篇章選擇
+files |= {f'Graphics/System/{n}.png' for n in ['Title2', 'Title2_0', 'Title2_1', 'Title2_2', 'Title2_3', 'Title3', 'Title3_2', 'Title3_3', 'Title3_4', 'TitleG']}
 files |= {'Graphics/Characters/chara_fly1.png', 'Graphics/Characters/enemy1.png', 'Graphics/Pictures/GBZ1 顔アイコン.PNG',
           'Graphics/Pictures/Z1_戦闘_背景.PNG', 'Graphics/Pictures/Z1_戦闘_必殺技_エネルギー波_敵_中.PNG',
           'Graphics/Pictures/カード関係.PNG', 'Graphics/System/Z1_Window.png',

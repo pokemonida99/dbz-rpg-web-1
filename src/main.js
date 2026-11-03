@@ -3,10 +3,11 @@ import { TEST, showTestMenu, startTestBoost } from './testmode.js?v=20261103-151
 import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION } from './core.js?v=20261103-1518';
 import { tileSheetPaths } from './tiles.js?v=20261103-1518';
 import { Field, fieldImages, nextEncounterSteps } from './field.js?v=20261103-1518';
+import { ANIME_IMAGES } from './anime.js?v=20261103-1518';
 import { Battle, battleImages, newHand, rollEncounter, setCardGame } from './battle.js?v=20261103-1518';
 import { makeMember, levelUp } from './party.js?v=20261103-1518';
 import { runEvent } from './events.js?v=20261103-1518';
-import { playOpening, playStory } from './opening.js?v=20261103-1518'; // the original's title animation and opening story
+import { playOpening, playStory, openingImages } from './opening.js?v=20261103-1518'; // the original's title animation and opening story
 import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapterBoss } from './chapter2.js?v=20261103-1518';
 import { fieldMenuHtml, openEntry } from './partymenu.js?v=20261103-1518'; // 隊伍・卡牌・組合技・作戰
 import { setItemsWorld, bubbles } from './items.js?v=20261103-1518'; // item cards (its 卡牌 menu entry registers itself)
@@ -191,6 +192,7 @@ const game = {
 
   async startBattle(enemyIds, boss, opts) {
     this.busy = true;
+    if (this.preload) await this.preload; // (the move films' pictures, fetched in the background since the title)
     this.field.leave();
     this.field.paused = true;
     hud.hidden = true;
@@ -386,22 +388,40 @@ Object.assign(game, { startZ2a, storyScenes, backdrop: () => trBackdrop(game) ||
 Object.assign(game, { startField, save, renderHud: () => renderHud(), showTitle: (sub, notes) => showTitle(sub, notes), nextChapter, startChapter4, startChapter5, startChapter6, startWillow, devChapter5: () => devChapter5(game), devChapter6: () => devChapter6(game), startZ2Ginyu: () => startZ2Ginyu(game), startZ2b: () => startZ2b(game) }); // for src/chapter*.js
 
 // ---------- title ----------
+function saveInfo(key) {
+  try {
+    const s = JSON.parse(localStorage.getItem(key));
+    if (!s || !s.party || !s.party.length) return '';
+    const z = String((s.flags && s.flags.z3) || '');
+    const part = /^tr|^zg/.test(z) || s.trStory ? 'ZG・時之間' : z === 'done' ? 'Z4 之後' : /^z4/.test(z) ? 'Z4' : /^z3/.test(z) ? 'Z3'
+      : (s.var && s.var[40]) >= 1 ? 'Z2' : 'Z1';
+    const m = s.party[0];
+    return `${part}　${m.name || ''} Lv${m.level || 1}${s.party.length > 1 ? ` 等 ${s.party.length} 人` : ''}`;
+  } catch (e) { return ''; }
+}
 const title = document.getElementById('title');
 // notes: lines under the subtitle (after Z1: what the original opens next)
 function showTitle(sub, notes) {
   if (game.field) { game.field.leave(); game.field.paused = true; }
   hud.hidden = true;
   audio.playBgm(game.world.titleBgm);
-  const has = !!localStorage.getItem(SAVE_KEY);
-  title.innerHTML = `<img src="${assetUrl('Graphics/System/Title.png')}" alt="">
+  const main = saveInfo(SAVE_KEY), auto = saveInfo(AUTO_KEY);
+  const balls = Array.from({ length: 7 }, (_, k) => `<i style="--k:${k};background-position:${-40 * k}px 0"></i>`).join('');
+  // the one big button is what most people want: carry on when there is a save, a new game when there isn't
+  const card = (a, label, info, big) => `<button class="tb${big ? ' big' : ''}" data-a="${a}"><span class="tl">${label}</span>${info ? `<span class="ti">${info}</span>` : ''}</button>`;
+  title.innerHTML = `<div class="t-stars"></div>
+    <img class="t-art" src="${assetUrl('Graphics/System/Title.png')}" alt="DRAGON BALL Z 強襲！サイヤ人">
     <div class="sub">${sub || '重製版・Z1～Z4・時之間・ZG'}</div>
+    <div class="t-balls">${balls}</div>
     ${notes ? `<div class="note unlocks">接下來開放：<br>${notes.join('<br>')}</div>` : ''}
     <div class="actions">
-      <button class="btn" data-a="new">新的開始</button>
-      ${has ? '<button class="btn" data-a="cont">繼續遊戲</button>' : ''}
-      ${localStorage.getItem(AUTO_KEY) ? '<button class="btn" data-a="auto">自動存檔</button>' : ''}
+      ${main ? card('cont', '繼續遊戲', main, true) : card('new', '新的開始', '從 Z1 拉蒂茲篇開始冒險', true)}
+      <div class="t-row">
+        ${main ? card('new', '新的開始', '') : ''}
+        ${auto ? card('auto', '自動存檔', auto) : ''}
+      </div>
     </div>
-    <div class="note">拖曳畫面下半部移動・點擊對話框繼續<br>原作：ドラゴンボールZ RPG（同人作品）<br>版本 ${VERSION}</div>`;
+    <div class="note">下半部拖曳移動・點對話框繼續　版本 ${VERSION}<br>原作：ドラゴンボールZ RPG（同人作品）</div>`;
   title.hidden = false;
   title.onclick = async (e) => {
     const a = e.target.closest('[data-a]');
@@ -455,16 +475,26 @@ async function boot() {
   if (!(await ensureLatest())) return;
   view.resize();
   window.addEventListener('resize', () => view.resize());
+  const B = window.__boot || { set() {}, ready: async () => {}, done() {} }; // the dragon-ball loading screen (index.html)
+  B.set(0.3);
   game.world = await (await fetch('data/world.json?v=20261103-1518')).json();
+  B.set(0.45);
   setCutsceneWorld(game.world);
   setFaces(game.world.faces);
   setItemsWorld(game.world);
   setGrowthWorld(game.world);
   const faceSheets = new Set(Object.values(game.world.faces).map((f) => f[0]));
-  await loadImages([...tileSheetPaths, ...fieldImages, ...battleImages(game.world), FACES, ...faceSheets]);
+  // what the map, the menus, the first battle and the opening need; the move films' 200-odd pictures come after the title
+  const films = new Set(ANIME_IMAGES);
+  const first = [...new Set([...tileSheetPaths, ...fieldImages, ...battleImages(game.world).filter((p) => !films.has(p)), FACES, ...faceSheets, ...openingImages()])];
+  let got = 0;
+  await Promise.all(first.map((p) => img(p).p.then(() => B.set(0.45 + (0.55 * ++got) / first.length))));
+  const later = () => { if (!game.preload) game.preload = loadImages([...films]).then(() => { game.preload = null; }); };
   setFieldGame(game);
   setCardGame(game); // the card schools change from 概況 11 on
   startTestBoost(game); // 測試模式 (?test): Lv 99, full cards, no encounters
+  const dev0 = new URLSearchParams(location.search).get('dev');
+  if (dev0 || TEST) { B.done(); later(); }
   if (showTestMenu()) { requestAnimationFrame(frame); return; }
   const dev = new URLSearchParams(location.search).get('dev'); // ?dev=ch6 / ch6earth / ch6vegeta: jump to chapter 6
   if (dev && dev.startsWith('ch6')) { title.hidden = true; devChapter6(game, dev); requestAnimationFrame(frame); return; }
@@ -472,7 +502,14 @@ async function boot() {
   if (dev && dev.startsWith('willow')) { title.hidden = true; devWillow(game, dev); requestAnimationFrame(frame); return; } // ?dev=willow / willow51 / willowboss
   if (dev && /^(z3|z4|tr|zg|csq|cda|cdb|cst|tac|pas|etf|ovw|flg|cmb|cma|cmc|cmd|grw|sys|viz|skc|cos|anga|anpv|anzb|ancb|ancc|andt|anda|aen1|aen2|aen3|aen4)/.test(dev)) { title.hidden = true; if (devZ3(game, dev)) { requestAnimationFrame(frame); return; } title.hidden = false; } // Z3 (src/z3*.js)
   if (dev && dev.startsWith('z2')) { title.hidden = true; devZ2a(game, dev); requestAnimationFrame(frame); return; } // ?dev=z2 / z2b / z2c / z2d
-  if (!options.skipOp) await playOpening(); // the title animation, like the original plays before its title screen
+  if (!options.skipOp) {
+    B.onTap = () => audio.unlock(); // (inside the tap itself: iOS plays sound only after a gesture)
+    await B.ready(); // all seven balls: 「點一下開始」
+    later();
+    const op = playOpening(true); // the title animation, like the original plays before its title screen
+    B.done();
+    await op;
+  } else { B.done(); later(); }
   showTitle();
   if (new URLSearchParams(location.search).get('dev') === 'ch5') { title.hidden = true; devChapter5(game); } // testing: start at the Garlic area
   requestAnimationFrame(frame);

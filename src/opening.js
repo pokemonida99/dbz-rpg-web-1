@@ -170,16 +170,19 @@ export function blt(c, path, x, y, w, h, sx = 0, sy = 0) {
 
 // Plays the title animation; resolves when it ends or is skipped. The browser needs a tap before it can play
 // the music, so it waits for one first.
-export async function playOpening() {
+export const openingImages = () => [...OP.nami, OP.kumo, ...OP.hikaru, ...OP.db, ...OP.uchu, ...OP.ship];
+// tapped: the boot screen's 「點一下開始」 already unlocked the sound, so no tap prompt of its own
+export async function playOpening(tapped = false) {
   const ui = overlay();
-  const all = [...OP.nami, OP.kumo, ...OP.hikaru, ...OP.db, ...OP.uchu, ...OP.ship];
-  const loading = loadImages(all);
-  const tap = document.createElement('div');
-  tap.className = 'tap';
-  tap.textContent = '點一下開始';
-  ui.el.appendChild(tap);
-  await new Promise((res) => { ui.onTap = res; ui.onSkip.push(res); });
-  tap.remove();
+  const loading = loadImages(openingImages());
+  if (!tapped) {
+    const tap = document.createElement('div');
+    tap.className = 'tap';
+    tap.textContent = '點一下開始';
+    ui.el.appendChild(tap);
+    await new Promise((res) => { ui.onTap = res; ui.onSkip.push(res); });
+    tap.remove();
+  }
   if (ui.skipped) { ui.close(); return; }
   await loading;
   audio.playBgm('Z1 オープニング');

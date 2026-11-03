@@ -12,9 +12,70 @@
 <link rel="apple-touch-icon" href="assets/icons/goku_180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/goku_192.png">
 <link rel="manifest" href="manifest.webmanifest">
+<style>
+/* the dragon-ball loading screen: here in the page so it shows before the 100 modules arrive (src/main.js drives it) */
+#boot { position: fixed; inset: 0; z-index: 90; background: #05050c; color: #ffd27a; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 22px; font-family: "Cubic11", "PingFang TC", sans-serif; transition: opacity .25s steps(3); }
+#boot.out { opacity: 0; pointer-events: none; }
+#boot .st { position: absolute; left: 0; top: 0; width: 1px; height: 1px; }
+#boot .logo { width: min(84vw, 360px); image-rendering: pixelated; position: relative; }
+#boot .sub { margin-top: -14px; font-size: 15px; letter-spacing: .3em; color: #8fb4ff; position: relative; }
+#boot .balls { display: flex; gap: 6px; position: relative; }
+#boot .balls i { width: 40px; height: 40px; background: url("assets/ui/dballs.png?v=20261103-1518") 0 0 / 280px 40px no-repeat;
+  image-rendering: pixelated; filter: grayscale(1) brightness(.28); }
+#boot .balls i.on { filter: none; animation: bt-pop .36s steps(4); }
+#boot.full .balls i { animation: bt-hop .9s steps(3) infinite; animation-delay: calc(var(--k) * .09s); }
+@keyframes bt-pop { 0% { transform: scale(1.6); filter: brightness(2.4); } 100% { transform: scale(1); } }
+@keyframes bt-hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-7px); } }
+#boot .msg { font-size: 15px; color: #c9b38a; min-height: 20px; position: relative; }
+#boot .msg b { color: #ffd27a; font-weight: 400; }
+#boot .go { position: relative; margin-top: 4px; padding: 14px 34px 12px; font: inherit; font-size: 22px; letter-spacing: .12em; color: #101848;
+  background: #f08a1c; border: 3px solid #5a1e00; box-shadow: inset 0 3px 0 #ffc04a, inset 0 -4px 0 #c25a10, 0 5px 0 #5a1e00; border-radius: 0;
+  animation: bt-blink 1.1s steps(2) infinite; }
+#boot .go:active { transform: translateY(4px); box-shadow: inset 0 3px 0 #ffc04a, inset 0 -4px 0 #c25a10, 0 1px 0 #5a1e00; }
+@keyframes bt-blink { 50% { color: #fff4c8; } }
+</style>
 <link rel="stylesheet" href="src/style.css?v=20261103-1518">
 </head>
 <body>
+<div id="boot">
+  <div class="st"></div>
+  <img class="logo" src="assets/ui/logo.png?v=20261103-1518" alt="DRAGON BALL Z">
+  <div class="sub">重製版</div>
+  <div class="balls"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i></div>
+  <div class="msg">收集龍珠中… <b>0</b> / 7</div>
+  <button class="go" hidden>點一下開始</button>
+</div>
+<script>
+// window.__boot: set(0..1) lights the balls, ready() waits for 「點一下開始」 (onTap runs inside the tap: the sound unlock),
+// done() fades the screen out. Until main.js takes over, the first two balls come on by themselves while the code loads.
+(function () {
+  var el = document.getElementById('boot'), balls = el.querySelectorAll('.balls i'), msg = el.querySelector('.msg'), go = el.querySelector('.go');
+  balls.forEach(function (b, k) { b.style.backgroundPosition = (-40 * k) + 'px 0'; });
+  var st = el.querySelector('.st'), sh = [];
+  for (var i = 0; i < 90; i++) sh.push(Math.round(Math.random() * innerWidth) + 'px ' + Math.round(Math.random() * innerHeight) + 'px 0 ' + (i % 9 ? 0 : 1) + 'px ' + (i % 4 ? '#5a6aa8' : '#e8ecff'));
+  st.style.boxShadow = sh.join(',');
+  var shown = 0, want = 0, res = null;
+  function draw(n) {
+    while (shown < n) balls[shown++].className = 'on';
+    msg.innerHTML = n < 7 ? '收集龍珠中… <b>' + n + '</b> / 7' : '龍珠到齊了！';
+    if (n >= 7) el.classList.add('full');
+  }
+  var B = window.__boot = {
+    onTap: null,
+    set: function (p) { want = Math.max(want, Math.min(7, Math.floor(p * 7 + 0.001))); draw(want); },
+    ready: function () {
+      B.set(1);
+      go.hidden = false;
+      return new Promise(function (r) { res = r; });
+    },
+    done: function () { el.classList.add('out'); setTimeout(function () { el.remove(); }, 400); }
+  };
+  go.addEventListener('pointerdown', function (e) { e.preventDefault(); if (!res) return; if (B.onTap) B.onTap(); go.hidden = true; var r = res; res = null; r(); });
+  setTimeout(function () { B.set(1 / 7); }, 250);
+  setTimeout(function () { B.set(2 / 7); }, 900);
+})();
+</script>
 <div id="app">
   <canvas id="view"></canvas>
   <div id="hud"></div>

@@ -1406,3 +1406,156 @@ Object.assign(ComboDuel.prototype, {
   },
 });
 films({ 860: ['cmdShiteiKai', 44], 861: ['cmdShiteiKai', 44] }, { cmdShiteiKai: () => [...COMMON, MAKUU, ...MAKANKO_FG] });
+
+// ======================================================================================================
+// 824 未来のZ戦士 (2924 超未來悟飯＋超特蘭克斯, all.rb 114026). Two versions by 特蘭克斯's clothes (variable 173): 0 / 4 —
+// 特蘭克斯 flies up, comes down at the enemy and cuts it (the sword effects 267-269; with 0 the シャイニングソード
+// アタック picture), then dashes and strikes; 1-3 — 悟飯 dashes in and strikes, later 特蘭克斯 kicks it. Both: 悟飯
+// knocks it across and back and down and up (the shared middle, 2924's 680-899 / 350-569), both charge and fire (295,
+// then 48), damage 44.
+// ======================================================================================================
+const SHINING = [pic('Z3_必殺技_シャイニングソードアタック.png'), pic('Z3_必殺技_シャイニングソードアタック(フリーザ付).png')]; // 340×346
+// the shared middle, `k` in the 0 / 4 version's numbering (680-899); `cutOn`: when the spark of 756 goes (the 0 / 4
+// version clears it at once — its `>= 374` is always true)
+function futureMiddle(z, k, s756cut, rays) {
+  const A = z.d.A, G = z.d.G;
+  if (k === 680) { z.pose(15); A.x = 740; A.y = STANDARD_ENEY; }
+  else if (k <= 694) A.x -= 28;
+  else if (k <= 715) {
+    if (k === 695) { z.se('ZG 打撃2'); A.x -= 28; }
+    z.efp = k >= 703 ? 0 : 123; rays[0] = 324; rays[1] = 158;
+    z.pose(17); z.gpose(17); G.x -= 20;
+  } else if (k <= 734) { if (k === 716) z.se('Z1 飛ぶ'); z.pose(15); A.x -= 28; G.x -= 20; }
+  else if (k === 735) { z.fxReset(); A.x = 900; A.y = STANDARD_ENEY; G.x = 640; G.y = STANDARD_ENEY; }
+  else if (k <= 754) { A.x -= 28; G.x -= 20; }
+  else if (k === 755) { z.se('ZG 打撃5'); A.x -= 28; z.pose(16); }
+  else if (k <= 779) { z.efp = k >= s756cut ? 0 : 123; rays[0] = 324; rays[1] = 158; G.x -= 4; G.y += 16; }
+  else if (k === 780) {
+    z.fxReset(); z.cut = false; z.cutFlag = false; z.no = 1;
+    A.x = CENTER_CHAX - 30; A.y = -184; G.x = CENTER_ENEX - 40; G.y = -140; z.pose(10); z.se('Z1 飛ぶ');
+  } else if (k <= 794) { G.y += 16; A.y += 24; A.x += 4; }
+  else if (k === 795) { z.pose(18); z.se('ZG 打撃1'); }
+  else if (k <= 829) { if (k % 4 === 0) G.x += 4; else if (k % 2 === 0) G.x -= 4; A.y -= 4; G.y -= 4; }
+  else if (k === 830) { z.otype = 1; z.pose(20); z.se('ZG 打撃4'); }
+  else if (k <= 859) { A.y += 2; G.y += 16; }
+  else if (k === 860) { z.se('Z1 飛ぶ'); z.pose(29); }
+  else if (k <= 879) { A.y -= 16; A.x -= 16; }
+}
+// the end, `k` in the 0 / 4 version's numbering (900-1154); true when it is over
+function futureFinal(z, k, suit) {
+  const A = z.d.A, bx = 234, by_ = -18 + 54 + 50;
+  if (k === 900) {
+    z.cut = true; z.cutFlag = true; z.no = 0; z.otype = 1; z.chg = 26; z.c2 = 20; z.efp = 92;
+    z.se('Z3 変身'); z.se('Z1 気を溜める'); z.se('Z1 気を溜める4'); z.se('Z1 気を溜める6');
+    z.color = 3; A.x = TEC_CENTER_CHAX; A.y = STANDARD_CHAY - 50;
+    z.back(118, TEC_CENTER_CHAX, STANDARD_CHAY + 50);
+  } else if (k <= 1027) {
+    if (k === 901) { z.efp = 0; z.eff = 0; z.pose(4); z.t2 = suit ? 12 : 10; z.color = 3; }
+    if (k === 961) z.pose(5);
+    z.back(201, bx - 8, by_ + 50); z.bf--;
+    z.back(201, bx - 8, by_ - 50); z.bf--;
+    z.back(118, TEC_CENTER_CHAX, STANDARD_CHAY + 50);
+  } else if (k <= 1126) {
+    if (k === 1028) { z.seStop(); z.se('Z1 エネルギー波'); z.se('Z1 大猿'); z.se('ZG 光線1'); A.x += 2; z.pose(2); z.t2 = suit ? 13 : 11; z.efp = 295; }
+    z.back(118, TEC_CENTER_CHAX, STANDARD_CHAY + 50);
+  } else if (k === 1127) { z.fxReset(); z.gpose(16); z.displayOut(); }
+  else if (k <= 1153) z.efp = 48;
+  else if (k === 1154) return true;
+  return false;
+}
+Object.assign(ComboDuel.prototype, {
+  * cmdFutureZ() {
+    const z = this.cmd, A = this.A, G = this.G, c173 = v(173), suit = [1, 2, 3].includes(c173), bx = 234, by_ = -18 + 54 + 50;
+    const ss4 = !!this.crew[20], cuts = [[500, 4, 22, 267, 8, -22], [510, 6, 22, 268, 5, -22], [520, 4, 22, 267, 3, -16], [530, 4, 16, 269, 5, -22],
+      [540, 4, 22, 267, 8, -22], [550, 6, 22, 268, 5, -22], [560, 4, 22, 267, 3, -16], [570, 4, 16, 269]]; // the sword strokes
+    for (;;) {
+      const f = z.top();
+      const rays = [324, 80];
+      if (f === 0) { z.se('Z1 逃げる'); z.otype = 1; z.pose(0); }
+      else if (f <= 59) pairIn(z, f, 26, 20);
+      else if (f === 60) { z.se('Z3 変身'); z.se('Z1 気を溜める'); z.color = 3; }
+      else if (f <= 187) {
+        z.efp = 0; z.eff = 0; z.pose(4); z.t2 = 0; z.color = 3;
+        z.back(201, bx - 8, by_ + 50); z.bf--;
+        z.back(201, bx - 8, by_ - 50); z.bf--;
+        z.back(118, TEC_CENTER_CHAX, STANDARD_CHAY + 50);
+      } else if (!suit) { // ---- 0 / 4: the sword ----
+        if (f <= 247) { // 特蘭克斯 flies up
+          if (f === 188) { z.t2 = 16; z.se('Z1 飛ぶ'); }
+          z.back(201, bx - 8, by_ - 50);
+          z.back(117, TEC_CENTER_CHAX, STANDARD_CHAY + 50 - (f - 188) * 24); z.bf--;
+          if (f === 247) { z.f = 370; z.seStop(); }
+        } else if (f === 371) { // and comes down at the enemy
+          z.chg = 20; z.no = 3; z.otype = 1; z.pose(3); z.gpose(0);
+          A.x = CENTER_ENEX - (96 + 8 * 49); A.y = STANDARD_ENEY - 8 * 49;
+          G.x = CENTER_ENEX + 8 * 52; G.y = STANDARD_ENEY + 8 * 52;
+          z.gy = 0; z.fxReset();
+        } else if (f <= 590) {
+          if (f <= 420) { A.x += 8; A.y += 8; }
+          if (f <= 450) { // (@effect_anime_* as a 3-frame timer: he wobbles)
+            if (z.eft === 0 && z.eff === 0) A.x += 4; else if (z.eft === 1 && z.eff === 0) A.x -= 4;
+            if (z.eff >= 2) { z.eft = z.eft === 0 ? 1 : 0; z.eff = 0; } else z.eff++;
+          }
+          if (f >= 430 && f <= 455) {
+            G.x -= 16; G.y -= 16;
+            if (f === 455) { z.pose(4); A.x += 16; z.se('DB3 刀'); z.cut = true; if (c173 !== 0 && ss4) z.efp = 269; }
+          }
+          if (f >= 455 && f <= 491 && c173 === 0 && ss4) { // the シャイニングソードアタック picture
+            A.y = -200; G.y = -200;
+            if (v(96) === 1) z.cut = false;
+            z.blt(SHINING[v(96) === 1 ? 1 : 0], 0, 0, 340, 346, 100, 10);
+          }
+          if (f === 492) { z.cut = true; A.y = 120; G.y = 120; z.pose(5); A.x -= 22; }
+          for (const [at, p1, dx, fx, p2, dx2] of cuts) {
+            if (f === at) { z.se('DB3 刀'); z.pose(p1); A.x += dx; z.rt = 0; z.rf = 0; z.efp = fx; }
+            else if (p2 != null && f === at + 6) { z.pose(p2); A.x += dx2; }
+          }
+          if (z.efp === 267 || z.efp === 268) { rays[0] = 228; rays[1] = 134 - 16; }
+          else if (z.efp === 269 || z.efp === 270) { rays[0] = 292; rays[1] = 70; }
+          else if (z.efp === 256) { rays[0] = 336 - 32; rays[1] = 112; }
+        } else if (f <= 622) { // he dashes back and in
+          const g = f - 591;
+          if (g === 0) { z.no = 0; z.seStop(); z.se('Z1 飛ぶ'); z.pose(16); z.otype = 0; }
+          if (g <= 15) A.x -= 8; else if (g >= 24) { A.x += 24; if (g === 27) z.pose(3); }
+        } else if (f <= 650) { if (f === 623) { z.se('Z1 強打'); z.gpose(16); } G.x += 24; G.y -= 16; }
+        else if (f <= 679) { // 悟飯 brings it back
+          const s = 651;
+          if (f === s) { G.x = -100; G.y = STANDARD_ENEY + 50; A.x = -150; A.y = STANDARD_ENEY + 50; z.se('Z1 飛ぶ'); z.chg = 26; z.otype = 1; z.pose(10); }
+          if (f <= s + 23) { G.x += 16; G.y -= 2; } else z.gpose(0);
+          A.x += 28; A.y -= 4;
+        } else if (f <= 899) futureMiddle(z, f, 374, rays);
+        else if (futureFinal(z, f, suit)) return yield* z.finish();
+      } else { // ---- 1-3: 悟飯 first ----
+        if (f <= 240) { // 悟飯 flies off
+          if (f === 188) { z.se('Z1 飛ぶ'); z.pose(7); } else A.x += 20;
+          z.back(201, bx - 8, by_ + 50); z.bf--;
+          z.back(118, TEC_CENTER_CHAX, STANDARD_CHAY + 50);
+        } else if (f === 241) { z.seStop(); G.x = CENTER_ENEX; G.y = STANDARD_ENEY; z.otype = 1; A.x = -320; A.y = STANDARD_CHAY; }
+        else if (f <= 270) A.x += 20;
+        else if (f === 271) { z.pose(11); z.se('Z1 強打'); }
+        else if (f <= 300) { z.gpose(16); z.efp = 0; G.x += 20; G.y -= 4; } // (the spark of 123 goes at once: `>= 220`)
+        else if (f <= 320) { z.fxReset(); A.x += 24; A.y -= 4; z.pose(10); }
+        else if (f <= 349) {
+          const s = 321;
+          if (f === s) { G.x = -100; G.y = STANDARD_ENEY + 50; A.x = -150; A.y = STANDARD_ENEY + 50; }
+          if (f <= s + 23) { G.x += 16; G.y -= 2; } else z.gpose(0);
+          A.x += 28; A.y -= 4;
+        } else if (f <= 569) futureMiddle(z, f + 330, 434 + 330, rays);
+        else if (f <= 583) { // 特蘭克斯 flies in
+          if (f === 570) { z.se('Z1 飛ぶ'); A.x = -96; A.y = STANDARD_CHAY; G.y = -100; z.chg = 20; z.otype = 1; z.pose(8); }
+          else { A.x += 24; G.y = Math.min(STANDARD_CHAY, G.y + 18); }
+        } else if (f <= 612) { // his blows
+          const g = f - 584;
+          if (g === 0) z.se('Z1 強打');
+          if (inR(g, 7, 10, 15, 18, 23, 26, 31, 34)) { z.otype = 0; A.x += 2; z.pose(1); } else if (inR(g, 11, 14, 19, 22, 27, 30, 35, 38)) { A.x += 2; z.pose(2); }
+          if (g <= 3) { G.x += 16; G.y -= 4; z.gpose(16); } else if (g <= 6) { G.x -= 16; G.y += 4; } else G.x += 2;
+          if (g >= 7 && (g - 7) % 4 === 0 && g <= 35) z.se('Z1 打撃');
+        } else if (f <= 630) { if (f === 613) { z.se('Z1 強打'); z.pose(3); z.gpose(17); } G.x += 24; G.y -= 24; }
+        else if (f <= 659) { if (f === 631) { z.se('Z1 飛ぶ'); z.pose(16); } A.x -= 16; A.y -= 24; }
+        else if (futureFinal(z, f + 240, suit)) return yield* z.finish();
+      }
+      yield* z.out(rays[0], rays[1]);
+    }
+  },
+});
+films({ 824: ['cmdFutureZ', 44] }, { cmdFutureZ: () => [...COMMON, ...SHINING] });

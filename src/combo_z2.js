@@ -113,6 +113,8 @@ class Cz {
   seStop() { audio.seStop(); }
   blt(sheet, sx, sy, w, h, x, y) { this.U.push((c) => blt(c, sheet, sx, sy, w, h, x, y)); } // @back_window.contents.blt
   front(sheet, sx, sy, w, h, x, y) { this.O.push((c) => blt(c, sheet, sx, sy, w, h, x, y)); } // (from an effect pattern)
+  // output_mozi into a speech bubble: 16 px a character (the remake's font; the original's own font bitmap)
+  say(text, x, y) { this.U.push((c) => { c.save(); c.font = '16px Cubic11, sans-serif'; c.fillStyle = '#000'; c.textBaseline = 'top'; [...text].forEach((ch, i) => c.fillText(ch, x + 16 * i, y + 6)); c.restore(); }); }
   fill(x, y, w, h, color) { this.U.push((c) => { c.fillStyle = color; c.fillRect(x, y, w, h); }); }
   pose(n) { this.d.A.frame = n; } // battle_anime_change 0,n
   gpose(n) { this.d.G.frame = n; } // battle_anime_change 1,n
@@ -1141,7 +1143,7 @@ function p1905(z, f) {
     z.back(116, z.chax - 144, STD_Y);
     const x = z.chax - 96 + 168, y = STD_Y - 48 + 28;
     z.blt(P.bubble, 256, 96, 224, 32, x, y);
-    z.U.push((c) => { c.save(); c.font = '16px Cubic11, sans-serif'; c.fillStyle = '#000'; c.textBaseline = 'top'; [...SHOUT].forEach((ch, i) => c.fillText(ch, x + 16 * i, y + 6)); c.restore(); });
+    z.say(SHOUT, x, y);
     if (f >= 91) z.blt(P.mark, 0, 0, 16, 16, z.chax - 144 + 40, STD_Y - 16 + 28);
   } else if (f <= 240) {
     if (f === 151) z.se(z3 ? 'Z3 変身' : 'Z2 気を溜める');
@@ -1268,6 +1270,55 @@ function p1909(z, f) {
   return false;
 }
 
+// 1828 答えは8だ(克林＆餃子) (all.rb 83868; Z3 only): the other one flies in (effects 89 / 90), both vanish (back 48)
+// and come out of nowhere beside the enemy; 餃子 asks 「9-1是！？」 (speech bubble), both count 「回答就是…」 and, with a
+// charge, 「8！！」 — the enemy is knocked away (damage 22, ZG 打撃4)
+function p1828(z, f) {
+  z.rx = f <= 500 ? 325 : 340; z.ry = f <= 500 ? 70 : 200;
+  // on a phone the two step back only to the edge of what shows, and the bubbles stay on screen (the rush ends where it does)
+  const m = Math.round(z.d.margin || 0), bx = () => Math.max(z.chax - 96, m);
+  const both = (text) => {
+    z.blt(P.bubble, 128, 0, 128, 32, bx(), STD_Y - 48); z.blt(P.bubble, 128, 32, 128, 32, bx(), STD_Y + 48 + 74);
+    z.say(text, bx(), STD_Y - 48); z.say(text, bx(), STD_Y + 48 + 74);
+  };
+  if (f === 0) { z.se('Z1 逃げる'); z.otype = 1; z.pose(0); }
+  else if (f <= 39) {
+    if (z.lead === 6) { z.sc[2] = 9; z.efp = 90; z.ay = f <= 10 ? -5 : 0; }
+    else if (z.lead === 9) { z.sc[2] = 6; z.efp = 89; z.ay = f <= 10 ? 5 : 0; }
+  } else if (f <= 59) { if (z.lead === 9 && f === 40) z.chay -= 100; z.chg = 6; z.sc[2] = 9; z.efp = 92; }
+  else if (f <= 100) {
+    z.chay = -120; z.efp = 0;
+    if (f === 60) z.se('Z1 高速移動');
+    z.back(48, TEC_CENTER, STD_Y + 76); z.bf--; z.back(48, TEC_CENTER, STD_Y + 76 - 100);
+  } else if (f === 110) { z.eff = 0; z.enex = CENTER_ENEX; z.eney = STD_Y; z.chg = 6; z.chax = CENTER_CHAX + 16; z.otype = 0; z.pose(0); z.sc[2] = 9; }
+  else if (f >= 120 && f <= 180) {
+    if (f === 120) z.se('Z1 高速移動');
+    z.back(48, TEC_CENTER, STD_Y + 76 - 16); z.bf--; z.back(48, TEC_CENTER, STD_Y + 76 - 100 + 16);
+    if (f === 180) { z.chay = STD_Y - 32; z.back(117, z.chax, STD_Y + 32); }
+  } else if (f >= 181 && f <= 260) {
+    z.back(117, z.chax, STD_Y + 32);
+    if (f >= 220) {
+      if (f === 220) z.se('Z1 吹っ飛ぶ');
+      z.blt(P.bubble, 128, 0, 128, 32, bx(), STD_Y - 48);
+      z.say('　9-1是！？', bx(), STD_Y - 48);
+      z.blt(P.mark, 0, 0, 16, 16, CENTER_ENEX + 40, STD_Y - 16);
+      if (f === 221) z.enex += 4;
+      if (f === 222) z.enex -= 4;
+    }
+  } else if (f >= 261 && f <= 320) {
+    z.otype = 0; z.pose(16); z.sct[2] = 16;
+    if (f <= 290 && z.chax - 6 >= Math.min(76 + 6 * 30, m)) z.chax -= 6;
+    z.back(117, z.chax, STD_Y + 32);
+    both('　回答就是…');
+  } else if (f >= 321 && f <= 327) {
+    if (f === 321) z.c0 = z.chax; // (76: 24 a frame to 244)
+    z.chax = z.c0 + Math.round((244 - z.c0) * (f - 320) / 7); z.pose(2); z.sct[2] = 1;
+    z.back(117, z.chax, STD_Y + 32);
+    both('　　8　！！');
+  } else if (f === 328) { z.chay = -160; z.kyouda = true; return true; }
+  return false;
+}
+
 // ---------- the combos ----------
 // combo → [Z2 film, damage, Z3 film, damage] (the Z2 / Z3 parts of the move switch: all.rb 56692 / 59742), and its Z1 film
 // for the eight that Z1 has (src/combo-anime.js); `small`: @tec_back_small in the Z3 part (every one but 748)
@@ -1289,6 +1340,7 @@ const CMB = {
   757: { z2: [p1857, 41], z3: [p1857, 41] }, // 767
   758: { z2: [p1858, 41], z3: [p1858, 41] }, // 768
   759: { z2: [p1859, 78], z3: [p1859, 78] }, // 769
+  728: { z2: [p1828, 22], z3: [p1828, 22] }, // 738 (the Z3 part only)
   804: { z2: [p1904, 41], z3: [p1904, 41] }, // 814
   805: { z2: [p1905, 41], z3: [p1905, 41] }, // 815
   806: { z2: [p1906, 22], z3: [p1906, 22] }, // 816

@@ -369,10 +369,26 @@ films({ 810: ['cmdIkiGaau', 44] }, { cmdIkiGaau: () => [...COMMON, HALF_ZG, HALF
 // ======================================================================================================
 const GEKIRETSU_P = pic('Z3_必殺技_激烈光弾(ピッコロ).png'), YAMCHA_CLOSE = pic('DB3_ヤムチャ(Z3化).PNG');
 const HALF_ZG_GREEN = pic('ZG_戦闘_必殺技_エネルギー波_半円(緑).PNG');
+
+// 2911 / 2913 (frames 404 / 244 on, `g` from there): 雅木茶 hits the enemy back and forth, flickers in his close-up,
+// then the flurry (poses 1-4 every 4 frames, the enemy jolted by @gx) and `last(g)` for the final blow (g 180-204)
+function yamchaRush(z, g, f, last) {
+  const A = z.d.A, R = 124, K = 4, hit = (...ks) => ks.some((k) => g === R + K * k);
+  if (g === 0) { z.se('Z1 強打'); z.gpose(16); }
+  if (g <= 9) z.gx = -16; else if (g <= 19) z.gx = 16; else if (g === 20) { z.gx = 0; z.gpose(0); }
+  else if (g === 50) { z.efp = 0; z.se('DB3 狼牙風風拳'); z.pose(0); }
+  else if (g >= 51 && g <= 120) { if (f % 2 === 0) { z.blt(YAMCHA_CLOSE, 0, 0, 64, 64, A.x + 16, STANDARD_CHAY + 24); A.y = -200; } else A.y = STANDARD_CHAY; }
+  else if (g === 121) A.y = STANDARD_CHAY;
+  else if (hit(0, 6, 8)) { z.otype = 0; z.gpose(16); z.pose(1); z.se('Z1 打撃'); }
+  else if (hit(1, 5, 10, 12)) { z.pose(4); z.se('Z1 打撃'); }
+  else if (hit(2, 4, 9, 13)) { z.pose(3); z.se('Z1 打撃'); }
+  else if (hit(3, 7, 11)) { z.pose(2); z.se('Z1 打撃'); }
+  else if (g >= R + K * 14 && g <= R + K * 20) last(g);
+  if (g >= R && g <= R + K * 13 + 3) z.gx = (g - R) % K <= 1 ? -8 : 8;
+}
 Object.assign(ComboDuel.prototype, {
   * cmdAshimoto() {
     const z = this.cmd, A = this.A, G = this.G, wake = 'rgb(188,188,188)';
-    const R = 124, K = 4, hit = (g, ...ks) => ks.some((k) => g === R + K * k);
     for (;;) {
       const f = z.top();
       let [rx, ry] = f <= 500 ? [325, 70] : [340, 200];
@@ -391,20 +407,9 @@ Object.assign(ComboDuel.prototype, {
       } else if (f === 311) {
         z.fxReset(); z.chg = 7; A.y = -200; A.x -= 26; z.bars = false; z.se('Z1 逃げる'); G.x = CENTER_ENEX; G.y = STANDARD_ENEY;
       } else if (f <= 403) { z.back(1); z.efp = 39; }
-      else if (f <= 584) { // the flurry on the enemy
-        const g = f - 404;
+      else if (f <= 584) { // the flurry on the enemy, then the kick
         z.back(1);
-        if (g === 0) { z.se('Z1 強打'); z.gpose(16); }
-        if (g <= 9) z.gx = -16; else if (g <= 19) z.gx = 16; else if (g === 20) { z.gx = 0; z.gpose(0); }
-        else if (g === 50) { z.efp = 0; z.se('DB3 狼牙風風拳'); z.pose(0); }
-        else if (g >= 51 && g <= 120) { if (f % 2 === 0) { z.blt(YAMCHA_CLOSE, 0, 0, 64, 64, A.x + 16, STANDARD_CHAY + 24); A.y = -200; } else A.y = STANDARD_CHAY; }
-        else if (g === 121) A.y = STANDARD_CHAY;
-        else if (hit(g, 0, 6, 8)) { z.otype = 0; z.gpose(16); z.pose(1); z.se('Z1 打撃'); }
-        else if (hit(g, 1, 5, 10, 12)) { z.pose(4); z.se('Z1 打撃'); }
-        else if (hit(g, 2, 4, 9, 13)) { z.pose(3); z.se('Z1 打撃'); }
-        else if (hit(g, 3, 7, 11)) { z.pose(2); z.se('Z1 打撃'); }
-        else if (g >= R + K * 14 && g <= R + K * 20) { z.otype = 0; z.pose(4); if (g === R + K * 14) z.se('ZG 打撃3'); z.gpose(17); }
-        if (g >= R && g <= R + K * 13 + 3) { const k = (g - R) % K; z.gx = k <= 1 ? -8 : 8; }
+        yamchaRush(z, f - 404, f, (g) => { z.otype = 0; z.pose(4); if (g === 124 + 4 * 14) z.se('ZG 打撃3'); z.gpose(17); });
       } else if (f <= 589) { z.gx = 0; A.x += 20; }
       else if (f <= 593) { if (f === 592) { z.otype = 1; z.pose(12); } if (f >= 592) A.x += 16; }
       else if (f <= 605) { if (f === 594) { z.se('ZG 打撃6'); z.otype = 1; z.pose(15); } G.x -= 12; G.y -= 16; }
@@ -427,3 +432,248 @@ Object.assign(ComboDuel.prototype, {
   },
 });
 films({ 811: ['cmdAshimoto', 44] }, { cmdAshimoto: () => [...COMMON, GEKIRETSU_P, YAMCHA_CLOSE, HALF_ZG, HALF_ZG_GREEN] });
+
+// ======================================================================================================
+// 812 熱戦・烈戦・超激戦 (the move switch's 822 オラにパワーをくれ！ → 2912, all.rb 112374; damage 21). The original's film
+// is 悟空 with 雅木茶・天津飯・克林・餃子 (not the combo's members): the four fly in round him (backs 116-122, the lead
+// moving out of the way), all five charge, and one great wave (effect 96, then 48).
+// ($super_saiyazin_flag[1]: 超悟空 when he is in the combo's crew.)
+// ======================================================================================================
+Object.assign(ComboDuel.prototype, {
+  * cmdOraPower() {
+    const z = this.cmd, A = this.A, go = 212 - 18, goku = this.crew[14] ? 14 : 3;
+    const four = () => {
+      z.back(116, A.x + 92, STANDARD_CHAY - 48); z.back(118, A.x + 92, STANDARD_CHAY + 48);
+      z.back(120, go, STANDARD_CHAY - 72); z.back(122, go, STANDARD_CHAY + 72);
+    };
+    // the lead → [@ax, @ay before frame 24 / 25, cha1-4, their offsets from STANDARD_CHAX + f * 8]
+    const IN = {
+      goku: [-4, 0, 24, [7, 8, 6, 9], [[24, -48], [24, 48], [-48, -72], [-48, 72]]],
+      7: [0, -2, 25, [goku, 8, 6, 9], [[-68, 0], [24, 48], [-48, -72], [-48, 72]]],
+      8: [0, 2, 25, [goku, 7, 6, 9], [[-68, 0], [24, -48], [-48, -72], [-48, 72]]],
+      6: [-3, -3, 25, [goku, 7, 8, 9], [[-68, 0], [24, -48], [24, 48], [-48, 72]]],
+      9: [-3, 3, 25, [goku, 7, 8, 6], [[-68, 0], [24, -48], [24, 48], [-48, -72]]],
+    };
+    for (;;) {
+      const f = z.top();
+      if (f === 0) { z.se('Z1 逃げる'); z.otype = 1; z.pose(0); }
+      else if (f <= 39) { // the others fly in
+        const [ax, ay, until, cs, at] = IN[z.lead === 3 || z.lead === 14 ? 'goku' : [7, 8, 6].includes(z.lead) ? z.lead : 9];
+        if (f < until) { if (ax) z.ax = ax; if (ay) z.ay = ay; } else { z.ax = 0; z.ay = 0; }
+        [z.c1, z.c2, z.c3, z.c4] = cs;
+        [116, 118, 120, 122].forEach((n, i) => z.back(n, STANDARD_CHAX + f * 8 + at[i][0], STANDARD_CHAY + at[i][1]));
+      } else if (f <= 59) {
+        z.ax = 0; z.ay = 0; A.x = TEC_CENTER_CHAX - 92; A.y = STANDARD_CHAY; z.chg = goku;
+        z.c1 = 7; z.c2 = 8; z.c3 = 6; z.c4 = 9;
+        four();
+      } else if (f <= 189) { // all charge
+        if (f === 60) {
+          z.se('Z1 ザー'); z.se('Z1 ゴー'); z.se('DB3 気を溜める2'); z.se('Z1 気を溜める'); z.se('Z1 気を溜める7');
+          z.otype = 1; z.pose(2); z.t1 = 2; z.t2 = 0; z.t3 = 2; z.t4 = 0;
+        }
+        four();
+      } else if (f <= 299) { // the wave
+        if (f === 190) {
+          z.seStop(); z.se('Z1 エネルギー波'); z.se('Z1 エネルギー波2'); z.se('Z1 怪光線'); z.se('Z1 ゴー');
+          z.pose(3); z.t1 = 3; z.t2 = 2; z.t3 = 3; z.t4 = 1; z.efp = 96;
+        }
+        four();
+      } else if (f === 300) { z.eff = 0; z.efp = 0; z.displayOut(); }
+      else if (f >= 302 && f <= 326) z.efp = 48;
+      else if (f === 327) return yield* z.finish();
+      yield* z.out(346, 84);
+    }
+  },
+});
+films({ 812: ['cmdOraPower', 21] }, { cmdOraPower: () => COMMON });
+
+// ======================================================================================================
+// 813 新狼鶴相打陣 (2913 雅木茶＋天津飯, all.rb 112558). 天津飯 below 雅木茶 (pairIn); 雅木茶 vanishes, 天津飯 charges; the
+// 狼牙風風拳 on the shock-wave backdrop (39) and the flurry knock the enemy up and away; 天津飯's 新気功砲 close-up with
+// four flashes, the 気功砲 column on the enemy (back 9) with four more, the explosion; 雅木茶 flies in and fires the
+// huge wave (damage 44).
+// ======================================================================================================
+const KIKOU_TIEN = pic('Z3_必殺技_新気功砲(テンシンハン・服あり).png');
+const HUGE3 = pic('Z3_戦闘_必殺技_エネルギー波_特大.PNG');
+Object.assign(ComboDuel.prototype, {
+  * cmdShinRokaku() {
+    const z = this.cmd, A = this.A, G = this.G;
+    const flashAt = (g, ...at) => { if (at.some((a) => g >= a && g <= a + 3)) { z.fill(0, 0, 640, FLASH_Y_SIZE_CUTIN_ON); if (at.includes(g)) z.se('Z1 エネルギー波'); } };
+    for (;;) {
+      const f = z.top();
+      let [rx, ry] = f <= 500 ? [325, 70] : [340, 200];
+      if (f === 0) { z.se('Z1 逃げる'); z.otype = 1; z.pose(0); }
+      else if (f <= 59) pairIn(z, f, 7, 8);
+      else if (f <= 150) { // 雅木茶 gone, 天津飯 charges below
+        if (f === 60) { z.efp = 0; z.se('Z1 高速移動'); z.se('Z3 変身'); z.color = 0; A.y = -200; }
+        z.back(201, 234, -18 + 54 + 50 + 50); z.bf--;
+        z.back(118, TEC_CENTER_CHAX, STANDARD_CHAY + 50);
+        if (f <= 109 && f % 4 === 0) z.blt(SPARK, 0, 48, 64, 64, TEC_CENTER_CHAX + 6, STANDARD_CHAY + 76 - 100);
+      } else if (f === 151) {
+        z.fxReset(); z.chg = 7; A.y = -200; A.x -= 26; z.bars = false; z.seStop(); z.se('Z1 逃げる'); G.x = CENTER_ENEX; G.y = STANDARD_ENEY;
+      } else if (f <= 243) { z.back(1); z.efp = 39; }
+      else if (f <= 424) {
+        z.back(1);
+        yamchaRush(z, f - 244, f, (g) => { z.otype = 1; z.pose(3); if (g === 124 + 4 * 14) z.se('ZG 打撃4'); z.gx = -16; z.gy = -8; z.gpose(17); });
+      } else if (f <= 459) { z.gx = -24; z.gy = -16; z.back(1); if (f === 459) { z.no = 3; z.bars = true; } }
+      else if (f <= 660) { // 天津飯's close-up, four flashes
+        const s = 460;
+        if (f === s) { z.gx = 0; z.gy = 0; z.seStop(); z.se('Z1 気を溜める4'); }
+        A.y = -200;
+        z.blt(KIKOU_TIEN, 0, 0, 170, 160, 208, 98);
+        flashAt(f, s + 40, s + 80, s + 120, s + 160);
+      } else if (f === 670) {
+        z.seStop(); z.bars = false; z.fxReset(); z.no = 0; z.displayOut(); z.gpose(16); z.se('Z1 ザー'); z.se('Z1 ゴー');
+      } else if (f >= 681 && f <= 890) { // the 気功砲 on the enemy
+        z.back(9);
+        flashAt(f, 711, 751, 791, 831);
+      } else if (f >= 891 && f <= 910) {
+        if (f === 891) { z.eff = 0; z.eft = 0; z.efp = 105; z.se('DB3 大爆発'); z.gpose(17); }
+        G.y += 16;
+      } else if (f >= 911 && f <= 930) { // 雅木茶 flies in
+        if (f === 911) { z.otype = 1; z.fxReset(); A.x = -96; A.y = STANDARD_CHAY; G.y = -200; z.se('DB3 気を溜める2'); z.pose(2); z.gpose(16); }
+        A.x += 16; G.y += 16;
+      } else if (f >= 931 && f <= 1020) { // and fires
+        if (f === 931) { z.seStop(); z.se('DB3 エネルギー波1'); z.se('DB3 エネルギー波2'); z.pose(3); }
+        z.blt(HUGE3, 0, 192, (f - 931) * 16, 192, 306, 66);
+      } else if (f === 1021) { A.y = -200; return yield* z.finish(); }
+      yield* z.out(rx, ry);
+    }
+  },
+});
+films({ 813: ['cmdShinRokaku', 44] }, { cmdShinRokaku: () => [...COMMON, YAMCHA_CLOSE, KIKOU_TIEN] });
+
+// ======================================================================================================
+// 814 超操気円裂斬 (2914 克林＋雅木茶, all.rb 112838). 雅木茶 comes in beside 克林 (effects 363 / 364), both charge (side
+// strips, two auras); their close-ups pass each other with the 気円斬 and the 繰気弾; then the two fly across the
+// enemy, each along one of three paths picked at random (@kienrand / @soukirand, never the same), damage 44.
+// (The original's further targets of a move on everyone — @all_attack_count ≥ 2 — only get that last part; a combo
+// here hits one target.)
+// ======================================================================================================
+const KIEN_KRILLIN = pic('Z3_必殺技_気円烈斬(クリリン).png'), SOKI_YAMCHA = pic('FC風_ZSSD_必殺技_繰気弾(ヤムチャ)2.png');
+const GENKI_BALL = pic('Z3_戦闘_必殺技_超元気玉_弾.PNG');
+Object.assign(ComboDuel.prototype, {
+  * cmdChoSokiEnretsu() {
+    const z = this.cmd, A = this.A, wake = 'rgb(188,188,188)';
+    let kien = 0, soki = 0;
+    const bx = TEC_CENTER_CHAX - 80 + 40, by_ = STANDARD_CHAY - 30;
+    const closeUps = (t) => {
+      z.blt(KIEN_KRILLIN, 0, 0, 130, 168, 320 - 190, 342 - t * 4);
+      z.blt(SOKI_YAMCHA, 0, 0, 124, 156, 320 + 52, -156 + t * 4);
+      z.fill(320 - 2, 0, 6, 228 + 64, wake);
+      z.blt(Z3.kien, 0, 150, 126, 30, 320 - 190 + 38, 342 - t * 4 - 46);
+      z.blt(GENKI_BALL, 126, 0, 126, 126, 320 + 52 - 40, -156 + t * 4 - 130);
+    };
+    for (;;) {
+      const f = z.top();
+      if (f === 0) { z.se('Z1 逃げる'); z.otype = 1; z.pose(0); }
+      else if (f <= 39) {
+        if (z.lead === 6) { z.c2 = 7; z.efp = 363; z.ax = f <= 10 ? -8 : 0; } else if (z.lead === 7) { z.c2 = 6; z.efp = 364; z.ax = f <= 13 ? 8 : 0; }
+      } else if (f <= 59) {
+        if (z.lead === 7 && f === 40) A.x -= 184;
+        z.chg = 6; z.c2 = 7; z.back(118, TEC_CENTER_CHAX + 80 + 24, STANDARD_CHAY); z.efp = 0;
+      } else if (f === 60) {
+        z.no = 1; z.se('Z3 変身'); z.se('Z1 気を溜める'); z.back(118, TEC_CENTER_CHAX + 80 + 24, STANDARD_CHAY); z.bf = 0;
+      } else if (f <= 187) { // both charge
+        z.efp = 0; z.eff = 0; z.pose(5); z.t2 = 9; z.color = 0;
+        z.back(201, bx - 80, by_); z.bf--;
+        z.back(201, bx + 80 + 24, by_); z.bf--;
+        z.back(118, TEC_CENTER_CHAX + 80 + 24, STANDARD_CHAY);
+      } else if (f <= 250) { // their close-ups pass each other
+        if (f === 188) { A.y = -200; z.seStop(); z.se('Z1 飛ぶ'); }
+        closeUps(f - 188);
+      } else if (f <= 299) {
+        if (f === 251) { z.seStop(); z.se('DB3 刀'); z.se('DB3 気を溜める2'); z.se('Z1 気を溜める7'); }
+        closeUps(62);
+      } else if (f === 300) { z.no = 0; z.eff = 0; z.efp = 0; z.displayOut(); }
+      else if (f === 301) {
+        soki = rand(3) + 1;
+        z.se('Z1 エネルギー波'); z.se('Z1 エネルギー波2');
+        do kien = rand(3) + 1; while (soki === kien);
+      } else if (f <= 333) { // across the enemy, each on its path
+        const t = f - 302, [ky, kd] = { 1: [-60, 6], 2: [158, 0], 3: [386, -6] }[kien], [sy, sd] = { 1: [-126, 6], 2: [108, 0], 3: [366, -6] }[soki];
+        z.blt(Z3.kien, 0, 150, 126, 30, -126 + 12 * t, ky + t * kd);
+        z.blt(GENKI_BALL, 126, 0, 126, 126, -126 + 12 * t, sy + t * sd);
+      } else if (f === 334) return yield* z.finish();
+      yield* z.out(340, 200);
+    }
+  },
+});
+films({ 814: ['cmdChoSokiEnretsu', 44] }, { cmdChoSokiEnretsu: () => [...COMMON, KIEN_KRILLIN, SOKI_YAMCHA, GENKI_BALL] });
+
+// the white / skin / orange flashes of 2907 / 2915 (frame `g` of the run)
+function flash3(z, g) {
+  if (inR(g, 1, 4, 17, 20, 33, 36, 50, 53)) z.fill(0, 0, 640, FLASH_Y_SIZE_CUTIN_ON, '#fff');
+  else if (inR(g, 5, 8, 21, 24, 37, 37, 54, 57)) z.fill(0, 0, 640, FLASH_Y_SIZE_CUTIN_ON, 'rgb(255,216,160)');
+  else if (inR(g, 9, 12, 25, 28, 42, 45, 58, 61)) z.fill(0, 0, 640, FLASH_Y_SIZE_CUTIN_ON, 'rgb(255,120,48)');
+}
+
+// ======================================================================================================
+// 815 烈戦人造人間 (2915 16號・18號・17號, all.rb 113088). The other two fly in round the lead (backs 116 / 118: 16號 in
+// the middle, 18號 above, 17號 below); 18號 and 17號 fly off, 16號 rams the enemy away; 18號 and 17號 come in from
+// both sides and fire their balls (290) — the flashes, the explosion; 16號 flies in on the shock-wave backdrop, grabs
+// it and blows up with flashes (damage 44).
+// ======================================================================================================
+Object.assign(ComboDuel.prototype, {
+  * cmdRessen() {
+    const z = this.cmd, A = this.A, G = this.G, go = 212 + 24;
+    for (;;) {
+      const f = z.top();
+      z.color = 0;
+      if (f === 0) { z.se('Z1 逃げる'); z.otype = 1; z.pose(0); }
+      else if (f <= 39) { // the other two fly in (the lead moves out of the way: 18號 up, 17號 down)
+        const x = STANDARD_CHAX + f * 8;
+        if (z.lead === 21 || z.lead === 22) {
+          if (f < 16) { z.ax = -2; z.ay = z.lead === 21 ? -4 : 4; } else { z.ax = 0; if (f > 16) z.ay = 0; }
+          z.c1 = 23; z.c2 = z.lead === 21 ? 22 : 21;
+          z.back(116, x + 16, STANDARD_CHAY);
+          z.back(118, x - 14, STANDARD_CHAY + (z.lead === 21 ? 64 : -64));
+        } else {
+          z.c1 = 21; z.c2 = 22;
+          z.back(116, x - 14, STANDARD_CHAY - 64); z.back(118, x - 14, STANDARD_CHAY + 64);
+        }
+      } else if (f <= 59) {
+        z.ax = 0; z.ay = 0; z.chg = 23; z.c1 = 21; z.c2 = 22; A.x = TEC_CENTER_CHAX; A.y = STANDARD_CHAY;
+        z.back(116, go, STANDARD_CHAY - 64); z.back(118, go, STANDARD_CHAY + 64);
+      } else if (f === 60) {
+        z.se('Z1 飛ぶ'); z.se('DB3 ダッシュ'); z.otype = 1; z.pose(8); z.t1 = 16; z.t2 = 16;
+        z.back(115, go, STANDARD_CHAY - 64); z.back(117, go, STANDARD_CHAY + 64);
+      } else if (f <= 119) { // 16號 dashes off, the others up and away
+        const t = f - 61;
+        A.x += 16;
+        z.back(115, go - t * 8, STANDARD_CHAY - 64 - t * 16); z.back(117, go + t * 8, STANDARD_CHAY + 64 - t * 16);
+      } else if (f === 120) { G.x = CENTER_ENEX; G.y = STANDARD_ENEY; A.x = -96 - 8 * 24; z.se('DB3 ダッシュ'); }
+      else if (f <= 144) A.x += 24;
+      else if (f <= 190) { if (f === 145) { z.seStop(); z.se('Z1 強打'); } G.x += 28; G.y -= 8; z.gpose(16); }
+      else if (f <= 233) { // 18號 and 17號 from both sides
+        if (f === 191) { z.se('Z1 飛ぶ'); A.y = -200; }
+        z.t1 = 2; z.t2 = 5;
+        z.back(116, -96 + (f - 191) * 8, STANDARD_CHAY); z.back(118, 640 - (f - 191) * 8, STANDARD_CHAY);
+      } else if (f <= 360) {
+        if (f === 235) z.se('DB3 気を溜める2');
+        z.back(116, -96 + 43 * 8 - 8, STANDARD_CHAY); z.back(118, 640 - 43 * 8 + 8, STANDARD_CHAY);
+        z.efp = 290;
+      } else if (f === 361) { z.efp = 0; G.x = CENTER_ENEX; G.y = STANDARD_ENEY; z.gpose(0); z.no = 1; }
+      else if (f >= 371 && f <= 428) { if (f === 371) z.se('Z1 エネルギー波'); flash3(z, f - 371); }
+      else if (f >= 429 && f <= 450) {
+        if (f === 429) { z.eff = 0; z.eft = 0; z.efp = 104; z.se('Z1 爆発1'); z.gpose(17); }
+        G.y += 16;
+      } else if (f >= 451 && f <= 470) { // 16號 flies in
+        if (f === 451) { z.efp = 0; z.bars = false; G.y = -200; A.y = STANDARD_CHAY; A.x = 640; z.pose(9); }
+        G.y += 16; A.x -= 16;
+        z.back(1);
+      } else if (f >= 471 && f <= 500) {
+        if (f === 471) { z.pose(6); z.gpose(16); z.se('Z1 強打'); }
+        G.x += f % 2 === 1 ? 8 : -8;
+        z.back(1);
+      } else if (f >= 501 && f <= 560) {
+        if (f === 501) { z.pose(7); z.se('Z1 気を溜める'); z.se('Z1 気を溜める2'); }
+        G.x += f % 2 === 1 ? 12 : -12;
+        flash3(z, f - 501);
+        z.back(1);
+      } else if (f === 561) { A.y = -200; return yield* z.finish(); }
+      yield* z.out(356, 70);
+    }
+  },
+});
+films({ 815: ['cmdRessen', 44] }, { cmdRessen: () => COMMON });

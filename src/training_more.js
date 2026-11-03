@@ -7,12 +7,12 @@
 //   3 Chi-Chi      111_Scene_Db_Chi_Chi_Training  play a hand card with as many attack stars as hers or more
 // All three: Z3 ミニゲーム music, the trainee is picked first (or none), the rewards are src/training.js trainingRewards
 // (EXP × the EXP rate, as the speed training). Frame counts are the original's (60 a second).
-import { img, audio, rand } from './core.js?v=20261104-0709';
-import { newCard } from './battle.js?v=20261104-0709';
-import { makeMember, applyLevel } from './party.js?v=20261104-0709';
-import { el, sprite, overlay, button } from './fieldmenu.js?v=20261104-0709';
-import { addTraining, trainingRewards, drawCard, zpRate } from './training.js?v=20261104-0709';
-import { registerZ3 } from './z3.js?v=20261104-0709';
+import { img, audio, rand } from './core.js?v=20261104-0727';
+import { newCard } from './battle.js?v=20261104-0727';
+import { makeMember, applyLevel } from './party.js?v=20261104-0727';
+import { el, sprite, overlay, button } from './fieldmenu.js?v=20261104-0727';
+import { addTraining, trainingRewards, drawCard, zpRate } from './training.js?v=20261104-0727';
+import { registerZ3 } from './z3.js?v=20261104-0727';
 
 const FACES = 'Graphics/Pictures/Z1_顔味方.PNG', FACE_CARDS = 'Graphics/Pictures/顔カード.PNG';
 const PIC = (n) => `Graphics/Pictures/Z3_修行_${n}.PNG`;
@@ -51,7 +51,7 @@ function shell(cls) {
     root, msg, bar,
     say(lines) { msg.textContent = lines.join('\n'); },
     buttons(...bs) { bar.innerHTML = ''; bar.append(...bs); },
-    tap() { return new Promise((res) => { wake = res; }); },
+    tap() { return new Promise((res) => { root.classList.add('tr-wait'); wake = () => { root.classList.remove('tr-wait'); res(); }; }); },
     // a page that waits for 確定 (or a tap anywhere)
     async page(lines, label = '確定', se = true) {
       if (lines) ui.say(lines);

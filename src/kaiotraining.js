@@ -5,10 +5,10 @@
 // far are kept (variable 431) for the next try. Catching him: 1000 EXP for Goku and +10 uses of all his moves.
 // The film runs at the original's 60 frames a second with its frame counts, positions (shifted 110 px left so the
 // 640-wide scene fits a 440-wide strip) and sprites.
-import { img, audio, rand } from './core.js?v=20261104-0709';
-import { newCard } from './battle.js?v=20261104-0709';
-import { levelUp, EXP_RATE } from './party.js?v=20261104-0709';
-import { el, overlay, button } from './fieldmenu.js?v=20261104-0709';
+import { img, audio, rand } from './core.js?v=20261104-0727';
+import { newCard } from './battle.js?v=20261104-0727';
+import { levelUp, EXP_RATE } from './party.js?v=20261104-0727';
+import { el, overlay, button } from './fieldmenu.js?v=20261104-0727';
 
 const P = (n) => `Graphics/Pictures/${n}.PNG`;
 const CARDS = P('カード関係'), BACK = P('Z1_背景_スクロール_界王星');
@@ -238,7 +238,7 @@ export async function bubblesTraining(game) {
 
   const setMsg = (lines) => { msg.textContent = lines.join('\n'); msg.style.visibility = lines.length ? 'visible' : 'hidden'; };
   let wake = null;
-  const wait = () => new Promise((res) => { wake = res; });
+  const wait = () => new Promise((res) => { root.classList.add('tr-wait'); wake = () => { root.classList.remove('tr-wait'); res(); }; }); // (tr-wait: the ▼, src/style.css)
   root.addEventListener('click', (e) => { if (!e.target.closest('button') && e.target !== handCv && wake) { const w = wake; wake = null; audio.se(SE_OK); w(); } });
 
   // ---- 0: the three pages of rules ----

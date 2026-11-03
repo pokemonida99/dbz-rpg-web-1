@@ -8,16 +8,16 @@
 //        Piccolo with King Kai (21).
 //   Z2-3 大長老 the Grand Elder's house, Vegeta joins, Zarbon twice, the last ball (26) → the second half (game.startZ2b).
 // state.flags.z2a: 'on' while in this part, 'done' after page 445. Variable 40 = 1 (Z2 art, src/era.js).
-import { input, audio, toast } from './core.js?v=20261104-0709';
-import { scenes, setParty, moveTo, enterMap, card } from './chapter2.js?v=20261104-0709';
-import { makeMember, applyLevel, levelUp } from './party.js?v=20261104-0709';
-import { eventCard } from './items.js?v=20261104-0709';
-import { addScenes, playScenes } from './cutscene.js?v=20261104-0709';
-import { shootingGame } from './z2shoot.js?v=20261104-0709';
-import { gravityTraining } from './gravitytraining.js?v=20261104-0709';
-import { pondPuzzle } from './z2pond.js?v=20261104-0709';
-import { applyEra } from './era.js?v=20261104-0709';
-import { newHand } from './battle.js?v=20261104-0709';
+import { input, audio, toast } from './core.js?v=20261104-0727';
+import { scenes, setParty, moveTo, enterMap, card } from './chapter2.js?v=20261104-0727';
+import { makeMember, applyLevel, levelUp } from './party.js?v=20261104-0727';
+import { eventCard } from './items.js?v=20261104-0727';
+import { addScenes, playScenes } from './cutscene.js?v=20261104-0727';
+import { shootingGame } from './z2shoot.js?v=20261104-0727';
+import { gravityTraining } from './gravitytraining.js?v=20261104-0727';
+import { pondPuzzle } from './z2pond.js?v=20261104-0727';
+import { applyEra } from './era.js?v=20261104-0727';
+import { newHand } from './battle.js?v=20261104-0727';
 
 const MAPS = ['17', '18', '20', '21', '22', '23', '24', '26'];
 export const isZ2aMap = (s) => MAPS.includes(s.map) && !!s.flags.z2a;
@@ -245,6 +245,11 @@ export function z2aBackdrop(game) {
 
 export function z2aGoal(world, s) {
   if (!world.z2a || !isZ2aMap(s)) return undefined;
+  const sw = s.sw || {};
+  // the goal follows what is left (sw 86 the village's ball, 87 Cui's; 89 the village of map 24, 85 the pond)
+  if (s.map === '22' && sw[87]) return sw[86] ? '目標：離開洞窟，打倒多多利亞' : '目標：離開洞窟，到村子收集龍珠';
+  if (s.map === '18' && (sw[86] || sw[87])) return sw[86] && sw[87] ? '目標：打倒多多利亞' : sw[86] ? '目標：到洞窟打倒邱夷，拿到龍珠' : '目標：到村子收集龍珠';
+  if (s.map === '24' && (sw[89] || sw[85]) && !(sw[89] && sw[85])) return sw[89] ? '目標：到池塘收集龍珠' : '目標：到村子收集龍珠';
   return world.z2a.goals[s.map];
 }
 
@@ -315,9 +320,9 @@ async function spot(game, p) {
       await play(game, 426);
       return resume(game);
     case 413: { // the village of map 24 (sw89), the first time: the seven-star ball, then Goku again
-      const again = !!s.sw[89];
+      const again = !!s.sw[89], keep = s.var[41];
       await play(game, 413);
-      if (again) return resume(game);
+      if (again) { s.var[41] = keep; return resume(game); } // (a visit again: the story stays where it was, like 601)
       return gokuAgain(game);
     }
     case 419: { // the pond (sw85): one of six pond maps (CE79) → 420

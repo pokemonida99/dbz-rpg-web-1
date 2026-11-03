@@ -7,11 +7,11 @@
 // switch: the original plays its damage 22 straight away (67446). The special-move strips, the cut-ins and pattern 32
 // are src/anime_goku_gohan.js's stage (agStage / agFrame / agCut / agEnd); what a pattern blits itself goes under
 // the fighters, its effect_pattern in front. Frame numbers in the comments are the original's @battle_anime_frame.
-import { audio, img, rand } from './core.js?v=20261104-0709';
-import { Duel, addMoves, draw, BACK_Y, STD_Y, RAY_SPEED } from './anime.js?v=20261104-0709';
-import { agFilmsPL as agFilms } from './anime_goku_gohan.js?v=20261104-0709';
-import { registerZ3, party, heal } from './z3.js?v=20261104-0709';
-import { applyLevel } from './party.js?v=20261104-0709';
+import { audio, img, rand } from './core.js?v=20261104-0727';
+import { Duel, addMoves, draw, BACK_Y, STD_Y, RAY_SPEED } from './anime.js?v=20261104-0727';
+import { agFilmsPL as agFilms } from './anime_goku_gohan.js?v=20261104-0727';
+import { registerZ3, party, heal } from './z3.js?v=20261104-0727';
+import { applyLevel } from './party.js?v=20261104-0727';
 
 const STD_CHAX = -70, STD_ENEX = 602; // (src/anime.js)
 const pic = (n) => `Graphics/Pictures/${n}`;

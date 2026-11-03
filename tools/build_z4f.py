@@ -1,4 +1,4 @@
-"""Z4 第六章 賽魯遊戲（地圖 48・49） — world.json data, added by tools/build_z3.py (read by src/z4f.js). docs/z4f.md has the
+"""Z4 第六章 沙魯遊戲（地圖 48・49） — world.json data, added by tools/build_z3.py (read by src/z4f.js). docs/z4f.md has the
 whole chapter with the original's sources.
 
 The original: Map007 event 7 「Z4_セル編」 page 72 (variable 41 = 2991) and pages 28-40 (2431-2621), the scenes
@@ -256,8 +256,8 @@ def add(world, h, z3):
     assert not missing, missing
 
     # ---------- the chapter ----------
-    world['z3']['titles']['z4f'] = 'Z4　第六章　賽魯遊戲'
-    world['z3']['goals'][MAP] = '目標：前往賽魯遊戲的擂台'
+    world['z3']['titles']['z4f'] = 'Z4　第六章　沙魯遊戲'
+    world['z3']['goals'][MAP] = '目標：前往沙魯遊戲的擂台'
     world['z3']['z4f'] = {
         'start': {'map': MAP, 'x': 75, 'y': 63},
         'back': {'map': MAP, 'x': 44, 'y': 36},  # page 30: after Mr. Satan
@@ -273,7 +273,7 @@ def add(world, h, z3):
         'backdrop': 'bg/z3_battle_1.png',
         'end': 'Z4　完',
         # what the original opens after Z4 (page 2602: CE180, 2693 Roshi): shown on the title screen
-        'unlocks': ['ZG：外傳篇（從地圖上的「時之間」進入）', '時之間的新區域（「通知！」卡）', '時之間：和賽魯的戰鬥有了變化'],
+        'unlocks': ['ZG：外傳篇（從地圖上的「時之間」進入）', '時之間的新區域（「通知！」卡）', '時之間：和沙魯的戰鬥有了變化'],
         # 超サイヤ人2 悟飯 (switch 388 in the original: ZG_顔グラ(ゴハン超1_2) row 2, the ZG battle sheets)
         'ss2': {'face': [P('ZG_顔グラ(ゴハン超1_2).png'), 2], 'sprite': P('ZG_戦闘_ゴハン(超2).png'),
                 'special': P('ZG_戦闘_必殺技_ゴハン(超2).png')},

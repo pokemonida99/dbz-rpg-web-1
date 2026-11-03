@@ -1,4 +1,4 @@
-// Z4 第二章 悄悄接近的賽魯（地圖 43） — driven by world.z3 (tools/build_z4b.py), following Map007 event 7 pages 7-15
+// Z4 第二章 悄悄接近的沙魯（地圖 43） — driven by world.z3 (tools/build_z4b.py), following Map007 event 7 pages 7-15
 // (variable 41 = 2091-2181), the scenes z1field 2091-2188 (all.rb 175648-176090) and the spots of map 43
 // (145_Event_Check.rb `when 43`). docs/z4bc.md has the whole chapter.
 //   2091 Piccolo against No. 17 → the film 2092 → 2093 Cell, Kame House, Bulma's controller → 2110 Cell arrives →
@@ -9,16 +9,16 @@
 //     → variable 41 = 2191: 第三章 (src/z4c.js)
 // The scene drawing, the battle films and the battles of both chapters are here (src/z4c.js imports them): the
 // scenes come from all.rb itself (tools/build_z4b.py scenes(): background, faces, character_output).
-import { audio, img, loadImages } from './core.js?v=20261104-0709';
-import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261104-0709';
-import { SCROLL_X, SCENE_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261104-0709';
-import { makeMember, applyLevel } from './party.js?v=20261104-0709';
-import { superSaiyan } from './supersaiyan.js?v=20261104-0709';
-import { applyEra } from './era.js?v=20261104-0709';
-import { newHand } from './battle.js?v=20261104-0709';
-import { addMoves, ANIME_IMAGES } from './anime.js?v=20261104-0709';
-import { duelFilm, screenPic } from './z3c.js?v=20261104-0709';
-import { registerZ3, nextZ3, Z3, begin, fight, toField, party, member, heal, card, moveTo, setParty } from './z3.js?v=20261104-0709';
+import { audio, img, loadImages } from './core.js?v=20261104-0727';
+import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261104-0727';
+import { SCROLL_X, SCENE_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261104-0727';
+import { makeMember, applyLevel } from './party.js?v=20261104-0727';
+import { superSaiyan } from './supersaiyan.js?v=20261104-0727';
+import { applyEra } from './era.js?v=20261104-0727';
+import { newHand } from './battle.js?v=20261104-0727';
+import { addMoves, ANIME_IMAGES } from './anime.js?v=20261104-0727';
+import { duelFilm, screenPic } from './z3c.js?v=20261104-0727';
+import { registerZ3, nextZ3, Z3, begin, fight, toField, party, member, heal, card, moveTo, setParty } from './z3.js?v=20261104-0727';
 
 const MAPS = ['43'];
 const C = (game) => Z3(game).z4b;

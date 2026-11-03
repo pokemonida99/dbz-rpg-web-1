@@ -1,4 +1,4 @@
-"""Z4 第一章 賽魯誕生的秘密（地圖 42・44・45）— world.json data, added by tools/build_z3.py (read by src/z4a.js).
+"""Z4 第一章 沙魯誕生的秘密（地圖 42・44・45）— world.json data, added by tools/build_z3.py (read by src/z4a.js).
 
 Map007 event 7 pages (variable 41) and where they run (145_Event_Check.rb "Z4セル誕生の秘密" / "Z4精神と時の部屋"):
   2001 (page 2)  あらすじ (CE120), Piccolo and the others hear of Cell; Cell at Ginger Town (2002); Vegeta flies off →
@@ -73,7 +73,7 @@ def add(world, h, z3):
     EXTRA.clear()
     z['pages'].update(pages)
 
-    z['titles']['z4a'] = 'Z4　第一章　賽魯誕生的秘密'
+    z['titles']['z4a'] = 'Z4　第一章　沙魯誕生的秘密'
     z['goals'].update({'42': '目標：調查蓋洛博士的研究所（地下室）', '44': '目標：在精神時光屋修行'})
     z['z4a'] = {
         'start42': {'map': '42', 'x': 67, 'y': 46, 'party': [6, 17, 7, 8, 9, 10, 24]},  # page 2001's $partyc

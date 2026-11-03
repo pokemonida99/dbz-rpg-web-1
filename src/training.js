@@ -7,11 +7,11 @@
 //   EXP  level × 2.5 / 2 per hit │ level × 2.5 × 2.5 per hit + level × 30 │ level × 2.5 × 10 per hit + level × 150,
 //        × 1.5–12 from 10 hits on;  CAP = SP = hits │ hits × 2 │ hits × 5;  ZP = ⌈hits / 2⌉, ⌈hits / 5⌉ random moves
 // SP goes to the member's 追加技能 and ZP to the member (src/growth.js), as after a battle.
-import { img, audio, rand } from './core.js?v=20261104-0709';
-import { newCard } from './battle.js?v=20261104-0709';
-import { levelUp, EXP_RATE } from './party.js?v=20261104-0709';
-import { expFor, has, ensure, afterBattle } from './growth.js?v=20261104-0709';
-import { el, sprite, overlay, button, bumpStat } from './fieldmenu.js?v=20261104-0709';
+import { img, audio, rand } from './core.js?v=20261104-0727';
+import { newCard } from './battle.js?v=20261104-0727';
+import { levelUp, EXP_RATE } from './party.js?v=20261104-0727';
+import { expFor, has, ensure, afterBattle } from './growth.js?v=20261104-0727';
+import { el, sprite, overlay, button, bumpStat } from './fieldmenu.js?v=20261104-0727';
 
 const CARDS = 'Graphics/Pictures/カード関係.PNG', FACES = 'Graphics/Pictures/Z1_顔味方.PNG';
 const KI = 16; // the 気 school glyph (column 16 of カード関係.PNG)
@@ -96,7 +96,7 @@ async function speedTraining(game) {
   };
   const buttons = (...bs) => { bar.innerHTML = ''; bar.append(...bs); };
   let wake = null;
-  const wait = () => new Promise((res) => { wake = res; });
+  const wait = () => new Promise((res) => { root.classList.add('tr-wait'); wake = () => { root.classList.remove('tr-wait'); res(); }; }); // (tr-wait: the ▼, src/style.css)
   root.addEventListener('click', (e) => { if (!e.target.closest('button') && e.target !== handCv && wake) { const w = wake; wake = null; w(); } });
 
   // ---- 0/1: who trains ----
@@ -242,8 +242,8 @@ css.textContent = `
 .tr .win { align-self: stretch; }
 .tr-msg { min-height: 5.4em; font-size: 16px; line-height: 1.6; white-space: pre-wrap; }
 .tr-mid { display: flex; align-items: center; gap: 6px; width: 100%; justify-content: center; }
-.tr-stage { width: 260px; height: 120px; }
-.tr-result { flex: 1; align-self: center !important; font-size: 16px; line-height: 1.5; max-width: 130px; }
+.tr-stage { flex: 0 1 260px; min-width: 0; height: auto; aspect-ratio: 260 / 120; }
+.tr-result { flex: 0 0 auto; align-self: center !important; font-size: 16px; line-height: 1.5; white-space: nowrap; } /* 「小菜一碟！」 on one line: the stage gives way */
 .tr-hand { width: min(100%, 384px); height: auto; aspect-ratio: 384 / 112; }
 .tr-pick { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .tr-mem { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px; font-size: 15px; color: var(--ink); background: #fff0d0; border: 2px solid #c8642a; }

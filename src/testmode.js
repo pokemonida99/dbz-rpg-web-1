@@ -1,8 +1,8 @@
 // 測試模式 (index.html?test): a page of jump points for testing by hand, and while it is on: every member at Lv 99,
 // every card at its maximum, no random encounters on the maps. It keeps its own save slots (src/main.js), so the
 // player's real saves are never touched. ?test alone shows the list; a pick reloads as ?test&dev=… (the dev jumps).
-import { applyLevel } from './party.js?v=20261104-0709';
-import { cardState, maxOf } from './items.js?v=20261104-0709';
+import { applyLevel } from './party.js?v=20261104-0727';
+import { cardState, maxOf } from './items.js?v=20261104-0727';
 
 const params = new URLSearchParams(location.search);
 export const TEST = params.has('test');
@@ -13,8 +13,8 @@ const LIST = [
   ['Z2', [['z2', '前往那美克星'], ['z2b', '悟空出擊'], ['z2c', '悟飯一行回到那美克星'], ['z2d', '大長老'], ['z2ginyu', '基紐特戰隊'],
     ['z2frieza', '弗利薩（第二型態前）'], ['z2last', '弗利薩最終型態前'], ['z2turles', '達列斯・史拉格支線']]],
   ['Z3', [['z3', '第一章 集龍珠'], ['z3b', '第二章 魔凶星篇'], ['z3c', '第三章 弗利薩復仇'], ['z3d', '第四章 古拉來襲'], ['z3e', '第五章 人造人間']]],
-  ['Z4', [['z4', '第一章 賽魯誕生的秘密'], ['z4b', '第二章 悄悄接近的賽魯'], ['z4c', '第三章 貝吉塔父子出擊'], ['z4d', '第四章 金屬古拉'],
-    ['z4e', '第五章 人造人間 13 號'], ['z4f', '第六章 賽魯遊戲']]],
+  ['Z4', [['z4', '第一章 沙魯誕生的秘密'], ['z4b', '第二章 悄悄接近的沙魯'], ['z4c', '第三章 貝吉塔父子出擊'], ['z4d', '第四章 金屬古拉'],
+    ['z4e', '第五章 人造人間 13 號'], ['z4f', '第六章 沙魯遊戲']]],
   ['時之間', [['tr', '大廳'], ['trz1', 'Z1 區域'], ['trz2', 'Z2 區域'], ['trz3', 'Z3 區域'], ['trz4', 'Z4 區域'], ['trbd', '巴達克篇'],
     ['trfuture', '絕望的反抗']]],
   ['ZG', [['zga', '本編 巴達克一夥篇'], ['zgb', '本編 毀滅瓦斯・西之都'], ['zgc', '本編 克恩星・暗黑行星'], ['zgbroly', '熱戰烈戰超激戰'],

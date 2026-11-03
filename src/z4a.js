@@ -1,4 +1,4 @@
-// Z4 第一章 賽魯誕生的秘密（地圖 42・44・45）— driven by world.z3 (tools/build_z4a.py; docs/z4-plan.md):
+// Z4 第一章 沙魯誕生的秘密（地圖 42・44・45）— driven by world.z3 (tools/build_z4a.py; docs/z4-plan.md):
 //   page 2001: あらすじ, Piccolo tells of Cell, Cell at Ginger Town, Vegeta flies off → map 42: the basement of
 //   Dr. Gero's lab (2011) → Willow and the bio-warriors again (battle 2015) → 2016: Capsule Corp., Piccolo after Cell,
 //   Goku wakes up, Vegeta and Trunks to the time chamber → map 44: the training (2071, 流派一致修行 pattern 1:
@@ -6,16 +6,16 @@
 //   map 45 (the flight, a short film here) → variable 41 = 2091 → 第二章 (src/z4b.js).
 // Map 44 (精神と時の部屋) is shared by Z4 chapters 1 / 3 / 5: its training spot is { chapter: 'z4', page: 'htc' },
 // handled by whichever chapter is being played (variable 121 says who trains).
-import { audio, img } from './core.js?v=20261104-0709';
-import { addScenes } from './cutscene.js?v=20261104-0709';
-import { makeMember, applyLevel } from './party.js?v=20261104-0709';
-import { superSaiyan } from './supersaiyan.js?v=20261104-0709';
-import { newHand } from './battle.js?v=20261104-0709';
-import { applyEra } from './era.js?v=20261104-0709';
-import { ryuhaPairTraining } from './z3train.js?v=20261104-0709';
+import { audio, img } from './core.js?v=20261104-0727';
+import { addScenes } from './cutscene.js?v=20261104-0727';
+import { makeMember, applyLevel } from './party.js?v=20261104-0727';
+import { superSaiyan } from './supersaiyan.js?v=20261104-0727';
+import { newHand } from './battle.js?v=20261104-0727';
+import { applyEra } from './era.js?v=20261104-0727';
+import { ryuhaPairTraining } from './z3train.js?v=20261104-0727';
 import {
   registerZ3, nextZ3, Z3, begin, play, fight, toField, party, heal, card, moveTo,
-} from './z3.js?v=20261104-0709';
+} from './z3.js?v=20261104-0727';
 
 const MAPS = ['42', '44', '45'];
 

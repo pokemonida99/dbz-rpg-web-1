@@ -1,4 +1,4 @@
-"""Z4 第二章 悄悄接近的賽魯（地圖 43） — world.json data, added by tools/build_z3.py (read by src/z4b.js). docs/z4bc.md has
+"""Z4 第二章 悄悄接近的沙魯（地圖 43） — world.json data, added by tools/build_z3.py (read by src/z4b.js). docs/z4bc.md has
 the whole chapter with the original's sources. The helpers here (the scene extractor, the page converter, the androids
 as party members) are shared with the third chapter (tools/build_z4c.py).
 
@@ -298,7 +298,7 @@ def add(world, h, z3):
     # ---------- the scenes, the battle films ----------
     films = {2092: 3, 2132: 4, 2157: 5, 2172: 6}
     sc = scenes(root, file, 2091, 2188, {2123, 2153, 2188} | set(films))
-    world['z3']['titles']['z4b'] = 'Z4　第二章　悄悄接近的賽魯'
+    world['z3']['titles']['z4b'] = 'Z4　第二章　悄悄接近的沙魯'
     world['z3']['z4b'] = {
         'scenes': sc,
         'field': {'map': MAP, 'x': 59, 'y': 5},  # page 8: party [8,9,7]

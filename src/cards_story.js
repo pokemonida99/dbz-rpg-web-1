@@ -11,13 +11,13 @@
 //   171 恐龍              +2 食物 (74), +2 宴席 (75)
 //   63 / 68 / 145 / 155   skill cards (src/growth.js useSkillCard, world.growth.cards); the skills' battle effects below
 //   57 58 59, 125-133, 168: the original never lets them be used (kind 'none')
-import { audio, toast } from './core.js?v=20261104-0709';
-import * as items from './items.js?v=20261104-0709';
-import * as growth from './growth.js?v=20261104-0709';
-import { KI_CARD } from './battle.js?v=20261104-0709';
-import { pickMember, memberChange } from './partymenu.js?v=20261104-0709';
-import { registerZ3, member, party } from './z3.js?v=20261104-0709';
-import { candidates } from './timeroom.js?v=20261104-0709';
+import { audio, toast } from './core.js?v=20261104-0727';
+import * as items from './items.js?v=20261104-0727';
+import * as growth from './growth.js?v=20261104-0727';
+import { KI_CARD } from './battle.js?v=20261104-0727';
+import { pickMember, memberChange } from './partymenu.js?v=20261104-0727';
+import { registerZ3, member, party } from './z3.js?v=20261104-0727';
+import { candidates } from './timeroom.js?v=20261104-0727';
 
 const { fieldCards, overlay, h, button, iconCanvas, handCanvas, gainCard, trim, cardState } = items;
 const SE_OK = 'Z3 決定', SE_ERR = 'Z3 エラー';

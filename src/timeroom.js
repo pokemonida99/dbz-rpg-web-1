@@ -8,16 +8,16 @@
 //   area      a door to an era's area (area = the page the original runs, 9102 …): phase 2 registers them here
 // state.flags.tr = what page 15 kept for the way back (variables 231-235, $story_partyc, $story_sp_saiya); variable 43 is
 // 999 inside, the story's value comes back on leaving.
-import { audio, say, choose, sleep } from './core.js?v=20261104-0709';
-import { registerZ3, begin, play, heal, member, party, startChapter } from './z3.js?v=20261104-0709';
-import { moveTo, enterMap } from './chapter2.js?v=20261104-0709';
-import { syncSuperSaiyan, FORMS } from './supersaiyan.js?v=20261104-0709';
-import { eventCard, fieldCards } from './items.js?v=20261104-0709';
-import { memberChange } from './partymenu.js?v=20261104-0709';
-import { holds } from './field.js?v=20261104-0709';
-import { apeOffAll } from './cards_a.js?v=20261104-0709'; // CE160 大猿全解除
-import { applyLevel } from './party.js?v=20261104-0709';
-import { ensure } from './growth.js?v=20261104-0709';
+import { audio, say, choose, sleep } from './core.js?v=20261104-0727';
+import { registerZ3, begin, play, heal, member, party, startChapter } from './z3.js?v=20261104-0727';
+import { moveTo, enterMap } from './chapter2.js?v=20261104-0727';
+import { syncSuperSaiyan, FORMS } from './supersaiyan.js?v=20261104-0727';
+import { eventCard, fieldCards } from './items.js?v=20261104-0727';
+import { memberChange } from './partymenu.js?v=20261104-0727';
+import { holds } from './field.js?v=20261104-0727';
+import { apeOffAll } from './cards_a.js?v=20261104-0727'; // CE160 大猿全解除
+import { applyLevel } from './party.js?v=20261104-0727';
+import { ensure } from './growth.js?v=20261104-0727';
 
 const TR = (game) => game.world.timeroom;
 const TX = (game) => TR(game).text;
@@ -229,6 +229,14 @@ function infoList(title, names) {
     });
     root.addEventListener('pointerdown', (e) => { e.stopPropagation(); audio.unlock(); });
     document.getElementById('app').appendChild(root);
+    // a list longer than the window: a ▼ under it until the end has been scrolled to
+    const more = document.createElement('div');
+    more.className = 'tr-more';
+    more.textContent = '▼ 往下捲還有';
+    const seen = () => { more.hidden = box.scrollTop + box.clientHeight >= box.scrollHeight - 4; };
+    box.after(more);
+    box.addEventListener('scroll', seen);
+    seen();
   });
 }
 
@@ -370,5 +378,6 @@ css.textContent = `
 .tr-title { color: #d0480c; flex: none; }
 .tr-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; touch-action: pan-y; }
 .tr-list .btn { margin: 0; text-align: left; font-size: 16px; }
+.tr-more { flex: none; text-align: center; color: #d0480c; font-size: 13px; }
 `;
 document.head.appendChild(css);

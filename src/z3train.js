@@ -17,12 +17,12 @@
 //   cleared = false: HP 0 (variable 41 stays 1309 → page 41: Vegeta's line, all_charecter_recovery, variable 41 − 1,
 //   and page 40 runs the training again from 100×). EXP for 100× / 200× is kept even then, as in the original.
 // Both play their BGM and leave it playing (the original's next page sets its own); they fade in 10 / out 20 frames.
-import { img, audio, rand, loadImages } from './core.js?v=20261104-0709';
-import { newCard } from './battle.js?v=20261104-0709';
-import { levelUp, EXP_RATE, makeMember, applyLevel } from './party.js?v=20261104-0709';
-import { el, overlay, button } from './fieldmenu.js?v=20261104-0709';
-import { registerZ3, member, heal } from './z3.js?v=20261104-0709';
-import { applyEra } from './era.js?v=20261104-0709';
+import { img, audio, rand, loadImages } from './core.js?v=20261104-0727';
+import { newCard } from './battle.js?v=20261104-0727';
+import { levelUp, EXP_RATE, makeMember, applyLevel } from './party.js?v=20261104-0727';
+import { el, overlay, button } from './fieldmenu.js?v=20261104-0727';
+import { registerZ3, member, heal } from './z3.js?v=20261104-0727';
+import { applyEra } from './era.js?v=20261104-0727';
 
 const P = (n) => `Graphics/Pictures/${n}.PNG`;
 const CARDS = P('カード関係'), DIGITS = P('数字英語'), ICONS = P('アイコン'), FACES = P('Z3_顔味方');
@@ -116,7 +116,8 @@ function scene(cls, W, H, msgFirst) {
   };
   // input_loop_run: a tap anywhere but on a button (no sound, as in the original)
   sc.tapWait = () => new Promise((res) => {
-    const h = (e) => { if (e.target.closest('button')) return; root.removeEventListener('click', h); res(); };
+    const h = (e) => { if (e.target.closest('button')) return; root.removeEventListener('click', h); root.classList.remove('tr-wait'); res(); };
+    root.classList.add('tr-wait');
     root.addEventListener('click', h);
   });
   // a result message: 60 frames, or a tap when variable 38 (戦闘メッセージ表示) isn't 0 — unset here counts as 1

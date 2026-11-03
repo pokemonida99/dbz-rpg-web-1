@@ -9,14 +9,14 @@
 // window over the stage. Tapping outside the window / anything but an enemy while targeting cancels that card.
 // A picked card wears its member's face: tap it (or the face above) to pick again for that member; 返回 undoes the
 // last pick. With everyone picked a big 出招！ starts the turn (or right away with 設定「選完直接出招」).
-import { view, img, loadImages, audio, sleep, rand } from './core.js?v=20261104-0709';
-import { levelUp, EXP_RATE } from './party.js?v=20261104-0709';
-import { Duel, ANIME_IMAGES, SW, SH, BACK_Y } from './anime.js?v=20261104-0709';
-import { commandButtons, autoSkill, autoTarget, tally } from './partymenu.js?v=20261104-0709'; // command row, 作戰, counters
-import * as items from './items.js?v=20261104-0709'; // item cards: effects that touch the battle rules
-import { tryCombo, announceCombos, comboHints, hasCombos, HINT_TEXT } from './combo.js?v=20261104-0709'; // 組合技
-import * as growth from './growth.js?v=20261104-0709'; // passive skills, proficiency, KO, SP / ZP / EXP pool
-import { superSaiyan, moveTransforms, afterBattle as ssAfterBattle } from './supersaiyan.js?v=20261104-0709'; // 超サイヤ人
+import { view, img, loadImages, audio, sleep, rand } from './core.js?v=20261104-0727';
+import { levelUp, EXP_RATE } from './party.js?v=20261104-0727';
+import { Duel, ANIME_IMAGES, SW, SH, BACK_Y } from './anime.js?v=20261104-0727';
+import { commandButtons, autoSkill, autoTarget, tally } from './partymenu.js?v=20261104-0727'; // command row, 作戰, counters
+import * as items from './items.js?v=20261104-0727'; // item cards: effects that touch the battle rules
+import { tryCombo, announceCombos, comboHints, hasCombos, HINT_TEXT } from './combo.js?v=20261104-0727'; // 組合技
+import * as growth from './growth.js?v=20261104-0727'; // passive skills, proficiency, KO, SP / ZP / EXP pool
+import { superSaiyan, moveTransforms, afterBattle as ssAfterBattle } from './supersaiyan.js?v=20261104-0727'; // 超サイヤ人
 
 export const SCHOOL = ['必', '龜', '神', '界', '魔', '惑', '基', '悟', '超'];
 const HAND = 6;
@@ -229,12 +229,14 @@ function foeFace(c, f, x, y) {
   if (!im.ok) return;
   c.drawImage(im.im, f.hp * 4 < f.maxhp ? 64 : 0, 64 * (f.face ? f.face[1] : f.id), 64, 64, x, y, 64, 64);
 }
-function text(c, s, x, y, color = INK, size = 16, align = 'left') {
+function text(c, s, x, y, color = INK, size = 16, align = 'left', maxW = 0) {
   c.font = `${size}px ${FONT}`;
+  // maxW: a line that must stay inside its window (narrow phones) gets a smaller size, then is squeezed
+  for (let z = size - 1; maxW && z >= 10 && c.measureText(s).width > maxW; z--) c.font = `${z}px ${FONT}`;
   c.textAlign = align;
   c.textBaseline = 'top';
   c.fillStyle = color;
-  c.fillText(s, x, y);
+  if (maxW) c.fillText(s, x, y, maxW); else c.fillText(s, x, y);
 }
 function cursor(c, x, y) { // the original's blinking ▼ (アイコン.PNG), centred on x, top at y
   const blink = Math.floor(performance.now() / 270) % 2;
@@ -577,7 +579,7 @@ export class Battle {
       text(c, s.name + (s.all ? '（全體）' : ''), x + 30, ry + 6, ok ? INK : '#a08060', 18);
       text(c, `KI ${ki}`, x + w - 14, ry + 8, ok ? '#7a5230' : '#c0a080', 14, 'right');
       hints[i].forEach((t, k) => text(c, `組合技 ${t.name}（${t.need}）${this.pending.solo ? '不使用' : HINT_TEXT[t.st]}`,
-        x + 30, ry + 27 + k * 14, t.st === 'ok' && !this.pending.solo ? RUST : '#a08060', 12));
+        x + 30, ry + 27 + k * 14, t.st === 'ok' && !this.pending.solo ? RUST : '#a08060', 12, 'left', w - 44));
       if (ok) this.hit(x, ry, w, rowH, () => { audio.se(SE_OK); this.pending.skill = s; this.chooseTarget(); }, 'modal');
       else this.hit(x, ry, w, rowH, () => audio.se(SE_ERR), 'modal');
     });
@@ -688,7 +690,7 @@ export class Battle {
     const m = this.party[this.cur];
     this.mode = 'card';
     this.pending = null;
-    this.say(`${m.name}：點一張卡出招。`, this.practice ? '「氣」的卡會變成自己的流派，可以使用必殺技。' : `${SCHOOL[m.school]}流或「必」的卡可以使用必殺技。`);
+    this.say(`${m.name}：點一張卡出招。`, this.practice ? '「氣」卡算自己的流派，能用必殺技。' : `${SCHOOL[m.school]}流或「必」的卡可以使用必殺技。`);
     this.buttons = commandButtons(this); // 自動・菜單・(返回)・逃跑 (src/partymenu.js)
   }
 

@@ -321,9 +321,9 @@ def add(world, h):
     build_z3train.add(world, h, z3)
     # ---------- Z4 (セル編): the same shared part (world.z3), its chapters in their own files (docs/z4-plan.md) ----------
     world['z3']['chapters'] += ['z4a', 'z4b', 'z4c', 'z4d', 'z4e', 'z4f']
-    import build_z4a  # noqa: E402  (Z4 第一章 賽魯誕生的秘密: maps 42, 44, 45)
+    import build_z4a  # noqa: E402  (Z4 第一章 沙魯誕生的秘密: maps 42, 44, 45)
     build_z4a.add(world, h, z3)
-    import build_z4b  # noqa: E402  (Z4 第二章 悄悄接近的賽魯: map 43)
+    import build_z4b  # noqa: E402  (Z4 第二章 悄悄接近的沙魯: map 43)
     build_z4b.add(world, h, z3)
     import build_z4c  # noqa: E402  (Z4 第三章 新生貝吉塔父子出擊: maps 46, 44)
     build_z4c.add(world, h, z3)
@@ -331,7 +331,7 @@ def add(world, h):
     build_z4d.add(world, h, z3)
     import build_z4e  # noqa: E402  (Z4 第五章 人造人間 13 號: maps 44, 93)
     build_z4e.add(world, h, z3)
-    import build_z4f  # noqa: E402  (Z4 第六章 賽魯遊戲: maps 48, 49)
+    import build_z4f  # noqa: E402  (Z4 第六章 沙魯遊戲: maps 48, 49)
     build_z4f.add(world, h, z3)
     # ---------- 時之間 (phase 1: the hall, the era halls, 隊伍變更, 説明, 戦闘練習: src/timeroom.js) ----------
     import build_timeroom  # noqa: E402

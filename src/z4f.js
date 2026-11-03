@@ -1,4 +1,4 @@
-// Z4 第六章 賽魯遊戲（地圖 48・49） — driven by world.z3 (tools/build_z4f.py), following Map007 event 7 page 72 (variable
+// Z4 第六章 沙魯遊戲（地圖 48・49） — driven by world.z3 (tools/build_z4f.py), following Map007 event 7 page 72 (variable
 // 41 = 2991) and pages 28-40 (2431-2621), the scenes z1field 2431-2693 (all.rb 176917-177900), the spots of map 48
 // (145_Event_Check.rb `when 48`) and map 49 (the kamehameha duel). docs/z4f.md has the whole chapter.
 //   2991 the 17th day (Goku's house, the temple, the rocks, No. 16) → map 48 (75,63)
@@ -8,18 +8,18 @@
 //     → 2571 → map 49 the kamehameha duel → 2591 heaven, Shenron, Capsule Corporation → 2602 the end (2691 the staff
 //     roll, 2693 Roshi) → 「Z4 完」 and the title screen (ZG 待續).
 //   After the clear (switch 458, the 時之間 in the original) 2461 asks whether everyone fights → battle 2464 → 2621.
-import { audio, img, loadImages, toast } from './core.js?v=20261104-0709';
-import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261104-0709';
-import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261104-0709';
-import { addMoves, ANIME_IMAGES } from './anime.js?v=20261104-0709';
-import { makeMember, applyLevel } from './party.js?v=20261104-0709';
-import { superSaiyan, syncSuperSaiyan, afterBattle, offHooks, onHooks, changeHooks } from './supersaiyan.js?v=20261104-0709';
-import { applyEra } from './era.js?v=20261104-0709';
-import { newHand } from './battle.js?v=20261104-0709';
-import { cardSquare } from './cardgames.js?v=20261104-0709';
-import { spotTally } from './fieldmenu.js?v=20261104-0709';
-import { duelFilm, screenPic } from './z3c.js?v=20261104-0709';
-import { registerZ3, Z3, begin, fight, toField, party, addMember, leave, member, heal, card, moveTo, setParty } from './z3.js?v=20261104-0709';
+import { audio, img, loadImages, toast } from './core.js?v=20261104-0727';
+import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261104-0727';
+import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261104-0727';
+import { addMoves, ANIME_IMAGES } from './anime.js?v=20261104-0727';
+import { makeMember, applyLevel } from './party.js?v=20261104-0727';
+import { superSaiyan, syncSuperSaiyan, afterBattle, offHooks, onHooks, changeHooks } from './supersaiyan.js?v=20261104-0727';
+import { applyEra } from './era.js?v=20261104-0727';
+import { newHand } from './battle.js?v=20261104-0727';
+import { cardSquare } from './cardgames.js?v=20261104-0727';
+import { spotTally } from './fieldmenu.js?v=20261104-0727';
+import { duelFilm, screenPic } from './z3c.js?v=20261104-0727';
+import { registerZ3, Z3, begin, fight, toField, party, addMember, leave, member, heal, card, moveTo, setParty } from './z3.js?v=20261104-0727';
 
 const MAPS = ['48', '49'];
 const C = (game) => Z3(game).z4f;
@@ -701,6 +701,7 @@ async function ring(game) {
     s.var[41] = 2451;
     await playPages(game, 2451);
     toField(game, C(game).back);
+    toast('先離開擂台，再回到擂台上，沙魯遊戲就會開始');
     return;
   }
   s.var[41] = 2461;
@@ -807,7 +808,11 @@ function resume(game, at) {
   if (f) f(game);
   else toField(game);
 }
-function goal(world, s) { return s.map === '48' ? Z3({ world }).goals['48'] : ''; }
+function goal(world, s) {
+  if (s.map !== '48') return '';
+  // after Mr. Satan the party stands by the ring: it starts when they come back to it (armed above)
+  return s.sw && s.sw[457] && !(s.flags || {}).z4fRing ? '目標：離開擂台再走回擂台，開始沙魯遊戲' : Z3({ world }).goals['48'];
+}
 
 // ---------- development: index.html?dev=z4f / z4fring / z4fcell / z4fgohan / z4f16 / z4fawake / z4flast / z4fbeam /
 // z4fend / z4fstaff / z4fall (&timer in a hidden pane) ----------

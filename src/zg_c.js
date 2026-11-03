@@ -7,23 +7,23 @@
 //   map 110: guard robots 6611-6615 → battle 6616 → 6621 (all five: switch 845); the door 6601; 怨念增幅裝置 6631 → battle
 //     6641 → 6651 (CE94) → battle 6671 → 6681 → battle 6701 → 6711 (CE69) → battle 6721 → 6731 → 6751 (CE95) → 6761 → 9932
 //   the 時の間へ移動 squares → page 9932 (back to the ZG hall mid-story: state.flags.zgBack, src/zg_a.js leaveZg / backToZg)
-import { audio, img, loadImages, toast, view } from './core.js?v=20261104-0709';
-import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261104-0709';
-import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261104-0709';
-import { addMoves } from './anime.js?v=20261104-0709';
-import { makeMember, applyLevel } from './party.js?v=20261104-0709';
-import { syncSuperSaiyan, FORMS } from './supersaiyan.js?v=20261104-0709';
-import { applyEra } from './era.js?v=20261104-0709';
-import { newHand } from './battle.js?v=20261104-0709';
-import { eventCard } from './items.js?v=20261104-0709';
-import { cardSquare } from './cardgames.js?v=20261104-0709';
-import { spotTally } from './fieldmenu.js?v=20261104-0709';
-import { screenPic } from './z3c.js?v=20261104-0709';
-import { registerZ3, Z3, begin, fight, toField, party, member, heal, moveTo } from './z3.js?v=20261104-0709';
-import { registerBackdrop, endTrStory } from './timeroom.js?v=20261104-0709';
+import { audio, img, loadImages, toast, view } from './core.js?v=20261104-0727';
+import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261104-0727';
+import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261104-0727';
+import { addMoves } from './anime.js?v=20261104-0727';
+import { makeMember, applyLevel } from './party.js?v=20261104-0727';
+import { syncSuperSaiyan, FORMS } from './supersaiyan.js?v=20261104-0727';
+import { applyEra } from './era.js?v=20261104-0727';
+import { newHand } from './battle.js?v=20261104-0727';
+import { eventCard } from './items.js?v=20261104-0727';
+import { cardSquare } from './cardgames.js?v=20261104-0727';
+import { spotTally } from './fieldmenu.js?v=20261104-0727';
+import { screenPic } from './z3c.js?v=20261104-0727';
+import { registerZ3, Z3, begin, fight, toField, party, member, heal, moveTo } from './z3.js?v=20261104-0727';
+import { registerBackdrop, endTrStory } from './timeroom.js?v=20261104-0727';
 // the ZG parts' shared party / way-back helpers (keepParty, restoreParty, leaveZg, backToZg: docs/zg-c.md); read through
 // the namespace so this part still runs on its own before the first part is merged (the same steps are below)
-import * as ZGA from './zg_a.js?v=20261104-0709';
+import * as ZGA from './zg_a.js?v=20261104-0727';
 
 const MAPS = ['105', '108', '109', '110'];
 const C = (game) => Z3(game).zgc;

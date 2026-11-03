@@ -400,7 +400,19 @@ build_bgext.add(world, globals())
 # leftovers of the translation the play-through found (docs/qa-fixes.md): Japanese kana / kanji left in names and lines,
 # one name spelled two ways. Story text and speaker / face keys only — never a file name (Z1 吹っ飛ぶ, 恐竜とサバイバル …)
 TEXT_FIXES = [('特蘭克斯ス', '特蘭克斯'), ('特蘭克斯く', '特蘭克斯'), ('賽亞人人', '賽亞人'), ('恐竜', '恐龍'), ('惑星戦士', '惑星戰士'),
-              ('宇宙里', '宇宙裡'), ('布利夫', '布里夫'), ('可能っ', '可能'), ('帕布金', '帕普金')]
+              ('宇宙里', '宇宙裡'), ('布利夫', '布里夫'), ('可能っ', '可能'), ('帕布金', '帕普金'),
+              # one name everywhere: ガーリックJr. 卡里克, パイクーハン 帕伊庫漢 (not 排骨飯), 変身 → 變身
+              ('卡里克 Jr.', '卡里克'), ('卡里克 區', '卡里克區'), ('排骨飯', '帕伊庫漢'), ('(変身', '(變身'),
+              ('Episode of Bardock', '巴達克外傳'),
+              # ガーリックJr.'s four (all.rb 124591: ガッシュ / タード / ビネガー / ゾルド), the translation's 加素 / 塔多 / 比家 / 素茲 cut short
+              ('加素', '加修'), ('塔多', '塔德'), ('比家', '比尼加'), ('素茲', '佐爾德'),
+              # the original's pad buttons, said as this version's buttons (src/partymenu.js, src/cardgames.js)
+              ('按下X按鈕 會從KI的消耗量轉換成使用回數', '按「看使用回數」會從KI的消耗量轉換成使用回數'),
+              ('你可以用Y鍵來切換顯示', '按「看技能」可以切換顯示'),
+              ('從能力畫面按下LR按鈕可以變更服裝！', '在能力畫面按「換裝」可以變更服裝！'),
+              ('你可以在合成界面按下X按鈕切換模式', '你可以在合成畫面用上方的按鈕切換模式'),
+              # 巴布魯斯: a tie wins too (src/kaiotraining.js a <= mine)
+              ('攻擊星數比巴布魯斯大的牌', '攻擊星數不小於巴布魯斯的牌')]
 ASSET = re.compile(r'^[A-Za-z][A-Za-z0-9]{0,7}[ _]|\.(?:png|PNG|ogg)$')
 def fix_text(o):
     if isinstance(o, str):
@@ -411,5 +423,21 @@ def fix_text(o):
     if isinstance(o, dict): return {fix_text(k) if isinstance(k, str) else k: fix_text(v) for k, v in o.items()}
     return o
 world = fix_text(world)
+# a picture named .PNG that is .png on disk (or the other way): GitHub Pages is case-sensitive, a miss costs a 404 first
+REAL = {}
+for d in ('Pictures', 'Characters', 'System', 'Battlebacks', 'Faces'):
+    full = os.path.join(root, 'assets', 'Graphics', d)
+    if os.path.isdir(full):
+        for f in os.listdir(full): REAL[f'Graphics/{d}/{f}'.lower()] = f'Graphics/{d}/{f}'
+def fix_case(o):
+    if isinstance(o, str): return REAL.get(o.lower(), o) if o.startswith('Graphics/') else o
+    if isinstance(o, list): return [fix_case(v) for v in o]
+    if isinstance(o, dict): return {k: fix_case(v) for k, v in o.items()}
+    return o
+world = fix_case(world)
+# 未來悟飯 (ゴハン(未来), actors 25 / 26) was 悟飯 like the boy: two 悟飯 in the ZG party could not be told apart
+for i in (25, 26):
+    for k in (i, str(i)):
+        if k in world['actors']: world['actors'][k]['name'] = '未來悟飯'
 json.dump(world, open(os.path.join(root, 'data', 'world.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 print('world.json written')

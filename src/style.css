@@ -157,3 +157,9 @@ button { font: inherit; color: inherit; -webkit-appearance: none; appearance: no
 .slots .sl.ask .sl-at { color: #c0300c; }
 .slots .sl:disabled { opacity: .45; }
 .slots .sl:active { transform: translateY(2px); }
+
+/* a training page waiting for a tap (the original's input_loop_run): the blinking ▼ under its message */
+.tr-wait .win.tr-msg, .tr-wait .win.kt-msg, .tr-wait .win.gv-msg, .tr-wait .win.zt-msg { position: relative; }
+.tr-wait .win.tr-msg::after, .tr-wait .win.kt-msg::after, .tr-wait .win.gv-msg::after, .tr-wait .win.zt-msg:not(.zt-more)::after {
+  content: "▼ 點一下繼續"; position: absolute; right: 0; bottom: -4px; color: #d0480c; font-size: 12px; animation: tw-blink .8s steps(1) infinite; }
+@keyframes tw-blink { 0%, 60% { opacity: 1; } 61%, 100% { opacity: .3; } }

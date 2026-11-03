@@ -74,6 +74,7 @@ import './anime_bardock.js?v=20261103-0825'; // 巴達克・超巴達克's move 
 import './anime_bardock_crew.js?v=20261103-0825'; // バーダック一味's move films (docs/anim-cd-plan.md ancc; ?dev=ancc…)
 import './anime_future.js?v=20261103-0825'; // 特蘭克斯・未來悟飯・龜仙人's Z3 move films (docs/anim-cd-plan.md andt; ?dev=andt…)
 import './anime_androids.js?v=20261103-0825'; // 人造人 18・17・16號's Z3 move films (docs/anim-cd-plan.md anda; ?dev=anda)
+import './anime_foes_zg.js?v=20261103-0825'; // the 「強」 rematches' and the later ZG enemies' move films (docs/anim-e-plan.md aen4; ?dev=aen4…)
 
 // testing in a hidden browser pane (no animation frames there): ?timer drives every frame with timers instead
 if (new URLSearchParams(location.search).has('timer')) window.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16);

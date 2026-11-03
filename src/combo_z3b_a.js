@@ -1,6 +1,6 @@
 // (cmd part a: films ported by a helper, merged into src/combo_z3b.js at the end)
 import { ComboDuel } from './combo-anime.js?v=20261103-1518';
-import { rand } from './core.js?v=20261103-1518';
+import { rand, audio } from './core.js?v=20261103-1518';
 import { RAY_SPEED as RS } from './anime.js?v=20261103-1518';
 import { films, COMMON, pic, STANDARD_CHAX, STANDARD_CHAY, STANDARD_ENEX, STANDARD_ENEY, CENTER_CHAX, CENTER_ENEX, TEC_CENTER_CHAX,
   FLASH_Y_SIZE_CUTIN_ON, FLASH_Y_SIZE_CUTIN_OFF, by, Z3, BLINK, v } from './combo_z3b.js?v=20261103-1518';
@@ -1036,3 +1036,231 @@ Object.assign(ComboDuel.prototype, {
   },
 });
 films({ 842: ['cmdMoonBreaker', 43] }, { cmdMoonBreaker: () => [...COMMON, MOON] });
+
+// ======================================================================================================
+// 868 大丈夫かチチ！？ (2968 超悟空＋琪琪, all.rb 122208). (悟空 leading: 琪琪 walks in to take his place.) 琪琪 dashes at
+// the enemy and is knocked back; 悟空 catches her (back 115), she goes up out of the way; 悟空 charges blue, vanishes,
+// reappears beside the enemy with the ball (235; the side panels), his ZG kamehameha close-ups and the beam, then the
+// half-round wave on the enemy (256), damage 44.
+// ======================================================================================================
+const KAME1_GOKU = [pic('ZG_必殺技_超カメハメ波1(悟空).PNG'), pic('ZG_必殺技_超カメハメ波1(悟空_ボロボロ).PNG'),
+  pic('ZG_必殺技_超カメハメ波1(悟空_さらにボロボロ).png'), pic('ZG_必殺技_超カメハメ波1(悟空_バトルスーツ).PNG')];
+const BEAM_BIG = pic('ZG_必殺技_光線_大.PNG'); // 316×158
+Object.assign(ComboDuel.prototype, {
+  * cmdDaijoubuChichi() {
+    const z = this.cmd, A = this.A, G = this.G, gx0 = -96 + 16 * 25 - 8 * 12, shift = TEC_CENTER_CHAX - gx0;
+    const c171 = () => { const c = v(171); return [1, 2, 3].includes(c) ? c : 0; };
+    for (;;) {
+      const f = z.top();
+      let rx = 356, ry = 112;
+      z.color = 3;
+      if (!z.tok && z.lead === 14) { // 琪琪 walks in
+        if (f === 0) z.se('Z1 逃げる');
+        if (f <= 60) { z.c1 = 10; z.ax = -16; z.back(115, STANDARD_CHAX + Math.min(f, 21) * 16, STANDARD_CHAY); }
+        if (f === 60) { z.ax = 0; z.chg = 10; A.x = TEC_CENTER_CHAX; z.tok = true; z.f = 0; }
+      } else if (z.tok) {
+        if (f <= 1) { z.c1 = 14; z.chg = 10; z.otype = 1; z.pose(6); A.x = TEC_CENTER_CHAX; A.y = STANDARD_CHAY; }
+        else if (f <= 59) { if (f === 2) z.se('Z1 逃げる'); A.x += 16; }
+        else if (f === 60) { G.x = CENTER_ENEX; G.y = STANDARD_CHAY; A.x = -96; }
+        else if (f <= 82) A.x += 16;
+        else if (f === 83) { z.otype = 0; z.pose(17); z.gpose(1); z.se('ZG 打撃4'); } // she is knocked back
+        else if (f <= 119) A.x -= 20;
+        else if (f === 120) { G.y = -200; A.x = 840; z.se('Z1 逃げる'); }
+        else if (f <= 146) { A.x -= 20; z.back(115, -96 + 16 * (f - 121), STANDARD_CHAY); } // 悟空 comes to catch her
+        else if (f <= 159) { if (f === 147) z.se('Z1 強打'); z.t1 = 16; z.back(115, gx0 + 96 - 8 * (f - 147), STANDARD_CHAY); A.x -= 8; }
+        else if (f === 160) { z.back(115, gx0, STANDARD_CHAY); z.t1 = 0; z.pose(0); }
+        else if (f <= 180) { z.back(115, gx0, STANDARD_CHAY); A.x += 4; }
+        else if (f <= 240) { z.back(115, gx0, STANDARD_CHAY); z.otype = 1; z.pose(7); }
+        else if (f <= 270) { z.pose(8); A.y -= 16; if (f === 241) z.se('Z1 逃げる'); z.back(115, gx0, STANDARD_CHAY); }
+        else if (f <= 359) { if (f === 271) z.se('Z3 変身'); z.back(201, 176, 88); z.bf--; z.back(115, gx0, STANDARD_CHAY); }
+        else if (f === 360) { z.chg = 14; A.x = gx0; A.y = STANDARD_CHAY; z.se('Z1 気を溜める'); z.pose(2); z.back(201, 176, 88); }
+        else if (f <= 420) z.back(201, 176, 88);
+        else if (f <= 540) { z.back(201, 176, 88); rx = 284 - shift; ry = 160; z.color = 0; z.efp = 237; if (f === 501) z.se('Z1 気を溜める2'); }
+        else if (f <= 620) { z.color = 0; rx = 284 - 8 - shift; ry = 160 - 8; z.efp = f === 620 ? 0 : 235; }
+        else if (f <= 680) { // he vanishes
+          A.y = -200;
+          if (f === 621) { z.seStop(); z.se('Z1 高速移動'); }
+          if (f % 4 === 0) z.blt(SPARK, 0, 48, 64, 64, TEC_CENTER_CHAX + 12 - shift, STANDARD_CHAY + 20);
+        } else if (f === 690) { G.x = CENTER_ENEX; G.y = STANDARD_ENEY; z.gpose(0); A.x = TEC_CENTER_CHAX - 48; }
+        else if (f >= 721 && f <= 750) { if (f === 721) z.se('Z1 高速移動'); if (f % 4 === 0) z.blt(SPARK, 0, 48, 64, 64, TEC_CENTER_CHAX + 12 - 48, STANDARD_CHAY + 20); }
+        else if (f >= 751 && f <= 810) { // beside the enemy with the ball
+          rx = 284 - 8 - 48; ry = 160 - 8; z.color = 0; z.efp = 235;
+          if (f === 751) z.se('Z1 気を溜める2');
+          A.y = STANDARD_CHAY;
+          if (f === 810) z.no = 4;
+        } else if (f >= 811 && f <= 920) { // his close-up, the ball
+          if (f === 811) { z.seStop(); z.se('ZG SE053'); }
+          z.cut = false; G.y = -200; A.y = -200; z.color = 0; rx = 258 + 16; ry = 46 + 86;
+          z.blt(KAME2_GOKU[c171()], 0, 0, 122, 212, 258, 46);
+        } else if (f >= 921 && f <= 989) { // and the beam
+          rx = 258 + 16; ry = 46 + 86; z.efp = 0;
+          if (f === 921) { z.seStop(); z.se('ZG SE040'); }
+          z.blt(KAME1_GOKU[c171()], 0, 0, 122, 212, 258, 46);
+          z.blt(BEAM_BIG, 0, 0, 316, 158, 162, 46 + 134);
+          if (f <= 928) z.flash();
+        } else if (f === 990) { z.cut = true; z.displayOut(); z.no = 0; z.otype = 1; A.y = STANDARD_CHAY; }
+        else if (f >= 991 && f <= 1090) { // the wave on the enemy
+          G.y = -200; rx = 308; ry = 96; z.color = 0;
+          if (f === 991) { z.seStop(); z.se('ZG 光線1'); }
+          z.pose(3); z.efp = 256;
+        } else if (f === 1091) { G.y = STANDARD_ENEY; A.y = -200; return yield* z.finish(); }
+      } else z.tok = true;
+      yield* z.out(rx, ry);
+    }
+  },
+});
+films({ 868: ['cmdDaijoubuChichi', 44] }, { cmdDaijoubuChichi: () => [...COMMON, ...KAME1_GOKU, ...KAME2_GOKU, BEAM_BIG] });
+
+// ======================================================================================================
+// 869 チチさんはやらせねえ！ / 世話焼かせるんじゃねえ (2969 超巴達克＋琪琪, all.rb 122455) and 870 カカロットが世話になった
+// らしいな！ (2970 龜仙人＋超巴達克, 122897): 巴達克's onslaught (2969 frames 405-909, 2970 535-1039: the same code 130
+// frames later) — the blows up and down, the rush across, the ground shaking (BGS), the strike — then his スピリッツ
+// キャノン close-up (235 → 289), the ball (206) and the hit (207), damage 44.
+// ======================================================================================================
+const SPIRITS_CANNON = [pic('Z3_必殺技_スピリッツキャノン(バーダック超)スカウター有り.png'), pic('Z3_必殺技_スピリッツキャノン(バーダック超).png')];
+const ROSHI_KAME = pic('DB3_亀仙人カメハメは.PNG'); // 3 frames of 64×96
+const SURPRISE = pic('戦闘アニメ_ビックリマーク.PNG');
+// one frame of the onslaught: `k` in 2969's numbering (405-909); returns [ray_x, ray_y], or true at 909
+function bardockRush(z, k, rays) {
+  const A = z.d.A, G = z.d.G;
+  if (k <= 410) {
+    z.gpose(16); if (k === 405) z.se('Z1 強打'); z.pose(12);
+    if (k >= 406 && k <= 407) G.x += 8; else if (k >= 408 && k <= 409) G.x -= 8;
+  } else if (k <= 460) { // knocked up and down, then away
+    const g = k - 411;
+    if (g >= 1 && g <= 8) { z.pose(12); G.y -= 8; }
+    else if (g >= 9 && g <= 12) { if (g === 9) z.se('ZG 打撃4'); if (g === 11) z.pose(13); z.gpose(17); G.y += 16; G.x -= 30; }
+    else if (g >= 23 && g <= 30) { z.pose(13); z.gpose(16); G.y -= 8; }
+    else if (g >= 31 && g <= 34) { if (g === 31) z.se('ZG 打撃4'); if (g === 33) z.pose(12); z.gpose(17); G.y += 12; G.x += 30; }
+    else if (g >= 35) {
+      z.gpose(17); G.x += 20; G.y += 2;
+      if (g >= 46) { A.x += 30; A.y += 2; }
+      if (g === 46) { z.pose(3); z.se('Z1 飛ぶ'); }
+    }
+  } else if (k === 461) { A.y = STANDARD_CHAY; G.y = STANDARD_CHAY; G.x = -100; A.x = -300; }
+  else if (k <= 505) { // the rush across
+    const g = k - 462;
+    if (g === 0) z.se('Z1 飛ぶ');
+    if (g >= 1 && g <= 17) { G.x += 20; A.x += 30; if (g === 13) z.pose(8); }
+    else if (g >= 18 && g <= 21) { z.pose(8); if (g === 18) z.se('ZG 打撃5'); G.x += 30; }
+    else if (g >= 22 && g <= 25) { G.x -= 30; A.y -= 16; A.x += 12; z.pose(3); }
+    else if (g >= 26 && g <= 27) { z.pose(9); A.y += 24; if (g === 27) z.se('Z1 強打'); }
+    else if (g >= 28 && g <= 35) { A.y += 16; G.y += 16; }
+    else if (g >= 36 && g <= 43) { A.y -= 16; G.y -= 18; G.x += 8; }
+  } else if (k <= 559) { // the ground shakes
+    const g = k - 506;
+    if (g === 0) { audio.playBgs('Z1 大地が揺れる'); z.pose(12); z.gpose(16); }
+    else if (g <= 42) {
+      const steps = [[10, 13, -8], [20, 12, 8], [25, 13, -16], [30, 12, 16], [33, 13, -32], [36, 12, 32], [38, 13, -48], [40, 12, 48], [41, 13, -96]];
+      const st = steps.find(([n]) => g <= n);
+      if (st) { z.pose(st[1]); if (g <= 10) z.gpose(16); G.x += st[2]; } else { z.pose(2); z.gpose(17); G.x += 96; audio.stopBgs(); z.se('Z1 吹っ飛ぶ'); }
+    } else G.x += 48;
+  } else if (k <= 619) { // the strike
+    const g = k - 561;
+    if (g === 0) { A.y = STANDARD_CHAY; G.y = STANDARD_CHAY; G.x = -100; A.x = 680; z.gpose(16); }
+    else if (g >= 1 && g <= 10) G.x += 32;
+    else if (g >= 11 && g <= 18) { G.x += 32; A.x -= 24; z.pose(11); if (g === 18) z.se('Z1 強打'); }
+    else if (g >= 19 && g <= 29) { G.x -= 32; z.gpose(17); if (g >= 25) { z.pose(14); A.x -= 72; A.y -= 16; if (g === 25) z.se('Z1 高速移動'); } }
+    else if (g === 30) { A.y = STANDARD_CHAY; A.x = G.x - 40; z.pose(10); z.se('ZG 打撃2'); }
+    else if (g >= 31) { G.x += 32; G.y -= 16; }
+  } else if (k <= 740) { // his スピリッツキャノン close-up
+    if (k === 620) { z.se('Z1 気を溜める3'); z.otype = 1; z.color = 3; z.cut = false; A.x = -200; }
+    z.blt(SPIRITS_CANNON[v(175) === 0 ? 0 : 1], 0, 26, 274, 228, 180, 64);
+    if (k <= 680) { rays[0] = 202; rays[1] = 236; z.efp = 235; } else { if (k === 740) z.cut = true; rays[0] = 186; rays[1] = 220; z.efp = 289; }
+  } else if (k <= 790) { A.x = TEC_CENTER_CHAX; rays[0] = 276; rays[1] = 140; z.pose(6); z.efp = 235; }
+  else if (k === 791) { z.seStop(); z.pose(2); rays[0] = -360; rays[1] = -96; }
+  else if (k === 792) { z.seStop(); z.se('Z1 エネルギー波'); z.efp = 206; z.eff = 0; rays[0] = -360; rays[1] = -96; }
+  else if (k <= 830) { z.efp = 206; rays[0] = 360; rays[1] = 96; }
+  else if (k === 831) z.fxReset();
+  else if (k === 861) z.displayOut();
+  else if (k >= 882 && k <= 908) z.efp = 207;
+  else if (k === 909) return true;
+  return false;
+}
+// the member's after-image as he vanishes (2969 361-399 / 2970 511-529: by $btl_progress, 2 here)
+function vanishing(z) { if (z.f % 4 === 0) z.blt(SPARK, 0, 48, 64, 64, z.d.A.x + 16, 144); }
+// 琪琪 (or 龜仙人) walks in to take 巴達克's place when he leads (2969 / 2970 0-60)
+function walkIn(z, f, id) {
+  if (f === 0) z.se('Z1 逃げる');
+  if (f <= 60) { z.c1 = id; z.ax = -16; z.back(115, STANDARD_CHAX + Math.min(f, 21) * 16, STANDARD_CHAY); }
+  if (f === 60) { z.ax = 0; z.chg = id; z.d.A.x = TEC_CENTER_CHAX; z.tok = true; z.f = 0; }
+}
+Object.assign(ComboDuel.prototype, {
+  * cmdSewayaku() { // 2969: 琪琪 dashes in and is knocked back, 巴達克 catches her, she goes up out of the way, he charges
+    const z = this.cmd, A = this.A, G = this.G, gx0 = -96 + 16 * 25 - 8 * 12;
+    for (;;) {
+      const f = z.top();
+      const rays = [356, 112];
+      z.color = 3;
+      if (!z.tok && z.lead === 32) walkIn(z, f, 10);
+      else if (z.tok) {
+        if (f <= 1) { z.c1 = 32; z.chg = 10; z.otype = 1; z.pose(6); A.x = TEC_CENTER_CHAX; A.y = STANDARD_CHAY; }
+        else if (f <= 59) { if (f === 2) z.se('Z1 逃げる'); A.x += 16; }
+        else if (f === 60) { G.x = CENTER_ENEX; G.y = STANDARD_CHAY; A.x = -96; }
+        else if (f <= 82) A.x += 16;
+        else if (f === 83) { z.otype = 0; z.pose(17); z.gpose(1); z.se('ZG 打撃4'); }
+        else if (f <= 119) A.x -= 20;
+        else if (f === 120) { G.y = -200; A.x = 840; z.se('Z1 逃げる'); }
+        else if (f <= 146) { A.x -= 20; z.back(115, -96 + 16 * (f - 121), STANDARD_CHAY); }
+        else if (f <= 159) { if (f === 147) z.se('Z1 強打'); z.t1 = 16; z.back(115, gx0 + 96 - 8 * (f - 147), STANDARD_CHAY); A.x -= 8; }
+        else if (f === 160) { z.back(115, gx0, STANDARD_CHAY); z.t1 = 0; z.pose(0); }
+        else if (f <= 180) { z.back(115, gx0, STANDARD_CHAY); A.x += 4; }
+        else if (f <= 240) { z.back(115, gx0, STANDARD_CHAY); z.otype = 1; z.pose(7); }
+        else if (f <= 270) { z.pose(8); A.y -= 16; if (f === 241) z.se('Z1 逃げる'); z.back(115, gx0, STANDARD_CHAY); }
+        else if (f <= 360) {
+          if (f === 271) { z.otype = 1; z.color = 3; z.pose(4); z.se('Z3 変身'); z.chg = 32; A.x = gx0; A.y = STANDARD_CHAY; }
+          z.back(201, 176, 88);
+        } else if (f <= 379) { if (f === 361) { z.seStop(); z.se('Z1 高速移動'); A.y = -200; } vanishing(z); }
+        else if (f === 380) { A.y = -200; G.x = CENTER_ENEX; G.y = STANDARD_ENEY; z.otype = 1; A.x -= 16; z.gpose(0); }
+        else if (f <= 399) { if (f === 381) { A.y = -200; A.x = TEC_CENTER_CHAX; } vanishing(z); }
+        else if (f <= 404) A.y = STANDARD_CHAY;
+        else if (bardockRush(z, f, rays)) return yield* z.finish();
+      } else z.tok = true;
+      yield* z.out(rays[0], rays[1]);
+    }
+  },
+  * cmdKakarotto() { // 2970: 龜仙人's MAX kamehameha (his DB3 picture, effect 2), the half-round wave (256); the enemy dashes in,
+    // "!", 龜仙人 is knocked away; 巴達克 comes in with his Final Revenger (238), then the onslaught
+    const z = this.cmd, A = this.A, G = this.G;
+    for (;;) {
+      const f = z.top();
+      const rays = [356, 112];
+      z.color = 3;
+      if (!z.tok && z.lead === 32) walkIn(z, f, 24);
+      else if (z.tok) {
+        if (f >= 1 && f <= 89) {
+          if (f === 1) { z.se('Z3 変身'); z.otype = 1; z.pose(6); z.chg = 24; }
+          z.color = 0; z.back(201, 218, 88);
+        } else if (f === 90) { z.no = 1; z.seStop(); z.se('Z1 気を溜める'); A.y = -100; z.cut = false; }
+        else if (f <= 240) z.blt(ROSHI_KAME, (f <= 140 ? 0 : f <= 190 ? 1 : 2) * 64, 0, 64, 96, CENTER_CHAX + 48, STANDARD_CHAY);
+        else if (f <= 279) {
+          if (f === 241) { z.seStop(); z.se('Z1 エネルギー波2'); z.pose(3); z.efp = 2; }
+          z.color = 0; rays[0] = 242; rays[1] = 120;
+          z.blt(ROSHI_KAME, 2 * 64, 0, 64, 96, CENTER_CHAX + 48, STANDARD_CHAY);
+        } else if (f <= 440) {
+          const g = f - 280;
+          if (g === 0) { z.cut = true; z.no = 0; z.pose(3); z.fxReset(); A.x = TEC_CENTER_CHAX; A.y = STANDARD_CHAY; z.efp = 256; }
+          rays[0] = 308 + 22; rays[1] = 96 + 16; z.color = 0;
+          if (g >= 115 && g <= 143) { if (g === 115) z.se('Z1 吹っ飛ぶ'); z.blt(SURPRISE, 0, 0, 16, 16, A.x + 24, STANDARD_CHAY - 16); }
+          else if (g === 144) { z.pose(16); z.efp = 0; } else if (g >= 145 && g <= 154) A.x -= 16; else if (g === 155) z.pose(0);
+          if (g === 70) { G.x = 640; G.y = STANDARD_CHAY; z.se('DB3 ダッシュ'); } else if (g >= 71 && g <= 114) G.x -= 8;
+          else if (g === 145) { G.x -= 8; z.seStop(); z.gpose(1); z.se('DB3 SE041'); z.se('Z1 飛ぶ'); }
+        } else if (f <= 509) { // 巴達克's Final Revenger
+          const g = f - 441;
+          if (g === 0) { z.t1 = 0; z.se('Z1 大猿'); z.efp = 238; }
+          rays[0] = -100 + g * 24; rays[1] = STANDARD_CHAY + 50 - g * 2;
+          if (g === 9) z.gpose(17); else if (g >= 10 && g <= 50) { if (f % 6 === 0) z.se('Z2 SE058'); G.x += 24; G.y -= 2; }
+        } else if (f === 510) { A.y = -200; G.x = -200; G.y = STANDARD_ENEY; z.otype = 1; A.x = CENTER_CHAX; z.gpose(17); z.efp = 0; z.chg = 32; }
+        else if (f <= 529) {
+          if (f === 511) { A.y = -200; A.x = CENTER_CHAX; }
+          G.x = G.x < CENTER_ENEX ? G.x + 28 : CENTER_ENEX;
+          vanishing(z);
+        } else if (f <= 534) { A.y = STANDARD_CHAY; z.gpose(0); }
+        else if (bardockRush(z, f - 130, rays)) return yield* z.finish();
+      } else z.tok = true;
+      yield* z.out(rays[0], rays[1]);
+    }
+  },
+});
+films({ 869: ['cmdSewayaku', 44], 870: ['cmdKakarotto', 44] },
+  { cmdSewayaku: () => [...COMMON, ...SPIRITS_CANNON], cmdKakarotto: () => [...COMMON, ...SPIRITS_CANNON, ROSHI_KAME, SURPRISE] });

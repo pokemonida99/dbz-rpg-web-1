@@ -57,6 +57,8 @@ const P = {
   midBlue: [pic('Z2_戦闘_必殺技_エネルギー波_中_敵_青.PNG'), pic('Z3_戦闘_必殺技_エネルギー波_中_敵_青.PNG')],
   vegetaGalick: pic('FC風_GBZ1 戦闘_ベジータ_ギャリック砲.PNG'), gokuKame: pic('FC風_GBZ1 戦闘_ゴクウ_カメハメは.png'), // 1813 Z3: 128×96
   dodohame: pic('Z3_戦闘_必殺技_どどはめはエネルギー波.png'), dodohameHit: pic('Z3_戦闘_必殺技_どどはめはエネルギー波_ヒット.png'), // 281 / 282
+  small: [pic('Z2_戦闘_必殺技_エネルギー波_小.PNG'), pic('Z3_戦闘_必殺技_エネルギー波_小.PNG')], // effect 226: 400×48 ×2
+  smallBlue: [pic('Z2_戦闘_必殺技_エネルギー波_小_敵_青.PNG'), pic('Z3_戦闘_必殺技_エネルギー波_小_敵_青.PNG')],
   shock: [pic('Z2_戦闘_必殺技_背景_衝撃波系.png'), pic('Z3_戦闘_必殺技_背景_衝撃波系.png')], // back 1: 3 frames of 640×180
   ball2: [pic('Z2_戦闘_必殺技_エネルギー弾2.PNG'), pic('Z3_戦闘_必殺技_エネルギー弾2.PNG')], // effects 203 / 204: 96×64
   half: pic('Z3_戦闘_必殺技_エネルギー波_半円.PNG'), // effects 256 / 265: 700×128 ×2 (1850 is only in the Z3 part)
@@ -284,6 +286,9 @@ const EFFECTS = {
   207: (z) => { const [s, w, h] = ball34(z); z.front(s, 0, 0, w, h, -192 + z.eff * RAY_SPEED, 96); }, // (ヒット)
   208: (z, rx, ry) => { z.eft = 3; z.front(balls(z), 384, 0, 128, 128, rx + z.eff * RAY_SPEED, ry); }, // 元気弾系(発動)
   209: (z) => { z.eft = 3; z.front(balls(z), 384, 0, 128, 128, -128 + z.eff * RAY_SPEED, 112); }, // (ヒット)
+  226: (z) => z.front(z.color === 3 ? z.P('smallBlue') : z.P('small'), 0, 0, 400, 48, -400 + z.eff * RAY_SPEED, 148), // エネルギー波_小系(ヒット)
+  233: (z, rx, ry) => z.front(z.P('midBlue'), 0, 80, 54 + z.eff * RAY_SPEED, 80, rx, ry), // 口から怪光線(発動) (@ray_color 0 / 1 / 3: 青)
+  234: (z, rx, ry) => z.front(z.P('midBlue'), 0, 0, 400, 80, -400 + z.eff * RAY_SPEED, ry), // (ヒット) (@ray_color 3)
   235: (z, rx, ry) => { z.front(z.color === 3 ? P.blinkBlue : P.blink, 32 * z.rt, 0, 32, 32, rx, ry); z.rstep(4, 4); }, // スーパーカメハメ波ため
   237: (z, rx, ry) => { z.front(z.color === 3 ? P.blinkSBlue : P.blinkS, 16 * z.rt, 0, 16, 16, rx, ry); z.rstep(4, 4); }, // (小)
   252: (z, rx, ry) => { z.front(P.genkiBlink, 64 * z.rt, 0, 64, 64, rx, ry); z.rstep(4, 3); }, // 元気玉ため
@@ -314,6 +319,17 @@ const EFFECTS = {
     for (const x of [928, 1216, 1504]) z.front(b, 112, 80, 288, 80, x - e, 160);
   },
   251: (z) => { const e = z.eff * RAY_SPEED; z.front(z.P('mid'), 0, 0, 400, 80, -400 + e, 134); z.front(z.P('midBlue'), 0, 80, 400, 80, 640 - e, 134); }, // (ヒット)
+  332: (z) => { // 狼牙風風拳 ヤムチャとわかもの: the two side by side (雅木茶's normal sheet, the young one's special sheet)
+    const e = z.eff;
+    const R = e <= 10 ? [14, 26] : e <= 20 ? [13, 25] : e <= 30 ? [12, 24] : e <= 35 ? [0, 19] : e <= 39 ? [3, 22] : e <= 43 ? [1, 20]
+      : e <= 46 ? [2, 21] : e <= 50 ? [4, 23] : e <= 53 ? [2, 21] : e <= 56 ? [1, 20] : e <= 60 ? [2, 21] : e <= 80 ? [16, 18] : null;
+    let a = z.sheet(7, false), b = z.sheet(15), r = R;
+    if (!r) { if (z.era >= 2) { a = z.sheet(7); r = [3, 21]; } else r = [2, 21]; }
+    if (e >= 36 && e % 5 === 0 && e < 85) z.se('Z3 打撃');
+    const y = e >= 61 && e <= 80 ? STD_Y - (e - 60) * 4 : e >= 81 && e <= 85 ? STD_Y - 80 + (e - 80) * 16 : STD_Y;
+    z.front(a, 0, r[0] * 96, 96, 96, CENTER_CHAX + 10, y);
+    z.front(b, 0, r[1] * 96, 96, 96, CENTER_CHAX + 154, y);
+  },
   320: (z) => { // 行くぞクリリン(発動): the green and the orange ball, closing in
     const e = z.eff, x = 340 + e * RAY_SPEED;
     if (z.era < 2) { z.front(P.ball3Green, 0, 0, 222, 134, x, 96 - 58 + e); z.front(P.ball3, 0, 0, 222, 134, x, 96 + 60 - e); }
@@ -851,18 +867,20 @@ function p1850(z, f) {
   return false;
 }
 
-// 1851 ありがとうピッコロさん！ (all.rb 85660): (比克 leading: 悟飯 runs in first, back 115) the enemy charges in from the
-// right and knocks 悟飯 back, 比克 runs in between (back 115), knocks it away and fires his mouth ball (back 116, 201 / 202)
-function p1851(z, f) {
+// 1851 ありがとうピッコロさん！ (all.rb 85660) / 1857 ピッコロさん！？ (86017, the young Namekian 15 in 比克's place,
+// his mouth-ball row 12): (比克 / 青年 leading: 悟飯 runs in first, back 115) the enemy charges in from the right and
+// knocks 悟飯 back, the other runs in between (back 115), knocks it away and fires his mouth ball (back 116, 201 / 202)
+const p1857 = (z, f) => p1851(z, f, 15, 12);
+function p1851(z, f, who = 4, row = 4) {
   const gohan = z.who5();
-  if (!z.flag && z.lead === 4) {
+  if (!z.flag && z.lead === who) {
     z.sc[1] = gohan;
     if (f === 0) z.se('Z1 逃げる');
     if (f <= 60) { if (z.scf <= 20) z.scf++; z.ax = -16; z.back(115, STD_CHAX + Math.min(f, 21) * 16, STD_Y); }
     if (f === 60) { z.ax = 0; z.chg = 5; z.chax = TEC_CENTER; z.flag = true; z.f = 0; }
     return false;
   }
-  if (f <= 1) { z.sc[1] = 4; z.chg = gohan; z.otype = 0; z.pose(0); z.chax = TEC_CENTER; z.chay = STD_Y; z.enex = 640 + 32; z.eney = STD_Y; }
+  if (f <= 1) { z.sc[1] = who; z.chg = gohan; z.otype = 0; z.pose(0); z.chax = TEC_CENTER; z.chay = STD_Y; z.enex = 640 + 32; z.eney = STD_Y; }
   else if (f <= 24) {
     if (f === 2) z.se('Z1 逃げる');
     if (f === 24) z.se('Z1 強打');
@@ -883,7 +901,7 @@ function p1851(z, f) {
     z.sct[1] = 1;
     if (f === 100) { z.seStop(); z.se('ZG 打撃4'); }
     z.back(115, CENTER_CHAX + 40, STD_Y); z.enex += 20; z.gpose(16);
-  } else if (f === 160) { z.se('Z1 怪光線'); z.color = 1; z.sct[1] = 4; z.back(116, CENTER_CHAX + 40, STD_Y); }
+  } else if (f === 160) { z.se('Z1 怪光線'); z.color = 1; z.sct[1] = row; z.back(116, CENTER_CHAX + 40, STD_Y); }
   else if (f <= 200) { z.back(116, CENTER_CHAX + 40, STD_Y); z.efp = 201; z.rx = 340; z.ry = 96; }
   else if (f === 201) z.fxReset();
   else if (f === 205) { z.gpose(0); z.displayOut(); }
@@ -892,19 +910,20 @@ function p1851(z, f) {
   return false;
 }
 
-// 1852 行くぞクリリン (all.rb 85753): 1801 with 克林: the other one flies in (effects 89 / 90), both vanish (back 48),
-// 比克 knocks the enemy off the stage (121), 克林 comes from behind and kicks it down (effect 125), both charge
-// (back 118) and fire (320), and the balls hit as one (247)
-function p1852(z, f) {
+// 1852 行くぞクリリン (all.rb 85753) / 1858 地球の方 (86109, the young Namekian 15 in 比克's place, charging in row 11):
+// 1801 with 克林: the other one flies in (effects 89 / 90), both vanish (back 48), 比克 knocks the enemy off the stage
+// (121), 克林 comes from behind and kicks it down (effect 125), both charge (back 118) and fire (320), the balls hit as one (247)
+const p1858 = (z, f) => p1852(z, f, 15, 11);
+function p1852(z, f, who = 4, row = 2) {
   z.rx = f <= 500 ? 325 : 340; z.ry = f <= 500 ? 70 : 200;
   if (f === 0) { z.se('Z1 逃げる'); z.otype = 1; z.pose(0); }
   else if (f <= 39) {
-    if (z.lead === 4) { z.sc[2] = 6; z.efp = 90; z.ay = f <= 10 ? -5 : 0; }
-    else if (z.lead === 6) { z.sc[2] = 4; z.efp = 89; z.ay = f <= 10 ? 5 : 0; }
-  } else if (f <= 59) { if (z.lead === 6 && f === 40) z.chay -= 100; z.chg = 4; z.sc[2] = 6; z.efp = 92; }
+    if (z.lead === who) { z.sc[2] = 6; z.efp = 90; z.ay = f <= 10 ? -5 : 0; }
+    else if (z.lead === 6) { z.sc[2] = who; z.efp = 89; z.ay = f <= 10 ? 5 : 0; }
+  } else if (f <= 59) { if (z.lead === 6 && f === 40) z.chay -= 100; z.chg = who; z.sc[2] = 6; z.efp = 92; }
   else if (f <= 100) { z.efp = 92; z.chay = -200; if (f === 60) z.se('Z1 高速移動'); z.back(48, TEC_CENTER + 10, STD_Y + 76 - 100); }
   else if (f <= 140) { z.efp = 0; if (f === 101) z.se('Z1 高速移動'); z.back(48, TEC_CENTER, STD_Y + 76); }
-  else if (f === 150) { z.eff = 0; z.enex = CENTER_ENEX; z.eney = STD_Y; z.chg = 4; z.chax = CENTER_CHAX; z.otype = 0; z.pose(0); }
+  else if (f === 150) { z.eff = 0; z.enex = CENTER_ENEX; z.eney = STD_Y; z.chg = who; z.chax = CENTER_CHAX; z.otype = 0; z.pose(0); }
   else if (f >= 160 && f <= 180) { if (f === 160) z.se('Z1 高速移動'); z.back(48, CENTER_CHAX + 16, STD_Y + 26); if (f === 180) z.chay = STD_Y; }
   else if (f === 186) { z.se('Z1 打撃'); z.pose(3); }
   else if (f === 191) { z.se('Z1 打撃'); z.pose(4); }
@@ -926,7 +945,7 @@ function p1852(z, f) {
   } else if (f >= 294 && f <= 353) {
     z.efp = 0; z.eff = 0;
     if (f === 294) z.se('Z1 気を溜める2');
-    z.chax = TEC_CENTER; z.chay = STD_Y - 50; z.pose(2); z.chg = 4; z.sct[2] = 2;
+    z.chax = TEC_CENTER; z.chay = STD_Y - 50; z.pose(row); z.chg = who; z.sct[2] = 2;
     z.back(118, TEC_CENTER, STD_Y + 50);
   } else if (f >= 354 && f <= 414) {
     if (f === 354) { z.seStop(); z.se('Z1 エネルギー波2'); }
@@ -959,6 +978,66 @@ function p1919(z, f) {
   return false;
 }
 
+// 1856 油断してやがったな(悟飯＆貝吉塔) (all.rb 85896): (貝吉塔 leading: 悟飯 runs in first, back 115) the enemy charges in
+// and knocks 悟飯 back, 貝吉塔's beam hits it from the left (effect 226, explosion 101); 貝吉塔 charges (back 102 / Z3
+// 201, blue) and fires from his mouth (233), which hits (234)
+function p1856(z, f) {
+  const z3 = z.era >= 2, [bn, bx, by] = z3 ? [201, 220, 86] : [102, 190, 32];
+  z.rx = 350; z.ry = 124;
+  if (!z.flag && (z.lead === 12 || z.lead === 19)) {
+    if (f === 0) z.se('Z1 逃げる');
+    if (f <= 60) { z.sc[1] = z.who5(); z.ax = -16; z.back(115, STD_CHAX + Math.min(f, 21) * 16, STD_Y); }
+    if (f === 60) { z.ax = 0; z.chg = 5; z.chax = TEC_CENTER; z.flag = true; z.f = 0; }
+    return false;
+  }
+  if (!z.flag) { z.flag = true; return false; }
+  if (f <= 1) { z.sc[1] = z.ss(12) ? 19 : 12; z.chg = z.who5(); z.otype = 0; z.pose(0); z.chax = TEC_CENTER; z.chay = STD_Y; z.enex = 640 + 32; z.eney = STD_Y; }
+  else if (f <= 24) {
+    if (f === 2) z.se('Z1 逃げる');
+    if (f === 24) z.se('ZG 打撃4');
+    if (f === 14) z.gpose(16);
+    if (f === 19) z.gpose(1);
+    z.enex -= 16;
+  } else if (f <= 59) { z.chax -= 16; z.pose(17); }
+  else if (f === 60) { z.color = 3; z.se('Z1 怪光線'); }
+  else if (f <= 86) z.efp = 226;
+  else if (f === 87) { z.eff = 0; z.eft = 0; z.efp = 101; z.seStop(); z.se('Z3 光線系ヒット'); z.gpose(16); }
+  else if (f <= 119) z.enex += 16;
+  else if (f === 120) {
+    z.se(z3 ? 'Z3 変身' : 'Z2 気を溜める');
+    z.chg = z.ss(12) ? 19 : 12; z.chax = TEC_CENTER; z.chay = STD_Y; z.otype = 1; z.color = 3; z.pose(5);
+  } else if (f <= 209) z.back(bn, bx, by);
+  else if (f === 210) { z.seStop(); z.pose(6); }
+  else if (f === 230) { z.seStop(); z.se('Z1 エネルギー波2'); z.efp = 233; }
+  else if (f === 269) z.fxReset();
+  else if (f === 279) z.displayOut();
+  else if (f >= 280 && f <= 306) z.efp = 234;
+  else if (f === 307) return true;
+  return false;
+}
+
+// 1859 何故か息の合う(雅木茶＆青年) (all.rb 86252): the other one flies in (effects 89 / 90), both vanish (back 48),
+// then the two together give the enemy a 狼牙風風拳 (effect 332); the enemy is knocked down out of the stage (damage 78,
+// ZG 打撃4)
+function p1859(z, f) {
+  z.rx = f <= 500 ? 325 : 340; z.ry = f <= 500 ? 70 : 200;
+  if (f === 0) { z.se('Z1 逃げる'); z.otype = 1; z.pose(0); }
+  else if (f <= 39) {
+    if (z.lead === 7) { z.sc[2] = 15; z.efp = 90; z.ay = f <= 10 ? -5 : 0; }
+    else if (z.lead === 15) { z.sc[2] = 7; z.efp = 89; z.ay = f <= 10 ? 5 : 0; }
+  } else if (f <= 59) { if (z.lead === 15 && f === 40) z.chay -= 100; z.chg = 7; z.sc[2] = 15; z.efp = 92; }
+  else if (f <= 100) {
+    z.chay = -120; z.efp = 0;
+    if (f === 60) z.se('Z1 高速移動');
+    z.back(48, TEC_CENTER + 6, STD_Y + 76); z.bf--; z.back(48, TEC_CENTER + 6, STD_Y + 76 - 100);
+  } else if (f === 110) {
+    z.eff = 0; z.enex = CENTER_ENEX; z.eney = STD_Y; z.chg = 7; z.chax = CENTER_CHAX + 16; z.otype = 0; z.pose(0);
+    z.sc[2] = 15; z.sct[2] = 19; z.se('Z1 逃げる'); z.displayOut();
+  } else if (f >= 111 && f <= 202) z.efp = 332;
+  else if (f === 203) { z.chay = -160; z.kyouda = true; return true; }
+  return false;
+}
+
 // ---------- the combos ----------
 // combo → [Z2 film, damage, Z3 film, damage] (the Z2 / Z3 parts of the move switch: all.rb 56692 / 59742), and its Z1 film
 // for the eight that Z1 has (src/combo-anime.js); `small`: @tec_back_small in the Z3 part (every one but 748)
@@ -976,6 +1055,10 @@ const CMB = {
   751: { z1: ['thanksPiccolo', 23], z2: [p1851, 41], z3: [p1851, 41] }, // 761
   752: { z1: ['krillinToo', 23], z2: [p1852, 41], z3: [p1852, 41] }, // 762
   819: { z1: ['doubleEyeBeam', 23], z2: [p1919, 23], z3: [p1919, 23] }, // 829
+  756: { z2: [p1856, 42], z3: [p1856, 42] }, // 766
+  757: { z2: [p1857, 41], z3: [p1857, 41] }, // 767
+  758: { z2: [p1858, 41], z3: [p1858, 41] }, // 768
+  759: { z2: [p1859, 78], z3: [p1859, 78] }, // 769
 };
 const SMALL_NOT = new Set([748]);
 const films = {};

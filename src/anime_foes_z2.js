@@ -19,12 +19,12 @@
 // src/anime_goku_gohan.js's stage. Each film keeps the original's counters (@ax @ay @gx @gy, @effect_anime_*,
 // @ray_anime_*, @back_anime_*) so it moves and blinks as the original does — an enemy's @ax flips sign every frame it
 // is left unset (output_battle_anime). Frame numbers in the comments are @battle_anime_frame.
-import { audio, img } from './core.js?v=20261104-0727';
-import { Duel, addMoves, moveFilm, spark, BACK_Y, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED } from './anime.js?v=20261104-0727';
-import { agFilms } from './anime_goku_gohan.js?v=20261104-0727';
-import { Battle } from './battle.js?v=20261104-0727';
-import { registerZ3, party, heal } from './z3.js?v=20261104-0727';
-import { applyLevel } from './party.js?v=20261104-0727';
+import { audio, img } from './core.js?v=20261104-0734';
+import { Duel, addMoves, moveFilm, spark, BACK_Y, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED } from './anime.js?v=20261104-0734';
+import { agFilms } from './anime_goku_gohan.js?v=20261104-0734';
+import { Battle } from './battle.js?v=20261104-0734';
+import { registerZ3, party, heal } from './z3.js?v=20261104-0734';
+import { applyLevel } from './party.js?v=20261104-0734';
 
 const FILMS = {
   345: 'fzWave', 346: 'fzSuper', 347: 'fzBlast', // 基紐

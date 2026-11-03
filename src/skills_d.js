@@ -18,12 +18,12 @@
 //   after the battle: カードドロップ 74-76/191-196 (get_card_drop_add 18109, the second drop only)
 //   on the map: 引き寄せ 616 / 追い払い 617 (encounter 165385: always / never an encounter)
 // 必中 389 and 鋼の意思 619 are already in src/battle.js (playerDamage, stopMember); 激怒 22 in src/growth.js.
-import * as growth from './growth.js?v=20261104-0727';
-import { rand } from './core.js?v=20261104-0727';
-import { isFav } from './cards_b.js?v=20261104-0727';
-import { zetsubou } from './skills_c.js?v=20261104-0727';
-import { registerZ3, party, heal } from './z3.js?v=20261104-0727';
-import { applyLevel } from './party.js?v=20261104-0727';
+import * as growth from './growth.js?v=20261104-0734';
+import { rand } from './core.js?v=20261104-0734';
+import { isFav } from './cards_b.js?v=20261104-0734';
+import { zetsubou } from './skills_c.js?v=20261104-0734';
+import { registerZ3, party, heal } from './z3.js?v=20261104-0734';
+import { applyLevel } from './party.js?v=20261104-0734';
 
 const { has, ensure, ran } = growth;
 const G = () => window.__game;

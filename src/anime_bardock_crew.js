@@ -15,12 +15,12 @@
 // is set on it here: the Z2 era, the moves without @chr_cutin_flag, @tec_output_back_no 4 and the Great Ape's cut-in.
 // The Great Ape is drawn by src/anime.js 48 px right / 96 up of where it stands, the original 96 left / 48 up, so its
 // positions are moved by (-48, +48) here. Frame numbers in the comments are the original's @battle_anime_frame.
-import { audio, img, rand } from './core.js?v=20261104-0727';
-import { addMoves, Duel, spark, STD_Y, CENTER_ENEX, TEC_CENTER, RAY_SPEED } from './anime.js?v=20261104-0727';
-import { ZfStage, ZF_FILMS, ZF_ALL, ZF_ACTOR, ZF_SMALL, ZF_AGAIN, zfBlt } from './anime_zfighters.js?v=20261104-0727';
-import { isSuper } from './supersaiyan.js?v=20261104-0727';
-import { registerZ3, party, heal } from './z3.js?v=20261104-0727';
-import { applyLevel } from './party.js?v=20261104-0727';
+import { audio, img, rand } from './core.js?v=20261104-0734';
+import { addMoves, Duel, spark, STD_Y, CENTER_ENEX, TEC_CENTER, RAY_SPEED } from './anime.js?v=20261104-0734';
+import { ZfStage, ZF_FILMS, ZF_ALL, ZF_ACTOR, ZF_SMALL, ZF_AGAIN, zfBlt } from './anime_zfighters.js?v=20261104-0734';
+import { isSuper } from './supersaiyan.js?v=20261104-0734';
+import { registerZ3, party, heal } from './z3.js?v=20261104-0734';
+import { applyLevel } from './party.js?v=20261104-0734';
 
 const pic = (n) => `Graphics/Pictures/${n}`;
 // $btl_top_file_name pictures: [Z2, Z3]

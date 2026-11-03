@@ -1,6 +1,6 @@
 // Shared runtime: canvas scaling, assets, input, audio, dialogue, toast.
 
-export const VERSION = '20261104-0727'; // stamped by tools/bump.py on each deploy
+export const VERSION = '20261104-0734'; // stamped by tools/bump.py on each deploy
 export const ASSET_ROOT = 'assets/';
 export const assetUrl = (p) => (ASSET_ROOT + p).split('/').map(encodeURIComponent).join('/');
 
@@ -37,6 +37,25 @@ const images = new Map();
 // the art of a later part of the story: a Z1 picture path → its Z2 version (src/era.js, while variable 40 is 1)
 let alias = {};
 export function setImageAlias(map) { alias = map || {}; }
+// an <img> in the page (the title's picture, the part cards) that failed: the same busy moment, tried again twice
+window.addEventListener('error', (e) => {
+  const t = e.target;
+  if (!(t instanceof HTMLImageElement)) return;
+  const n = +t.dataset.retry || 0;
+  if (n >= 2) return;
+  t.dataset.retry = n + 1;
+  setTimeout(() => { const u = t.src; t.src = ''; t.src = u; }, 800 * (n + 1));
+}, true);
+// fetch, again a little later when the server is busy (GitHub Pages: a 503 now and then)
+export async function fetchRetry(url, opts) {
+  for (let wait = 800; ; wait *= 2.5) {
+    try {
+      const r = await fetch(url, opts);
+      if (r.ok || r.status < 500 || wait > 6000) return r;
+    } catch (e) { if (wait > 6000) throw e; }
+    await new Promise((res) => setTimeout(res, wait));
+  }
+}
 export function img(path) {
   path = alias[path] || path;
   let e = images.get(path);
@@ -45,10 +64,16 @@ export function img(path) {
     // the original's file names mix .PNG and .png; a web server (GitHub Pages) tells them apart, so a miss tries the
     // other case once (the code names many pictures with .PNG)
     const other = path.replace(/\.(png|PNG)$/, (x) => (x === '.png' ? '.PNG' : '.png'));
-    let retried = false;
+    // GitHub Pages also answers a busy moment with a 503, and <img> can't tell that from a miss: the names are tried
+    // again a little later before giving up
+    const tries = other !== path ? [[other, 0], [path, 800], [other, 0], [path, 2500]] : [[path, 800], [path, 2500]];
     e = { im, ok: false, p: new Promise((res) => {
       im.onload = () => { e.ok = true; res(im); };
-      im.onerror = () => { if (!retried && other !== path) { retried = true; im.src = assetUrl(other); } else res(null); };
+      im.onerror = () => {
+        const t = tries.shift();
+        if (!t) return res(null);
+        setTimeout(() => { im.src = assetUrl(t[0]); }, t[1]);
+      };
     }) };
     im.src = assetUrl(path);
     images.set(path, e);
@@ -142,7 +167,7 @@ export const audio = {
   buf(path) {
     let p = this.bufs.get(path);
     if (!p) {
-      p = fetch(assetUrl(path)).then((r) => r.arrayBuffer()).then((b) => this.ctx.decodeAudioData(b)).catch(() => null);
+      p = fetchRetry(assetUrl(path)).then((r) => r.arrayBuffer()).then((b) => this.ctx.decodeAudioData(b)).catch(() => null);
       this.bufs.set(path, p);
     }
     return p;

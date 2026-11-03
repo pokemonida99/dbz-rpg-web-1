@@ -3,11 +3,11 @@
 //   120) → 卡里克 (121, battle 122) → he grows and revives the three (123, battle 126) → 一星球 (page 127 up to its
 //   first fade) → end of chapter; King Kai's last training (the rest of 127, map 14) is chapter 6 (game.startChapter6).
 // state.flags.ch5 tracks the step: 'garlic' → 'done'.
-import { input } from './core.js?v=20261104-0727';
-import { scenes, setParty, moveTo, enterMap, card } from './chapter2.js?v=20261104-0727';
-import { addScenes } from './cutscene.js?v=20261104-0727';
-import { makeMember, levelUp } from './party.js?v=20261104-0727';
-import { eventCard } from './items.js?v=20261104-0727';
+import { input } from './core.js?v=20261104-0734';
+import { scenes, setParty, moveTo, enterMap, card } from './chapter2.js?v=20261104-0734';
+import { addScenes } from './cutscene.js?v=20261104-0734';
+import { makeMember, levelUp } from './party.js?v=20261104-0734';
+import { eventCard } from './items.js?v=20261104-0734';
 
 const MAPS = ['13'];
 const pic = (n) => `Graphics/Pictures/${n}.PNG`;

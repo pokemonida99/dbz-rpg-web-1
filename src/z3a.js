@@ -4,15 +4,15 @@
 //   the herb man and the dinosaur (5-star ball), the mine and the gatekeeper (dynamite), the base (Kraz, battle 1197) →
 //   1200: four balls → Vegeta alone on map 34: the barrier and its three generators, the base (Ear, battle 1216) →
 //   1217: the others come, seven balls → map 35 Porunga (two wishes) → variable 41 = 1440 → 第二章 (src/z3b.js).
-import { addScenes, addNodes } from './cutscene.js?v=20261104-0727';
-import { makeMember, applyLevel } from './party.js?v=20261104-0727';
-import { eventCard } from './items.js?v=20261104-0727';
-import { ensure } from './growth.js?v=20261104-0727';
-import { superSaiyan } from './supersaiyan.js?v=20261104-0727';
-import { newHand } from './battle.js?v=20261104-0727';
+import { addScenes, addNodes } from './cutscene.js?v=20261104-0734';
+import { makeMember, applyLevel } from './party.js?v=20261104-0734';
+import { eventCard } from './items.js?v=20261104-0734';
+import { ensure } from './growth.js?v=20261104-0734';
+import { superSaiyan } from './supersaiyan.js?v=20261104-0734';
+import { newHand } from './battle.js?v=20261104-0734';
 import {
   registerZ3, startZ3, nextZ3, Z3, begin, play, fight, toField, party, member, heal, card, moveTo,
-} from './z3.js?v=20261104-0727';
+} from './z3.js?v=20261104-0734';
 
 const MAPS = ['33', '34', '35'];
 

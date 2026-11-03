@@ -6,10 +6,10 @@
 // (variable 432) for the next try. Hitting him: 1800 EXP for Goku and +15 uses of all his moves; variable 41 = 109.
 // The film runs at the original's 60 frames a second with its frame counts and positions (shifted 110 px left so
 // the 640-wide scene fits a 440-wide strip), like src/kaiotraining.js.
-import { img, audio, rand } from './core.js?v=20261104-0727';
-import { newCard } from './battle.js?v=20261104-0727';
-import { levelUp, EXP_RATE } from './party.js?v=20261104-0727';
-import { el, overlay, button } from './fieldmenu.js?v=20261104-0727';
+import { img, audio, rand } from './core.js?v=20261104-0734';
+import { newCard } from './battle.js?v=20261104-0734';
+import { levelUp, EXP_RATE } from './party.js?v=20261104-0734';
+import { el, overlay, button } from './fieldmenu.js?v=20261104-0734';
 
 const P = (n) => `Graphics/Pictures/${n}.PNG`;
 const CARDS = P('カード関係'), BACK = P('Z1_背景_スクロール_界王星');

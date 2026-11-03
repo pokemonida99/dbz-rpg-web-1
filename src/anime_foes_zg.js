@@ -22,11 +22,11 @@
 // 689 イグナイトビジョン (奧佐特(變身)) is 2789, オゾット's 692 too: src/aen3_ozotto.js aen3Ignite (aen3).
 // The giants (element 23: 金屬古拉・核心, 達列斯(大猿), 史拉格(巨大化), 奧佐特(變身)) have 192×192 frames, drawn at
 // (x - 48, y - 48) when they attack (output_battle_anime, all.rb 140062): these films draw them there.
-import { audio, img, rand } from './core.js?v=20261104-0727';
-import { Duel, moveFilm, STD_Y, CENTER_CHAX, CENTER_ENEX, RAY_SPEED } from './anime.js?v=20261104-0727';
-import { feRegister, feFilms, foeId, EFFECTS, BACKS } from './anime_foes_common.js?v=20261104-0727';
-import { registerZ3, party, heal } from './z3.js?v=20261104-0727';
-import { applyLevel } from './party.js?v=20261104-0727';
+import { audio, img, rand } from './core.js?v=20261104-0734';
+import { Duel, moveFilm, STD_Y, CENTER_CHAX, CENTER_ENEX, RAY_SPEED } from './anime.js?v=20261104-0734';
+import { feRegister, feFilms, foeId, EFFECTS, BACKS } from './anime_foes_common.js?v=20261104-0734';
+import { registerZ3, party, heal } from './z3.js?v=20261104-0734';
+import { applyLevel } from './party.js?v=20261104-0734';
 
 const pic = (n) => `Graphics/Pictures/${n}`;
 const STD_ENEX = 602;

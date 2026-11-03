@@ -21,7 +21,7 @@
 #boot .logo { width: min(84vw, 360px); image-rendering: pixelated; position: relative; }
 #boot .sub { margin-top: -14px; font-size: 15px; letter-spacing: .3em; color: #8fb4ff; position: relative; }
 #boot .balls { display: flex; gap: 6px; position: relative; }
-#boot .balls i { width: 40px; height: 40px; background: url("assets/ui/dballs.png?v=20261104-0727") 0 0 / 280px 40px no-repeat;
+#boot .balls i { width: 40px; height: 40px; background: url("assets/ui/dballs.png?v=20261104-0734") 0 0 / 280px 40px no-repeat;
   image-rendering: pixelated; filter: grayscale(1) brightness(.28); }
 #boot .balls i.on { filter: none; animation: bt-pop .36s steps(4); }
 #boot.full .balls i { animation: bt-hop .9s steps(3) infinite; animation-delay: calc(var(--k) * .09s); }
@@ -35,12 +35,12 @@
 #boot .go:active { transform: translateY(4px); box-shadow: inset 0 3px 0 #ffc04a, inset 0 -4px 0 #c25a10, 0 1px 0 #5a1e00; }
 @keyframes bt-blink { 50% { color: #fff4c8; } }
 </style>
-<link rel="stylesheet" href="src/style.css?v=20261104-0727">
+<link rel="stylesheet" href="src/style.css?v=20261104-0734">
 </head>
 <body>
 <div id="boot">
   <div class="st"></div>
-  <img class="logo" src="assets/ui/logo.png?v=20261104-0727" alt="DRAGON BALL Z">
+  <img class="logo" src="assets/ui/logo.png?v=20261104-0734" alt="DRAGON BALL Z">
   <div class="sub">重製版</div>
   <div class="balls"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i></div>
   <div class="msg">收集龍珠中… <b>0</b> / 7</div>
@@ -69,7 +69,14 @@
       go.hidden = false;
       return new Promise(function (r) { res = r; });
     },
-    done: function () { el.classList.add('out'); setTimeout(function () { el.remove(); }, 400); }
+    done: function () { el.classList.add('out'); setTimeout(function () { el.remove(); }, 400); },
+    // the code or the data could not be fetched (GitHub Pages: a 503 now and then): load the page again, up to three times
+    fail: function () {
+      var n = 3;
+      try { n = +sessionStorage.getItem('dbz-reload') || 0; sessionStorage.setItem('dbz-reload', n + 1); } catch (e) { /* private mode */ }
+      if (n < 3) { msg.textContent = '連線忙碌，重新載入中…'; setTimeout(function () { location.reload(); }, 1000 + n * 1500); }
+      else msg.textContent = '載入失敗，請檢查網路後重新整理';
+    }
   };
   go.addEventListener('pointerdown', function (e) { e.preventDefault(); if (!res) return; if (B.onTap) B.onTap(); go.hidden = true; var r = res; res = null; r(); });
   setTimeout(function () { B.set(1 / 7); }, 250);
@@ -87,6 +94,6 @@
   <div id="title"></div>
   <div id="toast" hidden></div>
 </div>
-<script type="module" src="src/main.js?v=20261104-0727"></script>
+<script type="module" src="src/main.js?v=20261104-0734" onerror="__boot.fail()"></script>
 </body>
 </html>

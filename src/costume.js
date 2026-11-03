@@ -185,7 +185,7 @@ function mapSwitches(s) {
 const on = (s, n) => (n === 131 ? [1, 3, 4].includes(s.var[173]) : n === 388 ? !!(s.sw[388] || (s.ss && s.ss[5])) : !!s.sw[n]);
 const pick = (s, list, lead) => {
   let hit = null;
-  for (const [v, sws, sheet, k] of list) if (v === lead && sws.every((n) => on(s, n))) hit = `${sheet}:${k}`;
+  for (const [v, sws, sheet, k, row] of list) if (v === lead && sws.every((n) => on(s, n))) hit = `${sheet}:${k}:${row || 0}`;
   return hit;
 };
 export const flySprite = (s, lead) => (era(s) === 2 ? pick(s, W().fly, lead) : null); // 'sheet:character' (src/field.js FLY_MORE)

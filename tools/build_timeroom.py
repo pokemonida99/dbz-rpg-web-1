@@ -131,7 +131,10 @@ def add(world, h, z3):
         c, g = p['condition'], p['graphic']
         if not c['variable_valid'] or not g['character_name']:
             continue
-        walk.append([c['variable_value'], [c[k + '_id'] for k in ('switch1', 'switch2') if c[k + '_valid']], g['character_name'], g['character_index']])
+        # (the last field: the page's direction row — on these sheets each row of a block is another character, and the
+        # event is direction-fixed: the row says who it is, not where they walk)
+        walk.append([c['variable_value'], [c[k + '_id'] for k in ('switch1', 'switch2') if c[k + '_valid']], g['character_name'], g['character_index'],
+                     {2: 0, 4: 1, 6: 2, 8: 3}[g['direction']]])
         sheets.add(g['character_name'])
 
     # map 48 (セルゲーム): its ring square (44,28) is a map event that shows the 時の間 tile 12 once Z4 is over

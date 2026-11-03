@@ -21,7 +21,7 @@ def pages(m, ev):
         c, g = pg['condition'], pg['graphic']
         sws = [c[k + '_id'] for k in ('switch1', 'switch2') if c[k + '_valid'] and c[k + '_id'] != 19]
         if c['variable_valid'] and c['variable_id'] == 42 and sws and g['character_name']:
-            out.append([c['variable_value'], sws, g['character_name'], g['character_index']])
+            out.append([c['variable_value'], sws, g['character_name'], g['character_index'], {2: 0, 4: 1, 6: 2, 8: 3}[g['direction']]])  # (row: who, on chara1-3)
     return out
 
 

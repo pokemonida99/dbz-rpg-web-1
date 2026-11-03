@@ -157,7 +157,7 @@ export class Field {
   walker() {
     const s = this.game.state, t = this.world.timeroom, lead = (s.var && s.var[42]) || 3;
     let hit = null;
-    for (const [v, sws, sheet, k] of (t && t.walk) || []) if (v === lead && sws.every((n) => s.sw[n])) hit = [sheet, k];
+    for (const [v, sws, sheet, k, row] of (t && t.walk) || []) if (v === lead && sws.every((n) => s.sw[n])) hit = [sheet, k, row];
     const cos = walkSprite(s, lead); // 換裝 (src/costume.js: map 44's clothes pages)
     if (cos) hit = cos.split(':').map((x, i) => (i ? +x : x));
     return hit;
@@ -266,7 +266,8 @@ export class Field {
     const fi = img(more ? `Graphics/Characters/${more[0]}.png` : FLY);
     if (wk) { // on foot: 32×32 frames, standing = the middle one
       const pat = this.moving ? [0, 1, 2, 1][Math.floor(this.anim) % 4] : 1, k = wk[1];
-      if (wi.ok) c.drawImage(wi.im, ((k % 4) * 3 + pat) * 32, (Math.floor(k / 4) * 4 + this.dir) * 32, 32, 32, Math.round(s.x - 16 - cx), Math.round(s.y - 16 - cy), 32, 32);
+      const row = wk[2] != null ? wk[2] : this.dir; // the original's direction-fixed page: the row is the character (chara1-3)
+      if (wi.ok) c.drawImage(wi.im, ((k % 4) * 3 + pat) * 32, (Math.floor(k / 4) * 4 + row) * 32, 32, 32, Math.round(s.x - 16 - cx), Math.round(s.y - 16 - cy), 32, 32);
     } else if (fi.ok) {
       const pat = [0, 1, 2, 1][Math.floor(this.anim) % 4];
       const bob = Math.round(Math.sin(this.anim * 1.3) * 1.5);

@@ -399,3 +399,4 @@ registerZ3('anda', {
 // sounds these films play beyond src/anime.js's, for tools/copy_assets.py
 export const ANDA_SOUNDS = ['Z1 怪光線', 'Z3 エネルギー波', 'DB3 気を溜める2', 'Z1 エネルギー波2', 'DB3 エネルギー波1', 'Z1 気を溜める',
   'Z1 ゴー', 'Z1 エネルギー波', 'ZG 光線系ヒット2', 'ZG 光線系ヒット3', 'Z3 光線系ヒット', 'Z3 跳ね返し'];
+export { at as andaAt, Gather as AndaGather, shake as andaShake }; // (src/anime_foes_z34.js: the enemies' films use the same blt / ki dots / shake)

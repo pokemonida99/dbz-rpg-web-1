@@ -67,6 +67,10 @@ files |= {f'Audio/BGS/{n}.ogg' for n in re.findall(r"'([^']+)'", dt.split('expor
 anda = open(os.path.join(root, 'src', 'anime_androids.js'), encoding='utf-8').read()
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", anda)}
 files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", anda.split('export const ANDA_SOUNDS')[1])}
+# the Z3 / Z4 enemies' move films (src/anime_foes_z34.js, docs/anim-e-plan.md aen2): its pic('…') and E2_SOUNDS
+e2 = open(os.path.join(root, 'src', 'anime_foes_z34.js'), encoding='utf-8').read()
+files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", e2)}
+files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", e2.split('export const E2_SOUNDS')[1])}
 # the opening (src/opening.js): its pictures and sounds, and the faces / sounds named in world.opening
 opening = open(os.path.join(root, 'src', 'opening.js'), encoding='utf-8').read()
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\(`?'?([^'`$]+\.(?:PNG|png))", opening)}

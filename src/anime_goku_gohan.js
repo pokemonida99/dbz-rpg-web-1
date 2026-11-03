@@ -129,15 +129,15 @@ const afterImage = (x, y) => (c) => spark(c, 0, 48, 64, 64, x, y);
 
 // ---------- the strips and the cut-in ----------
 // a picture `w` wide repeated across, scrolled `off` px to the left
-function across(c, sheet, w, h, y, off) { const x = -(off % w); draw(c, sheet, 0, 0, w, h, x, y); draw(c, sheet, 0, 0, w, h, x + w, y); }
+function across(c, sheet, w, h, y, off) { const x = -(((off % w) + w) % w); draw(c, sheet, 0, 0, w, h, x, y); draw(c, sheet, 0, 0, w, h, x + w, y); }
 function down(c, sheet, w, h, x, off) { const y = -(off % h); draw(c, sheet, 0, 0, w, h, x, y); draw(c, sheet, 0, 0, w, h, x, y + h); }
 function tecBack(c, d, st) {
   if (!st.era || d.t < st.tecFrom) return;
-  const t = d.t;
+  const t = d.t, s = st.rev ? -t : t; // st.rev: an enemy's move — the strips across scroll the other way (@tec_back += …)
   if (st.tecNo === 4) { const k = t % 3; draw(c, KAME_SIDES[0], k * 176, 0, 176, 320, 0, 18); draw(c, KAME_SIDES[1], k * 176, 0, 176, 320, SW - 176, 18); return; }
   if (st.era === 1) { // Z2: 640×64 strips, 12 px a frame
     if (st.tecNo === 1) { down(c, TEC2.left, 64, 640, 0, t * 12); down(c, TEC2.right, 64, 640, SW - 64, t * 12); return; }
-    across(c, TEC2.top, 640, 64, 0, t * 12); across(c, TEC2.low, 640, 64, 292, t * 12);
+    across(c, TEC2.top, 640, 64, 0, s * 12); across(c, TEC2.low, 640, 64, 292, s * 12);
     return;
   }
   if (st.tecNo === 1) { down(c, TEC3.left, 94, 360, 0, t * 16); down(c, TEC3.right, 92, 360, SW - 94, t * 16); return; }
@@ -147,9 +147,9 @@ function tecBack(c, d, st) {
     draw(c, b, k * 222, 0, 222, 222, st.tecNo === 2 ? SW - 222 : 0, 480 - 222 - 124);
     return;
   }
-  if (st.tecNo === 6) { across(c, BURNING_BAR, 672, 110, 4, t * 8); across(c, BURNING_BAR, 672, 110, 242, t * 8); return; }
-  across(c, st.red ? TEC3_RED.top : TEC3.top, 648, st.small ? 64 : 110, 0, t * 8);
-  across(c, st.red ? TEC3_RED.low : TEC3.low, 648, st.small ? 60 : 114, st.small ? 296 : 242, t * 8);
+  if (st.tecNo === 6) { across(c, BURNING_BAR, 672, 110, 4, s * 8); across(c, BURNING_BAR, 672, 110, 242, s * 8); return; }
+  across(c, st.red ? TEC3_RED.top : TEC3.top, 648, st.small ? 64 : 110, 0, s * 8);
+  across(c, st.red ? TEC3_RED.low : TEC3.low, 648, st.small ? 60 : 114, st.small ? 296 : 242, s * 8);
 }
 // set_battle_cutin_name (all.rb 19240) / the enemy's row
 function cutIn(c, d, st) {

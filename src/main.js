@@ -78,6 +78,7 @@ import './anime_foes_z2.js?v=20261103-0825'; // the Z2 enemies' move films (docs
 import './anime_foes_movie.js?v=20261103-0825'; // the movie / ZG enemies' move films (docs/anim-e-plan.md aen3; ?dev=aen3…)
 import './anime_foes_common.js?v=20261103-0825'; // the enemies' shared move films (docs/anim-e-plan.md, aen3's common file)
 import './anime_foes_z34.js?v=20261103-0825'; // the Z3 / Z4 enemies' move films (docs/anim-e-plan.md aen2; ?dev=aen2…)
+import './anime_foes_zg.js?v=20261103-0825'; // the 「強」 rematches' and the later ZG enemies' move films (docs/anim-e-plan.md aen4; ?dev=aen4…)
 
 // testing in a hidden browser pane (no animation frames there): ?timer drives every frame with timers instead
 if (new URLSearchParams(location.search).has('timer')) window.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16);

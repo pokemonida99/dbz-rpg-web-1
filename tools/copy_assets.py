@@ -95,6 +95,11 @@ files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", e2.split('export
 aen4 = open(os.path.join(root, 'src', 'anime_foes_zg.js'), encoding='utf-8').read()
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", aen4)}
 files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", aen4.split('export const AEN4_SOUNDS')[1])}
+# the S-combo films of anime 28xx (docs/anim-f-cmc.md): pic('…') and CMC*_SOUNDS of the stage and the three film files
+for js in ('combo_z3a_stage.js', 'combo_z3a.js', 'combo_z3a2.js', 'combo_z3a3.js'):
+    t = open(os.path.join(root, 'src', js), encoding='utf-8').read()
+    files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", t)}
+    files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", re.split(r'export const CMC\d?_SOUNDS', t)[1].split(']')[0])}
 # the opening (src/opening.js): its pictures and sounds, and the faces / sounds named in world.opening
 opening = open(os.path.join(root, 'src', 'opening.js'), encoding='utf-8').read()
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\(`?'?([^'`$]+\.(?:PNG|png))", opening)}

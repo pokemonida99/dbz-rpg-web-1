@@ -713,7 +713,7 @@ feFilms({
   aen3PowerDrain: { cut: true, pics: () => [SPARK] },
 });
 feRegister({ 545: 'aen3MistKame', 546: 'aen3MistBakuretsu', 547: 'aen3MistMasenko', 548: 'aen3MistGalick', 549: 'aen3MistSword',
-  692: 'aen3Ignite', 693: 'aen3ChaosBurst', 553: 'aen3PowerDrain' });
+  692: 'aen3Ignite', 689: 'aen3Ignite', 693: 'aen3ChaosBurst', 553: 'aen3PowerDrain' }); // (689: オゾット(変身) 253, aen4's enemy)
 
 const own = (d) => !d.p && foeId(d) >= 101; // (the Z3 switch; an earlier enemy plays the skill's film from before)
 const WHITE = '#fff';
@@ -811,7 +811,7 @@ Object.assign(Duel.prototype, {
       else if (f === 1) z.fxReset();
       else if (f <= 120) {
         // (`if frame < 42..34`: in a condition a range is a flip-flop, so this is frame < 42)
-        const [sheet, sy] = f < S + P + 20 ? [IGNITE[id] || IGNITE[154], 0] : [FOE_CUT, 64 * (id - 101)];
+        const [sheet, sy] = f < S + P + 20 ? [id === 154 ? IGNITE[154] : IGNITE[253], 0] : [FOE_CUT, 64 * (id - 101)];
         if (f <= S + P) { this.A.x += 32; z.back(sheet, 0, sy, 640, 64, -640 + 32 * (f - S), Y); } else {
           if (f === S + P + 1) { z.se('Z1 衝撃波'); z.se('Z1 怪しい気'); z.se('Z2 吹っ飛ぶ'); }
           z.back(sheet, 0, sy, 640, 64, 0, Y);

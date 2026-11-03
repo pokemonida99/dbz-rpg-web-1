@@ -25,6 +25,8 @@ addMoves({
 // every picture goes through pic() (tools/copy_assets.py collects them from this file)
 const pic = (n) => `Graphics/Pictures/${n}`;
 const era = () => Math.min(2, (globalThis.__game && globalThis.__game.state && globalThis.__game.state.var && globalThis.__game.state.var[40]) || 0);
+// $btl_progress when an enemy attacks: by its number ($ene_str_no = [1, 31, 101])
+const foeEra = () => { const g = globalThis.__game, d = g && g.scene && g.scene.duel, id = (d && d.f && d.f.id) || 0; return id < 31 ? 0 : id < 101 ? 1 : 2; };
 const v = (n) => { const s = globalThis.__game && globalThis.__game.state; return (s && s.var && s.var[n]) || 0; };
 const sw = (n) => { const s = globalThis.__game && globalThis.__game.state; return !!(s && s.sw && s.sw[n]); };
 // $btl_top_file_name pictures: Z2_ / Z3_ (these moves are never used in Z1)
@@ -129,15 +131,15 @@ const afterImage = (x, y) => (c) => spark(c, 0, 48, 64, 64, x, y);
 
 // ---------- the strips and the cut-in ----------
 // a picture `w` wide repeated across, scrolled `off` px to the left
-function across(c, sheet, w, h, y, off) { const x = -(off % w); draw(c, sheet, 0, 0, w, h, x, y); draw(c, sheet, 0, 0, w, h, x + w, y); }
+function across(c, sheet, w, h, y, off) { const x = -(((off % w) + w) % w); draw(c, sheet, 0, 0, w, h, x, y); draw(c, sheet, 0, 0, w, h, x + w, y); }
 function down(c, sheet, w, h, x, off) { const y = -(off % h); draw(c, sheet, 0, 0, w, h, x, y); draw(c, sheet, 0, 0, w, h, x, y + h); }
 function tecBack(c, d, st) {
   if (!st.era || d.t < st.tecFrom) return;
-  const t = d.t;
+  const t = d.t, h = st.foe ? -t : t; // (the strips across run the other way when the enemy attacks)
   if (st.tecNo === 4) { const k = t % 3; draw(c, KAME_SIDES[0], k * 176, 0, 176, 320, 0, 18); draw(c, KAME_SIDES[1], k * 176, 0, 176, 320, SW - 176, 18); return; }
-  if (st.era === 1) { // Z2: 640×64 strips, 12 px a frame
+  if (st.era === 1 && st.tecNo !== 2 && st.tecNo !== 3) { // Z2: 640×64 strips, 12 px a frame (the corners are Z3_ in Z2 too)
     if (st.tecNo === 1) { down(c, TEC2.left, 64, 640, 0, t * 12); down(c, TEC2.right, 64, 640, SW - 64, t * 12); return; }
-    across(c, TEC2.top, 640, 64, 0, t * 12); across(c, TEC2.low, 640, 64, 292, t * 12);
+    across(c, TEC2.top, 640, 64, 0, h * 12); across(c, TEC2.low, 640, 64, 292, h * 12);
     return;
   }
   if (st.tecNo === 1) { down(c, TEC3.left, 94, 360, 0, t * 16); down(c, TEC3.right, 92, 360, SW - 94, t * 16); return; }
@@ -147,22 +149,26 @@ function tecBack(c, d, st) {
     draw(c, b, k * 222, 0, 222, 222, st.tecNo === 2 ? SW - 222 : 0, 480 - 222 - 124);
     return;
   }
-  if (st.tecNo === 6) { across(c, BURNING_BAR, 672, 110, 4, t * 8); across(c, BURNING_BAR, 672, 110, 242, t * 8); return; }
-  across(c, st.red ? TEC3_RED.top : TEC3.top, 648, st.small ? 64 : 110, 0, t * 8);
-  across(c, st.red ? TEC3_RED.low : TEC3.low, 648, st.small ? 60 : 114, st.small ? 296 : 242, t * 8);
+  if (st.tecNo === 6) { across(c, BURNING_BAR, 672, 110, 4, h * 8); across(c, BURNING_BAR, 672, 110, 242, h * 8); return; }
+  across(c, st.red ? TEC3_RED.top : TEC3.top, 648, st.small ? 64 : 110, 0, h * 8);
+  across(c, st.red ? TEC3_RED.low : TEC3.low, 648, st.small ? 60 : 114, st.small ? 296 : 242, h * 8);
 }
 // set_battle_cutin_name (all.rb 19240) / the enemy's row
 function cutIn(c, d, st) {
   if (!st.era || d.t < st.cutFrom) return;
   const g = globalThis.__game, b = g && g.scene, duel = b && b.duel, s = (g && g.state) || {};
   if (!duel) return;
-  if (!st.mirror) {
+  // an enemy attacking (st.foe): its own cut-in first, the member's after the cut (none for a Z1 enemy, nor the member's
+  // in the Z1 story); the member's picture is the story's ($top_file_name)
+  if (st.foe && (foeEra() === 0 || (st.mirror && !v(40)))) return;
+  if (st.foe ? st.mirror : !st.mirror) {
     const id = duel.m && duel.m.id;
     if (!id) return;
-    let sheet = CUT[st.era], row = id - 3;
-    if (st.era === 2 && id === 14 && v(171) === 2) [sheet, row] = [CUT.zg, 10]; // Z3悟空 (さらにボロボロ)
-    if (st.era === 2 && id === 5 && sw(445)) [sheet, row] = [CUT.zg, 6]; // Z3悟飯短髪
-    if (st.era === 2 && id === 18 && s.ss && s.ss[5]) [sheet, row] = [CUT.zg, 2]; // 超サイヤ人2
+    const e = st.foe ? era() : st.era;
+    let sheet = CUT[e], row = id - 3;
+    if (e === 2 && id === 14 && v(171) === 2) [sheet, row] = [CUT.zg, 10]; // Z3悟空 (さらにボロボロ)
+    if (e === 2 && id === 5 && sw(445)) [sheet, row] = [CUT.zg, 6]; // Z3悟飯短髪
+    if (e === 2 && id === 18 && s.ss && s.ss[5]) [sheet, row] = [CUT.zg, 2]; // 超サイヤ人2
     if ((id === 16 || id === 32) && v(175) === 1) [sheet, row] = [CUT.zg, id === 16 ? 8 : 9]; // バーダック(超) スカウターなし
     draw(c, sheet, 0, row * 64, 640, 64, 0, 292);
     let sx = 0;
@@ -195,7 +201,7 @@ Object.assign(Duel.prototype, {
   // what these films draw besides the fighters: the strips and pictures behind them, effects in front, the cut-in on top
   agStage() {
     if (this.agSt) return this.agSt;
-    const st = this.agSt = { era: this.constructor === Duel && this.p ? era() : 0, tecFrom: Infinity, cutFrom: Infinity,
+    const st = this.agSt = { era: this.constructor === Duel ? (this.p ? era() : foeEra()) : 0, foe: !this.p, tecFrom: Infinity, cutFrom: Infinity,
       mirror: false, tecNo: 0, small: (this.G.sheets.size || 96) > 96, under: [], over: [] };
     st.tec = (on) => { st.tecFrom = on ? 0 : Infinity; };
     st.cut = (on, mirror = st.mirror) => { st.cutFrom = on ? 0 : Infinity; st.mirror = mirror; };
@@ -207,8 +213,8 @@ Object.assign(Duel.prototype, {
     return st;
   },
   * launch() { // 32, plus the strips and the cut-in from its frame 30 (Z2 on)
-    const film = this.constructor === Duel && this.p && moveFilm(this.skill);
-    if (MINE.has(film)) {
+    const film = this.constructor === Duel && moveFilm(this.skill);
+    if (MINE.has(film) && (this.p || LAUNCH[film].foe)) { // (an enemy's film: registered with foe: true)
       const st = this.agStage(), cfg = LAUNCH[film];
       FILM_PICTURES[film]().forEach((p) => img(p));
       if (st.era) {

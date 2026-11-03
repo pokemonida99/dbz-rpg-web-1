@@ -64,6 +64,7 @@ import './zg_b.js?v=20261103-1518';
 import './zg_c.js?v=20261103-1518';
 import './zg_recap.js?v=20261103-1518'; // ZG 的概況 (前情提要: src/fieldmenu.js)
 import './combo_dev.js?v=20261103-1518'; // ?dev=cmb…: S-combo / ひらめき tests (src/combo.js)
+import './combo_z2.js?v=20261103-1518'; // the S-combo films of Z2 and later, part cmb (docs/anim-f-cmb.md; ?dev=cmbxb…)
 import './sys.js?v=20261103-1518'; // 第二批 sys: 神龍的願望, the shop's added cards, Z3 / Z4 的概況 (docs/sys.md)
 import './viz.js?v=20261103-1518'; // the battle's skill names, the cover scene, the Great Ape's face (docs/batch2-plan.md viz)
 import './cos.js?v=20261103-1518'; // ?dev=cos…: 換裝 and the DB3 staff roll (docs/costume.md)

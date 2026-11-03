@@ -37,6 +37,10 @@ files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", anime.split('exp
 combo = open(os.path.join(root, 'src', 'combo-anime.js'), encoding='utf-8').read()
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", combo)}
 files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", combo.split('export const COMBO_SOUNDS')[1])}
+# the S-combo films of Z2 and later, part cmb (src/combo_z2.js, docs/anim-f-cmb.md): its pic('…') and CMB_SOUNDS
+cmb = open(os.path.join(root, 'src', 'combo_z2.js'), encoding='utf-8').read()
+files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", cmb)}
+files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", cmb.split('export const CMB_SOUNDS')[1].split(']')[0])}
 # 悟空・悟飯's move films (src/anime_goku_gohan.js, docs/anim-ab-plan.md): their pic('…') and AG_SOUNDS
 ag = open(os.path.join(root, 'src', 'anime_goku_gohan.js'), encoding='utf-8').read()
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", ag)}

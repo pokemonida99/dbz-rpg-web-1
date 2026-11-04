@@ -83,7 +83,7 @@ import './anime_foes_movie.js?v=20261104-0742'; // the movie / ZG enemies' move 
 import './anime_foes_common.js?v=20261104-0742'; // the enemies' shared move films (docs/anim-e-plan.md, aen3's common file)
 import './anime_foes_z34.js?v=20261104-0742'; // the Z3 / Z4 enemies' move films (docs/anim-e-plan.md aen2; ?dev=aen2…)
 import './anime_foes_zg.js?v=20261104-0742'; // the 「強」 rematches' and the later ZG enemies' move films (docs/anim-e-plan.md aen4; ?dev=aen4…)
-import { lapLabel, setLapGame } from './laps.js?v=20261104-0742'; // 第二輪 (docs/laps-plan.md; ?dev=lap…)
+import { lapLabel, setLapGame, canLap, syncLap, lapScreen, nextLapState } from './laps.js?v=20261104-0742'; // 第二輪 (docs/laps-plan.md; ?dev=lap…)
 import './laps_rules.js?v=20261104-0742';
 import './laps_arena.js?v=20261104-0742';
 import './combo_os.js?v=20261104-0742'; // the OS / FOS / ダブルエクスプロージョン / サイヤンアタック combo films (docs/anim-f-plan.md cma; ?dev=cma…)
@@ -481,6 +481,7 @@ function showTitle(sub, notes) {
         ${card('parts', '選擇篇章', '')}
         ${many ? card('load', '讀取存檔', '') : ''}
       </div>
+      ${lapSaves().length ? `<div class="t-row">${card('lap', '進入下一輪', '')}</div>` : ''}
     </div>
     <div class="note">下半部拖曳移動・點對話框繼續　版本 ${VERSION}<br>原作：ドラゴンボールZ RPG（同人作品）</div>`;
   title.hidden = false;
@@ -489,20 +490,42 @@ function showTitle(sub, notes) {
     if (!a) return;
     audio.unlock();
     if (a.dataset.a === 'parts') return showParts();
+    if (a.dataset.a === 'lap') { const ks = lapSaves(); return ks.length > 1 ? pickSlot('lap', (key) => enterLap(key)) : enterLap(ks[0]); }
     if (a.dataset.a === 'load') return pickSlot('load', (key) => { title.hidden = true; if (load(key)) recap(); });
     if (a.dataset.a === 'new' && !a.dataset.sure) return pickSlot('new', (key) => { useSlot(SLOTS.indexOf(key)); a.dataset.sure = 1; a.click(); });
     title.hidden = true;
     if (a.dataset.a === 'cont') { if (load(last)) recap(); return; }
     if (a.dataset.a === 'new') await playStory(game.world); // the opening story, then the field
-    game.state = game.newState();
-    startField();
-    game.field.paused = true;
-    game.busy = true;
-    await runEvent(game.world.story.intro, game.state);
-    game.busy = false;
-    game.field.paused = false;
-    save(true);
+    await beginStory(game.newState());
   };
+}
+async function beginStory(state) {
+  game.state = state;
+  startField();
+  game.field.paused = true;
+  game.busy = true;
+  await runEvent(game.world.story.intro, game.state);
+  game.busy = false;
+  game.field.paused = false;
+  save(true);
+}
+// 第二輪: the original's X key on the load screen (all.rb 39213) is a button here. Where the new round goes (the save it
+// comes from stays as it is), the ten items (src/laps.js), then the opening story from the start.
+const lapSaves = () => [...SLOTS, AUTO_KEY].filter((k) => { try { return canLap(JSON.parse(localStorage.getItem(k))); } catch (e) { return false; } });
+function enterLap(from, back = () => {}) {
+  pickSlot('lapnew', (key) => lapScreen((picks) => startLap(from, key, picks), () => enterLap(from, back)), back, from);
+}
+async function startLap(from, key, picks) {
+  const state = nextLapState(game, JSON.parse(localStorage.getItem(from)), picks);
+  useSlot(SLOTS.indexOf(key));
+  title.hidden = true;
+  hud.hidden = true;
+  actBtn.hidden = true;
+  if (game.field) game.field.leave();
+  game.scene = null;
+  game.busy = true;
+  await playStory(game.world);
+  await beginStory(state);
 }
 
 // 篇章選擇 over the title: one card per part with its original title picture; back returns to the title
@@ -526,27 +549,30 @@ function showParts() {
   title.appendChild(el);
 }
 // the three slots (and, to load, the auto-save): what each holds; saving over one, or starting a new game in it,
-// asks first. mode: 'save' | 'load' | 'new'; pick(key) when chosen, back() when closed
-function pickSlot(mode, pick, back = () => {}) {
+// asks first. mode: 'save' | 'load' | 'new' | 'lap' (the saves a next round can start from) | 'lapnew' (where it goes:
+// not over `from`); pick(key) when chosen, back() when closed
+function pickSlot(mode, pick, back = () => {}, from = null) {
   const el = document.createElement('div');
   el.className = 'slots';
   const when = (k) => { try { const t = (JSON.parse(localStorage.getItem(k)) || {}).savedAt; if (!t) return ''; const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; } catch (e) { return ''; } };
-  const keys = mode === 'load' ? [...SLOTS, AUTO_KEY] : SLOTS;
+  const keys = mode === 'load' ? [...SLOTS, AUTO_KEY] : mode === 'lap' ? lapSaves() : SLOTS, laps = mode === 'load' ? lapSaves() : [];
   const row = (k) => {
     const info = saveInfo(k), name = k === AUTO_KEY ? '自動存檔' : `存檔 ${SLOTS.indexOf(k) + 1}`;
-    const off = mode === 'load' && !info;
-    return `<button class="sl${info ? '' : ' empty'}${SLOTS[slot] === k && mode !== 'load' ? ' cur' : ''}" data-k="${k}" ${off ? 'disabled' : ''}>
-      <span class="sl-no">${name}</span><span class="sl-info">${info || '（空）'}</span><span class="sl-at">${when(k)}</span></button>`;
+    const off = (mode === 'load' && !info) || k === from;
+    return `<button class="sl${info ? '' : ' empty'}${SLOTS[slot] === k && mode !== 'load' && mode !== 'lap' ? ' cur' : ''}" data-k="${k}" ${off ? 'disabled' : ''}>
+      <span class="sl-no">${name}</span><span class="sl-info">${k === from ? `（原存檔）${info}` : info || '（空）'}</span><span class="sl-at">${when(k)}</span></button>${laps.includes(k) ? `<button class="lapa-go" data-lap="${k}">進入下一輪</button>` : ''}`;
   };
-  el.innerHTML = `<div class="panel"><div class="sl-head">${{ save: '存到哪裡？', load: '讀取哪個存檔？', new: '新的冒險存在哪裡？' }[mode]}</div>
+  el.innerHTML = `<div class="panel"><div class="sl-head">${{ save: '存到哪裡？', load: '讀取哪個存檔？', new: '新的冒險存在哪裡？', lap: '從哪個存檔進入下一輪？', lapnew: '下一輪存在哪裡？' }[mode]}</div>
     ${keys.map(row).join('')}<button class="btn ghost" data-k="back">返回</button></div>`;
   el.onclick = (e) => {
     e.stopPropagation();
+    const go = e.target.closest('[data-lap]');
+    if (go) { el.remove(); enterLap(go.dataset.lap, back); return; }
     const b = e.target.closest('[data-k]');
     if (!b) { if (e.target === el) { el.remove(); back(); } return; }
     const k = b.dataset.k;
     if (k === 'back') { el.remove(); back(); return; }
-    if (mode !== 'load' && localStorage.getItem(k) && !b.dataset.sure) { // a second tap on the same slot to overwrite it
+    if (mode !== 'load' && mode !== 'lap' && localStorage.getItem(k) && !b.dataset.sure) { // a second tap on the same slot to overwrite it
       el.querySelectorAll('.sl').forEach((x) => { delete x.dataset.sure; x.classList.remove('ask'); });
       b.dataset.sure = 1; b.classList.add('ask');
       b.querySelector('.sl-at').textContent = '再點一次覆蓋';
@@ -564,6 +590,7 @@ function frame(t) {
   const dt = Math.min(0.05, (t - last) / 1000);
   last = t;
   syncCostume(game);
+  syncLap(game);
   try {
     if (game.scene) {
       game.scene.update(dt);

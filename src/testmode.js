@@ -19,6 +19,7 @@ const LIST = [
     ['trfuture', '絕望的反抗']]],
   ['ZG', [['zga', '本編 巴達克一夥篇'], ['zgb', '本編 毀滅瓦斯・西之都'], ['zgc', '本編 克恩星・暗黑行星'], ['zgbroly', '熱戰烈戰超激戰'],
     ['zgbojack', '銀河危機']]],
+  ['第二輪', [['lap', '第二輪開頭（全部繼承）'], ['lap3', '第三輪開頭'], ['lapold', '可進第二輪的存檔']]],
 ];
 
 // ?test without a jump: the list instead of the title screen (returns true when it took over)

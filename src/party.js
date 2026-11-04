@@ -3,7 +3,14 @@
 // the original's "経験値倍率" option, for battles and training alike; at 1 the opening chapter takes ~100 fights
 // (Raditz needs about Lv6-7)
 export const EXP_RATE = 8;
-export function makeMember(world, id) {
+// src/laps.js: someone joining during a later round starts from what carried over
+let memberHook = null;
+export const setMemberHook = (f) => { memberHook = f; };
+
+export const makeMember = (world, id) => (memberHook ? memberHook(world, baseMember(world, id)) : baseMember(world, id));
+
+// the actor as the database has it (a new game's party: whatever round the state in memory is on doesn't count)
+export function baseMember(world, id) {
   const a = world.actors[id];
   const m = { id, name: a.name, face: a.face, school: a.school, level: a.level, exp: 0, skills: [...a.skills], maxLv: a.level };
   applyLevel(world, m);

@@ -350,6 +350,8 @@ import build_tecspark  # noqa: E402  (ひらめき: the moves that may turn into
 build_tecspark.add(world, globals())
 import build_viz  # noqa: E402  (batch 2 viz: the era's card faces, the Great Ape's face, map events, the 時之間 area names)
 build_viz.add(world, globals())
+import build_laps  # noqa: E402  (第二輪: docs/laps-plan.md)
+build_laps.add(world, globals())
 import build_costume  # noqa: E402  (換裝: the clothes' map sprites, the faces / battle sheets src/costume.js names)
 build_costume.add(world, globals())
 import build_z1bg  # noqa: E402  (Z1 battle backgrounds: the original's strips under a black sky, src/main.js z1Backdrop)

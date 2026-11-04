@@ -5,7 +5,7 @@ import { tileSheetPaths } from './tiles.js?v=20261104-0742';
 import { Field, fieldImages, nextEncounterSteps, holds } from './field.js?v=20261104-0742';
 import { ANIME_IMAGES } from './anime.js?v=20261104-0742';
 import { Battle, battleImages, newHand, rollEncounter, setCardGame } from './battle.js?v=20261104-0742';
-import { makeMember, levelUp } from './party.js?v=20261104-0742';
+import { baseMember, levelUp } from './party.js?v=20261104-0742';
 import { runEvent } from './events.js?v=20261104-0742';
 import { playOpening, playStory, openingImages } from './opening.js?v=20261104-0742'; // the original's title animation and opening story
 import { rollArea, chapterGoal, afterRaditz, resumeChapter, chapterSpot, chapterBoss } from './chapter2.js?v=20261104-0742';
@@ -83,6 +83,9 @@ import './anime_foes_movie.js?v=20261104-0742'; // the movie / ZG enemies' move 
 import './anime_foes_common.js?v=20261104-0742'; // the enemies' shared move films (docs/anim-e-plan.md, aen3's common file)
 import './anime_foes_z34.js?v=20261104-0742'; // the Z3 / Z4 enemies' move films (docs/anim-e-plan.md aen2; ?dev=aen2…)
 import './anime_foes_zg.js?v=20261104-0742'; // the 「強」 rematches' and the later ZG enemies' move films (docs/anim-e-plan.md aen4; ?dev=aen4…)
+import { lapLabel, setLapGame } from './laps.js?v=20261104-0742'; // 第二輪 (docs/laps-plan.md; ?dev=lap…)
+import './laps_rules.js?v=20261104-0742';
+import './laps_arena.js?v=20261104-0742';
 import './combo_os.js?v=20261104-0742'; // the OS / FOS / ダブルエクスプロージョン / サイヤンアタック combo films (docs/anim-f-plan.md cma; ?dev=cma…)
 
 // testing in a hidden browser pane (no animation frames there): ?timer drives every frame with timers instead
@@ -110,7 +113,7 @@ const game = {
     return {
       map: '1', x: w.start.x * 32 + 16, y: w.start.y * 32 + 16, travel: 0,
       steps: 0, nextEnc: nextEncounterSteps(),
-      party: w.party.map((id) => makeMember(w, id)),
+      party: w.party.map((id) => baseMember(w, id)),
       hand: newHand(w),
       zeni: 0,
       flags: {},
@@ -440,7 +443,7 @@ function saveInfo(key) {
     const s = JSON.parse(localStorage.getItem(key));
     if (!s || !s.party || !s.party.length) return '';
     const m = s.party[0];
-    return `${savePart(s)[0]}　${m.name || ''} Lv${m.level || 1}${s.party.length > 1 ? ` 等 ${s.party.length} 人` : ''}`;
+    return `${lapLabel(s)}${savePart(s)[0]}　${m.name || ''} Lv${m.level || 1}${s.party.length > 1 ? ` 等 ${s.party.length} 人` : ''}`;
   } catch (e) { return ''; }
 }
 function savePic(key) { try { const s = JSON.parse(localStorage.getItem(key)); return s && s.party ? savePart(s)[1] : 'Title'; } catch (e) { return 'Title'; } }
@@ -605,6 +608,7 @@ async function boot() {
   await Promise.all(first.map((p) => img(p).p.then(() => B.set(0.45 + (0.55 * ++got) / first.length))));
   const later = () => { if (!game.preload) game.preload = warmImages([...films]).then(() => { game.preload = null; }); };
   setFieldGame(game);
+  setLapGame(game);
   setCardGame(game); // the card schools change from 概況 11 on
   startTestBoost(game); // 測試模式 (?test): Lv 99, full cards, no encounters
   const dev0 = new URLSearchParams(location.search).get('dev');
@@ -614,7 +618,7 @@ async function boot() {
   if (dev && dev.startsWith('ch6')) { title.hidden = true; devChapter6(game, dev); requestAnimationFrame(frame); return; }
   if (dev && ['z2ginyu', 'z2frieza', 'z2last', 'z2turles'].includes(dev)) { title.hidden = true; devZ2b(game, dev); requestAnimationFrame(frame); return; } // Z2 second half
   if (dev && dev.startsWith('willow')) { title.hidden = true; devWillow(game, dev); requestAnimationFrame(frame); return; } // ?dev=willow / willow51 / willowboss
-  if (dev && /^(z3|z4|tr|zg|csq|cda|cdb|cst|tac|pas|etf|ovw|flg|cmb|cma|cmc|cmd|grw|sys|viz|skc|cos|anga|anpv|anzb|ancb|ancc|andt|anda|aen1|aen2|aen3|aen4)/.test(dev)) { title.hidden = true; if (devZ3(game, dev)) { requestAnimationFrame(frame); return; } title.hidden = false; } // Z3 (src/z3*.js)
+  if (dev && /^(lap|z3|z4|tr|zg|csq|cda|cdb|cst|tac|pas|etf|ovw|flg|cmb|cma|cmc|cmd|grw|sys|viz|skc|cos|anga|anpv|anzb|ancb|ancc|andt|anda|aen1|aen2|aen3|aen4)/.test(dev)) { title.hidden = true; if (devZ3(game, dev)) { requestAnimationFrame(frame); return; } title.hidden = false; } // Z3 (src/z3*.js)
   if (dev && dev.startsWith('z2')) { title.hidden = true; devZ2a(game, dev); requestAnimationFrame(frame); return; } // ?dev=z2 / z2b / z2c / z2d
   if (!options.skipOp) {
     B.onTap = () => audio.unlock(); // (inside the tap itself: iOS plays sound only after a gesture)

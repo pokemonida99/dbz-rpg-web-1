@@ -11,9 +11,12 @@ const PARTY = [3, 14, 4, 5, 18, 6, 7, 8, 9, 10, 24, 15, 12, 19, 17, 20, 25, 26, 
 const SHOWN = { // update_eneput_flag: the switches that let each group of enemies show (860: cleared once, a second round)
   base: () => true, z3: (sw) => sw[119] || sw[860], z4: (sw) => sw[431] || sw[860], post: (sw) => (sw[570] && sw[459]) || sw[860],
   zg: (sw) => sw[599] || sw[850] || sw[586] || sw[860], gaiden: (sw) => sw[586] || sw[860],
+  lap: (sw, s, n) => sw[860] && !!((s.flags || {}).arena || { open: [] }).open[n], // 周回プレイ用ボス: its arena rank is open
 };
+// update_eneput_flag + get_ene_history_list: the enemies of the 図鑑 and this roll, in their order
+export const shownFoes = (game) => game.world.db3ed.foes.filter(([, g, n]) => SHOWN[g](game.state.sw || {}, game.state, n)).map(([id]) => id);
 // set_ene_str_no: Z1_顔敵 below 31, Z2_顔敵 below 101 (row id − 30), Z3_顔敵 (row id − 100)
-const foeFace = (id) => (id < 31 ? [PIC + 'Z1_顔敵.PNG', id] : id < 101 ? [PIC + 'Z2_顔敵.PNG', id - 30] : [PIC + 'Z3_顔敵.PNG', id - 100]);
+export const foeFace = (id) => (id < 31 ? [PIC + 'Z1_顔敵.PNG', id] : id < 101 ? [PIC + 'Z2_顔敵.PNG', id - 30] : [PIC + 'Z3_顔敵.PNG', id - 100]);
 // set_card_frame 1 (14062): the back of the era's cards in カード関係
 function backRect(s) {
   const v = s.var || {}, e = v[40] || 0;
@@ -23,9 +26,9 @@ function backRect(s) {
 }
 
 export function db3ed(game) {
-  const s = game.state, w = game.world.db3ed, sw = s.sw || {};
+  const s = game.state, w = game.world.db3ed;
   const list = [...PARTY.map((id) => ({ face: [PIC + 'Z1_顔味方.PNG', id - 3] })), // (the era's sheet in its clothes: src/costume.js)
-    ...w.foes.filter(([, g]) => SHOWN[g](sw)).map(([id]) => ({ face: foeFace(id) }))];
+    ...shownFoes(game).map((id) => ({ face: foeFace(id) }))];
   const cards = new Image(); // カード関係 as it is (the eras' aliases redraw parts of it)
   cards.src = assetUrl(PIC + 'カード関係.PNG');
   const root = document.createElement('div');

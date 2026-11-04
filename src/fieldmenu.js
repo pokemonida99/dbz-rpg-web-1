@@ -14,6 +14,7 @@ import { view, img, audio, say, choose, textSpeed, warmImages } from './core.js?
 import { Battle, battleOpts } from './battle.js?v=20261104-0742';
 import { fieldCards } from './items.js?v=20261104-0742';
 import { holds } from './field.js?v=20261104-0742';
+import { shownFoes, foeFace } from './db3ed.js?v=20261104-0742'; // the 図鑑's enemies (update_eneput_flag)
 
 const SE_OK = 'Z3 決定', SE_MOVE = 'Z3 カーソル移動', SE_ERR = 'Z3 エラー';
 const FOE_FACES = 'Graphics/Pictures/Z1_顔敵.PNG', FACES = 'Graphics/Pictures/Z1_顔味方.PNG', CARDS = 'Graphics/Pictures/カード関係.PNG';
@@ -307,14 +308,15 @@ function battleHistory(g) {
 
 let foeCursor = 0;
 function enemyHistory(g) {
-  const w = g.world, s = g.state, list = w.bestiary;
+  const w = g.world, s = g.state, list = shownFoes(g).map((id) => w.bestiary.find((b) => b.id === id)).filter(Boolean);
   const UNKNOWN = '？？？？？？？？';
+  if (foeCursor >= list.length) foeCursor = 0;
   return screen('敵人情報', (render) => {
     const e = list[foeCursor], seen = !!(s.foeSeen || {})[e.id], scouted = !!(s.foeScouted || {})[e.id];
     const det = el('div', 'win fm-foe');
     const art = el('div', 'fm-foe-art');
     const faceBox = el('div', 'fm-black');
-    if (seen) faceBox.append(sprite(FOE_FACES, 0, 64 * e.id, 64, 64));
+    if (seen) { const [sheet, row] = foeFace(e.id); faceBox.append(sprite(sheet, 0, 64 * row, 64, 64)); }
     const school = el('div', 'fm-school', sprite(CARDS, 0, 192, 64, 32));
     school.append(seen ? sprite(CARDS, 32 * e.school, 64, 32, 32) : sprite(CARDS, 320, 0, 32, 32));
     const big = el('div', 'fm-black fm-big');

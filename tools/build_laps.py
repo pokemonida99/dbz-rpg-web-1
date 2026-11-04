@@ -2,6 +2,8 @@
 
 Each part has its own function below, so the parallel sessions don't touch the same lines.
 """
+import os
+import re
 
 
 def add_a(world, h):
@@ -13,7 +15,41 @@ def add_b(world, h):
 
 
 def add_c(world, h):
-    """分工 C：覺醒頭目。"""
+    """分工 C：覺醒頭目。Enemies 265 / 275 (no arena rank fights them, the original keeps them in its database and its move
+    tables, all.rb 124504 / 124564), the attack values set in code, and the whole 図鑑: get_ene_history_list's enemies
+    (src/db3ed.js shownFoes picks the ones it shows; build_field's world.bestiary had only the Z1 ones)."""
+    import build_costume
+    enemy, skill, edb, root = (h[k] for k in ('enemy', 'skill', 'enemies_db', 'root'))
+    pics = {f.lower(): f for f in os.listdir(os.path.join(root, 'game', 'Graphics', 'Pictures'))}
+
+    def picture(stem):
+        for ext in ('.png', '.PNG'):
+            if (stem + ext).lower() in pics:
+                return 'Graphics/Pictures/' + pics[(stem + ext).lower()]
+        raise SystemExit(f'build_laps: missing picture {stem}')
+    for eid in (265, 275):
+        e = enemy(eid)
+        e['sprite'] = picture(f"Z3_戦闘_必殺技_敵_{edb[eid]['name']}")
+        e['portrait'] = picture(f"Z3_戦闘_敵_{edb[eid]['name']}")
+        e['face'] = ['Graphics/Pictures/Z3_顔敵.PNG', eid - 100]
+        world['enemies'][eid] = e
+        world['drops'][eid] = [[d['item_id'], d['denominator']] for d in (edb[eid]['drop_item1'], edb[eid]['drop_item2'])
+                                    if d['kind'] == 1 and d['item_id'] in world['items']]
+        for a in edb[eid]['actions']:
+            if a['skill_id'] not in world['skills'] and str(a['skill_id']) not in world['skills']:
+                world['skills'][a['skill_id']] = skill(a['skill_id'])
+    # KGC::LimitBreak.set_enemy_parameters (all.rb 187644): what the database (attack up to 999) can't hold, for 215 / 254 /
+    # 153 of the first round too
+    src = open(os.path.join(root, 'research', 'all.rb'), encoding='utf-8').read()
+    body = src[src.index('def set_enemy_parameters'):]
+    set_ = {}
+    for k, field, v in re.findall(r'^\s*\$data_enemies\[(\d+)\]\.(atk|exp) = (\d+)', body[:body.index('def revise_enemy_parameters')], re.M):
+        (world['enemies'].get(int(k)) or world['enemies'][k])[field] = int(v)
+        set_.setdefault(int(k), {})[field] = int(v)
+    world['bestiary'] = [{'id': k, 'name': h['s2t'](edb[k]['name']), 'maxhp': edb[k]['maxhp'], 'school': int(edb[k]['hit']) - 1,
+                          'exp': set_.get(k, {}).get('exp', int(edb[k]['exp'])), 'gold': int(edb[k]['gold']), 'sp': int(edb[k]['maxmp']),
+                          'drops': [d['item_id'] for d in (edb[k]['drop_item1'], edb[k]['drop_item2']) if d['kind'] == 1]}
+                         for k, *_ in build_costume.foe_order()]
 
 
 def add(world, h):

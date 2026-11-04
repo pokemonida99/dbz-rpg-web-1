@@ -240,7 +240,7 @@ def add(world, h, z3, tr):
         'start': GO(97, 7, 33), 'boss99': GO(99, 46, 20), 'back': GO(96, 8, 3), 'warps': WARPS,
         'paikuhan': GO(96, 23, 3), 'buu': GO(96, 28, 3),
         'arena': {'ranks': ranks, 'names': arena_names(src, s2t), 'unlock': arena_unlock(src), 'prizes': arena_prizes(D, s2t),
-                  'cards': arena_cards(D), 'seen': seen_list(edb), 'bg': world['timeroom']['practiceBg'], 'bgm': 'Z2 天下一武道会'},
+                  'cards': arena_cards(D), 'bg': world['timeroom']['practiceBg'], 'bgm': 'Z2 天下一武道会'},
         'text': {
             'title': s2t('银河ギリギリ!!ぶっちぎりの凄い奴'),
             'goal97': '目標：' + s2t('神秘的银河战士!!') + '（打倒布欽、哥高亞與贊佳、比度）',
@@ -416,13 +416,6 @@ def arena_prizes(D, s2t):
             cur = None
         k += 1
     return out
-
-
-def seen_list(edb):
-    """get_ene_history_list (all.rb): the enemies of the 図鑑 in their order (spi), Arale last — CE194 needs every one
-    but her met (switch 853)"""
-    order = sorted((e['spi'], k) for k, e in enumerate(edb) if k and e and e['name'] and not e['levitate'])
-    return [k for _, k in order][:-1]
 
 
 def arena_cards(D):

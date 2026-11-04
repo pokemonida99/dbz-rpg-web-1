@@ -82,12 +82,12 @@ fz = open(os.path.join(root, 'src', 'anime_foes_z2.js'), encoding='utf-8').read(
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", fz)}
 files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", fz.split('export const FZ_SOUNDS')[1].split(']')[0])}
 # the enemies' move films (docs/anim-e-plan.md): the shared stage (src/anime_foes_common.js) and aen3's (src/anime_foes_movie.js)
-for js, key in (('anime_foes_common.js', 'FE_SOUNDS'), ('anime_foes_movie.js', 'AEN3_SOUNDS')):
+for js, key in (('anime_foes_common.js', 'FE_SOUNDS'), ('anime_foes_movie.js', 'AEN3_SOUNDS'), ('laps_arena.js', 'LAPC_SOUNDS')):
     t = open(os.path.join(root, 'src', js), encoding='utf-8').read()
     files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", t)}
     files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", t.split(f'export const {key}')[1].split(']')[0])}
 # イレイサーショック / リベンジャーカノン play the original's frame-by-frame pictures (names built at run time)
-for d in ('raichi_ire', 'hatchiyack_cannon'):
+for d in ('raichi_ire', 'hatchiyack_cannon', 'hatchiyack_charge'):
     files |= {f'Graphics/Pictures/{d}/{f}' for f in os.listdir(os.path.join(src, 'Graphics', 'Pictures', d)) if f.lower().endswith('.png')}
 # the Z3 / Z4 enemies' move films (src/anime_foes_z34.js, docs/anim-e-plan.md aen2): its pic('…') and E2_SOUNDS
 e2 = open(os.path.join(root, 'src', 'anime_foes_z34.js'), encoding='utf-8').read()

@@ -8,6 +8,8 @@ import { audio, loadImages, toast } from './core.js?v=20261104-0742';
 import { eventCard } from './items.js?v=20261104-0742';
 import { overlay, Stage, say, SCENE_X, SCENE_Y, SCROLL_X, ENE, PLAY_X } from './opening.js?v=20261104-0742';
 
+export const cutRules = { wait: (n) => n }; // 事件等待 of a later round (switch 882, src/laps_rules.js)
+
 const pic = (n) => `Graphics/Pictures/${n}.PNG`;
 const BG = (n) => pic(`Z1_背景_${n}`);
 const PARTY = pic('Z1_顔味方'), EVENT = pic('Z1_顔イベント'), FOE = pic('Z1_顔敵');
@@ -254,7 +256,7 @@ export async function playScenes(list, s, more = {}) {
       else if (n.bgsFade != null) audio.fadeBgs(n.bgsFade);
       else if (n.shake != null) ui.el.classList.toggle('shake', n.shake && !quiet); // 画面揺らすフラグ
       else if (n.flash) { if (!quiet) await stage.doFlash(n.flash); }
-      else if (n.wait) { if (!quiet) await ui.wait(n.wait); }
+      else if (n.wait) { if (!quiet) await ui.wait(cutRules.wait(n.wait)); }
       else if (n.choice) { const k = quiet ? 0 : await choice(ui, n.choice); const r = await run(n.branches[k] || []); if (r) return r; } // skipped: the first answer
       else if (n.loop) { // 112 loop … 413 (a menu asked again until its 113 break); skipped: once round
         for (let k = 0; k < 99; k++) { const r = await run(n.loop); if (r === 'break' || ui.skipped) break; if (r) return r; }

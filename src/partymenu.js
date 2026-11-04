@@ -14,6 +14,7 @@
 // In battle the choosing comes back (picks kept) when the promise resolves, unless it resolves to 'stay'
 // (the entry has moved the battle on by itself, e.g. started the turn).
 import { img, audio, rand } from './core.js?v=20261104-0742';
+import { levelCap } from './party.js?v=20261104-0742';
 import * as growth from './growth.js?v=20261104-0742'; // 技能 page, ZP, KI cost with passive skills
 import { FORMS } from './supersaiyan.js?v=20261104-0742'; // the two forms whose 作戰 is one
 import { canDress, dress, dressTag } from './costume.js?v=20261104-0742'; // 換裝 and its 「D:」 mark
@@ -236,7 +237,7 @@ function statWin(world, s, m, skillPage) {
   const dt = dressTag(s, m.id);
   if (dt) left.append(dt);
   const curve = world.actors[m.id].exp;
-  const next = m.level >= 99 ? 0 : curve[m.level + 1] - m.exp;
+  const next = m.level >= levelCap() ? 0 : curve[m.level + 1] - m.exp;
   const nums = el('div', 'pm-nums',
     el('div', '', word('LV'), el('i'), digits(m.level)),
     el('div', '', word('HP'), el('i'), digits(m.hp)), el('div', '', slash(), el('i'), digits(m.maxhp)),

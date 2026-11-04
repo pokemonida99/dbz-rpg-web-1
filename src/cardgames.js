@@ -136,6 +136,7 @@ export async function cardSquare(game, poi) {
   const s = cardState(game.state);
   if (poi && poi.v44) s.var[44] = poi.v44;
   s.sw = s.sw || {};
+  if (poi && poi.forceShop) s.sw[866] = true; // the 時之間's square on a later round (event_check, all.rb 183829)
   s.var[223] = (s.var[223] || 0) + 1; // times stopped on a card square
   let n = rand(3);
   if (s.sw[866]) n = 0;

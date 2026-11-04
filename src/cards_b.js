@@ -159,17 +159,19 @@ fieldCards[197] = async ({ game }) => {
 
 // ---------- 203 重力裝置: Scene_Db_Status window_state 15 (CAP → ZP), $captozp_rate = 15 ----------
 const CAP_RATE = 15;
+export const capRules = { mul: () => 1 }; // the option of a later round (variable 471, src/laps_rules.js)
 function capToZp(game, m) {
   const s = game.state, T = game.world.cardsB.zp;
   return new Promise((done) => {
     let cap = 0, timer = 0;
+    const mul = capRules.mul();
     const box = document.createElement('div');
     box.className = 'cdb-zp win';
     const stop = () => { clearTimeout(timer); timer = 0; };
     // ▲ / ▼ (R: ×10, L+R: ×100, the original's variable 471 = 0); held down it repeats
     const step = (n) => {
       const before = cap;
-      cap = Math.max(0, Math.min(Math.floor(s.zeni / CAP_RATE) * CAP_RATE, cap + n * CAP_RATE));
+      cap = Math.max(0, Math.min(Math.floor(s.zeni / CAP_RATE) * CAP_RATE, cap + n * mul * CAP_RATE));
       if (cap !== before) audio.se(SE_MOVE);
       render();
     };
@@ -185,7 +187,7 @@ function capToZp(game, m) {
       for (const n of ns) {
         const b = document.createElement('button');
         b.className = 'btn';
-        b.textContent = `${n > 0 ? '▲' : '▼'}${Math.abs(n) * CAP_RATE}`;
+        b.textContent = `${n > 0 ? '▲' : '▼'}${Math.abs(n) * mul * CAP_RATE}`;
         b.onpointerdown = (e) => {
           e.stopPropagation();
           step(n);

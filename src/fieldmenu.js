@@ -24,6 +24,8 @@ const RADAR = 'Graphics/Pictures/ドラゴンレーダー.PNG', BALL = 'Graphics
 const OPT_KEY = 'dbz-portrait-options';
 export const options = { bgm: 0, ready: 0, enc: 1, encSe: 0, battleFast: 0, quickGo: 0, fastMsg: 0, skipOp: 0, skipRecap: 0, runSkill: 0, runSlide: 0 };
 try { Object.assign(options, JSON.parse(localStorage.getItem(OPT_KEY)) || {}); } catch (e) { /* first run */ }
+// src/laps_rules.js: the rows a later round adds; its event battles' songs (variables 428 / 429)
+export const lapOptions = { rows: () => [], ready: () => options.ready, event: () => 0 };
 const saveOptions = () => { try { localStorage.setItem(OPT_KEY, JSON.stringify(options)); } catch (e) { /* private mode */ } };
 textSpeed.instant = !!options.fastMsg;
 battleOpts.quick = !!options.quickGo;
@@ -37,14 +39,14 @@ const BATTLE_BGM = { 8: ['Z1 戦闘1', 'DBZ 強襲！サイヤ人！『サイヤ
 export function bgmOn(g, kind) {
   const B = g.world.sys && g.world.sys.bgm, s = g.state || {}, sw = s.sw || {}, v40 = (s.var || {})[40] || 0;
   if (!B) return kind === 'battle' ? [0, 1, 8, 9, 10, 11] : [0];
-  const on = new Set(kind === 'battle' ? Object.keys(B.battle).map(Number).filter((n) => n <= (B.battleMax[v40] ?? 22)) : B.readyBase);
+  const on = new Set(kind === 'battle' ? Object.keys(B.battle).map(Number).filter((n) => n <= (sw[860] ? 22 : B.battleMax[v40] ?? 22)) : B.readyBase);
   for (const [terms, nums, val] of B[`${kind}Rules`]) {
     if (terms.some((t) => (t[0] === 'sw' ? !!sw[t[1]] === t[2] : v40 >= t[1]))) for (const n of nums) { if (val) on.add(n); else on.delete(n); }
   }
   return [...on].filter((n) => B[kind][n]).sort((a, b) => a - b);
 }
 const songOf = (g, kind, no) => { const B = g.world.sys && g.world.sys.bgm; return B ? (B[kind][no] || [])[0] : kind === 'battle' && BATTLE_BGM[no] ? BATTLE_BGM[no][0] : null; };
-const songList = (kind) => (g) => bgmOn(g, kind).map((n) => [n, n === 0 ? '默認' : n === 1 ? '隨機' : (g.world.sys ? g.world.sys.bgm[kind][n][1] : BATTLE_BGM[n][1])]);
+export const songList = (kind) => (g) => bgmOn(g, kind).map((n) => [n, n === 0 ? '默認' : n === 1 ? '隨機' : (g.world.sys ? g.world.sys.bgm[kind][n][1] : BATTLE_BGM[n][1])]);
 const ENC_SE = ['Z1 敵発見', 'Z3 敵発見', 'ZSSD 敵発見(GXSCC音源Ver)', 'GBZ2 戦闘開始']; // set_encount_se
 let game = null;
 export function setFieldGame(g) {
@@ -80,11 +82,13 @@ const playBgm = audio.playBgm.bind(audio), playSe = audio.se.bind(audio);
 audio.playBgm = (name, vol) => {
   const b = game && game.scene instanceof Battle ? game.scene : null;
   // 戰鬥前ＢＧＭ (variable 319, all.rb 47545 / 53145): the battle opens on it; its own song once the first turn is fought
-  const ready = b && options.ready && !b.readyDone && bgmOn(game, 'ready').includes(options.ready) && songOf(game, 'ready', options.ready);
+  const readyNo = b && !b.readyDone && lapOptions.ready(game, b);
+  const ready = readyNo && bgmOn(game, 'ready').includes(readyNo) && songOf(game, 'ready', readyNo);
   if (ready) { const first = !b.readyNext; b.readyNext = [name, vol]; if (first) return playBgm(ready, vol); return; }
   if (b && (name === 'Z1 戦闘1' || b.eventBgm)) { // an event battle without music of its own plays the story's default
     const on = bgmOn(game, 'battle');
-    let no = b.eventBgm || !on.includes(options.bgm) ? 0 : options.bgm;
+    let no = b.eventBgm ? lapOptions.event(game, b) : options.bgm;
+    if (!on.includes(no)) no = 0;
     if (no === 1) { const pool = on.filter((n) => n >= 2); no = pool.length ? pool[Math.floor(Math.random() * pool.length)] : 0; } // (10567)
     name = (no && songOf(game, 'battle', no)) || storyBattleBgm(((game.state.var || {})[43]) || 0);
   }
@@ -241,9 +245,11 @@ function screen(title, build) {
   const root = overlay('fm-screen');
   return new Promise((done) => {
     const render = () => {
+      const top = root.scrollTop; // (設定: a later round's rows are below the fold)
       root.innerHTML = '';
       root.append(el('div', 'win fm-head', title), ...build(render));
       root.append(el('div', 'fm-bar', button('返回', () => { audio.se(SE_OK); root.remove(); done(); })));
+      root.scrollTop = top;
     };
     render();
   });
@@ -359,7 +365,7 @@ function openOptions(g) {
   let help = '';
   return screen('設定', (render) => {
     const box = el('div', 'win fm-rows fm-opts');
-    for (const [key, label, list, desc] of OPTION_ROWS) {
+    for (const [key, label, list, desc] of [...OPTION_ROWS, ...lapOptions.rows(g)]) {
       const values = typeof list === 'function' ? list(g) : list; // (the songs this save has)
       const i = values.findIndex(([v]) => v === options[key]);
       const step = (d) => {
@@ -464,7 +470,7 @@ css.textContent = `
 .fm-pick.on { border-color: #f83800; }
 .fm-step { display: flex; align-items: center; gap: 6px; padding-left: 12px; }
 .fm-step b { flex: 1; text-align: center; font-weight: 400; color: #d0480c; font-size: 15px; }
-.fm-help { font-size: 15px; min-height: 2.6em; }
+.fm-help { font-size: 15px; min-height: 2.6em; flex: none; }
 .fm-recap { align-items: center; justify-content: center; gap: 10px; }
 .fm-recap canvas { width: 100%; max-width: 512px; aspect-ratio: 4 / 1; }
 .fm-title { font-size: 22px; padding: 6px 28px !important; }

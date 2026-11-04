@@ -6,6 +6,10 @@ export const EXP_RATE = 8;
 // src/laps.js: someone joining during a later round starts from what carried over
 let memberHook = null;
 export const setMemberHook = (f) => { memberHook = f; };
+// src/laps_rules.js: the level cap of a later round (final_level); 99 on a first play
+let capHook = null;
+export const setLevelCap = (f) => { capHook = f; };
+export const levelCap = () => (capHook ? capHook() : 99);
 
 export const makeMember = (world, id) => (memberHook ? memberHook(world, baseMember(world, id)) : baseMember(world, id));
 
@@ -20,17 +24,22 @@ export function baseMember(world, id) {
 }
 
 export function applyLevel(world, m) {
-  const p = world.actors[m.id].params[Math.min(m.level, 99)];
+  const t = world.actors[m.id].params;
+  // KGC_LimitBreak base_parameter (all.rb 188043): from Lv 100 on, Lv 99's value + (Lv 99's − Lv 98's) × (level − 99)
+  const p = m.level < 100 ? t[m.level] : t[99].map((v, k) => v + (v - t[98][k]) * (m.level - 99));
   [m.maxhp, m.maxki, m.atk, m.def, m.spi, m.agi] = p;
   const z = m.plus; // stats raised with ZP (src/growth.js) stay on top of the level's
   if (z) { m.maxhp += z.hp; m.maxki += z.ki; m.atk += z.atk; m.def += z.def; m.agi += z.agi; }
+  // the limits of KGC_LimitBreak (all.rb 187589)
+  m.maxhp = Math.min(m.maxhp, 99999); m.maxki = Math.min(m.maxki, 99999);
+  m.atk = Math.min(m.atk, 999999); m.def = Math.min(m.def, 999999); m.spi = Math.min(m.spi, 999999); m.agi = Math.min(m.agi, 999999);
 }
 
 // returns the number of levels gained
 export function levelUp(world, m) {
   let n = 0;
   const curve = world.actors[m.id].exp;
-  while (m.level < 99 && m.exp >= curve[m.level + 1]) {
+  while (m.level < levelCap() && m.exp >= curve[m.level + 1]) {
     m.level++;
     n++;
     if (m.maxLv == null) m.maxLv = m.level - 1;

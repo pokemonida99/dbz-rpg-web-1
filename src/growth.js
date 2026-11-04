@@ -10,7 +10,7 @@
 // ko (knocked out: stays out until HP is back to full or the party rests).
 // Per game: state.skillSeen {skill: n} ($skill_set_get_num[1], which skills the 追加技能 list offers), var[305] pool.
 import { audio, say, choose, rand, VERSION } from './core.js?v=20261104-0742';
-import { levelUp } from './party.js?v=20261104-0742';
+import { levelUp, levelCap } from './party.js?v=20261104-0742';
 
 const SKILL_GET_MAX = 9; // $skill_get_max
 const HINSHI = 31; // $hinshi_hp: below this HP % a member is "dying"
@@ -603,7 +603,7 @@ export async function usePool(game) {
   if (await ask([`要使用共有經驗值讓角色升級嗎？\n共有經驗值：${s.var[305] || 0}　基準等級：${base}`])) return true;
   if (!s.var[305]) { await say([['', '沒有共有經驗值']]); return true; }
   let m;
-  while ((m = await pickMember(game, '共有經驗值', (x) => x.level < 99, false))) {
+  while ((m = await pickMember(game, '共有經驗值', (x) => x.level < levelCap(), false))) {
     const curve = w.actors[m.id].exp;
     const rest = curve[m.level + 1] - m.exp;
     const rate = Math.min(3, Math.max(1, 1 + (base - m.level) * 0.1));

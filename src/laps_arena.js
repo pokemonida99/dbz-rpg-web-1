@@ -116,6 +116,7 @@ function dev(game, step) {
   s.sw[849] = true; // オゾット変身撃破 (ZG cleared)
   s.sw[852] = n > 69; // アラレと会った
   s.sw[586] = true; // Z外伝クリア
+  s.sw[600] = true; // ブウ撃破 (page 7211: zgbj:90041 gives card 168 only with it)
   s.sw[480] = true; // (the arena's first-time explanation)
   if (!m[1]) { s.laps = 1; s.sw[860] = true; }
   for (const x of [...s.party, ...Object.values(s.bench || {})]) if (x) { x.level = 99; x.exp = game.world.actors[x.id].exp[99]; x.maxLv = 99; }

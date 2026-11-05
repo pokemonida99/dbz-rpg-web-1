@@ -347,7 +347,7 @@ export class Battle {
     if (this.phase !== 'fight') this.drawLineup(c);
     // message window
     win(c, L.msg.x, L.msg.y, L.msg.w, L.msg.h);
-    this.msg.slice(0, 2).forEach((s, i) => text(c, s, L.msg.x + 12, L.msg.y + 10 + i * 22, INK, 17));
+    this.msg.slice(0, 2).forEach((s, i) => text(c, s, L.msg.x + 12, L.msg.y + 10 + i * 22, INK, 17, 'left', L.msg.w - 24));
     if (this.cont && Math.floor(now / 400) % 2) text(c, '▼', L.msg.x + L.msg.w - 22, L.msg.y + L.msg.h - 22, RUST, 14);
     if (this.cont) this.hit(0, L.msg.y, W, view.h - L.msg.y, this.cont);
     if (this.phase === 'fight' && this.duel) this.drawDuel(c);
@@ -1092,8 +1092,10 @@ export class Battle {
     await new Promise((res) => { this.cont = res; });
     if (ups.length) {
       audio.se('Z1 レベルアップ', 80);
-      this.say(...ups.length > 1 ? [`${ups.join('、')}！`] : [`${ups[0]}！`]);
-      await new Promise((res) => { this.cont = res; });
+      for (let k = 0; k < ups.length; k += 4) { // (two to a line, two lines to a page: nine at once don't run off the window)
+        this.say(...[ups.slice(k, k + 2), ups.slice(k + 2, k + 4)].filter((l) => l.length).map((l) => `${l.join('、')}！`));
+        await new Promise((res) => { this.cont = res; });
+      }
     }
     await items.afterBattle(this);
     let pages;

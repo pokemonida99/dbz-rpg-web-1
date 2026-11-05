@@ -25,11 +25,18 @@ def pages(m, ev):
     return out
 
 
+# the 周回 bosses (element 51, update_eneput_flag all.rb 21060): each shows once $btl_arena_fight_rank[n] is open, n being
+# one below the rank it is fought in; 265 and 275 are not in that case and never show
+LAP_RANK = {256: 69, 257: 70, 258: 71, 259: 72, 260: 73, 261: 74, 262: 75, 263: 75, 264: 76, 268: 77, 266: 78, 267: 79, 269: 80,
+            270: 81, 271: 82, 272: 83, 273: 84, 274: 85, 276: 86, 277: 87, 278: 88, 279: 89, 280: 90}
+
+
 def foe_order():
-    """the DB3 staff roll's enemies (Z_db3ed all.rb 23873): get_ene_history_list (every named enemy by its spi) after
-    update_eneput_flag (20990) — [id, group] for the ones it may show; src/db3ed.js checks the group's switches:
-    base (Z1, Z2, バーダック編; levitate hides), z3 (switch 119 or 860), z4 (431 or 860), post (570 and 459, or 860),
-    zg (599, 850 or 586, or 860), gaiden (586 or 860); lap (the 周回 bosses, element 51) only on a second round: left out"""
+    """the enemies of the 図鑑 and the DB3 staff roll (Z_db3ed all.rb 23873): get_ene_history_list (every named enemy by
+    its spi, a later id with the same spi wins) after update_eneput_flag (20990) — [id, group] for the ones it may show;
+    src/db3ed.js checks the group's switches: base (Z1, Z2, バーダック編; levitate hides), z3 (switch 119 or 860), z4 (431 or
+    860), post (570 and 459, or 860), zg (599, 850 or 586, or 860), gaiden (586 or 860); lap [id, 'lap', n]: 860 and the
+    arena's rank n open"""
     out = []
     for k, e in enumerate(json.load(open(os.path.join(root, 'data', 'enemies.json'), encoding='utf-8'))):
         if not k or not e or not e['name']:
@@ -48,10 +55,11 @@ def foe_order():
         if r[42] == 1 or r[43] == 1 or r[44] == 1:
             c = 'gaiden'
         if r[51] == 1:
-            c = None
+            c = 'lap' if k in LAP_RANK else None
         if c and not (c in ('base', 'z3', 'z4') and e['levitate']):
             out.append((e['spi'], k, c))
-    return [[k, c] for _, k, c in sorted(out)]
+    by_spi = {spi: [k, c] + ([LAP_RANK[k]] if c == 'lap' else []) for spi, k, c in sorted(out)}
+    return [by_spi[spi] for spi in sorted(by_spi)]
 
 
 def add(world, g=None):

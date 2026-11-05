@@ -10,7 +10,7 @@
 //   闘技場 (map 58 (22,5), 'arena'): 90001 → Scene_Db_Battle_arena (the rank list) → 90011-90031 three rounds (90012 …:
 //        battle_arena_ene_set) → 90041 (CE191 prizes, the new ranks) / 90051 (lost); rank 69 Arale, 70-91 覚醒 bosses.
 import { audio, say, choose, toast } from './core.js?v=20261104-0742';
-import { db3ed } from './db3ed.js?v=20261104-0742'; // the DB3 staff roll
+import { db3ed, shownFoes } from './db3ed.js?v=20261104-0742'; // the DB3 staff roll
 import { trunksMoves } from './costume.js?v=20261104-0742'; // CE61
 import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261104-0742';
 import { SCROLL_X, SCENE_Y, ENE, PLAY_X, say as sceneSay } from './opening.js?v=20261104-0742';
@@ -382,9 +382,9 @@ async function arenaPrize(game, line) {
 // CE194: every rank but Arale's cleared once (855), every enemy of the 図鑑 but her met (853)
 function araleCheck(game) {
   const s = game.state, a = ar(s), last = 69;
-  const all = a.clear.length >= last && [...Array(last - 1).keys()].every((x) => (a.clear[x] || 0) > 0);
+  const all = [...Array(last - 1).keys()].every((x) => (a.clear[x] || 0) > 0); // (Arale's own rank not needed: the event fills the list with 0 first)
   s.sw[855] = all;
-  s.sw[853] = all && A(game).seen.every((id) => (s.foeSeen || {})[id]);
+  s.sw[853] = all && shownFoes(game).slice(0, -1).every((id) => (s.foeSeen || {})[id]); // (for x in 0..size-2: the last one left out)
 }
 async function arenaCE(game, n, env) {
   if (n === 191) await arenaPrize(game, (t) => (env.quiet ? null : sceneSay(env.ui, env.ctx.faces, ['', t])));
@@ -515,7 +515,7 @@ function dev(game, step) {
   devState(game, step);
   return true;
 }
-function devState(game, step) {
+export function devState(game, step) {
   const s = game.state = game.newState();
   G = game;
   s.var[40] = 2;

@@ -170,7 +170,9 @@ agFilms({
   fzFrog: [() => [AURA3[3], MEDA], FOE],
   fzImpact: [() => [AURA3[3], SHOCK], FOE],
 });
-const z2Foe = () => { const id = foeId(); return id >= 31 && id < 101; };
+// the same patterns in the Z3 switch (all.rb 65418-65866): the 周回 bosses 達列斯・弗利薩(全力)・超貝吉塔, $btl_progress 2
+const Z3_SWITCH = new Set([370, 371, 372, 375, 376, 377, 624, 694, 695]);
+const z2Foe = () => { const id = foeId(); return (id >= 31 && id < 101) || (id >= 101 && Z3_SWITCH.has(Number(duelSkill()))); };
 function duelSkill() { const g = globalThis.__game, a = g && g.scene && g.scene.anim; return (a && a.skill) || 0; }
 
 // the short film of a move on everyone (no 31 / 32: the attacker is already gone, the ground already down)

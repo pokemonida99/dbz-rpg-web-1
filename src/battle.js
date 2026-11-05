@@ -256,8 +256,12 @@ function glow(c, paint) {
   c.restore();
 }
 
+// src/laps_rules.js: a later round's difficulty, before the enemies are read; its rate on a 時之間 boss's shared EXP
+export const battleRules = { setup: null, reward: (t) => t };
+
 export class Battle {
   constructor(world, game, enemyIds, boss, opts = {}) {
+    if (battleRules.setup) battleRules.setup(world, game);
     this.world = world;
     this.game = game;
     this.boss = boss;
@@ -431,9 +435,9 @@ export class Battle {
         text(c, plan.skill ? plan.skill.name : '攻擊', cx + 32, y + 76, '#fff', 12, 'center');
       }
       if (this.held(m) && !m.ko) num(c, this.stops.get(m), cx + 64, y + 28 + 48, 3); // the turns it can't act (50022)
-      word(c, 'LV', cx, y + 96); num(c, m.level, cx + 64, y + 96);
-      num(c, m.hp, cx + 64, y + 116); slash(c, cx, y + 132); num(c, m.maxhp, cx + 64, y + 132);
-      num(c, m.ki, cx + 64, y + 152); slash(c, cx, y + 168); num(c, m.maxki, cx + 64, y + 168);
+      word(c, 'LV', cx, y + 96); num(c, m.level, cx + 64, y + 96, 0, 32); // (fit: past Lv 99 and 9999 HP, a later round)
+      num(c, m.hp, cx + 64, y + 116, 0, 64); slash(c, cx, y + 132); num(c, m.maxhp, cx + 64, y + 132, 0, 64);
+      num(c, m.ki, cx + 64, y + 152, 0, 64); slash(c, cx, y + 168); num(c, m.maxki, cx + 64, y + 168, 0, 64);
       this.hit(cx, y + 20, colW, h - 20, () => this.onFighterTap(i));
     });
   }
@@ -1074,7 +1078,7 @@ export class Battle {
     this.buttons = [];
     await announceCombos(this);
     // a 時之間 boss (src/timeroom.js trBattle): no EXP (switch 124), its own shared EXP / CAP (variables 306 / 317)
-    const tr = this.trReward;
+    const tr = battleRules.reward(this.trReward);
     const noExp = !tr && this.bsw[124]; // switch 124: no EXP, CAP or SP (50762 / 50867)
     const exp = tr || noExp ? 0 : items.expGain(this.game.state, this.foes.reduce((s, f) => s + f.exp, 0)) * EXP_RATE;
     if (!noExp) this.game.state.zeni += items.capGain(this.game.state, tr && tr.cap ? tr.cap : this.foes.reduce((s, f) => s + f.gold, 0));

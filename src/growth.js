@@ -605,7 +605,7 @@ export async function usePool(game) {
   let m;
   while ((m = await pickMember(game, '共有經驗值', (x) => x.level < levelCap(), false))) {
     const curve = w.actors[m.id].exp;
-    const rest = curve[m.level + 1] - m.exp;
+    const rest = Math.max(0, curve[m.level + 1] - m.exp); // (a save from when the cap was 99: EXP past the next level)
     const rate = Math.min(3, Math.max(1, 1 + (base - m.level) * 0.1));
     const rateText = Number.isInteger(rate) ? rate.toFixed(1) : String(rate);
     let n;

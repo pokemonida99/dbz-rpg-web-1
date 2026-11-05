@@ -95,30 +95,29 @@ A 最重也最容易出錯。B、C 不需要等 A，靠第 0 步的 `?dev=lap` �
 - `?dev=lap`（第二輪開頭、全部繼承）、`?dev=lap3`、`?dev=lapold`（可進第二輪的存檔）；`?test` 清單也有。
 - `tools/build_laps.py` 的 `add_a`、`add_b`、`add_c`；`src/laps_rules.js`、`src/laps_arena.js` 已 import。
 
-**存檔欄位分類（第一版，A 負責查完定案）**
+**存檔欄位分類（A 已查完定案，出處與理由在 `docs/laps-a.md`）**
 
 | 類別 | 欄位 |
 |---|---|
-| 一定重來 | `map` `x` `y` `travel` `steps` `nextEnc` `party` `bench` `hand` `flags`（鬥技場除外）`teams` `ss` `forms` `progress` `cdaAir` `bubbleTiles` `z1Bd` `cardiMax`，其他 `sw`、`var` |
-| 一定保留 | 神龍願望開關、`cardMax`、`recipes`；設定存在 `options`，本來就不在存檔裡 |
-| 能力 | 成員 `level` `exp` `maxLv` `zp` `runzp` `plus`；變數 305、324 |
+| 一定重來 | `map` `x` `y` `travel` `nextEnc` `party` `bench` `hand` `flags`（鬥技場除外）`teams` `ss` `forms` `progress` `cdaAir` `bubbleTiles` `z1Bd` `cardiMax`，成員的 `skills`，其他 `sw`、`var` |
+| 一定保留 | 神龍願望與原版設定的開關、變數（`ALWAYS`）、`recipes`、`tactics`、成員的 `zp`、`stats.time`；設定存在 `options`，本來就不在存檔裡 |
+| 角色狀態 | 成員 `level` `exp` `maxLv` `runzp` `plus`；變數 305、324。關掉時 `zp` 加回用過的量與初始等級份 |
 | 技能 | 成員 `typ` `add` `addN` `sp` `got` `set` `firstTyp` `freeSet`；`skillSeen`；變數 25 |
-| 換裝 | 開關 439、381、444、443、447、594 |
-| 卡片 | `cards` `zeni`；變數 224～227、311～313、420 |
-| 必殺技 | 開關 70、861、`world.tecspark` 的 `get` |
-| 熟練度 | `skillLv`；變數 61～66、71～76 |
-| 組合技 | `combos` |
-| 戰鬥記錄 | `stats` `defeats` `flags.arena`；變數 202～223 的記錄、423 |
+| 服裝 | 開關 439、381、444、443、447、594 |
+| 卡片 | `cards` `zeni` `cardMax`；變數 224～227、311～313、420。繼承時先照 CE199、CE14 丟掉部分卡片，再加開場 4 張 |
+| 必殺技 | 開關 70、`world.tecspark` 的 `get` 與條件開關／變數；選了就打開 861 |
+| 熟練度 | `skillLv` `atkLv`；變數 61～66、71～76 |
+| 組合技 | `combos`、`world.laps.comboSw`（對調 553／796、1108／1109、445／512 後）、`comboVar` |
+| 戰鬥記錄 | `stats` `defeats` `cardUses` `steps` `flags.arena`（`first` 清空）；變數 202～223 的記錄、423 |
 | 敵人情報 | `foeSeen` `foeKills` `foeScouted` |
 | BGM | 開關 151～200、702～740 |
 
-**A 要查清楚的**
+**A 查清楚的結果**
 
-- `tactics`、`cardMax` 與開關 494／495 的關係、`forms`、`ss` 分類對不對。
-- 通關時的存檔可能還在換隊狀態（`flags.tr`、`flags.zgParty`、`flags.z4fTmp`、`tr_bardock`、鬥技場 `a.keep`）：繼承要取主線隊伍，不能取暫時的隊伍；超賽亞人形態（`FORMS`）要對回本體。
-- 招式：原版全員忘招再靠事件學回（`21332`），`m.skills` 要照原版重建；CE9 與 861 的 9 處分支、新氣功法等事件學招；Map007 事件 1 第 1 頁（初始卡片與設定）、第 22 頁（卡 141）。
-- 組合技：原版會對調開關 553／796、1108／1109、445／512（`21527`），以及 `$scombo_chk_flag` 的條件開關。
-- 第二輪開場不覆蓋原存檔：先選存檔位，用 `pickSlot`。
+- `tactics` 一定保留；`cardMax` 屬於卡片，開關 494／495 只影響上限，願望保留但持有數可能回到 1／1／2／3；`forms`、`ss` 一定重來。
+- 換隊狀態：`nextLapState` 先用 `mainStory` 取主線（巴達克篇 `flags.trbd.main`、鬥技場 `a.keep`、全部解除超賽亞人），成員一律從 `party` + `bench` 取；其他暫存隊伍只存編號。
+- 招式：成員的 `skills` 不繼承，靠故事學回；只有 861 與靈光招式的 CE9 列由 `syncLap` 給（`world.laps.ce9`）。
+- 卡 141：Map007 事件 1 第 22 頁的 860 分支是一周目退卡，周回不消耗（B 的 `consumable`），開場不用給。
 
 **B 要注意的**
 

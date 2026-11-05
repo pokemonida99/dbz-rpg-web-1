@@ -65,7 +65,7 @@ fieldCards[141] = async ({ game }) => {
   s.sw = s.sw || {};
   s.flags = s.flags || {};
   const name = (id) => (game.world.actors[id] || {}).name || '';
-  if (!s.sw[74]) { await say(game.world.cardsB.info.map((t) => ['', t])); s.sw[74] = true; } // CE263, once
+  if (!s.sw[74]) { await say([...game.world.cardsB.info, ...(s.sw[860] && game.world.laps ? game.world.laps.favInfo : [])].map((t) => ['', t])); s.sw[74] = true; } // CE263, once
   if (favId(s)) await say([['', T.now.replace('{old}', name(favId(s)))]]);
   if (!(await yes(T.ask))) return false; // the card comes back (126 [141] +1)
   for (;;) {

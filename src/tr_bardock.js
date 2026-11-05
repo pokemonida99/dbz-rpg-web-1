@@ -13,7 +13,7 @@ import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261104-0742';
 import { ENE, PLAY_X } from './opening.js?v=20261104-0742';
 import { audio, view, img, loadImages, setFaces } from './core.js?v=20261104-0742';
 import { eventCard } from './items.js?v=20261104-0742';
-import { makeMember, applyLevel } from './party.js?v=20261104-0742';
+import { baseMember, applyLevel } from './party.js?v=20261104-0742';
 import { applyEra } from './era.js?v=20261104-0742';
 import { newHand } from './battle.js?v=20261104-0742';
 import { syncSuperSaiyan, FORMS } from './supersaiyan.js?v=20261104-0742';
@@ -167,14 +167,14 @@ async function setupZ1(game) {
   if (!bar) {
     const mainOf = (id) => k.main.party.find((m) => m.id === id) || k.main.bench[id];
     const fresh = (id) => {
-      const m = makeMember(w, id), was = mainOf(id);
+      const m = baseMember(w, id), was = mainOf(id); // (z1bar_varinitialize: not what a later round carries over)
       if (was) m.skills = [...was.skills];
       m.level = 1; m.exp = 0; m.maxLv = 1;
       applyLevel(w, m);
       heal(m);
       return m;
     };
-    bar = { party: [fresh(16), fresh(4)], bench: {}, forms: {}, cards: {}, defeats: {}, v305: 0, v324: 0, pic: [0, 0, 0, 0, 0] };
+    bar = { party: [fresh(16), fresh(4)], bench: {}, forms: {}, cards: {}, defeats: {}, v305: 0, v324: 0, pic: [71, 73, 74, 75, 76].map((n) => s.var[n] || 0) }; // (CE161: 0, or what a later round carried over)
     for (const [id, on, skill] of t.ce161) learn(bar.party.find((m) => m.id === id), skill, on);
   }
   s.party = bar.party; s.bench = bar.bench; s.forms = bar.forms; s.cards = bar.cards; s.defeats = bar.defeats;

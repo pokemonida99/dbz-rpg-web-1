@@ -49,9 +49,8 @@ function extendCurves(world, cap) {
 }
 setLevelCap(() => {
   const g = window.__game, s = g && g.state;
-  if (!isLap(s)) return 99;
   const cap = finalLevel(lapCount(s));
-  extendCurves(g.world, cap);
+  if (g && g.world) extendCurves(g.world, cap);
   return cap;
 });
 

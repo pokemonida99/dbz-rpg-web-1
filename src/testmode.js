@@ -6,6 +6,22 @@ import { cardState, maxOf } from './items.js?v=20261104-0742';
 
 const params = new URLSearchParams(location.search);
 export const TEST = params.has('test');
+// ?test&dev=lapqa / lapqapai / lapqabuu: to try the last fights of the first round. The save docs/laps-qa.md section 7 played to the
+// end under the cap of 199, no extra training (Lv 138-156), in front of Arale (ranks 1-68 cleared) / 帕伊庫漢 / 布歐; no boost
+const QA = TEST && /^lapqa(pai|buu)?$/.exec(params.get('dev') || '');
+export const isQaJump = () => !!QA;
+export async function qaSave() {
+  const s = await (await fetch('tools/fixtures/lap-end-199.json')).json();
+  const door = { pai: 23, buu: 28 }[QA[1]];
+  const a = s.flags.arena = s.flags.arena || { open: [], clear: [], first: [] };
+  for (let x = 0; x < 68; x++) { a.open[x] = true; a.clear[x] = a.clear[x] || 1; }
+  a.open[68] = true;
+  s.sw[852] = true; // アラレと会った
+  s.sw[480] = true; // (the arena's first-time explanation)
+  s.map = door ? '96' : '58'; s.x = (door || 22) * 32 + 16; s.y = (door ? 3 : 6) * 32 + 16;
+  for (const m of s.party) { m.hp = m.maxhp; m.ki = m.maxki; m.ko = false; }
+  return s;
+}
 
 const LIST = [
   ['Z1', [['new', '第一章 拉蒂茲篇（新的開始）'], ['ch5', '第五章 卡里克篇'], ['ch6', '第六章 界王修行'], ['ch6earth', '第六章 迎擊賽亞人'],
@@ -20,6 +36,7 @@ const LIST = [
   ['ZG', [['zga', '本編 巴達克一夥篇'], ['zgb', '本編 毀滅瓦斯・西之都'], ['zgc', '本編 克恩星・暗黑行星'], ['zgbroly', '熱戰烈戰超激戰'],
     ['zgbojack', '銀河危機']]],
   ['第二輪', [['lap', '第二輪開頭（全部繼承）'], ['lap3', '第三輪開頭'], ['lapold', '可進第二輪的存檔']]],
+  ['第一輪最後難關（Lv138～156 的存檔，不補等級和卡片）', [['lapqa', '阿拉蕾（鬥技場等級 69）'], ['lapqapai', '帕伊庫漢'], ['lapqabuu', '布歐']]],
 ];
 
 // ?test without a jump: the list instead of the title screen (returns true when it took over)
@@ -50,6 +67,7 @@ export function startTestBoost(game) {
   badge.textContent = '測試';
   badge.onclick = () => { location.search = '?test'; };
   document.getElementById('app').appendChild(badge);
+  if (QA) return;
   setInterval(() => {
     const s = game.state, w = game.world;
     if (!s || !s.party || !s.party.length) return;

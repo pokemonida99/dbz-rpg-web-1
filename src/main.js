@@ -1,5 +1,5 @@
 // Boot, game state, scene switching, story beats, HUD, menu, save/load.
-import { TEST, showTestMenu, startTestBoost } from './testmode.js?v=20261104-0742'; // 測試模式 (index.html?test)
+import { TEST, showTestMenu, startTestBoost, isQaJump, qaSave } from './testmode.js?v=20261104-0742'; // 測試模式 (index.html?test)
 import { view, img, loadImages, audio, say, setFaces, toast, sleep, input, assetUrl, VERSION, fetchRetry, warmImages } from './core.js?v=20261104-0742';
 import { tileSheetPaths } from './tiles.js?v=20261104-0742';
 import { Field, fieldImages, nextEncounterSteps, holds } from './field.js?v=20261104-0742';
@@ -642,6 +642,7 @@ async function boot() {
   if (dev0 || TEST) { B.done(); later(); }
   if (showTestMenu()) { requestAnimationFrame(frame); return; }
   const dev = new URLSearchParams(location.search).get('dev'); // ?dev=ch6 / ch6earth / ch6vegeta: jump to chapter 6
+  if (isQaJump()) { title.hidden = true; localStorage.setItem(AUTO_KEY, JSON.stringify(await qaSave())); if (load(AUTO_KEY)) { requestAnimationFrame(frame); return; } title.hidden = false; } // (src/testmode.js)
   if (dev && dev.startsWith('ch6')) { title.hidden = true; devChapter6(game, dev); requestAnimationFrame(frame); return; }
   if (dev && ['z2ginyu', 'z2frieza', 'z2last', 'z2turles'].includes(dev)) { title.hidden = true; devZ2b(game, dev); requestAnimationFrame(frame); return; } // Z2 second half
   if (dev && dev.startsWith('willow')) { title.hidden = true; devWillow(game, dev); requestAnimationFrame(frame); return; } // ?dev=willow / willow51 / willowboss

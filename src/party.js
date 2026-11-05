@@ -6,7 +6,7 @@ export const EXP_RATE = 8;
 // src/laps.js: someone joining during a later round starts from what carried over
 let memberHook = null;
 export const setMemberHook = (f) => { memberHook = f; };
-// src/laps_rules.js: the level cap of a later round (final_level); 99 on a first play
+// src/laps_rules.js: the level cap of the round (final_level): 199 on a first play
 let capHook = null;
 export const setLevelCap = (f) => { capHook = f; };
 export const levelCap = () => (capHook ? capHook() : 99);

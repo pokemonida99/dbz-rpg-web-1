@@ -1,8 +1,8 @@
 // 測試模式 (index.html?test): a page of jump points for testing by hand, and while it is on: every member at Lv 99,
 // every card at its maximum, no random encounters on the maps. It keeps its own save slots (src/main.js), so the
 // player's real saves are never touched. ?test alone shows the list; a pick reloads as ?test&dev=… (the dev jumps).
-import { applyLevel } from './party.js?v=20261104-0742';
-import { cardState, maxOf } from './items.js?v=20261104-0742';
+import { applyLevel } from './party.js?v=20261105-1811';
+import { cardState, maxOf } from './items.js?v=20261105-1811';
 
 const params = new URLSearchParams(location.search);
 export const TEST = params.has('test');

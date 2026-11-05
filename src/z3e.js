@@ -9,19 +9,19 @@
 //   1383 Piccolo and Kami fuse, Cell → battle 1390 (Piccolo alone, 4 turns, enemy damage × 0.5) → 1401 太陽拳, the
 //     ending cut-ins → variable 41 = 2001 → 「Z3 完」 and the title screen (Z4 待續).
 // A "stop" (the original's Event_Check after each move on the board): the stick let go after flying a few squares.
-import { input, audio, toast, rand } from './core.js?v=20261104-0742';
-import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261104-0742';
-import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261104-0742';
-import { addMoves } from './anime.js?v=20261104-0742';
-import { makeMember, applyLevel } from './party.js?v=20261104-0742';
-import { superSaiyan } from './supersaiyan.js?v=20261104-0742';
-import { setTypical } from './growth.js?v=20261104-0742';
-import { eventCard } from './items.js?v=20261104-0742';
-import { applyEra } from './era.js?v=20261104-0742';
-import { newHand } from './battle.js?v=20261104-0742';
-import { cardSquare } from './cardgames.js?v=20261104-0742';
-import { spotTally } from './fieldmenu.js?v=20261104-0742';
-import { registerZ3, Z3, begin, fight, toField, party, addMember, member, heal, card, moveTo, setParty, hasChapter, nextZ3 } from './z3.js?v=20261104-0742';
+import { input, audio, toast, rand } from './core.js?v=20261105-1811';
+import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261105-1811';
+import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261105-1811';
+import { addMoves } from './anime.js?v=20261105-1811';
+import { makeMember, applyLevel } from './party.js?v=20261105-1811';
+import { superSaiyan } from './supersaiyan.js?v=20261105-1811';
+import { setTypical } from './growth.js?v=20261105-1811';
+import { eventCard } from './items.js?v=20261105-1811';
+import { applyEra } from './era.js?v=20261105-1811';
+import { newHand } from './battle.js?v=20261105-1811';
+import { cardSquare } from './cardgames.js?v=20261105-1811';
+import { spotTally } from './fieldmenu.js?v=20261105-1811';
+import { registerZ3, Z3, begin, fight, toField, party, addMember, member, heal, card, moveTo, setParty, hasChapter, nextZ3 } from './z3.js?v=20261105-1811';
 
 const MAPS = ['40'];
 const C = (game) => Z3(game).z3e;

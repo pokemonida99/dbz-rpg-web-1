@@ -9,10 +9,10 @@
 //               effects (power, guard, first strike, dodge, KI-free move, stopping or weakening an enemy, scouter).
 // Data: world.items / cardShop / drops (tools/build_items.py). Battle hooks: the exports under "battle" below.
 // Menus: the 卡牌 slot of src/partymenu.js (battle 菜單 and field menu, battle = null on the field).
-import { img, audio, toast, rand } from './core.js?v=20261104-0742';
-import { newCard } from './battle.js?v=20261104-0742';
-import { menuEntries, hooks } from './partymenu.js?v=20261104-0742';
-import { ext } from './growth.js?v=20261104-0742'; // (先手必勝, カードドロップ: src/skills_d.js)
+import { img, audio, toast, rand } from './core.js?v=20261105-1811';
+import { newCard } from './battle.js?v=20261105-1811';
+import { menuEntries, hooks } from './partymenu.js?v=20261105-1811';
+import { ext } from './growth.js?v=20261105-1811'; // (先手必勝, カードドロップ: src/skills_d.js)
 
 const ICONS = 'ui/item_cards.png'; // 64×64 icons, 10 a row, the Z1 column of the original 顔カード.PNG
 const CARDS = 'Graphics/Pictures/カード関係.PNG';

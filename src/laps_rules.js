@@ -7,16 +7,16 @@
 //   難度        revise_enemy_parameters (187755): the enemies' numbers in world.enemies, re-made when the choice changes
 // ?dev=lapb<round>: that round with the party one EXP below the cap; ?dev=lapbmax: at Lv 9999; ?dev=lapbshop: next to a card
 // square; ?dev=lapbtr: in the 時之間
-import { levelCap, setLevelCap, applyLevel } from './party.js?v=20261104-0742';
-import { isLap, lapCount } from './laps.js?v=20261104-0742';
-import { registerZ3, devZ3 } from './z3.js?v=20261104-0742';
-import { fieldHooks } from './field.js?v=20261104-0742';
-import './cards_a.js?v=20261104-0742';
-import { capRules } from './cards_b.js?v=20261104-0742';
-import * as items from './items.js?v=20261104-0742';
-import { battleRules } from './battle.js?v=20261104-0742';
-import { cutRules } from './cutscene.js?v=20261104-0742';
-import { options, lapOptions, songList } from './fieldmenu.js?v=20261104-0742';
+import { levelCap, setLevelCap, applyLevel } from './party.js?v=20261105-1811';
+import { isLap, lapCount } from './laps.js?v=20261105-1811';
+import { registerZ3, devZ3 } from './z3.js?v=20261105-1811';
+import { fieldHooks } from './field.js?v=20261105-1811';
+import './cards_a.js?v=20261105-1811';
+import { capRules } from './cards_b.js?v=20261105-1811';
+import * as items from './items.js?v=20261105-1811';
+import { battleRules } from './battle.js?v=20261105-1811';
+import { cutRules } from './cutscene.js?v=20261105-1811';
+import { options, lapOptions, songList } from './fieldmenu.js?v=20261105-1811';
 
 const stateOf = () => { const g = window.__game; return g && g.state; };
 

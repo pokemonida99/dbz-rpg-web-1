@@ -5,10 +5,10 @@
 //   793-798 あの時の借りを返すよ！… 2893-2898 (107479-109803)     799 流派を超えた連携 2899 (109804)
 // Frame numbers in the comments are the original's @battle_anime_frame; every frame: the film's own drawing (behind the
 // fighters), then mv() (output_battle_anime's movement), then the effect (@effect_anime_pattern, in front).
-import { audio, rand } from './core.js?v=20261104-0742';
-import { STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED } from './anime.js?v=20261104-0742';
-import { ComboDuel } from './combo-anime.js?v=20261104-0742';
-import { pic, blt, cmcFilms, cmcPictures, STD_CHAX, SPARK } from './combo_z3a_stage.js?v=20261104-0742';
+import { audio, rand } from './core.js?v=20261105-1811';
+import { STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED } from './anime.js?v=20261105-1811';
+import { ComboDuel } from './combo-anime.js?v=20261105-1811';
+import { pic, blt, cmcFilms, cmcPictures, STD_CHAX, SPARK } from './combo_z3a_stage.js?v=20261105-1811';
 
 const FLASH_ON = 296, FLASH_OFF = 356; // FLASH_Y_SIZE_CUTIN_ON / _OFF: the white flash above the cut-in, or all of it
 const v = (n) => { const s = globalThis.__game && globalThis.__game.state; return (s && s.var && s.var[n]) || 0; };

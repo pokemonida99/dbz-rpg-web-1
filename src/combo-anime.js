@@ -73,7 +73,7 @@ export class ComboDuel extends Duel {
     for (let i = 0; i < 10; i++) { this.fade = (i + 1) / 10; yield; }
   }
 
-  sheet(id, sp) { return sp ? this.crew[id].special : this.crew[id].normal; }
+  sheet(id, sp) { const m = this.crew[this.who(id)]; return sp ? m.special : m.normal; } // (a Super Saiyan's row: his sheets)
   who(id) { return this.crew[id] ? id : SS[id]; } // the crew member who is `id` (or his Super Saiyan form)
   // back 48: the after-images left by someone vanishing at high speed (every 4th frame of the back counter, `phase` ahead)
   afterImage(x, y, phase = 0) { return (c, t) => { if ((t + phase) % 4 === 0) spark(c, 0, 48, 64, 64, x, y); }; }
@@ -99,7 +99,7 @@ export class ComboDuel extends Duel {
 
   // ---- 805 捨て身の攻撃 (悟空 + 比克): 比克 charges 魔貫光殺砲 while 悟空 grabs the enemy from behind ----
   * sutemi() {
-    const lead = this.lead === 3 ? 3 : 4;
+    const lead = this.lead === this.who(3) ? 3 : 4;
     // 比克 stands at x 110 in the original; on a phone (stage cropped by `margin` each side) he moves in so he and his aura stay whole
     const px = Math.max(CENTER_CHAX - 130, Math.round(this.margin) + 28), dx = px - (CENTER_CHAX - 130);
     this.se('Z1 逃げる');
@@ -244,7 +244,7 @@ export class ComboDuel extends Duel {
   // ---- 804 ダブル衝撃波 (悟空 + 琪琪): the lead steps back while the other flickers in (effect 50), both raise a
   // hand (effect 51), then the shock wave behind the enemy (back 1) ----
   * doubleShock() {
-    const other = this.lead === 3 ? 10 : 3;
+    const other = this.lead === this.who(3) ? 10 : 3;
     this.se('Z1 逃げる');
     this.pose(this.A, 0, false);
     yield;
@@ -274,7 +274,7 @@ export class ComboDuel extends Duel {
     const lo = Math.max(74, Math.round(this.margin)), hi = Math.min(458, SW - Math.round(this.margin) - 96);
     const X = (x) => Math.round(lo + ((x - 74) * (hi - lo)) / 384);
     const MOVE = { 3: 17, 24: 18, 6: 24, 7: 24 }; // the frames the lead walks (@ax until frame 18 / 19 / 25)
-    const others = [3, 24, 6, 7].filter((id) => id !== this.lead);
+    const lead = this.lead === this.who(3) ? 3 : this.lead, others = [3, 24, 6, 7].filter((id) => id !== lead);
     const rows = { 24: 2, 6: 1, 7: 1 }; // @scombo_cha*_anime_type from frame 60 (190: 3 / 2 / 2)
     const at = (id, row) => (c) => draw(c, this.sheet(id, true), 0, row * 96, 96, 96, X(SLOT[id]), STD_Y);
     this.se('Z1 逃げる');
@@ -283,10 +283,10 @@ export class ComboDuel extends Duel {
     // 1-59: the lead walks to his place, the others flicker in (normal sheet rows 14, 13, 12, then their special sheet)
     const flick = others.map((id) => this.appear(id, X(SLOT[id]), 0, true));
     this.behind((c, t) => flick.forEach((f) => f(c, t)));
-    const n = MOVE[this.lead], dx = (X(SLOT[this.lead]) - this.A.x) / n;
+    const n = MOVE[lead], dx = (X(SLOT[lead]) - this.A.x) / n;
     for (let f = 1; f < 60; f++) { if (f <= n) this.A.x += dx; yield; }
     // 60-190: 悟空 in the lead's place, everyone charging (back 8 over them)
-    this.L.sheets = this.crew[3];
+    this.L.sheets = this.crew[this.who(3)];
     this.A.x = X(SLOT[3]);
     this.pose(this.A, 3, true);
     this.se('Z1 ザー');

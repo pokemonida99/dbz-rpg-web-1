@@ -1,16 +1,18 @@
 // Field: free flight over the map, random encounters, the boss marker.
-import { view, img, input, audio, rand } from './core.js?v=20261108-0603';
-import { renderMap, drawTile, tileSheetPaths } from './tiles.js?v=20261108-0603';
-import { flySprite, walkSprite } from './costume.js?v=20261108-0603';
+import { view, img, input, audio, rand } from './core.js?v=20261108-0709';
+import { renderMap, drawTile, tileSheetPaths } from './tiles.js?v=20261108-0709';
+import { flySprite, walkSprite } from './costume.js?v=20261108-0709';
 
 const SPEED = 150; // art pixels per second (~4.7 tiles/s)
 // fieldHooks.step(state, step) → the distance actually flown this frame (src/cards_a.js: 飛機 doubles it); encounters and
 // the other per-tile counts still go by the plain step, as the original counts card moves, not squares
 export const fieldHooks = {};
-const FLY = 'Graphics/Characters/chara_fly1.png'; // 48×48 frames, Goku = character 0
+// 48×48 frames: the Z3 maps' 飛行キャラ event pages give variable 42 = 3-10 (悟空…餃子) characters 0-7 of chara_fly2
+// (chara_fly1 is another set: its character 2 is Bardock, 16)
+const FLY = 'Graphics/Characters/chara_fly2.png';
 const BOSS = 'Graphics/Characters/enemy1.png'; // 32×32 frames, Raditz = character 0
 export const fieldImages = [FLY, BOSS];
-// leaders past the eight of chara_fly1 (the Z3 maps' 飛行キャラ event pages: actor → [sheet, character])
+// leaders past those eight (the Z3 maps' 飛行キャラ event pages: actor → [sheet, character])
 const FLY_MORE = { 12: 'chara_fly2:7', 16: 'chara_fly1:2', 14: 'chara_fly4:0', 17: 'chara_fly3:0', 18: 'chara_fly1:4', 19: 'chara_fly5:4', 20: 'chara_fly5:5', 21: 'chara_fly4:5', 22: 'chara_fly4:4', 23: 'chara_fly4:6', 25: 'chara_fly3:4', 26: 'chara_fly5:2' };
 
 export class Field {

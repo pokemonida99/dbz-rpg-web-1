@@ -3,7 +3,7 @@
 // [pattern, x, y, zoom, angle, mirror, opacity, blend]. Each frame shows for 4 game frames; a cell is a 192×192 piece
 // of its picture (pattern ≥ 100: the second one) with its middle on (x, y) from the anchor — the target's centre for
 // position 1. Blend 1 adds, 2 subtracts.
-import { img } from './core.js?v=20261108-0603';
+import { img } from './core.js?v=20261108-0709';
 
 export const animFrames = (a) => a.frames.length * 4;
 export function drawAnim(c, a, t, x, y) {

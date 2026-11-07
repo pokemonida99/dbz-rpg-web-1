@@ -11,12 +11,12 @@
 // set_chr_display_out. Each film runs like the original: a body per @battle_anime_frame that sets the poses, moves
 // (@ax @gx …, the enemy's @ax mirrored every frame), blts under the fighters and the effect_pattern in front, with the
 // original's effect / ray / back counters. Frame numbers in the comments are @battle_anime_frame.
-import { audio, img } from './core.js?v=20261108-0603';
-import { Duel, addMoves, moveFilm, draw, RAY_SPEED } from './anime.js?v=20261108-0603';
-import { feRegister } from './anime_foes_common.js?v=20261108-0603';
-import { andaAt as at, andaShake as shake } from './anime_androids.js?v=20261108-0603';
-import { registerZ3, party, heal } from './z3.js?v=20261108-0603';
-import { applyLevel } from './party.js?v=20261108-0603';
+import { audio, img } from './core.js?v=20261108-0709';
+import { Duel, addMoves, moveFilm, draw, RAY_SPEED } from './anime.js?v=20261108-0709';
+import { feRegister } from './anime_foes_common.js?v=20261108-0709';
+import { andaAt as at, andaShake as shake } from './anime_androids.js?v=20261108-0709';
+import { registerZ3, party, heal } from './z3.js?v=20261108-0709';
+import { applyLevel } from './party.js?v=20261108-0709';
 
 const STD_CHAX = -70, STD_ENEX = 602, STD_Y = 120, CENTER_CHAX = 240, CENTER_ENEX = 304, TEC_CENTER = 266; // (all.rb 52435)
 const RS = RAY_SPEED, FLASH_ON = 296; // FLASH_Y_SIZE_CUTIN_ON

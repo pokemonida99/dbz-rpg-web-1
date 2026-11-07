@@ -3,10 +3,10 @@
 // 2844, 754 お母さんをいじめるなーっ！ 2854, 762 ダブルスラッシュ 2862, 763 ギャリックかめはめは 2863, 764 親子かめはめ波 2864,
 // 770 母さんは俺が守る 2870. Frame numbers in the comments are the original's @battle_anime_frame; `eff` is the film's
 // @effect_anime_pattern, drawn after the fighters every frame it is set (st.ef counting on, as effect_pattern does).
-import { audio, rand } from './core.js?v=20261107-2255';
-import { STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED } from './anime.js?v=20261107-2255';
-import { ComboDuel } from './combo-anime.js?v=20261107-2255';
-import { pic, blt, cmcFilms, cmcPictures, STD_CHAX, SPARK } from './combo_z3a_stage.js?v=20261107-2255';
+import { audio, rand } from './core.js?v=20261107-2349';
+import { STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED } from './anime.js?v=20261107-2349';
+import { ComboDuel } from './combo-anime.js?v=20261107-2349';
+import { pic, blt, cmcFilms, cmcPictures, STD_CHAX, SPARK } from './combo_z3a_stage.js?v=20261107-2349';
 
 const STD_ENEX = 602;
 const P = {

@@ -10,15 +10,15 @@
 // (@battle_anime_frame, @effect_anime_*, @ray_anime_*, @back_anime_*, @ax … with @gx flipping every frame as
 // output_battle_anime does, @btl_ani_cha_chg_no, @scombo_cha*), blits straight away what the pattern blits (behind
 // the fighters), and Cz.out() moves the fighters and draws @effect_anime_pattern in front.
-import { audio, img } from './core.js?v=20261107-2255';
-import { draw, spark, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED, ANIME_IMAGES } from './anime.js?v=20261107-2255';
-import { ComboDuel, addComboFilms } from './combo-anime.js?v=20261107-2255';
-import { blt } from './anime_foes_common.js?v=20261107-2255';
-import './anime_goku_gohan.js?v=20261107-2255'; // (agStage)
-import { registerZ3, party, heal } from './z3.js?v=20261107-2255';
-import { applyLevel } from './party.js?v=20261107-2255';
-import { superSaiyan } from './supersaiyan.js?v=20261107-2255';
-import { comboData } from './combo.js?v=20261107-2255';
+import { audio, img } from './core.js?v=20261107-2349';
+import { draw, spark, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED, ANIME_IMAGES } from './anime.js?v=20261107-2349';
+import { ComboDuel, addComboFilms } from './combo-anime.js?v=20261107-2349';
+import { blt } from './anime_foes_common.js?v=20261107-2349';
+import './anime_goku_gohan.js?v=20261107-2349'; // (agStage)
+import { registerZ3, party, heal } from './z3.js?v=20261107-2349';
+import { applyLevel } from './party.js?v=20261107-2349';
+import { superSaiyan } from './supersaiyan.js?v=20261107-2349';
+import { comboData } from './combo.js?v=20261107-2349';
 
 const pic = (n) => `Graphics/Pictures/${n}`;
 const STD_CHAX = -70, STD_ENEX = 602;

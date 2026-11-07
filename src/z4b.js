@@ -9,16 +9,16 @@
 //     → variable 41 = 2191: 第三章 (src/z4c.js)
 // The scene drawing, the battle films and the battles of both chapters are here (src/z4c.js imports them): the
 // scenes come from all.rb itself (tools/build_z4b.py scenes(): background, faces, character_output).
-import { audio, img, loadImages } from './core.js?v=20261107-2255';
-import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261107-2255';
-import { SCROLL_X, SCENE_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261107-2255';
-import { makeMember, applyLevel } from './party.js?v=20261107-2255';
-import { superSaiyan } from './supersaiyan.js?v=20261107-2255';
-import { applyEra } from './era.js?v=20261107-2255';
-import { newHand } from './battle.js?v=20261107-2255';
-import { addMoves, ANIME_IMAGES } from './anime.js?v=20261107-2255';
-import { duelFilm, screenPic } from './z3c.js?v=20261107-2255';
-import { registerZ3, nextZ3, Z3, begin, fight, toField, party, member, heal, card, moveTo, setParty } from './z3.js?v=20261107-2255';
+import { audio, img, loadImages } from './core.js?v=20261107-2349';
+import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261107-2349';
+import { SCROLL_X, SCENE_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261107-2349';
+import { makeMember, applyLevel } from './party.js?v=20261107-2349';
+import { superSaiyan } from './supersaiyan.js?v=20261107-2349';
+import { applyEra } from './era.js?v=20261107-2349';
+import { newHand } from './battle.js?v=20261107-2349';
+import { addMoves, ANIME_IMAGES } from './anime.js?v=20261107-2349';
+import { duelFilm, screenPic } from './z3c.js?v=20261107-2349';
+import { registerZ3, nextZ3, Z3, begin, fight, toField, party, member, heal, card, moveTo, setParty } from './z3.js?v=20261107-2349';
 
 const MAPS = ['43'];
 const C = (game) => Z3(game).z4b;

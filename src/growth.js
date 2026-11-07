@@ -9,8 +9,8 @@
 // got {skill: 1} learned, set {skill: 1} ever set, zp, maxLv (top level reached), plus {hp,ki,atk,def,agi} from ZP,
 // ko (knocked out: stays out until HP is back to full or the party rests).
 // Per game: state.skillSeen {skill: n} ($skill_set_get_num[1], which skills the 追加技能 list offers), var[305] pool.
-import { audio, say, choose, rand, VERSION } from './core.js?v=20261107-2255';
-import { levelUp, levelCap } from './party.js?v=20261107-2255';
+import { audio, say, choose, rand, VERSION } from './core.js?v=20261107-2349';
+import { levelUp, levelCap } from './party.js?v=20261107-2349';
 
 const SKILL_GET_MAX = 9; // $skill_get_max
 const HINSHI = 31; // $hinshi_hp: below this HP % a member is "dying"

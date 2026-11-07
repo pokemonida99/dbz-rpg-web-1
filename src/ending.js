@@ -5,8 +5,8 @@
 //  - playZ1Ending(): Title_Anime z1_ed (all.rb 167746) — space, a glint, Vegeta's pod rising away from Earth, then
 //    Frieza's face, until a tap. Drawn at its 640×480 size and fitted to the screen width, like the title animation.
 // Both have the 略過 button of the other story scenes.
-import { audio, loadImages, assetUrl } from './core.js?v=20261108-0039';
-import { overlay, blt } from './opening.js?v=20261108-0039';
+import { audio, loadImages, assetUrl } from './core.js?v=20261108-0603';
+import { overlay, blt } from './opening.js?v=20261108-0603';
 
 const pic = (n) => `Graphics/Pictures/${n}.PNG`;
 const FPS = 60;

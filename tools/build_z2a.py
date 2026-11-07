@@ -32,8 +32,8 @@ P2, E2, F2, CARD = P('Z2_顔味方'), P('Z2_顔イベント'), P('Z2_顔敵'), P
 
 # the original's Z2 art for what Z1 drew (the Z2_ prefix of $top_file_name / $btl_top_file_name): src/era.js swaps them
 # while variable 40 is 1. Battle sheets of the Z1 party (actor 3-9) and the party faces (same rows).
-ERA_SHEETS = ['顔味方'] + [f'戦闘_{n}' for n in ('ゴクウ', 'ピッコロ', 'ゴハン', 'クリリン', 'ヤムチャ', 'テンシンハン', 'チャオズ')] \
-    + [f'戦闘_必殺技_{n}' for n in ('ゴクウ', 'ピッコロ', 'ゴハン', 'クリリン', 'ヤムチャ', 'テンシンハン', 'チャオズ')]
+ERA_SHEETS = ['顔味方'] + [f'戦闘_{n}' for n in ('ゴクウ', 'ピッコロ', 'ゴハン', 'クリリン', 'ヤムチャ', 'テンシンハン', 'チャオズ', 'チチ')] \
+    + [f'戦闘_必殺技_{n}' for n in ('ゴクウ', 'ピッコロ', 'ゴハン', 'クリリン', 'ヤムチャ', 'テンシンハン', 'チャオズ', 'チチ')]
 
 # who speaks with which face in Z2 (the remake's dialogue faces; [sheet, row, column])
 FACES = {

@@ -14,7 +14,7 @@
 //   suit: 443, long hair; 2 red 道着: 447, short hair = switch 445); 173 特蘭克斯 (0 私服, 1 battle suit: 110, 2 tank top: 570,
 //   3 long hair no sword: 580, 4 long hair with the sword: 581 / 860); 174 his clothes kept (CE210); 175 巴達克 without the
 //   scouter (594); 176 琪琪; 177 18號 (always); switch 363 龜仙人's everyday clothes (always); switch 360: no 換裝 now.
-import { img, assetUrl, setImageAlias, putImage, loadImages, audio } from './core.js?v=20261108-0039';
+import { img, assetUrl, setImageAlias, putImage, loadImages, audio } from './core.js?v=20261108-0603';
 
 const PIC = 'Graphics/Pictures/';
 const era = (s) => Math.min(2, (s.var && s.var[40]) || 0);

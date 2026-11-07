@@ -13,11 +13,11 @@
 //   menuEntries.card = async ({ game, battle }) => { … }   // battle is null when opened from the field menu
 // In battle the choosing comes back (picks kept) when the promise resolves, unless it resolves to 'stay'
 // (the entry has moved the battle on by itself, e.g. started the turn).
-import { img, audio, rand } from './core.js?v=20261108-0039';
-import { levelCap } from './party.js?v=20261108-0039';
-import * as growth from './growth.js?v=20261108-0039'; // 技能 page, ZP, KI cost with passive skills
-import { FORMS } from './supersaiyan.js?v=20261108-0039'; // the two forms whose 作戰 is one
-import { canDress, dress, dressTag } from './costume.js?v=20261108-0039'; // 換裝 and its 「D:」 mark
+import { img, audio, rand } from './core.js?v=20261108-0603';
+import { levelCap } from './party.js?v=20261108-0603';
+import * as growth from './growth.js?v=20261108-0603'; // 技能 page, ZP, KI cost with passive skills
+import { FORMS } from './supersaiyan.js?v=20261108-0603'; // the two forms whose 作戰 is one
+import { canDress, dress, dressTag } from './costume.js?v=20261108-0603'; // 換裝 and its 「D:」 mark
 
 const FACES = 'Graphics/Pictures/Z1_顔味方.PNG'; // 64×64; row = actor id - 3; columns: normal, hurt, KO
 const CARDS = 'Graphics/Pictures/カード関係.PNG';

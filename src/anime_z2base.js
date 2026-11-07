@@ -2,10 +2,10 @@
 // Z2 switch 58400 on): src/anime.js holds the Z1 ones (patterns 1xx), whose poses are the Z1 sheets' and go wrong on the Z2 / Z3 sheets
 // of the same member. Written out frame by frame like src/anime_z3base.js; f is @battle_anime_frame. The party on src/anime_zfighters.js's
 // stage, the enemies on src/anime_foes_common.js's. Moves with a film of their own in Z3 only come here in Z2 (Z3B: src/anime_z3base.js).
-import { audio, img } from './core.js?v=20261108-0039';
-import { Duel, addMoves, STD_Y, CENTER_CHAX, CENTER_ENEX, BACK_Y, RAY_SPEED } from './anime.js?v=20261108-0039';
-import { ZfStage } from './anime_zfighters.js?v=20261108-0039';
-import { EFFECTS, BACKS, FE_IMAGES } from './anime_foes_common.js?v=20261108-0039';
+import { audio, img } from './core.js?v=20261108-0603';
+import { Duel, addMoves, draw, RAY, STD_Y, CENTER_CHAX, CENTER_ENEX, BACK_Y, RAY_SPEED } from './anime.js?v=20261108-0603';
+import { ZfStage } from './anime_zfighters.js?v=20261108-0603';
+import { EFFECTS, BACKS, FE_IMAGES } from './anime_foes_common.js?v=20261108-0603';
 
 const pic = (n) => `Graphics/Pictures/${n}`;
 // $btl_top_file_name + "戦闘_必殺技_…": [Z2_, Z3_] (the other era's where one has none)
@@ -50,6 +50,7 @@ const S = {
   '背景_衝撃波系': [pic('Z2_戦闘_必殺技_背景_衝撃波系.png'), pic('Z3_戦闘_必殺技_背景_衝撃波系.png')],
   '背景_気功砲系': [pic('Z2_戦闘_必殺技_背景_気功砲系.png'), pic('Z3_戦闘_必殺技_背景_気功砲系.png')],
 };
+const SCATTER_BLUE = [pic('Z2_戦闘_必殺技_拡散エネルギー波_青_敵.png'), pic('Z3_戦闘_必殺技_拡散エネルギー波_青_敵.png')];
 const AURA2_BLUE = [pic('Z2_戦闘_必殺技_気を溜める2(青).png'), pic('Z3_戦闘_必殺技_気を溜める2(青).png')], ROSHI = pic('DB3_亀仙人カメハメは.PNG');
 const KIEN = pic('Z2_戦闘_必殺技_気円斬.png'), SPARK = pic('戦闘アニメ.PNG'), KAIOKEN_SS = [pic('Z2_戦闘_必殺技_界王拳(超悟空).PNG'), pic('Z3_戦闘_必殺技_界王拳(超悟空).PNG')];
 const IMAGES = [...Object.values(S).flat(), KIEN, SPARK, ...KAIOKEN_SS, ROSHI];
@@ -732,14 +733,66 @@ Object.assign(Duel.prototype, {
   },
 });
 
+// ---------- 琪琪 in Z1 (she can join on Earth, page 145): 202 / 203 / 204; src/anime.js had lent her others' films ----------
+const Z1_BALL = pic('Z1_戦闘_必殺技_エネルギー弾.PNG'), Z1_AURA = pic('Z1_戦闘_必殺技_気を溜める3.png'), Z1_WALL = pic('Z1_戦闘_必殺技_気を溜める9.PNG');
+const CHICHI_Z1 = { 102: 'zaChiBeam', 103: 'zaChiSlugger', 104: 'zaChiSuper' };
+const z1Film = (d) => (d.constructor === Duel && d.p && era() === 0 ? CHICHI_Z1[d.skill] : null);
+// effects 2 / 8: the ball facing us, the next picture every 10 frames
+const facing = (x, y) => (c, t) => draw(c, Z1_BALL, Math.floor(t / 11) * 128, 0, 128, 128, x, y);
+const aura6 = (x, y) => (c, t) => draw(c, Z1_AURA, 0, Math.floor(t / 5) % 3 * 160, 160, 160, x, y); // back 6
+const wall17 = () => (c, t) => draw(c, Z1_WALL, 0, Math.floor(t / 5) % 3 * 378, 640, 356, 0, 0); // back 17
+Object.assign(Duel.prototype, {
+  * zaChiBeam() { // 202 ビーム
+    this.se('Z1 気を溜める');
+    this.pose(this.A, 4, true);
+    yield* this.wait(61);
+    this.se('Z1 怪光線'); // 61
+    yield* this.wait(9);
+    this.effect(facing(252, 90)); // 70
+    yield* this.wait(30);
+    yield* this.cut(RAY.small); // 100
+  },
+  * zaChiSlugger() { // 203 気功スラッガー
+    this.se('Z1 気を溜める3');
+    this.pose(this.A, 2, true);
+    this.behind(aura6(236, 100));
+    yield* this.wait(61);
+    this.se('Z1 エネルギー波2'); // 61
+    this.pose(this.A, 3, true);
+    yield;
+    this.behind(null);
+    this.effect(facing(254, 110));
+    yield* this.wait(63);
+    this.effect(null); // 125
+    yield;
+    yield* this.cut(RAY.mid); // 126
+  },
+  * zaChiSuper() { // 204 超気功スラッガー
+    this.se('Z1 気を溜める7');
+    this.pose(this.A, 5, true);
+    this.behind(wall17());
+    yield* this.wait(90);
+    audio.seStop(); this.se('Z1 気を溜める'); this.pose(this.A, 2, true); // 90
+    yield* this.wait(71);
+    this.se('Z1 エネルギー波2'); this.pose(this.A, 3, true); // 161
+    this.effect(facing(254, 110));
+    yield* this.wait(59);
+    this.effect(null); // 220
+    this.behind(null);
+    yield* this.wait(10);
+    yield* this.cut(RAY.huge, 27, -30); // 230
+  },
+});
+
 // the first films: in Z2 and on these moves go to the films above
 for (const name of ['energyWave', 'kamehameha', 'kaioken', 'kaiokenKamehameha', 'genkidama', 'makouhou', 'eyeBeam', 'mouthBeam', 'bakuretsu', 'makankosappo', 'gohanMakouhou', 'masenko',
   'krillinWave', 'kameSmall', 'scatterWave', 'kienzan', 'sokidan', 'tienWave', 'shishinFist', 'kikouhou', 'shishinKikouhou', 'dodonpa', 'psychic', 'vegetaBlast', 'galickGun', 'kameKamehameha', 'bankoku', 'maxKamehameha']) {
   const film0 = Duel.prototype[name];
   if (!film0) continue;
   Duel.prototype[name] = function* film(...a) {
-    const cfg = cfgOf(this);
+    const cfg = cfgOf(this), z1 = z1Film(this);
     if (cfg && this.st) return yield* this[cfg.film](...(cfg.a || []));
+    if (z1) return yield* this[z1]();
     return yield* film0.apply(this, a);
   };
 }
@@ -750,9 +803,21 @@ EFFECTS[229] = EFFECTS[229] || ((z, rx, ry) => z.front(IMPACT[3][z.era >= 2 ? 1 
 EFFECTS[230] = EFFECTS[230] || ((z, rx, ry) => z.front(IMPACT[3][z.era >= 2 ? 1 : 0], 0, 116, 30, 116, 640 - z.eff * RAY_SPEED, ry));
 const auraSheet = (z) => (S[`気を溜める3${{ 3: '(青)', 4: '(赤)', 1: '(緑)' }[z.color] || ''}`] || S['気を溜める3'])[z.era >= 2 ? 1 : 0];
 BACKS[101] = BACKS[101] || ((z, x, y) => { z.back(auraSheet(z), z.bt * 184, 0, 184, 240, x, y); z.bstep(4, 2); });
+// the shared table's 231-234 / back 9 are the Z3 pictures (for the enemies from 101 on); these go by $btl_top_file_name like the original's
+const eraOf = (z) => (z.era >= 2 ? 1 : 0);
+const midOf = (z) => S[z.color === 4 ? 'エネルギー波_中_敵_赤' : 'エネルギー波_中_敵_青'][eraOf(z)];
+EFFECTS[1231] = (z, rx, ry) => { const n = z.eff * RAY_SPEED; z.front(SCATTER_BLUE[eraOf(z)], 346 - n, 112, 54 + n, 112, rx - n, ry); };
+EFFECTS[1232] = (z) => z.front(SCATTER_BLUE[eraOf(z)], 0, 0, 400, 112, 640 - z.eff * RAY_SPEED, 122);
+EFFECTS[1233] = (z, rx, ry) => { const n = z.eff * RAY_SPEED; z.front(midOf(z), 346 - n, 0, 54 + n, 80, rx - n, ry); };
+EFFECTS[1234] = (z, rx, ry) => z.front(midOf(z), 0, 80, 400, 80, 640 - z.eff * RAY_SPEED, ry);
+BACKS[1009] = (z) => {
+  const sheet = S['背景_気功砲系'][eraOf(z)], k = z.bt * 360;
+  if ((z.d.G.sheets.size || 96) > 96) { z.back(sheet, 0, k, 142, 356, -20, 0); z.back(sheet, 242, k, 142, 356, 322, 0); } else z.back(sheet, 0, k, 384, 356, 90, 0);
+  z.bstep(4, 2);
+};
 BACKS[105] = BACKS[105] || ((z, x, y) => { z.back(AURA2_BLUE[z.era >= 2 ? 1 : 0], z.bt * 152, 0, 152, 192, x, y); z.bstep(4, 2); });
 BACKS[102] = BACKS[102] || ((z, x, y) => { z.back((S[`気を溜める4${{ 3: '(青)' }[z.color] || ''}`] || S['気を溜める4'])[z.era >= 2 ? 1 : 0], z.bt * 224, 0, 224, 288, x, y - 36); z.bstep(4, 2); });
-const foePics = () => [...S['気を溜める3'], ...S['気を溜める3(青)'], ...S['気を溜める3(赤)'], ...S['気を溜める4'], ...S['気を溜める4(青)'], ...S['エネルギー波_小_敵_青'], ...S['エネルギー波_中_敵_青'], ...S['エネルギー波_中_敵_赤'], ...S['拡散エネルギー波'], ...IMPACT[3], ...AURA2_BLUE];
+const foePics = () => [...S['気を溜める3'], ...S['気を溜める3(青)'], ...S['気を溜める3(赤)'], ...S['気を溜める4'], ...S['気を溜める4(青)'], ...S['エネルギー波_小_敵_青'], ...S['エネルギー波_中_敵_青'], ...S['エネルギー波_中_敵_赤'], ...SCATTER_BLUE, ...IMPACT[3], ...AURA2_BLUE, ...S['背景_気功砲系']];
 // their own 31 / 32: src/anime_foes_common.js only runs them for the enemies from 101 on
 const FOES = { 331: 'zaeWave', 332: 'zaeWave', 333: 'zaeWave', 334: 'zaeWave', 337: 'zaeWave', 340: 'zaeWave', 343: 'zaeWave',
   335: 'zaeBlast', 339: 'zaeBlast', 342: 'zaeBlast', 336: 'zaeChain', 338: 'zaeMouth', 341: 'zaeStrong', 344: 'zaeStrong', 357: 'zaeTimeStop' };
@@ -829,9 +894,9 @@ Object.assign(Duel.prototype, {
       if (f === 0) { z.se(se); z.color = 3; } else if (f <= 89) z.backPattern(no, bx, by2);
       else if (f === 90) { z.seStop(); z.pose(3); } else if (f === 100) z.pose(4);
       else if (f === 110) z.pose(1);
-      else if (f === 120) { z.seStop(); z.se('Z1 エネルギー波'); z.efp = 231; } else if (f === 159) z.fxReset();
+      else if (f === 120) { z.seStop(); z.se('Z1 エネルギー波'); z.efp = 1231; } else if (f === 159) z.fxReset();
       else if (f === 169) z.displayOut();
-      else if (f >= 170) z.efp = 232;
+      else if (f >= 170) z.efp = 1232;
       yield* z.out(224, 110);
     }
     return yield* z.damage(23);
@@ -840,9 +905,9 @@ Object.assign(Duel.prototype, {
     const z = this.feStage(), [no, se] = charge(z), [bx, by2] = z.era >= 2 ? [248, 86] : [232, 36];
     for (let f = 0; f < 187; f++) {
       if (f === 0) { z.se(se); z.color = z.era >= 2 ? 3 : 4; } else if (f <= 89) z.backPattern(no, bx, by2);
-      else if (f === 90) { z.seStop(); z.pose(3); } else if (f === 110) { z.seStop(); z.se('Z1 エネルギー波2'); z.efp = 233; z.color = 4; } else if (f === 149) z.fxReset();
+      else if (f === 90) { z.seStop(); z.pose(3); } else if (f === 110) { z.seStop(); z.se('Z1 エネルギー波2'); z.efp = 1233; z.color = 4; } else if (f === 149) z.fxReset();
       else if (f === 159) z.displayOut();
-      else if (f >= 160) z.efp = 234;
+      else if (f >= 160) z.efp = 1234;
       yield* z.out(238, 128);
     }
     return yield* z.damage(23);
@@ -851,7 +916,7 @@ Object.assign(Duel.prototype, {
     const z = this.feStage();
     for (let f = 0; f < 147; f++) {
       if (f === 0) { z.se('Z2 気を溜める'); z.pose(2); z.color = 3; } else if (f <= 108) z.backPattern(105, 260, 60);
-      else if (f === 109) { z.seStop(); z.fxReset(); } else if (f === 119) { z.displayOut(); z.tec = false; z.cutFlag = false; } else if (f >= 120) z.backPattern(9);
+      else if (f === 109) { z.seStop(); z.fxReset(); } else if (f === 119) { z.displayOut(); z.tec = false; z.cutFlag = false; } else if (f >= 120) z.backPattern(1009);
       yield* z.out(325, 138);
     }
     return yield* z.damage(25);
@@ -861,13 +926,13 @@ Object.assign(Duel.prototype, {
     const [bno, bx, by2, rx, ry, p0, p1] = second ? (z.era >= 2 ? [no, 250, 86, 214, 116, 3, 4] : [102, 216, 36, 214, 116, 3, 4]) : [101, 233, 36, 232, 122, null, 1];
     for (let f = 0; f < 187; f++) {
       if (f === 0) { z.se(second ? se : 'Z2 気を溜める'); z.color = 3; if (p0 != null) z.pose(p0); } else if (f <= 89) z.backPattern(bno, bx, by2);
-      else if (f === 90) { z.seStop(); z.pose(p1); } else if (f === 110) { z.seStop(); z.se('Z1 エネルギー波2'); z.efp = 233; } else if (f === 149) z.fxReset();
+      else if (f === 90) { z.seStop(); z.pose(p1); } else if (f === 110) { z.seStop(); z.se('Z1 エネルギー波2'); z.efp = 1233; } else if (f === 149) z.fxReset();
       else if (f === 159) z.displayOut();
-      else if (f >= 160) z.efp = 234;
+      else if (f >= 160) z.efp = 1234;
       yield* z.out(rx, ry);
     }
     return yield* z.damage(23);
   },
 });
 export const Z2B_SOUNDS = ['Z3 エネルギー波', 'Z1 怪光線', 'Z1 気を溜める', 'Z3 変身', 'Z2 気を溜める', 'Z1 高速移動', 'Z1 逃げる', 'Z1 エネルギー波2', 'Z2 気を溜める_元気弾', 'Z1 エネルギー波', 'Z1 エネルギー波3',
-  'Z1 ザー', 'Z1 気円斬', 'Z1 分身', 'Z1 飛ぶ', 'ZG 打撃2', 'ZG 打撃4', 'Z1 強打', 'DB3 エネルギー波1', 'Z1 必殺技'];
+  'Z1 ザー', 'Z1 気円斬', 'Z1 分身', 'Z1 気を溜める3', 'Z1 気を溜める7', 'Z1 飛ぶ', 'ZG 打撃2', 'ZG 打撃4', 'Z1 強打', 'DB3 エネルギー波1', 'Z1 必殺技'];

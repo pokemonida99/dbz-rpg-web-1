@@ -10,11 +10,11 @@
 // goldGot, goldSpent, cardBuy, cardSell, chaMax [actor, enemy, damage], eneMax [enemy, actor, damage];
 // state.foeKills[enemy] ($ene_defeat_num), state.foeSeen[enemy] ($ene_enc_history_flag),
 // state.foeScouted[enemy] ($ene_sco_history_flag: HP and drops shown), state.cardUses[item] ($card_run_num).
-import { view, img, audio, say, choose, textSpeed, warmImages } from './core.js?v=20261108-0039';
-import { Battle, battleOpts } from './battle.js?v=20261108-0039';
-import { fieldCards } from './items.js?v=20261108-0039';
-import { holds } from './field.js?v=20261108-0039';
-import { shownFoes, foeFace } from './db3ed.js?v=20261108-0039'; // the 図鑑's enemies (update_eneput_flag)
+import { view, img, audio, say, choose, textSpeed, warmImages } from './core.js?v=20261108-0603';
+import { Battle, battleOpts } from './battle.js?v=20261108-0603';
+import { fieldCards } from './items.js?v=20261108-0603';
+import { holds } from './field.js?v=20261108-0603';
+import { shownFoes, foeFace } from './db3ed.js?v=20261108-0603'; // the 図鑑's enemies (update_eneput_flag)
 
 const SE_OK = 'Z3 決定', SE_MOVE = 'Z3 カーソル移動', SE_ERR = 'Z3 エラー';
 const FOE_FACES = 'Graphics/Pictures/Z1_顔敵.PNG', FACES = 'Graphics/Pictures/Z1_顔味方.PNG', CARDS = 'Graphics/Pictures/カード関係.PNG';

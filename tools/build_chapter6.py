@@ -64,9 +64,8 @@ def add(world, h):
     for sid in (64, 65, 103, 104):  # Krillin's 気円斬 too
         if sid in world['skills']:
             world['skills'][sid]['tail'] = True
-    # 琪琪 (actor 10): joins on Earth (page 145); her moves from common event 9; she has no special-move sheet
+    # 琪琪 (actor 10): joins on Earth (page 145); her moves from common event 9
     world['actors'][10] = actor(10, 7, '琪琪', 'Z1_戦闘_チチ.PNG', 'Z1_戦闘_必殺技_エネルギー波.PNG', [101, 102, 103, 104])
-    world['actors'][10]['special'] = world['actors'][10]['sprite']
     world['faces'].update({s2t(n): [FACE_EVENT, r] for n, r in [('界王', 18), ('神龙', 19), ('琪琪', 15), ('波波', 10), ('天神', 14)]})
     world['faces']['蘭琪'] = ['Graphics/Pictures/顔カード.PNG', 33]
     world['faces'][s2t('那巴')] = [h['FACE_FOE'], 11]

@@ -9,15 +9,15 @@
 // the fighters with @effect_anime_frame / @ray_anime_frame counting up every frame it is drawn) is st.ef.
 // The films are in src/combo_z3a.js (with src/combo_z3a2.js and src/combo_z3a3.js); this file has the stage, the
 // shared effects and damage patterns, and the ?dev=cmc… jumps.
-import { audio, img, rand, view } from './core.js?v=20261105-1811';
-import { spark, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED, ANIME_IMAGES } from './anime.js?v=20261105-1811';
-import { ComboDuel, addComboFilms } from './combo-anime.js?v=20261105-1811';
-import { ZfStage, zfBlt as blt } from './anime_zfighters.js?v=20261105-1811';
+import { audio, img, rand, view } from './core.js?v=20261107-2255';
+import { spark, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED, ANIME_IMAGES } from './anime.js?v=20261107-2255';
+import { ComboDuel, addComboFilms } from './combo-anime.js?v=20261107-2255';
+import { ZfStage, zfBlt as blt } from './anime_zfighters.js?v=20261107-2255';
 export { blt };
-import { registerZ3, party, heal } from './z3.js?v=20261105-1811';
-import { applyLevel } from './party.js?v=20261105-1811';
-import { superSaiyan } from './supersaiyan.js?v=20261105-1811';
-import { comboData } from './combo.js?v=20261105-1811';
+import { registerZ3, party, heal } from './z3.js?v=20261107-2255';
+import { applyLevel } from './party.js?v=20261107-2255';
+import { superSaiyan } from './supersaiyan.js?v=20261107-2255';
+import { comboData } from './combo.js?v=20261107-2255';
 
 export const pic = (n) => `Graphics/Pictures/${n}`;
 export const STD_CHAX = -70;

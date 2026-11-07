@@ -17,6 +17,7 @@ html, body {
   margin: 0; height: 100%; background: #000; color: #eee; overflow: hidden;
   font-family: "Cubic11", "PingFang TC", "Noto Sans TC", system-ui, sans-serif;
   touch-action: none; overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%; text-size-adjust: 100%; /* iPhone makes the text bigger after a turn */
   -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
 }
 #app { position: fixed; inset: 0; overflow: hidden; }

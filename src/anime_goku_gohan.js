@@ -9,12 +9,12 @@
 // @tec_output_back from frame 30 of pattern 32) and the cut-in (output_cutin: the member's 味方カットイン, after the
 // cut to the defender the enemy's 敵カットイン). src/anime.js has neither yet, so these films bring their own: a wrap
 // of launch() and render() that only acts for them (agSt). Frame numbers in the comments are @battle_anime_frame.
-import { audio, img, loadImages } from './core.js?v=20261105-1811';
-import { Duel, addMoves, moveFilm, draw, spark, SW, SH, STD_Y, CENTER_ENEX, CENTER_CHAX, TEC_CENTER, RAY_SPEED } from './anime.js?v=20261105-1811';
-import { battleHooks } from './battle.js?v=20261105-1811';
-import { registerZ3, party, heal } from './z3.js?v=20261105-1811';
-import { superSaiyan, moveTransforms } from './supersaiyan.js?v=20261105-1811';
-import { applyLevel } from './party.js?v=20261105-1811';
+import { audio, img, loadImages } from './core.js?v=20261107-2255';
+import { Duel, addMoves, moveFilm, draw, filmCut, spark, SW, SH, STD_Y, CENTER_ENEX, CENTER_CHAX, TEC_CENTER, RAY_SPEED } from './anime.js?v=20261107-2255';
+import { battleHooks } from './battle.js?v=20261107-2255';
+import { registerZ3, party, heal } from './z3.js?v=20261107-2255';
+import { superSaiyan, moveTransforms } from './supersaiyan.js?v=20261107-2255';
+import { applyLevel } from './party.js?v=20261107-2255';
 
 addMoves({
   26: 'angaSuperKame', 27: 'angaShunkanKame', 29: 'angaSs', // 悟空
@@ -119,6 +119,23 @@ const FILM_PICTURES = {
 const LAUNCH = { angaSuperKame: { cut: true }, angaShunkanKame: { cut: true, small: true }, angaSs: { cut: true },
   angaGohanKame: {}, angaBurstRush: { cut: true, small: 'z3' }, angaGekiretsu: { cut: true }, angaGohanSuperKame: { cut: true, small: true } };
 
+// the first films (src/anime.js, src/z2b.js) are the Z1 ones and draw neither, so the same from the original's two move switches
+// (Z2 all.rb 56699-57400, Z3 59749-60760), by skill: cut @chr_cutin_flag; small @tec_back_small ('z3': only in the Z3 switch);
+// no / red @tec_output_back_no / @tec_back_color of the Z3 switch
+const CUT_ONLY = { cut: true }, Z3_SMALL = { cut: true, small: 'z3' }, STRIPS = {};
+const BASE = {
+  1: STRIPS, 2: STRIPS, 5: CUT_ONLY, 6: Z3_SMALL, 7: Z3_SMALL, 18: { cut: true, no: 1 }, 19: { cut: true, no: 2, cutEnds: true }, // 悟空
+  31: STRIPS, 33: STRIPS, 34: STRIPS, 35: Z3_SMALL, 36: { cut: true, late: true }, // 比克
+  46: STRIPS, 47: CUT_ONLY, // 悟飯
+  61: STRIPS, 62: STRIPS, 63: CUT_ONLY, 64: CUT_ONLY, // 克林
+  71: CUT_ONLY, 72: STRIPS, 73: CUT_ONLY, // 雅木茶
+  81: STRIPS, 82: STRIPS, 83: CUT_ONLY, 84: CUT_ONLY, // 天津飯
+  91: CUT_ONLY, 92: CUT_ONLY, 93: CUT_ONLY, // 餃子
+  101: STRIPS, 102: STRIPS, 103: CUT_ONLY, 104: Z3_SMALL, // 琪琪
+  121: STRIPS, 123: CUT_ONLY, 124: CUT_ONLY, // 貝吉塔
+  141: STRIPS, 142: CUT_ONLY, 143: Z3_SMALL, 144: { cut: true, small: true }, // 青年
+};
+
 // an animation counter as the original keeps one (back / ray frames): the picture first, then `>= every` moves to the
 // next of n, then the counter goes up
 class Cyc {
@@ -171,6 +188,7 @@ function cutIn(c, d, st) {
     if (e === 2 && id === 18 && s.ss && s.ss[5]) [sheet, row] = [CUT.zg, 2]; // 超サイヤ人2
     if ((id === 16 || id === 32) && v(175) === 1) [sheet, row] = [CUT.zg, id === 16 ? 8 : 9]; // バーダック(超) スカウターなし
     draw(c, sheet, 0, row * 64, 640, 64, 0, 292);
+    filmCut.on = true;
     let sx = 0;
     if (id === 24 && sw(363)) [sheet, row, sx] = [CUT[2], 21, 2 * 640]; // 亀仙人普段着
     if (id === 17 && v(173) === 1) [sheet, row] = [CUT.zg, 5]; // トランクスバトルスーツ
@@ -182,7 +200,7 @@ function cutIn(c, d, st) {
     const id = duel.f && duel.f.id;
     if (!id || id < 31) return; // a Z1 enemy has none
     const z2 = id < 101, sheet = FOE_CUT[z2 ? 1 : 2], row = id - (z2 ? 31 : 101), im = img(sheet);
-    if (im.ok && (row + 1) * 64 <= im.im.height) draw(c, sheet, 0, row * 64, 640, 64, 0, 292);
+    if (im.ok && (row + 1) * 64 <= im.im.height) { draw(c, sheet, 0, row * 64, 640, 64, 0, 292); filmCut.on = true; }
   }
 }
 
@@ -196,7 +214,7 @@ export function agRegister(films) {
 // other files' films on this stage (src/anime_androids.js): film → its pictures, film → its pattern 32 settings
 // (agRegister: src/anime_future.js; agFilms: src/anime_bardock.js — three forms of the same registration)
 export function agFilmsPL(pictures, launch) { Object.assign(FILM_PICTURES, pictures); Object.assign(LAUNCH, launch); for (const k in pictures) MINE.add(k); }
-const baseLaunch = Duel.prototype.launch, baseRender = Duel.prototype.render;
+const baseLaunch = Duel.prototype.launch, baseRender = Duel.prototype.render, baseAim = Duel.prototype.aim, baseRain = Duel.prototype.rainDown;
 Object.assign(Duel.prototype, {
   // what these films draw besides the fighters: the strips and pictures behind them, effects in front, the cut-in on top
   agStage() {
@@ -224,7 +242,41 @@ Object.assign(Duel.prototype, {
         if (cfg.red && st.era >= 2) st.red = true;
       }
     }
+    const cfg = this.constructor === Duel && this.p && !MINE.has(film) && BASE[this.skill];
+    if (cfg) this.agBase(cfg);
     yield* baseLaunch.call(this);
+    if (cfg && cfg.cutEnds && this.agSt.era >= 2) this.agSt.cutFrom = Infinity; // 2119: @chr_cutin_flag = false as the film starts
+  },
+  // a first film: it sets behind() and effect() itself, so the strips go under whatever it puts behind the fighters
+  agBase(cfg) {
+    const st = this.agStage(), behind = Duel.prototype.behind;
+    this.behind = (f) => behind.call(this, (c, n) => { tecBack(c, this, st); if (f) f(c, n); });
+    this.behind(null);
+    st.base = true;
+    if (!st.era) return st;
+    st.tecFrom = this.t + 29;
+    if (cfg.cut) st.cutFrom = this.t + 29;
+    if (cfg.small === true || (cfg.small === 'z3' && st.era >= 2)) st.small = true;
+    if (st.era >= 2) {
+      st.tecNo = cfg.no || 0; st.red = !!cfg.red;
+      if (cfg.late) { st.tecFrom = Infinity; st.cutFrom = Infinity; st.late = true; } // 2136: nothing during 32, it all comes with the cut
+    }
+    return st;
+  },
+  aim(dy) { // set_chr_display_out: after the cut to the defender, the enemy's cut-in
+    baseAim.call(this, dy);
+    const st = this.agSt;
+    if (!st || !st.base) return;
+    st.tecNo = 0; // (@tec_output_back_no = 0 with set_chr_display_out: 2118, 2119, 2136)
+    if (st.late) { st.tecFrom = 0; st.cutFrom = 0; st.red = false; }
+    if (st.cutFrom !== Infinity) st.mirror = true;
+  },
+  * rainDown(start) { // a further target of 拡散エネルギー波 comes here without 31 / 32, the strips and the enemy's cut-in already up (all.rb 57028)
+    if (this.constructor === Duel && this.p && !this.agSt && BASE[this.skill]) {
+      const st = this.agBase(BASE[this.skill]);
+      if (st.era) { st.tecFrom = 0; st.cutFrom = 0; }
+    }
+    return yield* baseRain.call(this, start);
   },
   render() {
     const cv = baseRender.call(this);

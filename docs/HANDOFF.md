@@ -92,6 +92,7 @@ python3 tools/serve.py 8790                   # http://localhost:8790/index.html
   - 畫面要真的在畫：內建瀏覽器面板隱藏時 requestAnimationFrame 不會跑，用網址加 `&timer`（例如 `index.html?dev=z2&timer`），或自己跑 update+draw 迴圈。曾經有「每場戰鬥一開始就黑畫面」的 bug 就是因為沒畫到而漏測。
   - 戰鬥要用正常遇敵的方式進入：`__game.state.nextEnc = 1; __game.onStep()`，確認主控台沒有錯誤。
   - 開發用跳關：`?dev=ch5 ch6 ch6earth ch6vegeta willow willow51 willowboss z2 z2b z2c z2d z2ginyu z2frieza z2last z2turles z3 z3a33 z3a34 z3b… z3c… z3d… z3e… z3pair z3gravity z4 z4a… z4b… z4c… z4d… z4e… z4f…`（新章節也照樣加；Z3 各章的完整清單見 README）。
+- **只能直向**（`index.html` 的 `#turn`）：Android 加到主畫面會鎖住（`manifest.webmanifest`），其他手機橫放時蓋住畫面，並把 `#app` 拿掉、擋下 resize、暫停所有 `requestAnimationFrame` 迴圈（音樂照播），遊戲完全不知道轉過；轉回直向由 ResizeObserver 重算版面。電腦不受影響。測試時注意：`&timer` 會蓋掉這層暫停。
 - **上線**：推之前一定先跑 `python3 tools/bump.py`（更新版本號，手機才會自動換新版），推上 `main` 後用 `gh api repos/pokemonida99/dbz-rpg-web-1/pages/builds/latest` 確認部署，並看 `https://pokemonida99.github.io/dbz-rpg-web-1/version.json`。
 - **GitHub Pages 部署卡住**（出現 "in progress deployment"）：**不要** `gh run rerun`（會卡在 queued 取消不掉），改用 `gh api -X POST repos/pokemonida99/dbz-rpg-web-1/pages/builds` 重新觸發。
 - Commit 訊息結尾加：`Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`

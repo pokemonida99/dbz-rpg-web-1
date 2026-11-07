@@ -8,16 +8,16 @@
 //        Piccolo with King Kai (21).
 //   Z2-3 大長老 the Grand Elder's house, Vegeta joins, Zarbon twice, the last ball (26) → the second half (game.startZ2b).
 // state.flags.z2a: 'on' while in this part, 'done' after page 445. Variable 40 = 1 (Z2 art, src/era.js).
-import { input, audio, toast } from './core.js?v=20261105-1811';
-import { scenes, setParty, moveTo, enterMap, card } from './chapter2.js?v=20261105-1811';
-import { makeMember, applyLevel, levelUp } from './party.js?v=20261105-1811';
-import { eventCard } from './items.js?v=20261105-1811';
-import { addScenes, playScenes } from './cutscene.js?v=20261105-1811';
-import { shootingGame } from './z2shoot.js?v=20261105-1811';
-import { gravityTraining } from './gravitytraining.js?v=20261105-1811';
-import { pondPuzzle } from './z2pond.js?v=20261105-1811';
-import { applyEra } from './era.js?v=20261105-1811';
-import { newHand } from './battle.js?v=20261105-1811';
+import { input, audio, toast } from './core.js?v=20261107-2255';
+import { scenes, setParty, moveTo, enterMap, card } from './chapter2.js?v=20261107-2255';
+import { makeMember, applyLevel, levelUp } from './party.js?v=20261107-2255';
+import { eventCard } from './items.js?v=20261107-2255';
+import { addScenes, playScenes } from './cutscene.js?v=20261107-2255';
+import { shootingGame } from './z2shoot.js?v=20261107-2255';
+import { gravityTraining } from './gravitytraining.js?v=20261107-2255';
+import { pondPuzzle } from './z2pond.js?v=20261107-2255';
+import { applyEra } from './era.js?v=20261107-2255';
+import { newHand } from './battle.js?v=20261107-2255';
 
 const MAPS = ['17', '18', '20', '21', '22', '23', '24', '26'];
 export const isZ2aMap = (s) => MAPS.includes(s.map) && !!s.flags.z2a;
@@ -247,6 +247,7 @@ export function z2aGoal(world, s) {
   if (!world.z2a || !isZ2aMap(s)) return undefined;
   const sw = s.sw || {};
   // the goal follows what is left (sw 86 the village's ball, 87 Cui's; 89 the village of map 24, 85 the pond)
+  if (s.map === '17' && !sw[81]) return '目標：前往那美克星（先接觸擋路的宇宙飛船，不明行星可以順路看看）';
   if (s.map === '22' && sw[87]) return sw[86] ? '目標：離開洞窟，打倒多多利亞' : '目標：離開洞窟，到村子收集龍珠';
   if (s.map === '18' && (sw[86] || sw[87])) return sw[86] && sw[87] ? '目標：打倒多多利亞' : sw[86] ? '目標：到洞窟打倒邱夷，拿到龍珠' : '目標：到村子收集龍珠';
   if (s.map === '24' && (sw[89] || sw[85]) && !(sw[89] && sw[85])) return sw[89] ? '目標：到池塘收集龍珠' : '目標：到村子收集龍珠';

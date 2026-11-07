@@ -15,10 +15,10 @@
 // to it) — the Z1 films (src/anime.js) have neither. Positions are written for the party attacking (the only side
 // that has these moves); an enemy using one gets the same film mirrored.
 // Frame numbers in the comments are the original's @battle_anime_frame of the pattern.
-import { audio, img, rand } from './core.js?v=20261105-1811';
-import { registerZ3, party, heal } from './z3.js?v=20261105-1811';
-import { applyLevel } from './party.js?v=20261105-1811';
-import { addMoves, ANIME_IMAGES, Duel, draw, SW, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED, BACK_Y } from './anime.js?v=20261105-1811';
+import { audio, img, rand } from './core.js?v=20261107-2255';
+import { registerZ3, party, heal } from './z3.js?v=20261107-2255';
+import { applyLevel } from './party.js?v=20261107-2255';
+import { addMoves, ANIME_IMAGES, Duel, draw, filmCut, SW, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED, BACK_Y } from './anime.js?v=20261107-2255';
 
 addMoves({ 32: 'pvBakuretsuha', 39: 'pvGekiretsu', 40: 'pvMakuHoidan', 41: 'pvMakankoFull', // 比克
   122: 'pvVegetaWave', 125: 'pvBigBang', 130: 'pvFinalFlash' }); // 貝吉塔 / 超貝吉塔
@@ -112,6 +112,7 @@ function strip(c, st, t, red) {
 // 敵カットイン (Z2 enemies 31-100, Z3 101 on; a Z1 enemy has none), 640×64 at y 292
 function cutIn(c, st) {
   if (!st.cut) return;
+  filmCut.on = st.cut === 'me' || st.who.foe >= 31;
   if (st.cut === 'me') { draw(c, CUT_ME, 0, 64 * (st.who.actor - 3), 640, 64, 0, 292); return; }
   const id = st.who.foe;
   if (id >= 101) draw(c, CUT_FOE[3], 0, 64 * (id - 101), 640, 64, 0, 292);

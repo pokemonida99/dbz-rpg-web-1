@@ -1,7 +1,7 @@
 // Field: free flight over the map, random encounters, the boss marker.
-import { view, img, input, audio, rand } from './core.js?v=20261105-1811';
-import { renderMap, drawTile, tileSheetPaths } from './tiles.js?v=20261105-1811';
-import { flySprite, walkSprite } from './costume.js?v=20261105-1811';
+import { view, img, input, audio, rand } from './core.js?v=20261107-2255';
+import { renderMap, drawTile, tileSheetPaths } from './tiles.js?v=20261107-2255';
+import { flySprite, walkSprite } from './costume.js?v=20261107-2255';
 
 const SPEED = 150; // art pixels per second (~4.7 tiles/s)
 // fieldHooks.step(state, step) → the distance actually flown this frame (src/cards_a.js: 飛機 doubles it); encounters and
@@ -25,16 +25,18 @@ export class Field {
     this.pois = world.pois[game.state.map] || [];
     this.near = null; // the interactive spot the player is next to
     this.look = { x: 0, y: 0 }; // camera lead on road maps
-    if (this.map.road != null || this.map.path) this.setupRoad(game.state);
+    if (this.map.road != null || this.map.path || this.map.grid) this.setupRoad(game.state);
   }
 
   // ---------- road maps (Snake Way, King Kai's planet): the player keeps to the road / squares ----------
   // The road is the passable tiles of one layer (world.maps[id].road = layer index), or the ground tiles listed in
   // world.maps[id].path (the training squares). Movement goes tile centre to tile centre along it; at a bend the
-  // player turns by itself, at a fork the stick decides.
+  // player turns by itself, at a fork the stick decides. world.maps[id].grid (the Z2 space maps): every tile the original
+  // lets the player on, as its events stand now.
   setupRoad(s) {
     const { w, h, layers } = this.map, pas = this.world.passages;
     this.open = new Uint8Array(w * h);
+    if (this.map.grid) { this.syncEvents(); return this.gridStart(s); }
     if (this.map.path) { for (let i = 0; i < w * h; i++) if (this.map.path.includes(layers[0][i])) this.open[i] = 1; }
     else { const L = layers[this.map.road]; for (let i = 0; i < w * h; i++) if (L[i] && !(pas[L[i]] & 1)) this.open[i] = 1; }
     if (this.map.oneWay) { // one-way roads (Snake Way): tiles closer to the start than the furthest reached are shut
@@ -63,7 +65,31 @@ export class Field {
     if (this.dist) this.far = Math.max(0, this.dist[Math.floor(s.x / 32) + Math.floor(s.y / 32) * w]); // the position is the progress
   }
 
+  // a save made while flying freely, or a way that shut behind the player, may leave the story's spots out of reach: go to the
+  // nearest tile they can be reached from
+  gridStart(s) {
+    const { w, h } = this.map, spread = (from) => {
+      const seen = new Set(from), q = [...from];
+      for (let k = 0; k < q.length; k++) {
+        const x = q[k] % w, y = Math.floor(q[k] / w);
+        for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (this.passable(x + a, y + b) && !seen.has(x + a + (y + b) * w)) { seen.add(x + a + (y + b) * w); q.push(x + a + (y + b) * w); }
+      }
+      return seen;
+    };
+    const goals = this.pois.filter((p) => p.chapter && (!p.when || holds(s, p.when))).map((p) => p.x + p.y * w);
+    const at = Math.floor(s.x / 32) + Math.floor(s.y / 32) * w;
+    if (this.passable(at % w, Math.floor(at / w))) { const here = spread([at]); if (goals.some((g) => here.has(g))) return; }
+    const good = spread(goals);
+    let best = null, bd = Infinity;
+    for (const i of good) {
+      const d = Math.hypot((i % w) * 32 + 16 - s.x, Math.floor(i / w) * 32 + 16 - s.y);
+      if (this.passable(i % w, Math.floor(i / w)) && d < bd) { bd = d; best = i; }
+    }
+    if (best != null) { s.x = (best % w) * 32 + 16; s.y = Math.floor(best / w) * 32 + 16; }
+  }
+
   isOpen(tx, ty) {
+    if (this.map.grid) return this.passable(tx, ty);
     if (tx < 0 || ty < 0 || tx >= this.map.w || ty >= this.map.h) return false;
     const i = tx + ty * this.map.w;
     return this.open[i] === 1 && (!this.dist || this.dist[i] >= this.far);
@@ -220,7 +246,7 @@ export class Field {
       this.look.y += (ly * 90 - this.look.y) * k;
     }
     // nearest interactive spot within reach
-    let near = null, nd = this.map.walk ? 22 : 44; // on foot: standing on the square, like the original's Event_Check
+    let near = null, nd = this.map.walk || this.map.grid ? 22 : 44; // on foot, tile by tile: standing on the square, like the original's Event_Check
     if (this.spent && Math.hypot(s.x - (this.spent.x * 32 + 16), s.y - (this.spent.y * 32 + 16)) >= 44) this.spent = null;
     for (const p of this.pois) {
       if (p.gone && s.sw[p.gone]) continue; // a beaten Pumpkin / Broccoli
@@ -264,7 +290,10 @@ export class Field {
     const lead = (s.var && s.var[42]) || 3, fm = flySprite(s, lead) || FLY_MORE[lead], more = fm && fm.split(':'); // flySprite: 換裝
     const wk = this.map.walk && this.walker(), wi = wk && img(`Graphics/Characters/${wk[0]}.png`);
     const fi = img(more ? `Graphics/Characters/${more[0]}.png` : FLY);
-    if (wk) { // on foot: 32×32 frames, standing = the middle one
+    if (this.map.hero) { // a ship on the Z2 space maps: the tile of event 2 「主人公」 (tools/build_z2a.py)
+      const bm = tileSheetPaths.map((p) => { const e = img(p); return e.ok ? e.im : null; });
+      drawTile(c, bm, this.map.hero, Math.round(s.x - 16 - cx), Math.round(s.y - 16 - cy), 0);
+    } else if (wk) { // on foot: 32×32 frames, standing = the middle one
       const pat = this.moving ? [0, 1, 2, 1][Math.floor(this.anim) % 4] : 1, k = wk[1];
       const row = wk[2] != null ? wk[2] : this.dir; // the original's direction-fixed page: the row is the character (chara1-3)
       if (wi.ok) c.drawImage(wi.im, ((k % 4) * 3 + pat) * 32, (Math.floor(k / 4) * 4 + row) * 32, 32, 32, Math.round(s.x - 16 - cx), Math.round(s.y - 16 - cy), 32, 32);

@@ -6,10 +6,10 @@
 //   374 エネルギー波 → 384: 2431 in the Z3 switch (65679), 達列斯(覺醒) (the Z2 達列斯 keeps its own: feFallback)
 // and the jumps: ?dev=lapc (second round, in front of the arena, ranks 1-69 cleared), lapc75 (ranks to 74 cleared),
 // lapcfirst (the same save on a first round: ranks 70 and on stay shut), lapcfirst68 (rank 68 to play, for the way to Arale).
-import { Duel } from './anime.js?v=20261105-1811';
-import { feRegister, feFilms, feFallback, foeId } from './anime_foes_common.js?v=20261105-1811';
-import { registerZ3 } from './z3.js?v=20261105-1811';
-import { devState } from './zg_bojack.js?v=20261105-1811';
+import { Duel } from './anime.js?v=20261107-2255';
+import { feRegister, feFilms, feFallback, foeId } from './anime_foes_common.js?v=20261107-2255';
+import { registerZ3 } from './z3.js?v=20261107-2255';
+import { devState } from './zg_bojack.js?v=20261107-2255';
 
 const pic = (n) => `Graphics/Pictures/${n}`;
 const SUN = { 1: pic('Z3_必殺技_カットイン_太陽拳(セル第１形態).png'), 2: pic('Z3_必殺技_カットイン_太陽拳(セル第２形態).png'),

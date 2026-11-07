@@ -8,17 +8,17 @@
 //     battle 6116 → 6121 → map 100 (35,14); (5,27) → 6131 (CE66) → battle 6141 → 6151 → 6171 → map 103: zgb
 // The pages run one after another the way Map007 does (variable 41; a transfer to map 7 = the page of variable 41;
 // a page that ends on a battle_process number fights it, then variable 95's page).
-import { registerArea, startTrStory, endTrStory, registerBackdrop, goTo, healAll } from './timeroom.js?v=20261105-1811';
-import { registerZ3, begin, play, fight, party, member, leave, hasChapter, Z3, z3BackdropAt, moveTo } from './z3.js?v=20261105-1811';
-import { addScenes, addNodes } from './cutscene.js?v=20261105-1811';
-import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261105-1811';
-import { audio, say, choose, img, loadImages, setFaces } from './core.js?v=20261105-1811';
-import { superSaiyan, syncSuperSaiyan, FORMS, formOf } from './supersaiyan.js?v=20261105-1811';
-import { applyEra } from './era.js?v=20261105-1811';
-import { addMoves } from './anime.js?v=20261105-1811';
-import { screenPic } from './z3c.js?v=20261105-1811';
-import { eventCard } from './items.js?v=20261105-1811';
-import { setTypical } from './growth.js?v=20261105-1811';
+import { registerArea, startTrStory, endTrStory, registerBackdrop, goTo, healAll } from './timeroom.js?v=20261107-2255';
+import { registerZ3, begin, play, fight, party, member, leave, hasChapter, Z3, z3BackdropAt, moveTo } from './z3.js?v=20261107-2255';
+import { addScenes, addNodes } from './cutscene.js?v=20261107-2255';
+import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261107-2255';
+import { audio, say, choose, img, loadImages, setFaces } from './core.js?v=20261107-2255';
+import { superSaiyan, syncSuperSaiyan, FORMS, formOf } from './supersaiyan.js?v=20261107-2255';
+import { applyEra } from './era.js?v=20261107-2255';
+import { addMoves } from './anime.js?v=20261107-2255';
+import { screenPic } from './z3c.js?v=20261107-2255';
+import { eventCard } from './items.js?v=20261107-2255';
+import { setTypical } from './growth.js?v=20261107-2255';
 
 const T = (game) => Z3(game).zga;
 const MAPS = ['100', '101', '102'];

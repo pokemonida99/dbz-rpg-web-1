@@ -6,10 +6,10 @@
 // all.rb 67760) and the cut-ins (output_cutin, 67657). They live in a stage of draw lists rebuilt every frame, the
 // way the original draws straight into its window: the bars → the move's own pictures → the fighters → the
 // effects → the cut-in. Frame numbers in the comments are the original's @battle_anime_frame.
-import { audio, img, rand } from './core.js?v=20261105-1811';
-import { addMoves, Duel, spark, STD_Y, CENTER_CHAX, CENTER_ENEX, RAY_SPEED } from './anime.js?v=20261105-1811';
-import { registerZ3, party, heal } from './z3.js?v=20261105-1811';
-import { applyLevel } from './party.js?v=20261105-1811';
+import { audio, img, rand } from './core.js?v=20261107-2255';
+import { addMoves, Duel, filmCut, spark, STD_Y, CENTER_CHAX, CENTER_ENEX, RAY_SPEED } from './anime.js?v=20261107-2255';
+import { registerZ3, party, heal } from './z3.js?v=20261107-2255';
+import { applyLevel } from './party.js?v=20261107-2255';
 
 const pic = (n) => `Graphics/Pictures/${n}`;
 // the bars (output_back): Z3 @tec_output_back_no 0 top / bottom, 1 left / right, 2 top-left / bottom-right corners,
@@ -131,6 +131,7 @@ class Stage {
 
   drawCut(c) { // output_cutin: the attacker's, or the defender's once the film has cut to it (Z1 enemies have none)
     if (!this.cut || !this.cutFlag) return;
+    filmCut.on = !this.mirror || this.foe >= 31;
     if (!this.mirror) blt(c, this.era === 1 ? CUT.z2 : CUT.z3, 0, 64 * (this.actor - 3), 640, 64, 0, 292);
     else if (this.foe >= 101) blt(c, CUT.foe3, 0, 64 * (this.foe - 101), 640, 64, 0, 292);
     else if (this.foe >= 31) blt(c, CUT.foe2, 0, 64 * (this.foe - 31), 640, 64, 0, 292);

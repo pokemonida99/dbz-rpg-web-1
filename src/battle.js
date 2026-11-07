@@ -9,14 +9,14 @@
 // window over the stage. Tapping outside the window / anything but an enemy while targeting cancels that card.
 // A picked card wears its member's face: tap it (or the face above) to pick again for that member; 返回 undoes the
 // last pick. With everyone picked a big 出招！ starts the turn (or right away with 設定「選完直接出招」).
-import { view, img, loadImages, audio, sleep, rand } from './core.js?v=20261105-1811';
-import { levelUp, EXP_RATE } from './party.js?v=20261105-1811';
-import { Duel, ANIME_IMAGES, SW, SH, BACK_Y } from './anime.js?v=20261105-1811';
-import { commandButtons, autoSkill, autoTarget, tally } from './partymenu.js?v=20261105-1811'; // command row, 作戰, counters
-import * as items from './items.js?v=20261105-1811'; // item cards: effects that touch the battle rules
-import { tryCombo, announceCombos, comboHints, hasCombos, HINT_TEXT } from './combo.js?v=20261105-1811'; // 組合技
-import * as growth from './growth.js?v=20261105-1811'; // passive skills, proficiency, KO, SP / ZP / EXP pool
-import { superSaiyan, moveTransforms, afterBattle as ssAfterBattle } from './supersaiyan.js?v=20261105-1811'; // 超サイヤ人
+import { view, img, loadImages, audio, sleep, rand } from './core.js?v=20261107-2255';
+import { levelUp, EXP_RATE } from './party.js?v=20261107-2255';
+import { Duel, ANIME_IMAGES, SW, SH, BACK_Y, filmCut } from './anime.js?v=20261107-2255';
+import { commandButtons, autoSkill, autoTarget, tally } from './partymenu.js?v=20261107-2255'; // command row, 作戰, counters
+import * as items from './items.js?v=20261107-2255'; // item cards: effects that touch the battle rules
+import { tryCombo, announceCombos, comboHints, hasCombos, HINT_TEXT } from './combo.js?v=20261107-2255'; // 組合技
+import * as growth from './growth.js?v=20261107-2255'; // passive skills, proficiency, KO, SP / ZP / EXP pool
+import { superSaiyan, moveTransforms, afterBattle as ssAfterBattle } from './supersaiyan.js?v=20261107-2255'; // 超サイヤ人
 
 export const SCHOOL = ['必', '龜', '神', '界', '魔', '惑', '基', '悟', '超'];
 const HAND = 6;
@@ -646,7 +646,10 @@ export class Battle {
       c.drawImage(bd.im, 0, 0, bd.im.width, bd.im.height, bx, by, bw, bh);
     }
     if (this.anim) {
-      c.drawImage(this.anim.render(), sx, sy, sw, sh, dx, dy, sw, sh);
+      filmCut.on = false;
+      const cv = this.anim.render();
+      c.drawImage(cv, sx, sy, sw, sh, dx, dy, sw, sh);
+      if (filmCut.on && stage.h < SH) c.drawImage(cv, sx, 292, sw, 64, dx, dy + sh - 64, sw, 64); // the whole cut-in, along the window's bottom
       if (this.anim.fade > 0) { c.fillStyle = `rgba(0,0,0,${this.anim.fade})`; c.fillRect(0, stage.y, W, stage.h); }
     }
     c.restore();

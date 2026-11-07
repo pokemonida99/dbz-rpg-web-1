@@ -115,6 +115,15 @@ def add(world, h):
     # ---------- maps ----------
     for mid, rows in ((17, 50), (18, 85), (22, 35), (20, 14), (21, 14), (23, 50), (24, 85), (26, 35)):
         world['maps'][str(mid)] = build_map(mid, rows=rows)
+    # the two space maps: the party's marker is a ship (event 2 主人公 shows a tile, CE moves it to the player: 100 on map 17,
+    # Goku's own on map 23); `grid`: tile by tile on the original's passability (src/field.js), with the maps' events: map 17's
+    # mysterious ship and unknown planet (switches 81, 82), map 23's ways that open as Goku trains (variable 43)
+    import build_timeroom
+    for mid in (17, 23):
+        m = world['maps'][str(mid)]
+        m['hero'] = D('map%03d' % mid)['events']['2']['pages'][-1]['graphic']['tile_id']
+        m['grid'] = True
+        m['ev'] = build_timeroom.map_events(D, mid, m['h'])
     for mid in ('20', '21'):  # the gravity room / King Kai's planet: the ring of floor tiles only (src/field.js path maps)
         world['maps'][mid]['path'] = [1544]
 
@@ -273,7 +282,7 @@ def add(world, h):
         'backdrops': {'2048': 0, '1543': 2, '1551': 2, '1580': 2, '1581': 2, '1588': 2, '1590': 2, '1596': 2, '1598': 2,
                       '1575': 3, '1542': 5},
         'goals': {
-            '17': '目標：前往那美克星（宇宙飛船、不明行星可以順路看看）',
+            '17': '目標：前往那美克星（不明行星可以順路看看）',
             '18': '目標：收集龍珠（洞窟、村子），打倒多多利亞',
             '22': '目標：打倒洞窟裡的邱夷',
             '20': '目標：在重力室修行', '21': '目標：比克在界王星重力修行',

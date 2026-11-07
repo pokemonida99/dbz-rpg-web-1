@@ -4,10 +4,10 @@
 // narration over z1field scenes (6771-6775 made for it, the rest the story's own). The scenes are drawn the way
 // src/zg_a.js draws ZG's (set_character_face with the clothes of the story, character_output_all 26 / 22) under numbers
 // of their own (the original's + 1000000), so nothing the story chapters register is touched.
-import { addScenes, playScenes } from './cutscene.js?v=20261107-2349';
-import { addRecap, storySoFar } from './fieldmenu.js?v=20261107-2349';
-import { drawZgScene } from './zg_a.js?v=20261107-2349';
-import { registerZ3, devZ3 } from './z3.js?v=20261107-2349';
+import { addScenes, playScenes } from './cutscene.js?v=20261108-0039';
+import { addRecap, storySoFar } from './fieldmenu.js?v=20261108-0039';
+import { drawZgScene } from './zg_a.js?v=20261108-0039';
+import { registerZ3, devZ3 } from './z3.js?v=20261108-0039';
 
 const R = (game) => game.world.z3 && game.world.z3.zgRecap;
 const pick = (game) => { const r = R(game); return r && r.recap[(game.state.var || {})[43] || 0]; };

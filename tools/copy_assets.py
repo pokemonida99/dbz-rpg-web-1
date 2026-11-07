@@ -55,6 +55,10 @@ files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", pv.split('export
 zf = open(os.path.join(root, 'src', 'anime_zfighters.js'), encoding='utf-8').read()
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", zf)}
 files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", zf.split('export const ZF_SOUNDS')[1])}
+# the first moves' Z2 films (src/anime_z2base.js): its pic('…') and Z2B_SOUNDS
+za = open(os.path.join(root, 'src', 'anime_z2base.js'), encoding='utf-8').read()
+files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", za)}
+files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"'([^']+)'", za.split('export const Z2B_SOUNDS')[1])}
 # the first moves' Z3 films (src/anime_z3base.js): its pic('…') and Z3B_SOUNDS
 zb = open(os.path.join(root, 'src', 'anime_z3base.js'), encoding='utf-8').read()
 files |= {f'Graphics/Pictures/{n}' for n in re.findall(r"pic\('([^']+)'\)", zb)}

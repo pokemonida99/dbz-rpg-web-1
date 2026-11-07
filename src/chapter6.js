@@ -4,12 +4,12 @@
 //   map 15 (栽培人・那巴・貝吉塔; Goku arrives before the Saibamen or before Nappa, by how many tries King Kai took;
 //   琪琪 may join) → Vegeta flees → the Z1 ending film (src/ending.js) → the Willow chapter (src/willow.js).
 // state.flags.ch6 tracks the step: 'kaio' → 'earth' → 'done'.
-import { input, say, toast, audio } from './core.js?v=20261107-2349';
-import { scenes, setParty, moveTo, enterMap, card } from './chapter2.js?v=20261107-2349';
-import { makeMember, applyLevel } from './party.js?v=20261107-2349';
-import { runEvent } from './events.js?v=20261107-2349';
-import { eventCard } from './items.js?v=20261107-2349';
-import { playShenron, playZ1Ending } from './ending.js?v=20261107-2349';
+import { input, say, toast, audio } from './core.js?v=20261108-0039';
+import { scenes, setParty, moveTo, enterMap, card } from './chapter2.js?v=20261108-0039';
+import { makeMember, applyLevel } from './party.js?v=20261108-0039';
+import { runEvent } from './events.js?v=20261108-0039';
+import { eventCard } from './items.js?v=20261108-0039';
+import { playShenron, playZ1Ending } from './ending.js?v=20261108-0039';
 
 const MAPS = ['14', '15'];
 export const isChapter6Map = (s) => MAPS.includes(s.map);

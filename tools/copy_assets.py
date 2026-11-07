@@ -128,6 +128,11 @@ files |= {f'Graphics/Pictures/Z1_イベント_{n}.PNG' for n in re.findall(r"EV\
 files |= {f[0] for f in world['opening']['faces'].values()}
 files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"se\('([^']+)'\)", opening)}
 files |= {f'Audio/SE/{n["se"]}.ogg' for n in world['opening']['story'] if 'se' in n}
+# the openings after Z1 (src/opening_films.js): the original's folders of them whole, and their songs
+for d in ('z2op', 'z3op', 'zcellop', 'zgop'):
+    files |= {f'Graphics/Pictures/{d}/{n}' for n in os.listdir(os.path.join(src, 'Graphics', 'Pictures', d)) if n.lower().endswith('.png')}
+files |= {f'Audio/BGM/{n} オープニング.ogg' for n in ('Z1', 'Z2', 'Z3', 'ZD', 'ZG')}
+files |= {f'Audio/SE/{n}.ogg' for n in re.findall(r"(?:_SE = |se: |audio\.se\()'([^']+)'", open(os.path.join(root, 'src', 'opening_films.js'), encoding='utf-8').read())}
 files |= {f'Audio/BGM/{n}.ogg' for n in re.findall(r"playBgm\('([^']+)'\)", opening)}
 # the party / tactics menus (src/partymenu.js): the original's cursor sounds
 partymenu = open(os.path.join(root, 'src', 'partymenu.js'), encoding='utf-8').read()

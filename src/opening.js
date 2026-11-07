@@ -5,7 +5,7 @@
 //    the pod landing, Raditz meeting Piccolo, Goku at the Kame House), with the original text in full
 //    (world.opening, built by tools/opening_data.py) and the speaker's face in the dialogue box.
 // Both draw on their own layer above everything else and have a 略過 (skip) button, like the classic version.
-import { img, loadImages, audio } from './core.js?v=20261108-0709';
+import { img, loadImages, audio } from './core.js?v=20261108-0722';
 
 const pic = (n) => `Graphics/Pictures/${n}`;
 const FPS = 60;
@@ -95,7 +95,6 @@ const OP = {
   uchu: range(18, (i) => pic(`z1_oputyuu${i}.PNG`)),
   ship: range(10, (i) => pic(`z1_utyuusen${i}.PNG`)),
 };
-const OP_END = 2380;
 
 class TitleAnime {
   constructor() {
@@ -168,13 +167,21 @@ export function blt(c, path, x, y, w, h, sx = 0, sy = 0) {
   if (sw > 0 && sh > 0) c.drawImage(e.im, sx, sy, sw, sh, x, y, sw, sh);
 }
 
+// The openings of Title_Anime#op (all.rb 167225), by the key src/opening_pick.js gives: z1 here, the others in
+// src/opening_films.js (addOpening). A film: { images(), bgm, bgmAt?, se?, end (frames), make() → { f, draw(c) on 640×480, tick() } }.
+// One not built yet plays Z1's.
+const FILMS = { z1: { images: () => [...OP.nami, OP.kumo, ...OP.hikaru, ...OP.db, ...OP.uchu, ...OP.ship], bgm: 'Z1 オープニング', end: 2380, make: () => new TitleAnime() } };
+export function addOpening(key, film) { FILMS[key] = film; }
+export const filmOf = (key) => FILMS[key] || FILMS.z1;
+export const openingImages = (key) => filmOf(key).images();
+
 // Plays the title animation; resolves when it ends or is skipped. The browser needs a tap before it can play
 // the music, so it waits for one first.
-export const openingImages = () => [...OP.nami, OP.kumo, ...OP.hikaru, ...OP.db, ...OP.uchu, ...OP.ship];
 // tapped: the boot screen's 「點一下開始」 already unlocked the sound, so no tap prompt of its own
-export async function playOpening(tapped = false) {
+export async function playOpening(tapped = false, key = 'z1') {
+  const film = filmOf(key), OP_END = film.end;
   const ui = overlay();
-  const loading = loadImages(openingImages());
+  const loading = loadImages(film.images());
   if (!tapped) {
     const tap = document.createElement('div');
     tap.className = 'tap';
@@ -185,8 +192,10 @@ export async function playOpening(tapped = false) {
   }
   if (ui.skipped) { ui.close(); return; }
   await loading;
-  audio.playBgm('Z1 オープニング');
-  const anime = new TitleAnime();
+  if (film.bgm && !film.bgmAt) audio.playBgm(film.bgm); // (bgmAt: the frame the song starts on, the Cell Games' openings)
+  else audio.stopBgm();
+  if (film.se) audio.se(film.se); // (ZG: a sound instead of a song, stopped at the end)
+  const anime = film.make();
   const buf = document.createElement('canvas');
   buf.width = 640; buf.height = 480;
   const bc = buf.getContext('2d');
@@ -200,7 +209,7 @@ export async function playOpening(tapped = false) {
       if (ui.skipped) return;
       const due = Math.min(OP_END, Math.floor(((t - t0) * FPS) / 1000));
       // catch up on frames the browser skipped; only the last one needs drawing
-      while (anime.f < due) { if (due - anime.f === 1) anime.draw(bc); anime.tick(); }
+      while (anime.f < due) { if (due - anime.f === 1) anime.draw(bc); anime.tick(); if (anime.f === film.bgmAt) audio.playBgm(film.bgm); }
       const c = ui.fit();
       const W = c.canvas.width, H = c.canvas.height;
       const s = W / 640, dh = Math.round(480 * s);
@@ -212,6 +221,7 @@ export async function playOpening(tapped = false) {
     };
     requestAnimationFrame(frame);
   });
+  if (film.se) audio.seStop();
   ui.close();
 }
 

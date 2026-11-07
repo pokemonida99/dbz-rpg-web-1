@@ -7,13 +7,13 @@
 //   超2 悟飯's 超サイヤ人変身 59 in battle → on_super_saiyazin 5 (all.rb 53436: $partyc 18 → schanum 5)
 //   地球育ちのサイヤ人 678-686 at an S-combo (all.rb 68354-68396): every participant's card + the highest fx.ah stars of
 //     the levels the participants have learned (the combo star: src/combo.js ext('combo'))
-import { audio, sleep } from './core.js?v=20261108-0709';
-import * as growth from './growth.js?v=20261108-0709';
-import * as battle from './battle.js?v=20261108-0709';
-import { changeHooks, onHooks, superSaiyan } from './supersaiyan.js?v=20261108-0709';
-import { tally } from './partymenu.js?v=20261108-0709';
-import { registerZ3, party, member, heal } from './z3.js?v=20261108-0709';
-import { applyLevel } from './party.js?v=20261108-0709';
+import { audio, sleep } from './core.js?v=20261108-0722';
+import * as growth from './growth.js?v=20261108-0722';
+import * as battle from './battle.js?v=20261108-0722';
+import { changeHooks, onHooks, superSaiyan } from './supersaiyan.js?v=20261108-0722';
+import { tally } from './partymenu.js?v=20261108-0722';
+import { registerZ3, party, member, heal } from './z3.js?v=20261108-0722';
+import { applyLevel } from './party.js?v=20261108-0722';
 
 const EARTH = [678, 679, 680, 681, 682, 683, 684, 685, 686];
 

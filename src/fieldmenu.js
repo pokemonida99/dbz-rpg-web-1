@@ -10,11 +10,11 @@
 // goldGot, goldSpent, cardBuy, cardSell, chaMax [actor, enemy, damage], eneMax [enemy, actor, damage];
 // state.foeKills[enemy] ($ene_defeat_num), state.foeSeen[enemy] ($ene_enc_history_flag),
 // state.foeScouted[enemy] ($ene_sco_history_flag: HP and drops shown), state.cardUses[item] ($card_run_num).
-import { view, img, audio, say, choose, textSpeed, warmImages } from './core.js?v=20261108-0936';
-import { Battle, battleOpts } from './battle.js?v=20261108-0936';
-import { fieldCards } from './items.js?v=20261108-0936';
-import { holds } from './field.js?v=20261108-0936';
-import { shownFoes, foeFace } from './db3ed.js?v=20261108-0936'; // the 図鑑's enemies (update_eneput_flag)
+import { view, img, audio, say, choose, textSpeed, warmImages } from './core.js?v=20261108-0950';
+import { Battle, battleOpts } from './battle.js?v=20261108-0950';
+import { fieldCards } from './items.js?v=20261108-0950';
+import { holds, fieldOpts } from './field.js?v=20261108-0950';
+import { shownFoes, foeFace } from './db3ed.js?v=20261108-0950'; // the 図鑑's enemies (update_eneput_flag)
 
 const SE_OK = 'Z3 決定', SE_MOVE = 'Z3 カーソル移動', SE_ERR = 'Z3 エラー';
 const FOE_FACES = 'Graphics/Pictures/Z1_顔敵.PNG', FACES = 'Graphics/Pictures/Z1_顔味方.PNG', CARDS = 'Graphics/Pictures/カード関係.PNG';
@@ -23,13 +23,14 @@ const RADAR = 'Graphics/Pictures/ドラゴンレーダー.PNG', BALL = 'Graphics
 
 // ---------- options (Scene_Db_Option) ----------
 const OPT_KEY = 'dbz-portrait-options';
-export const options = { bgm: 0, ready: 0, enc: 1, encSe: 0, battleFast: 0, quickGo: 0, fastMsg: 0, skipOp: 0, skipRecap: 0, runSkill: 0, runSlide: 0 };
+export const options = { bgm: 0, ready: 0, enc: 1, encSe: 0, battleFast: 0, quickGo: 0, fastMsg: 0, skipOp: 0, skipRecap: 0, runSkill: 0, runSlide: 0, goalArrow: 1 };
 try { Object.assign(options, JSON.parse(localStorage.getItem(OPT_KEY)) || {}); } catch (e) { /* first run */ }
 // src/laps_rules.js: the rows a later round adds; its event battles' songs (variables 428 / 429)
 export const lapOptions = { rows: () => [], ready: () => options.ready, event: () => 0 };
 const saveOptions = () => { try { localStorage.setItem(OPT_KEY, JSON.stringify(options)); } catch (e) { /* private mode */ } };
 textSpeed.instant = !!options.fastMsg;
 battleOpts.quick = !!options.quickGo;
+fieldOpts.arrow = !!options.goalArrow;
 
 // 戰鬥BGM (set_battle_bgm_name, variable 37): 0 默認 follows the story (Z1 戦闘2 from the Sansho area on), 1 隨機, then the
 // original's numbers with [file, title] (world.sys.bgm.battle, tools/build_sys.py; these four when it isn't there)
@@ -341,7 +342,8 @@ function enemyHistory(g) {
     det.append(el('div', 'fm-foe-name', seen ? e.name : UNKNOWN), art, rows);
     const pick = el('div', 'win fm-foe-list');
     list.forEach((x, k) => {
-      const b = button(`${k + 1}：${(s.foeSeen || {})[x.id] ? x.name : UNKNOWN}`, () => { audio.se(SE_MOVE); foeCursor = k; render(); }, 'fm-pick' + (k === foeCursor ? ' on' : ''));
+      const label = `${k + 1}：${(s.foeSeen || {})[x.id] ? x.name : UNKNOWN}`;
+      const b = button(label, () => { audio.se(SE_MOVE); foeCursor = k; render(); }, 'fm-pick' + (k === foeCursor ? ' on' : '') + (label.length > 11 ? ' long' : '')); // long: 弗利薩(第１形態) and the like, smaller
       pick.append(b);
     });
     requestAnimationFrame(() => { const on = pick.querySelector('.on'); if (on) on.scrollIntoView({ block: 'nearest' }); });
@@ -362,6 +364,7 @@ const OPTION_ROWS = [
   ['fastMsg', '消息高速化', [[0, '無效'], [1, '有效']], '訊息一次全部顯示'],
   ['skipOp', '跳過ＯＰ', [[0, '關閉'], [1, '打開']], '啟動時不播放片頭動畫'],
   ['skipRecap', '跳過概況', [[0, '關閉'], [1, '打開']], '讀取存檔時不顯示前情提要'],
+  ['goalArrow', '目標箭頭', [[1, '顯示'], [0, '不顯示']], '地圖上主角旁的小箭頭，指向目前目標的方向（原版沒有）'], // src/field.js drawArrow
 ];
 function openOptions(g) {
   let help = '';
@@ -376,6 +379,7 @@ function openOptions(g) {
         saveOptions();
         textSpeed.instant = !!options.fastMsg;
         battleOpts.quick = !!options.quickGo;
+        fieldOpts.arrow = !!options.goalArrow;
         help = desc;
         if (key === 'encSe') audio.se('Z1 敵発見');
         render();
@@ -467,9 +471,10 @@ css.textContent = `
 .fm-big { width: 96px; height: 96px; }
 .fm-school { position: relative; width: 64px; height: 32px; }
 .fm-school canvas:last-child { position: absolute; left: 16px; top: 0; }
-.fm-foe-list { flex: 1; min-height: 120px; overflow-y: auto; overflow-x: hidden; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2px 6px; align-content: start; }
+.fm-foe-list { flex: 1; min-height: 120px; overflow-y: auto; overflow-x: hidden; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-auto-rows: max-content; gap: 2px 6px; align-content: start; } /* (rows at their own height: the list scrolls instead of squashing them) */
 .fm-pick { text-align: left; padding: 4px 6px; font-size: 15px; white-space: nowrap; overflow: hidden; min-width: 0; color: var(--ink); background: #fff0d0; border: 2px solid transparent; }
 .fm-pick.on { border-color: #f83800; }
+.fm-pick.long { font-size: 12px; padding-top: 6px; padding-bottom: 6px; }
 .fm-step { display: flex; align-items: center; gap: 6px; padding-left: 12px; }
 .fm-step b { flex: 1; text-align: center; font-weight: 400; color: #d0480c; font-size: 15px; }
 .fm-help { font-size: 15px; min-height: 2.6em; flex: none; }

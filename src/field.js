@@ -1,7 +1,7 @@
 // Field: free flight over the map, random encounters, the boss marker.
-import { view, img, input, audio, rand } from './core.js?v=20261108-0936';
-import { renderMap, drawTile, tileSheetPaths } from './tiles.js?v=20261108-0936';
-import { flySprite, walkSprite } from './costume.js?v=20261108-0936';
+import { view, img, input, audio, rand } from './core.js?v=20261108-0950';
+import { renderMap, drawTile, tileSheetPaths } from './tiles.js?v=20261108-0950';
+import { flySprite, walkSprite } from './costume.js?v=20261108-0950';
 
 const SPEED = 150; // art pixels per second (~4.7 tiles/s)
 // fieldHooks.step(state, step) → the distance actually flown this frame (src/cards_a.js: 飛機 doubles it); encounters and
@@ -307,7 +307,7 @@ export class Field {
     }
     c.drawImage(this.layers.upper, -cx, -cy);
     this.drawEvents(c, cx, cy, true);
-    if (!this.cam) this.drawArrow(c, s, cx, cy);
+    if (!this.cam && fieldOpts.arrow) this.drawArrow(c, s, cx, cy);
     if (this.near) { // "!" over the player's head
       const bx = Math.round(s.x - cx), by = Math.round(s.y - (this.map.walk ? 30 : 46) - cy + Math.sin(this.anim * 3) * 2);
       c.fillStyle = '#fff';
@@ -384,6 +384,8 @@ export class Field {
 export const EVERYDAY = new Set(['卡片商店', '修行', '進入旅館', '隊伍變更', '界王修行', '巴布魯斯修行', '古雷格利修行', '重力修行', '回到時之間', '時之間']);
 export const TR_DOORS = new Set(['party', 'go', 'area', 'leave', 'info', 'practice', 'arena']);
 const SPOT_VERB = /^(進入|前往|靠近|調查|接觸|迎戰|拜訪|離開|和|到)/;
+
+export const fieldOpts = { arrow: true }; // 設定 「目標箭頭」 (src/fieldmenu.js)
 
 export const nextEncounterSteps = () => 12 + rand(14);
 

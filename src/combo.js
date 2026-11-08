@@ -19,13 +19,13 @@
 //
 // ひらめき (閃き必殺技, data/tecspark.json → world.tecspark, tools/build_tecspark.py) is checked here too, just before the
 // combos (chk_tecspark, all.rb 53813): see spark() below.
-import { VERSION, view, img, audio, rand, sleep, fetchRetry } from './core.js?v=20261108-0936';
-import { SW, moveFilm, addMoves } from './anime.js?v=20261108-0936';
-import { ComboDuel } from './combo-anime.js?v=20261108-0936';
-import { menuEntries } from './partymenu.js?v=20261108-0936';
-import * as growth from './growth.js?v=20261108-0936';
-import * as items from './items.js?v=20261108-0936';
-import * as battle from './battle.js?v=20261108-0936'; // battleHooks (used at run time only: battle.js imports this file)
+import { VERSION, view, img, audio, rand, sleep, fetchRetry } from './core.js?v=20261108-0950';
+import { SW, moveFilm, addMoves } from './anime.js?v=20261108-0950';
+import { ComboDuel } from './combo-anime.js?v=20261108-0950';
+import { menuEntries } from './partymenu.js?v=20261108-0950';
+import * as growth from './growth.js?v=20261108-0950';
+import * as items from './items.js?v=20261108-0950';
+import * as battle from './battle.js?v=20261108-0950'; // battleHooks (used at run time only: battle.js imports this file)
 
 let DATA = { combos: [], moves: {}, sync: {} };
 export const comboData = fetchRetry(`data/combos.json?v=${VERSION}`).then((r) => r.json()).then((d) => (DATA = d)).catch(() => DATA);
@@ -463,7 +463,7 @@ function injectCss() {
 .combo-list .cl-panel { width: 100%; max-height: 100%; display: flex; flex-direction: column; }
 .combo-list .cl-head { display: flex; justify-content: space-between; align-items: center; font-size: 20px; color: var(--rust); margin-bottom: 6px; }
 .combo-list button { background: #fff0d0; border: 2px solid #7a5230; color: var(--ink); padding: 4px 10px; font-size: 16px; }
-.combo-list .cl-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; }
+.combo-list .cl-tabs { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 6px; } /* (wraps: a sideways scroll can't be dragged under the battle's touch-action: none) */
 .combo-list .cl-tab { display: flex; align-items: center; gap: 4px; padding: 2px 8px 2px 2px; white-space: nowrap; }
 .combo-list .cl-tab.on { background: var(--gold); border-color: var(--rust); }
 .combo-list canvas { image-rendering: pixelated; display: block; }

@@ -109,13 +109,17 @@ def add(world, h):
         {'x': 11, 'y': 5, 'label': '這股氣是……', 'chapter': 'z2turles', 'when': [['sw', 109, False], ['var', 43, 36]]},
     ] + at([(10, 65), (50, 68), (19, 38), (40, 23)], INN) \
       + at([(8, 7), (10, 7), (22, 36), (14, 64), (54, 62), (45, 17), (10, 69)], CARD) + at([(11, 71), (48, 27)], TRAIN)
-    # Frieza (map events 8-10, enemy1.png character 4): his first form once Piccolo is back, then the 2nd / 3rd form
+    # Frieza (map events 8-10, enemy1.png character 4): his first form once Piccolo is back, then the 2nd / 3rd form.
+    # At 概況 34 the original stands Gohan (event 8, chara1, facing him) at (22,19) and Frieza (event 9) at (23,19) — drawn
+    # from those events (world.maps[29].ev, as the original's conditions), the first form's marker only starts the fight
+    import build_timeroom
+    world['maps']['29']['ev'] = [e for e in build_timeroom.map_events(D, 29, 89) if (e[0], e[1]) in ((22, 19), (23, 19))]
     world['bosses']['29'] = [
-        {'x': 22, 'y': 19, 'index': 4, 'flag': 'z2Frieza1', 'key': 'frieza1', 'when': [['sw', 102, True], ['var', 43, 34]]},
+        {'x': 23, 'y': 19, 'index': 4, 'flag': 'z2Frieza1', 'key': 'frieza1', 'when': [['sw', 102, True], ['var', 43, 34]], 'hidden': True},
         {'x': 37, 'y': 59, 'index': 4, 'flag': 'z2Frieza2', 'key': 'frieza2', 'when': ['var', 43, 35]},
         {'x': 37, 'y': 59, 'index': 4, 'flag': 'z2Frieza3', 'key': 'frieza3', 'when': ['var', 43, 36]},
     ]
-    world['radar']['29'] = [(24, 4), (16, 65), (22, 19), (37, 59)]
+    world['radar']['29'] = [(24, 4), (16, 65), (23, 19), (37, 59)]
     # 140_Field_Main.rb (24,26,29): 3-5 at a time (1-2 when alone); Frieza's last form (概況 36) brings stronger ones
     world['areas']['29'] = {'pool': [32, 35, 38, 41, 42], 'n': [3, 5], 'alone': [1, 2],
                             'late': {'var43': 36, 'pool': [33, 36, 39, 42, 44, 47]}}

@@ -21,7 +21,7 @@
 #boot .logo { width: min(84vw, 360px); position: relative; } /* logo_hd.png: GPT's clean redraw of the original Title.png logo, 1080 px wide, shown smaller */
 #boot .sub { margin-top: -14px; font-size: 15px; letter-spacing: .3em; color: #8fb4ff; position: relative; }
 #boot .balls { display: flex; gap: 6px; position: relative; }
-#boot .balls i { width: 40px; height: 40px; background: url("assets/ui/dballs.png?v=20261108-1000") 0 0 / 280px 40px no-repeat;
+#boot .balls i { width: 40px; height: 40px; background: url("assets/ui/dballs.png?v=20261108-1004") 0 0 / 280px 40px no-repeat;
   image-rendering: pixelated; filter: grayscale(1) brightness(.28); }
 #boot .balls i.on { filter: none; animation: bt-pop .36s steps(4); }
 #boot.full .balls i { animation: bt-hop .9s steps(3) infinite; animation-delay: calc(var(--k) * .09s); }
@@ -41,12 +41,12 @@
 #turn i { width: 44px; height: 76px; border: 4px solid #ffd27a; box-shadow: inset 0 -12px 0 #5a1e00, inset 0 10px 0 #5a1e00, inset 0 0 0 40px #101848; animation: turn-it 1.6s steps(4) infinite; }
 @keyframes turn-it { 0%, 25% { transform: rotate(-90deg); } 75%, 100% { transform: rotate(0); } }
 </style>
-<link rel="stylesheet" href="src/style.css?v=20261108-1000">
+<link rel="stylesheet" href="src/style.css?v=20261108-1004">
 </head>
 <body>
 <div id="boot">
   <div class="st"></div>
-  <img class="logo" src="assets/ui/logo_hd.png?v=20261108-1000" alt="DRAGON BALL Z">
+  <img class="logo" src="assets/ui/logo_hd.png?v=20261108-1004" alt="DRAGON BALL Z">
   <div class="sub">重製版</div>
   <div class="balls"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i></div>
   <div class="msg">收集龍珠中… <b>0</b> / 7</div>
@@ -138,6 +138,6 @@
   window.cancelAnimationFrame = function (id) { caf(live[id]); delete live[id]; };
 })();
 </script>
-<script type="module" src="src/main.js?v=20261108-1000" onerror="__boot.fail()"></script>
+<script type="module" src="src/main.js?v=20261108-1004" onerror="__boot.fail()"></script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 // Field: free flight over the map, random encounters, the boss marker.
-import { view, img, input, audio, rand } from './core.js?v=20261108-1000';
-import { renderMap, drawTile, tileSheetPaths } from './tiles.js?v=20261108-1000';
-import { flySprite, walkSprite } from './costume.js?v=20261108-1000';
+import { view, img, input, audio, rand } from './core.js?v=20261108-1004';
+import { renderMap, drawTile, tileSheetPaths } from './tiles.js?v=20261108-1004';
+import { flySprite, walkSprite } from './costume.js?v=20261108-1004';
 
 const SPEED = 150; // art pixels per second (~4.7 tiles/s)
 // fieldHooks.step(state, step) → the distance actually flown this frame (src/cards_a.js: 飛機 doubles it); encounters and
@@ -282,6 +282,7 @@ export class Field {
     c.drawImage(this.layers.ground, -cx, -cy);
 
     for (const b of this.bossList()) {
+      if (b.hidden) continue; // (drawn by the map's own events: map 29's Frieza)
       const bi = img(b.sheet || BOSS); // (b.sheet: another enemy sheet, e.g. enemy5.png for the Willow fortress)
       if (!bi.ok) continue;
       const f = Math.floor(this.anim) % 3, k = b.index || 0; // enemy1.png: 4 characters a row, 3×4 frames each

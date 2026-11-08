@@ -9,19 +9,19 @@
 //   9941 帕伊庫漢 (zgpaikuhan): 7101 → 7111 → battle 7116 → 7121 → 9942;  9951 布歐 (zgbuu): 7201 → 7211 → 7216 → 7221 → 9952
 //   闘技場 (map 58 (22,5), 'arena'): 90001 → Scene_Db_Battle_arena (the rank list) → 90011-90031 three rounds (90012 …:
 //        battle_arena_ene_set) → 90041 (CE191 prizes, the new ranks) / 90051 (lost); rank 69 Arale, 70-91 覚醒 bosses.
-import { audio, say, choose, toast } from './core.js?v=20261108-1000';
-import { db3ed, shownFoes } from './db3ed.js?v=20261108-1000'; // the DB3 staff roll
-import { trunksMoves } from './costume.js?v=20261108-1000'; // CE61
-import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261108-1000';
-import { SCROLL_X, SCENE_Y, ENE, PLAY_X, say as sceneSay } from './opening.js?v=20261108-1000';
-import { addMoves } from './anime.js?v=20261108-1000';
-import { syncSuperSaiyan, superSaiyan, FORMS } from './supersaiyan.js?v=20261108-1000';
-import { eventCard, cardState } from './items.js?v=20261108-1000';
-import { cardSquare } from './cardgames.js?v=20261108-1000';
-import { spotTally } from './fieldmenu.js?v=20261108-1000';
-import { registerZ3, Z3, begin, play, fight, toField, party, member, heal } from './z3.js?v=20261108-1000';
-import { registerArea, startTrStory, endTrStory, goTo, healAll } from './timeroom.js?v=20261108-1000';
-import { applyLevel } from './party.js?v=20261108-1000';
+import { audio, say, choose, toast } from './core.js?v=20261108-1004';
+import { db3ed, shownFoes } from './db3ed.js?v=20261108-1004'; // the DB3 staff roll
+import { trunksMoves } from './costume.js?v=20261108-1004'; // CE61
+import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261108-1004';
+import { SCROLL_X, SCENE_Y, ENE, PLAY_X, say as sceneSay } from './opening.js?v=20261108-1004';
+import { addMoves } from './anime.js?v=20261108-1004';
+import { syncSuperSaiyan, superSaiyan, FORMS } from './supersaiyan.js?v=20261108-1004';
+import { eventCard, cardState } from './items.js?v=20261108-1004';
+import { cardSquare } from './cardgames.js?v=20261108-1004';
+import { spotTally } from './fieldmenu.js?v=20261108-1004';
+import { registerZ3, Z3, begin, play, fight, toField, party, member, heal } from './z3.js?v=20261108-1004';
+import { registerArea, startTrStory, endTrStory, goTo, healAll } from './timeroom.js?v=20261108-1004';
+import { applyLevel } from './party.js?v=20261108-1004';
 
 const C = (game) => game.world.zgBojack;
 const MAPS = ['97', '98', '99'];

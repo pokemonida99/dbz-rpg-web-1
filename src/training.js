@@ -7,11 +7,11 @@
 //   EXP  level × 2.5 / 2 per hit │ level × 2.5 × 2.5 per hit + level × 30 │ level × 2.5 × 10 per hit + level × 150,
 //        × 1.5–12 from 10 hits on;  CAP = SP = hits │ hits × 2 │ hits × 5;  ZP = ⌈hits / 2⌉, ⌈hits / 5⌉ random moves
 // SP goes to the member's 追加技能 and ZP to the member (src/growth.js), as after a battle.
-import { img, audio, rand } from './core.js?v=20261108-1000';
-import { newCard } from './battle.js?v=20261108-1000';
-import { levelUp, EXP_RATE } from './party.js?v=20261108-1000';
-import { expFor, has, ensure, afterBattle } from './growth.js?v=20261108-1000';
-import { el, sprite, overlay, button, bumpStat } from './fieldmenu.js?v=20261108-1000';
+import { img, audio, rand } from './core.js?v=20261108-1004';
+import { newCard } from './battle.js?v=20261108-1004';
+import { levelUp, EXP_RATE } from './party.js?v=20261108-1004';
+import { expFor, has, ensure, afterBattle } from './growth.js?v=20261108-1004';
+import { el, sprite, overlay, button, bumpStat } from './fieldmenu.js?v=20261108-1004';
 
 const CARDS = 'Graphics/Pictures/カード関係.PNG', FACES = 'Graphics/Pictures/Z1_顔味方.PNG';
 const KI = 16; // the 気 school glyph (column 16 of カード関係.PNG)

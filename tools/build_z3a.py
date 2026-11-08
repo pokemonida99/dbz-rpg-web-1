@@ -30,6 +30,10 @@ def add(world, h, z3):
     # ---------- maps (the last row holds the original's control events only) ----------
     world['maps']['33'] = build_map(33, rows=99)
     world['maps']['34'] = build_map(34, rows=44)
+    # map 33's people from the original's events (not its animap1 trees): the dinosaur (event 36, !bigsize_anime) until
+    # switch 405, the gatekeeper (event 155, enemy1 character 6) until switch 409
+    import build_timeroom
+    world['maps']['33']['ev'] = [e for e in build_timeroom.map_events(D, 33, 99) if (e[0], e[1]) in ((10, 8), (62, 65))]
 
     INN = {'label': '進入旅館', 'event': 'z2inn', 'effect': 'rest'}
     CARD_SQ = {'label': '卡片商店', 'effect': 'shop'}

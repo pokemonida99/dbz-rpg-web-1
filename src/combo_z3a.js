@@ -1,10 +1,10 @@
 // S-combo films of the original's anime_pattern 28xx (docs/anim-f-plan.md cmc), ported frame by frame from
 // Scene_Db_Battle_Anime (102_Scene_Db_Battle_Anime.rb) on the stage of src/combo_z3a_stage.js (read its header first).
 // The other films of this group are in src/combo_z3a2.js and src/combo_z3a3.js (imported at the end).
-import { audio, rand } from './core.js?v=20261108-1000';
-import { STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED } from './anime.js?v=20261108-1000';
-import { ComboDuel } from './combo-anime.js?v=20261108-1000';
-import { pic, blt, cmcFilms, cmcPictures, STD_CHAX, SPARK } from './combo_z3a_stage.js?v=20261108-1000';
+import { audio, rand } from './core.js?v=20261108-1004';
+import { STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED } from './anime.js?v=20261108-1004';
+import { ComboDuel } from './combo-anime.js?v=20261108-1004';
+import { pic, blt, cmcFilms, cmcPictures, STD_CHAX, SPARK } from './combo_z3a_stage.js?v=20261108-1004';
 
 // ---------- 2846 ダブル残像拳 (746 悟空＆克林 / 749 克林＆龜仙人, all.rb 101893) ----------
 // the lead rises (or sinks) while the other flies in below (effect 90) / above (89); the two side by side (back 116),
@@ -713,5 +713,5 @@ export const CMC1_SOUNDS = ['Z1 逃げる', 'Z1 高速移動', 'DB3 残像拳', 
   'Z1 衝撃波', 'Z1 怪光線', 'Z1 エネルギー波2', 'Z1 飛ぶ', 'Z1 強打', 'ZG 打撃2', 'Z1 ザー', 'Z1 ゴー', 'Z1 気円斬', 'Z3 エネルギー波',
   'ZG 光線系ヒット2', 'DB3 気を溜める2', 'DB3 エネルギー波1', 'DB3 エネルギー波2', 'Z1 分身', 'Z3 四身の拳', 'Z3 超能力', 'Z1 打撃',
   'Z3 打撃', 'Z1 気を溜める2', 'ZG 打撃4'];
-import './combo_z3a2.js?v=20261108-1000';
-import './combo_z3a3.js?v=20261108-1000';
+import './combo_z3a2.js?v=20261108-1004';
+import './combo_z3a3.js?v=20261108-1004';

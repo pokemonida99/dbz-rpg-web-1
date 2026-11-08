@@ -9,14 +9,15 @@
 // window over the stage. Tapping outside the window / anything but an enemy while targeting cancels that card.
 // A picked card wears its member's face: tap it (or the face above) to pick again for that member; 返回 undoes the
 // last pick. With everyone picked a big 出招！ starts the turn (or right away with 設定「選完直接出招」).
-import { view, img, loadImages, audio, sleep, rand } from './core.js?v=20261108-1145';
-import { levelUp, EXP_RATE } from './party.js?v=20261108-1145';
-import { Duel, ANIME_IMAGES, SW, SH, BACK_Y, filmCut } from './anime.js?v=20261108-1145';
-import { commandButtons, autoSkill, autoTarget, tally } from './partymenu.js?v=20261108-1145'; // command row, 作戰, counters
-import * as items from './items.js?v=20261108-1145'; // item cards: effects that touch the battle rules
-import { tryCombo, announceCombos, comboHints, hasCombos, HINT_TEXT } from './combo.js?v=20261108-1145'; // 組合技
-import * as growth from './growth.js?v=20261108-1145'; // passive skills, proficiency, KO, SP / ZP / EXP pool
-import { superSaiyan, moveTransforms, afterBattle as ssAfterBattle } from './supersaiyan.js?v=20261108-1145'; // 超サイヤ人
+import { view, img, loadImages, audio, sleep, rand } from './core.js?v=20261108-1614';
+import { levelUp, EXP_RATE } from './party.js?v=20261108-1614';
+import { Duel, ANIME_IMAGES, SW, SH, BACK_Y, filmCut } from './anime.js?v=20261108-1614';
+import { commandButtons, autoSkill, autoTarget, tally } from './partymenu.js?v=20261108-1614'; // command row, 作戰, counters
+import * as items from './items.js?v=20261108-1614'; // item cards: effects that touch the battle rules
+import { tryCombo, announceCombos, comboHints, hasCombos, HINT_TEXT } from './combo.js?v=20261108-1614'; // 組合技
+import * as growth from './growth.js?v=20261108-1614'; // passive skills, proficiency, KO, SP / ZP / EXP pool
+import { superSaiyan, moveTransforms, afterBattle as ssAfterBattle } from './supersaiyan.js?v=20261108-1614'; // 超サイヤ人
+import { skin } from './era.js?v=20261108-1614'; // the window skin of the story's era (frame, ground colour, ▼)
 
 export const SCHOOL = ['必', '龜', '神', '界', '魔', '惑', '基', '悟', '超'];
 const HAND = 6;
@@ -24,11 +25,11 @@ const CARDS = 'Graphics/Pictures/カード関係.PNG';
 const FACES = 'Graphics/Pictures/Z1_顔味方.PNG'; // 64×64; row = actor id - 3; columns: normal, hurt, KO
 const FOE_FACES = 'Graphics/Pictures/Z1_顔敵.PNG'; // 64×64; row = enemy id; columns: normal, hurt
 const DIGITS = 'Graphics/Pictures/数字英語.PNG'; // 16×16 cells: row 0 black digits + "/", row 1 HPKILV, row 2 white digits
-const FRAME_IMG = 'ui/frame.png'; // the Z1 window border (8px corners)
-const ICONS = 'Graphics/Pictures/アイコン.PNG'; // 16×16 cursors: Z1 ▼ = cell 12, its blink frame = cell 14 (set_tate_cursor_blink)
+const FRAME_IMG = 'ui/frame.png'; // the window border (Z1; src/era.js aliases the era's own, skin.k px corners)
+const ICONS = 'Graphics/Pictures/アイコン.PNG'; // 16×16 cursors: ▼ = cell skin.cur[0], its blink frame = skin.cur[1] (set_tate_cursor_blink)
 // the original's cursor sounds (139_Public.rb $BGM_CursorOn / $BGM_CursorMove / $BGM_Error)
 const SE_OK = 'Z3 決定', SE_MOVE = 'Z3 カーソル移動', SE_ERR = 'Z3 エラー';
-const PURPLE = '#9040f0', CREAM = '#ffd8a0', INK = '#301808', RUST = '#d0480c';
+const PURPLE = '#9040f0', INK = '#301808', RUST = '#d0480c';
 const FONT = 'Cubic11, system-ui, sans-serif';
 // portrait battle backgrounds made for this version (pixel art in the style of the Z1 field strip), 400×600;
 // one is picked per battle and kept for the whole fight. Film row 0 sits on image row BACKDROP_TOP.
@@ -164,18 +165,19 @@ function enemyDamage(b, foe, skill, card, m, guardCard) {
   if (battleHooks.taken) d = battleHooks.taken(b, m, d);
   if (skill && skill.noDamage) d = 0; // element 11 (時間停止, 太陽拳, 復仇衝鋒: 68757)
   if (items.evades(m)) return -1;
+  if (b.partyEvade) return -1; // switch 17 味方必ず回避 (68796: an event battle, src/z3.js fight)
   const avoid = growth.ext('avoid', Math.trunc((m.agi * 1.2 + guardCard.g) / 3 - (foe.agi * 1.1 + card.a) / 3), b, m, foe); // (殘像拳: src/cards_b.js)
   const miss = avoid > 0 && rand(100) + 1 < avoid && !b.bsw[130] && !(skill && skill.sure); // switch 130 / element 29: always hits (68770)
   return miss ? -1 : b.foeRate ? Math.trunc(d * b.foeRate) : d; // variable 82 敵攻撃ダメージn倍 (src/z3e.js)
 }
 
 // ---------- drawing helpers (original art) ----------
-function win(c, x, y, w, h, fill = CREAM) {
+function win(c, x, y, w, h, fill = skin.cream) {
   c.fillStyle = fill;
   c.fillRect(x + 3, y + 3, w - 6, h - 6);
   const f = img(FRAME_IMG);
   if (!f.ok) return;
-  const k = 8, im = f.im;
+  const k = skin.k, im = f.im;
   c.drawImage(im, 0, 0, k, k, x, y, k, k);
   c.drawImage(im, 64 - k, 0, k, k, x + w - k, y, k, k);
   c.drawImage(im, 0, 64 - k, k, k, x, y + h - k, k, k);
@@ -241,7 +243,7 @@ function text(c, s, x, y, color = INK, size = 16, align = 'left', maxW = 0) {
 function cursor(c, x, y) { // the original's blinking ▼ (アイコン.PNG), centred on x, top at y
   const blink = Math.floor(performance.now() / 270) % 2;
   const im = img(ICONS);
-  if (im.ok) { c.drawImage(im.im, 16 * (blink ? 14 : 12), 0, 16, 16, x - 8, y - 4, 16, 16); return; }
+  if (im.ok) { c.drawImage(im.im, 16 * skin.cur[blink ? 1 : 0], 0, 16, 16, x - 8, y - 4, 16, 16); return; }
   if (blink) return;
   c.fillStyle = '#f83800';
   c.beginPath(); c.moveTo(x - 7, y); c.lineTo(x + 7, y); c.lineTo(x, y + 9); c.fill();
@@ -526,7 +528,7 @@ export class Battle {
       let bx = 4;
       this.buttons.forEach(([label, fn, wt = 1]) => {
         const bw = u * wt + gap * (wt - 1);
-        win(c, bx, L.btnY, bw, 40, wt > 1 ? '#ffe070' : CREAM);
+        win(c, bx, L.btnY, bw, 40, wt > 1 ? '#ffe070' : skin.cream);
         text(c, label, bx + bw / 2, L.btnY + (wt > 1 ? 8 : 11), wt > 1 ? RUST : INK, wt > 1 ? 22 : 18, 'center');
         this.hit(bx, L.btnY, bw, 40, fn, this.mode === 'target' ? 'modal' : undefined);
         bx += bw + gap;
@@ -608,7 +610,7 @@ export class Battle {
     let x = 4;
     face(c, m, x, y); tag(c, m.school, x, y + 64);
     x += 64 + gap;
-    c.fillStyle = CREAM; c.fillRect(x, y, 92, 96);
+    c.fillStyle = skin.cream; c.fillRect(x, y, 92, 96);
     word(c, 'HP', x + 2, y + 8); num(c, m.hp, x + 90, y + 8); slash(c, x + 22, y + 26); num(c, m.maxhp, x + 90, y + 26);
     word(c, 'KI', x + 2, y + 52); num(c, m.ki, x + 90, y + 52); slash(c, x + 22, y + 70); num(c, m.maxki, x + 90, y + 70);
     x += 92 + gap;
@@ -618,7 +620,7 @@ export class Battle {
     x = W - 4 - 64;
     foeFace(c, f, x, y); tag(c, f.school, x, y + 64);
     // 超能力: the icon while that side can't act (アイコン 32×32 at (160, 16); 54145 / 54312)
-    const ic = img(ICONS), icon = (ix) => { c.fillStyle = CREAM; c.fillRect(ix + 2, y + 2, 28, 28); c.drawImage(ic.im, 160, 16, 32, 32, ix, y, 32, 32); };
+    const ic = img(ICONS), icon = (ix) => { c.fillStyle = skin.cream; c.fillRect(ix + 2, y + 2, 28, 28); c.drawImage(ic.im, 160, 16, 32, 32, ix, y, 32, 32); };
     if (ic.ok && this.held(m) && !m.ko) icon(4 + 32);
     if (ic.ok && f.hp > 0 && (f.stop || items.stopCount(f))) icon(x);
   }
@@ -895,7 +897,7 @@ export class Battle {
   // last one standing (25), hp40 / hp30 / hp50 = one more at 40 / 30 / 50 % HP or less (27 / 26 / 29), two = two or
   // fewer standing (28)
   attacks(f) {
-    let n = f.eva;
+    let n = this.once ? 1 : f.eva; // switch 40 1回しか攻撃しない (chk_attack_num 140505: an event battle, src/z3.js fight)
     if (this.alone && this.foes.filter((x) => x.hp > 0).length === 1) n++;
     if (this.hp30 && (f.hp * 100) / f.maxhp <= 30) n++;
     if (this.hp40 && (f.hp * 100) / f.maxhp <= 40) n++;

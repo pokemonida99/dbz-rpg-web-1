@@ -11,12 +11,12 @@
 // set_chr_display_out. Each film runs like the original: a body per @battle_anime_frame that sets the poses, moves
 // (@ax @gx …, the enemy's @ax mirrored every frame), blts under the fighters and the effect_pattern in front, with the
 // original's effect / ray / back counters. Frame numbers in the comments are @battle_anime_frame.
-import { audio, img } from './core.js?v=20261108-1145';
-import { Duel, addMoves, moveFilm, draw, RAY_SPEED } from './anime.js?v=20261108-1145';
-import { feRegister } from './anime_foes_common.js?v=20261108-1145';
-import { andaAt as at, andaShake as shake } from './anime_androids.js?v=20261108-1145';
-import { registerZ3, party, heal } from './z3.js?v=20261108-1145';
-import { applyLevel } from './party.js?v=20261108-1145';
+import { audio, img } from './core.js?v=20261108-1614';
+import { Duel, addMoves, moveFilm, draw, RAY_SPEED } from './anime.js?v=20261108-1614';
+import { feRegister } from './anime_foes_common.js?v=20261108-1614';
+import { andaAt as at, andaShake as shake } from './anime_androids.js?v=20261108-1614';
+import { registerZ3, party, heal } from './z3.js?v=20261108-1614';
+import { applyLevel } from './party.js?v=20261108-1614';
 
 const STD_CHAX = -70, STD_ENEX = 602, STD_Y = 120, CENTER_CHAX = 240, CENTER_ENEX = 304, TEC_CENTER = 266; // (all.rb 52435)
 const RS = RAY_SPEED, FLASH_ON = 296; // FLASH_Y_SIZE_CUTIN_ON
@@ -175,7 +175,7 @@ function syncStage(st) {
   const e = st.e2;
   if (!e.flag) e.cut = false;
   st.tecFrom = e.tec ? 0 : Infinity; st.tecNo = e.tecNo; st.small = e.small; st.red = e.red;
-  st.cutFrom = e.cut ? 0 : Infinity; st.mirror = !e.mir; // (the stage: mirror = the enemy's row)
+  st.cutFrom = e.cut ? 0 : Infinity; st.mirror = !!e.mir; // (the stage's mirror = @chr_cutin_mirror_flag: false the enemy's row)
 }
 
 const launch0 = Duel.prototype.launch;
@@ -822,6 +822,134 @@ function flurry(r, t, k, s, rows) {
   else if (t === k * 9) r.a(0);
   else if (t >= k * 10 && t < k * 11 && rows[5] != null) { r.a(rows[5]); r.ry += 32; if (t === k * 10) r.se(s); }
 }
+
+// ---------- the first films a Z3 enemy still plays (docs/z3-audit-foes.md A-D) ----------
+// An enemy numbered 101 on goes through the Z3 move switch (all.rb 54627 / 59742) even where its pattern is one of the
+// first films of src/anime.js: 卡里克一夥「強」 407-430, 栽培人系 401 / 403, 威洛一夥「強」 559-565 / 686-690, 超特蘭克斯's
+// 衝撃波 1101. There the original
+// - takes the effects from $btl_top_file_name, Z3_ (only back 4's 気を溜める and 突進(ウィロー) are written Z1_), and back 13
+//   is 気を溜める10 from $btl_progress 2 (134021);
+// - puts up the strips from frame 30 of pattern 32 (the switch's @tec_output_back_no / @tec_back_small) and, with
+//   @chr_cutin_flag, the enemy's cut-in. Only 559 / 562 / 563 / 690 / 1101 call set_chr_display_out (the member's
+//   cut-in after it); the others move the fighters themselves and keep the enemy's row;
+// - 407 / 408 / 424-430 turn the strips across at the cut (@tec_output_back_no = 0); 409 (at the cut) and 430 (as it
+//   starts) take them away, so do 559 / 563 / 1101 with set_chr_display_out; 408 / 409 hold pose 11 while they charge
+//   (frames 1-60), and 559 / 563 leave out the after-images ($btl_progress 0 only).
+// The first films stay as they are (the Z1 enemies use them): for an enemy from 101 on they are wrapped here — the Z3_
+// picture drawn in place of the Z1_ one on that film's own canvas, the strips and the cut-in on src/anime_goku_gohan.js's
+// stage (agBase), the cut found where the member is put in the middle.
+const SWAP = Object.fromEntries([
+  [pic('Z1_戦闘_必殺技_エネルギー弾.PNG'), pic('Z3_戦闘_必殺技_エネルギー弾.PNG')],
+  [pic('Z1_戦闘_必殺技_エネルギー弾(桃).PNG'), pic('Z3_戦闘_必殺技_エネルギー弾(桃).PNG')],
+  [pic('Z1_戦闘_必殺技_エネルギー弾(青).PNG'), pic('Z3_戦闘_必殺技_エネルギー弾(青).PNG')],
+  [pic('Z1_戦闘_必殺技_エネルギー弾_敵.PNG'), pic('Z3_戦闘_必殺技_エネルギー弾_敵.PNG')],
+  [pic('Z1_戦闘_必殺技_エネルギー波.PNG'), pic('Z3_戦闘_必殺技_エネルギー波.PNG')],
+  [pic('Z1_戦闘_必殺技_エネルギー波_中(桃).PNG'), pic('Z3_戦闘_必殺技_エネルギー波_中(桃).PNG')],
+  [pic('Z1_戦闘_必殺技_エネルギー波_円_中(桃).PNG'), pic('Z3_戦闘_必殺技_エネルギー波_円_中(桃).PNG')],
+  [pic('Z1_戦闘_必殺技_エネルギー波_敵_大.PNG'), pic('Z3_戦闘_必殺技_エネルギー波_敵_大.PNG')],
+  [pic('Z1_戦闘_必殺技_エネルギー波_特大.PNG'), pic('Z3_戦闘_必殺技_エネルギー波_特大.PNG')],
+  [pic('Z1_戦闘_必殺技_エネルギー液.PNG'), pic('Z3_戦闘_必殺技_エネルギー液.PNG')],
+  [pic('Z1_戦闘_必殺技_エネルギー液(青).PNG'), pic('Z3_戦闘_必殺技_エネルギー液(青).PNG')],
+  [pic('Z1_戦闘_必殺技_繰気弾(桃).PNG'), pic('Z3_戦闘_必殺技_繰気弾(桃).PNG')],
+  [pic('Z1_戦闘_必殺技_気を溜める5.PNG'), pic('Z3_戦闘_必殺技_気を溜める10.PNG')], // back 13
+  [pic('Z1_戦闘_必殺技_気を溜める7.PNG'), pic('Z3_戦闘_必殺技_気を溜める7.PNG')], // back 15
+  [pic('Z1_戦闘_必殺技_気を溜める8.png'), pic('Z3_戦闘_必殺技_気を溜める8.png')], // back 16
+  [pic('Z1_戦闘_必殺技_背景_衝撃波系.png'), pic('Z3_戦闘_必殺技_背景_衝撃波系.png')],
+  [pic('Z1_戦闘_必殺技_背景_魔族系(縦).png'), pic('Z3_戦闘_必殺技_背景_魔族系(縦).png')],
+  [pic('Z1_戦闘_必殺技_氷(FF3).PNG'), pic('Z3_戦闘_必殺技_氷(FF3).PNG')],
+]);
+// 403 溶解液 is 401 痺れ液 in blue (@ray_color 3): effect 16's ball and effect 44's liquid
+const SWAP_BLUE = { ...SWAP, [pic('Z1_戦闘_必殺技_エネルギー弾.PNG')]: pic('Z3_戦闘_必殺技_エネルギー弾(青).PNG'),
+  [pic('Z1_戦闘_必殺技_エネルギー液.PNG')]: pic('Z3_戦闘_必殺技_エネルギー液(青).PNG') };
+// skill → the Z3 switch (all.rb 59749-66930): cut @chr_cutin_flag, no @tec_output_back_no, small @tec_back_small before 32;
+// turn: the strips across at the cut; off: the strips go 'cut' / 'start'; out: set_chr_display_out (the member's cut-in
+// after the cut); pose11: frames 1-60; noAfter: no after-images
+const OLD = {
+  307: { no: 1, turn: true }, 321: { no: 1, turn: true }, // 317 / 331 → 407 (64676)
+  308: { cut: true, no: 1, small: true, turn: true, pose11: true }, 322: { cut: true, no: 1, small: true, turn: true, pose11: true }, // → 408
+  309: { cut: true, no: 1, small: true, off: 'cut', pose11: true }, 323: { cut: true, no: 1, small: true, off: 'cut', pose11: true }, // → 409
+  324: { no: 1, turn: true }, 325: { cut: true, no: 1, turn: true }, 326: { cut: true, no: 1, turn: true }, // → 424 / 425 / 426
+  328: { cut: true, no: 1, small: true, turn: true }, 329: { cut: true, no: 1, small: true, turn: true }, // → 428 / 429
+  330: { cut: true, no: 1, small: true, off: 'start' }, // → 430 (64935)
+  301: {}, 302: {}, 303: { swap: SWAP_BLUE }, // → 401 / 401 / 403 (64615-64645)
+  459: { cut: true, out: true, off: 'cut', noAfter: true }, 462: { cut: true, out: true }, // → 559 / 562 (65227 / 65263)
+  463: { cut: true, out: true, off: 'cut', noAfter: true }, 464: {}, 465: { cut: true }, // → 563-565
+  586: {}, 587: {}, 588: { cut: true }, 589: { cut: true }, 590: { cut: true, out: true }, // → 686-690 (65326-65397)
+  1: { out: true, off: 'cut' }, // 超特蘭克斯 → 1101 (59749)
+};
+const OLD_FILMS = ['gingerWave', 'nikkiBigWave', 'swordAttack', 'sanshoWave', 'sanshoBigWave', 'garlicBall', 'garlicBigWave',
+  'giantWave', 'blackHole', 'paralysis', 'shockwave', 'kishimeWhip', 'ebiIce', 'misoStretch', 'misoWave', 'misoBigWave',
+  'willowWave', 'photonStrike', 'willowMouth', 'gigantic', 'planetGeyser'];
+// this attack's state, or null when it is not one of these (an enemy numbered 101 on with a skill of OLD)
+function z3old(d) {
+  if (d.z3o !== undefined) return d.z3o;
+  const cfg = d.constructor === Duel && !d.p && foeId() >= 101 && OLD[d.skill];
+  d.z3o = cfg ? { cfg, cut: false, mirror: false, tec: true, no: cfg.no || 0 } : null;
+  if (!cfg) return null;
+  const swap = new Map(Object.entries(cfg.swap || SWAP).map(([a, b]) => { img(b); return [img(a).im, b]; }));
+  const drawImage = CanvasRenderingContext2D.prototype.drawImage;
+  d.c.drawImage = function (im, ...a) { // (the Z3_ one still loading: nothing, rather than the Z1_ one)
+    const to = swap.get(im);
+    if (!to) return drawImage.call(this, im, ...a);
+    const e = img(to);
+    if (e.ok) drawImage.call(this, e.im, ...a);
+  };
+  if (cfg.noAfter) d.afterImages = () => null;
+  return d.z3o;
+}
+// the strips and the cut-in (src/anime_goku_gohan.js agBase): from frame 30 of 32, or up already (a further target)
+function z3oStage(d, z, now) {
+  const st = d.agBase({ cut: z.cfg.cut, small: z.cfg.small, no: z.cfg.no });
+  if (now) { st.tecFrom = 0; if (z.cfg.cut) st.cutFrom = 0; }
+  return st;
+}
+// a film run frame by frame: pose 11 while it charges, and at the cut (the member put in the middle) what the switch does
+function* z3oRun(d, z, gen) {
+  if (z.cfg.off === 'start') z.tec = false;
+  for (let f = 0; ; f++) {
+    const r = gen.next();
+    if (r.done) return r.value;
+    if (z.cfg.pose11 && f >= 1 && f <= 60 && d.A.sp && d.A.frame === 0) d.A.frame = 11;
+    if (!z.cut && d.G.x === CENTER_CHAX && d.G.y === STD_Y) {
+      z.cut = true;
+      if (z.cfg.turn || z.cfg.off) z.no = 0;
+      if (z.cfg.off === 'cut') z.tec = false;
+      if (z.cfg.out && z.cfg.cut) z.mirror = true;
+    }
+    yield r.value;
+  }
+}
+for (const name of OLD_FILMS) {
+  const film = Duel.prototype[name];
+  Duel.prototype[name] = function* (...a) {
+    const z = z3old(this);
+    return z ? yield* z3oRun(this, z, film.apply(this, a)) : yield* film.apply(this, a);
+  };
+}
+// the further targets of 黑洞波 / 行星噴發 (@all_attack_count >= 2): no 31 / 32, the strips and the cut-in as the first left them
+for (const name of ['blackHoleAgain', 'geyserAgain']) {
+  const again = Duel.prototype[name];
+  Duel.prototype[name] = function* (...a) {
+    const z = z3old(this);
+    if (!z || this.agSt) return yield* again.apply(this, a); // (blackHole's own end)
+    z3oStage(this, z, true);
+    Object.assign(z, { tec: z.cfg.off !== 'start', no: 0, mirror: !!(z.cfg.out && z.cfg.cut) });
+    return yield* z3oRun(this, z, again.apply(this, a));
+  };
+}
+const z3oLaunch = Duel.prototype.launch, z3oRender = Duel.prototype.render;
+Object.assign(Duel.prototype, {
+  * launch() { // 32: the strips and the cut-in from its frame 30
+    const z = z3old(this);
+    if (z) z3oStage(this, z, false);
+    return yield* z3oLaunch.call(this);
+  },
+  render() { // the stage as the switch has it (src/anime_goku_gohan.js's aim() would turn the cut-in to the member's)
+    const z = z3old(this), st = this.agSt;
+    if (z && st) { st.mirror = z.mirror; st.tecNo = z.no; if (!z.tec) st.tecFrom = Infinity; }
+    return z3oRender.call(this);
+  },
+});
 
 // ?dev=aen2: a Z3 save (悟空・雅木茶・悟飯・貝吉塔 at level 60) against 弗利薩・古拉・金屬古拉; ?dev=aen2-127-128-129
 // against those enemies. In the battle, aen2Use(i, skill) makes enemy i use that move now (src/battle.js enemyAct, as

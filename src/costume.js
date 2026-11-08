@@ -14,7 +14,7 @@
 //   suit: 443, long hair; 2 red 道着: 447, short hair = switch 445); 173 特蘭克斯 (0 私服, 1 battle suit: 110, 2 tank top: 570,
 //   3 long hair no sword: 580, 4 long hair with the sword: 581 / 860); 174 his clothes kept (CE210); 175 巴達克 without the
 //   scouter (594); 176 琪琪; 177 18號 (always); switch 363 龜仙人's everyday clothes (always); switch 360: no 換裝 now.
-import { img, assetUrl, setImageAlias, putImage, loadImages, audio } from './core.js?v=20261108-1145';
+import { img, assetUrl, setImageAlias, putImage, loadImages, audio } from './core.js?v=20261108-1614';
 
 const PIC = 'Graphics/Pictures/';
 const era = (s) => Math.min(2, (s.var && s.var[40]) || 0);
@@ -73,6 +73,7 @@ const STRUNKS = [null, SHEET('ZG_戦闘_トランクス(超).PNG', 'ZG_戦闘_�
   SHEET('Z3_戦闘_トランクス(超)(剣なし・タンクトップ・長髪).png', 'Z3_戦闘_必殺技_トランクス(超)(剣なし・タンクトップ・長髪).png'),
   SHEET('Z3_戦闘_トランクス(超)(剣持ち長髪).png', 'Z3_戦闘_必殺技_トランクス(超)(剣持ち長髪).png')];
 const GOHAN_SS2 = SHEET('ZG_戦闘_ゴハン(超2).png', 'ZG_戦闘_必殺技_ゴハン(超2).png'); // (src/z4f.js puts it on 悟飯 as m.sprite)
+const CREW = { 27: 'トーマ', 28: 'セリパ', 29: 'トテッポ', 30: 'パンブーキン' };
 export function battleOf(s, id) {
   const v = s.var || {}, sw = s.sw || {}, ss = s.ss || {}, e = era(s);
   let r = null;
@@ -90,6 +91,7 @@ export function battleOf(s, id) {
   if (id === 5 && e === 2 && sw[445]) r = SHEET('ZG_戦闘_ゴハン.PNG', 'ZG_戦闘_必殺技_ゴハン.PNG'); // 短髪
   if (id === 18 && e === 2 && ss[5]) r = GOHAN_SS2;
   if (id === 5 && e === 2 && sw[445] && v[172] === 2) r = SHEET('ZG_戦闘_ゴハン_赤道着.png', 'ZG_戦闘_必殺技_ゴハン_赤道着.png');
+  if (CREW[id] && e === 2) r = SHEET(`Z3_戦闘_${CREW[id]}.png`, `Z3_戦闘_必殺技_${CREW[id]}.png`); // バーダック一味 (Z3_ by $top_file_name; the Great Ape is src/cards_a.js's)
   if (id === 18 && e === 2 && v[172] === 2) {
     r = ss[5] ? SHEET('ZG_戦闘_ゴハン(超2)_赤道着.png', 'ZG_戦闘_必殺技_ゴハン(超2)_赤道着.png')
       : SHEET('ZG_戦闘_ゴハン(超)_赤道着.png', 'ZG_戦闘_必殺技_ゴハン(超)_赤道着.png');

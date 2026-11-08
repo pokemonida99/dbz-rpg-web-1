@@ -9,19 +9,19 @@
 //   1383 Piccolo and Kami fuse, Cell → battle 1390 (Piccolo alone, 4 turns, enemy damage × 0.5) → 1401 太陽拳, the
 //     ending cut-ins → variable 41 = 2001 → 「Z3 完」 and the title screen (Z4 待續).
 // A "stop" (the original's Event_Check after each move on the board): the stick let go after flying a few squares.
-import { input, audio, toast, rand } from './core.js?v=20261108-1145';
-import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261108-1145';
-import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261108-1145';
-import { addMoves } from './anime.js?v=20261108-1145';
-import { makeMember, applyLevel } from './party.js?v=20261108-1145';
-import { superSaiyan } from './supersaiyan.js?v=20261108-1145';
-import { setTypical } from './growth.js?v=20261108-1145';
-import { eventCard } from './items.js?v=20261108-1145';
-import { applyEra } from './era.js?v=20261108-1145';
-import { newHand } from './battle.js?v=20261108-1145';
-import { cardSquare } from './cardgames.js?v=20261108-1145';
-import { spotTally } from './fieldmenu.js?v=20261108-1145';
-import { registerZ3, Z3, begin, fight, toField, party, addMember, member, heal, card, moveTo, setParty, hasChapter, nextZ3 } from './z3.js?v=20261108-1145';
+import { input, audio, toast, rand } from './core.js?v=20261108-1614';
+import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261108-1614';
+import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261108-1614';
+import { addMoves } from './anime.js?v=20261108-1614';
+import { makeMember, applyLevel } from './party.js?v=20261108-1614';
+import { superSaiyan } from './supersaiyan.js?v=20261108-1614';
+import { setTypical } from './growth.js?v=20261108-1614';
+import { eventCard } from './items.js?v=20261108-1614';
+import { applyEra } from './era.js?v=20261108-1614';
+import { newHand } from './battle.js?v=20261108-1614';
+import { cardSquare } from './cardgames.js?v=20261108-1614';
+import { spotTally } from './fieldmenu.js?v=20261108-1614';
+import { registerZ3, Z3, begin, fight, toField, party, addMember, member, heal, card, moveTo, setParty, hasChapter, nextZ3 } from './z3.js?v=20261108-1614';
 
 const MAPS = ['40'];
 const C = (game) => Z3(game).z3e;
@@ -321,12 +321,12 @@ async function afterAndroids(game, won) {
   await playPages(game, won ? 1376 : 1381, 1383);
   return battleCell(game);
 }
-// 1390: Piccolo alone against Cell, 4 turns (variable 94), the enemy's damage halved (variable 82)
+// 1390: Piccolo alone against Cell, 4 turns (variable 94); page 1383 turns on switch 40 → Cell attacks once a turn
+// (src/z3.js fight). Variable 82 (the enemy's damage ×n) is never set in the original: no halving.
 async function battleCell(game) {
   const s = game.state;
-  const r = await battle(game, 1390, { turns: 4, foeRate: s.var[82] || 0.5 });
+  const r = await battle(game, 1390, { turns: 4 });
   if (r === 'lose') return;
-  s.var[82] = 0;
   s.sw[143] = r === 'win'; // 撃破 / ターン数経過
   s.var[41] = 1401;
   await playPages(game, 1401);

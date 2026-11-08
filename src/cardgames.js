@@ -11,8 +11,8 @@
 // The goods and prizes follow the part of the story (variable 44, set by chk_card: see eraOf): the shop sells
 // Scene_Shop's z1～zG_cardlist (world.csq.shop) up to that part, the lottery and concentration draw from
 // create_get_card's card_id_z1～zg (world.csq.lot). Uses the card screen's overlay and helpers (src/items.js).
-import { img, audio, rand, toast, sleep } from './core.js?v=20261108-1145';
-import { cardState, gainCard, lose, maxOf, trim, iconCanvas, overlay, h, button, openShop } from './items.js?v=20261108-1145';
+import { img, audio, rand, toast, sleep } from './core.js?v=20261108-1614';
+import { cardState, gainCard, lose, maxOf, trim, iconCanvas, overlay, h, button, openShop } from './items.js?v=20261108-1614';
 
 const MG = 'Graphics/Pictures/カードミニゲーム素材1.png'; // (0,0,96,120) the lottery's link, (0,120,64,96) a card back
 const CARDS = 'Graphics/Pictures/カード関係.PNG'; // (64,96,64,96) the Z1 card frame (back side)
@@ -35,7 +35,7 @@ const CSS = `
 @keyframes compoflash { 50% { filter: brightness(3); } }
 #cards .rl { flex: 1; min-height: 0; width: 100%; overflow-y: auto; touch-action: pan-y; }
 #cards .rl:empty { display: none; }
-#cards .rl .tabs button { flex: 1; justify-content: center; padding: 4px; font-size: 15px; border: 2px solid #b08850; background: #fbe6bf; border-radius: 4px; }
+#cards .rl .tabs button { flex: 1; justify-content: center; padding: 4px; font-size: 15px; border: 2px solid #b08850; background: var(--cream-hi); border-radius: 4px; }
 #cards .rl .tabs button.on { background: #d0480c; color: #fff; border-color: #d0480c; }
 #cards .rl .tabs { position: sticky; top: 0; background: var(--cream); padding-bottom: 4px; z-index: 1; }
 #cards .rl .nm { flex: 1; min-width: 0; font-size: 12px; letter-spacing: -.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -168,7 +168,7 @@ export async function lottery(game) {
   let col = -1, blink = 0;
   const draw = () => {
     const c = cv.getContext('2d');
-    c.fillStyle = '#f6d7a0'; c.fillRect(0, 0, 384, 208);
+    c.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--cream') || '#f6d7a0'; c.fillRect(0, 0, 384, 208);
     const mg = img(MG);
     if (mg.ok) { c.drawImage(mg.im, 0, 0, 96, 120, 64, 44, 96, 120); c.drawImage(mg.im, 0, 0, 96, 120, 224, 44, 96, 120); }
     for (let k = 0; k < 6; k++) {

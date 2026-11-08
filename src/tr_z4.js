@@ -5,11 +5,11 @@
 //   z4boss   a boss square (9704 …): the battle page (poi.boss), 9755 (No. 13) goes on to 9756 (No. 13 merged)
 //   z4warp   map 94's squares between the androids (9761-9766)
 //   z4card40 map 95 カード特殊 (variable 44 = 40)
-import { audio, toast, sleep } from './core.js?v=20261108-1145';
-import { registerZ3, member, party, z3BackdropAt } from './z3.js?v=20261108-1145';
-import { cardSquare } from './cardgames.js?v=20261108-1145';
-import { spotTally } from './fieldmenu.js?v=20261108-1145';
-import { registerArea, registerTrSpot, enterArea, leaveArea, trBattle, goTo, registerBackdrop } from './timeroom.js?v=20261108-1145';
+import { audio, toast, sleep } from './core.js?v=20261108-1614';
+import { registerZ3, member, party, z3BackdropAt } from './z3.js?v=20261108-1614';
+import { cardSquare } from './cardgames.js?v=20261108-1614';
+import { spotTally } from './fieldmenu.js?v=20261108-1614';
+import { registerArea, registerTrSpot, enterArea, leaveArea, trBattle, goTo, registerBackdrop } from './timeroom.js?v=20261108-1614';
 
 const T = (game) => game.world.trZ4;
 const DOORS = [9702, 9711, 9721, 9731, 9741, 9751, 9771];

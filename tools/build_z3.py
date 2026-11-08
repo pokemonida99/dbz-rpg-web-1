@@ -90,7 +90,7 @@ def bgm_names(src):
                 elif part.isdigit():
                     cur.append(int(part))
             continue
-        m = re.search(r'set_battle_bgm_name_modetype "([^"]+)"', line)
+        m = re.match(r'\s*set_battle_bgm_name_modetype "([^"]+)"', line)  # (not a commented-out one: 20号 / 18号)
         if m and cur:
             for n in cur:
                 names.setdefault(n, m.group(1))

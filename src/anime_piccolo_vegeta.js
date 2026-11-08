@@ -15,10 +15,10 @@
 // to it) — the Z1 films (src/anime.js) have neither. Positions are written for the party attacking (the only side
 // that has these moves); an enemy using one gets the same film mirrored.
 // Frame numbers in the comments are the original's @battle_anime_frame of the pattern.
-import { audio, img, rand } from './core.js?v=20261108-1145';
-import { registerZ3, party, heal } from './z3.js?v=20261108-1145';
-import { applyLevel } from './party.js?v=20261108-1145';
-import { addMoves, ANIME_IMAGES, Duel, draw, filmCut, SW, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED, BACK_Y } from './anime.js?v=20261108-1145';
+import { audio, img, rand } from './core.js?v=20261108-1614';
+import { registerZ3, party, heal } from './z3.js?v=20261108-1614';
+import { applyLevel } from './party.js?v=20261108-1614';
+import { addMoves, ANIME_IMAGES, Duel, draw, filmCut, SW, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED, BACK_Y } from './anime.js?v=20261108-1614';
 
 addMoves({ 32: 'pvBakuretsuha', 39: 'pvGekiretsu', 40: 'pvMakuHoidan', 41: 'pvMakankoFull', // 比克
   122: 'pvVegetaWave', 125: 'pvBigBang', 130: 'pvFinalFlash' }); // 貝吉塔 / 超貝吉塔
@@ -65,14 +65,14 @@ let bakuretsuEnd = -1e9; // 爆裂波 hits every enemy: a film started right aft
 // who is fighting: the battle's current pair (src/battle.js this.duel), or the attacker guessed from the move
 function fighters(d) {
   const g = typeof window !== 'undefined' && window.__game, b = g && g.scene;
-  if (b && b.anim === d && b.duel) return { actor: b.duel.m.id, foe: Number(b.duel.f.id) };
+  if (b && b.anim === d && b.duel && d.constructor === Duel) return { actor: b.duel.m.id, foe: Number(b.duel.f.id) }; // (a combo's chain: by the sheet)
   const sheet = String(d.A.sheets.special || '');
   return { actor: [32, 39, 40, 41].includes(d.skill) ? 4 : sheet.includes('(超)') ? 19 : 12, foe: 0 };
 }
 
 // ---------- the Z3 stage: what output_back, the pattern's own blits and output_cutin draw around the fighters ----------
 function stage(d) {
-  const cfg = MOVES[d.skill], who = fighters(d);
+  const cfg = MOVES[d.skill] || {}, who = fighters(d); // ({}: one of these films inside a combo's chain, src/combo-anime.js)
   const st = { strip: null, cut: null, under: [], over: [], e: null, ex: 0, ey: 0, dx: 0, dy: 0, bt: 0, bf: 0, rt: 0, rf: 0, ef: 0, who,
     small: (d.R.sheets.size || 96) > 96 || (d.L.sheets.size || 96) > 96, mirror: !d.p };
   const flip = (c, f) => { if (!st.mirror) return f(); c.save(); c.translate(SW, 0); c.scale(-1, 1); f(); c.restore(); };
@@ -164,6 +164,8 @@ Object.assign(Duel.prototype, {
   },
   // the original's per-pattern reset (anime_pattern_fromat): the counters back to 0, no effect
   pvFormat(st) { st.bt = st.bf = st.rt = st.rf = st.ef = 0; st.e = null; },
+  // the stage pvLaunch set up, or (a film played by a combo's chain, which has no 必殺技! of its own) a new one
+  pvSt() { return this.pv || (this.pv = stage(this)); },
   // back 201 気を溜める(Z3): two frames of 136×142, the next every 17 calls
   pvAura(st, color, x = 228, y = 88) { st.under.push([AURA[color], back(st, 16, 2) * 136, 0, 136, 142, x, y]); },
   pvDemon(st) { st.under.push([DEMON_V, 0, back(st, 4, 3) * 480, 640, 356, 0, 0]); }, // back 2 必殺技発動時縦
@@ -210,7 +212,7 @@ Object.assign(Duel.prototype, {
 
   // ---- 比克 ----
   * pvBakuretsuha() { // 2132 爆裂波(ピッコロ), @ray_color 3: the blue aura, the burst over the demon backdrop, the shock
-    const st = this.pv;
+    const st = this.pvSt();
     this.pvFormat(st);
     this.se('Z3 変身');
     yield;
@@ -237,7 +239,7 @@ Object.assign(Duel.prototype, {
   },
 
   * pvGekiretsu() { // 2139 激烈光弾: the green aura, his close-up, the blinking ball, the half-circle wave
-    const st = this.pv;
+    const st = this.pvSt();
     this.pvFormat(st);
     st.dx = 350; st.dy = 114; st.blink = BLINK.green; st.half = HALF.green;
     this.se('Z3 変身');
@@ -279,7 +281,7 @@ Object.assign(Duel.prototype, {
   },
 
   * pvMakuHoidan() { // 2140 魔空包囲弾: eight balls fired off, then they close in round the enemy from every side
-    const st = this.pv;
+    const st = this.pvSt();
     this.pvFormat(st);
     st.dx = 340; st.dy = 96;
     this.se('Z3 変身');
@@ -340,7 +342,7 @@ Object.assign(Duel.prototype, {
   },
 
   * pvMakankoFull() { // 2136 魔貫光殺砲 (Z3): the shaking cut-in and the flash, his pose, the drill beam
-    const st = this.pv;
+    const st = this.pvSt();
     this.pvFormat(st);
     st.dx = 640 - 246 - 16; st.dy = 180;
     this.se('Z1 気を溜める3');
@@ -374,7 +376,7 @@ Object.assign(Duel.prototype, {
 
   // ---- 貝吉塔 ----
   * pvVegetaWave() { // 1221 (ベジータ)エネルギー波 (Z3), @ray_color 3: the small blue wave grows from his hand
-    const st = this.pv;
+    const st = this.pvSt();
     this.pvFormat(st);
     this.se('Z1 怪光線');
     this.pose(this.A, 1, true);
@@ -391,7 +393,7 @@ Object.assign(Duel.prototype, {
   },
 
   * pvBigBang() { // 2225 ビッグバンアタック: the blue aura, his close-up (the Super Saiyan's own), the blinking ball, the blast
-    const st = this.pv, ss = st.who.actor === 19;
+    const st = this.pvSt(), ss = st.who.actor === 19;
     this.pvFormat(st);
     st.dx = 338; st.dy = 156; st.blink = BLINK.blue; st.half = HALF.blue;
     this.se('Z3 変身');
@@ -431,7 +433,7 @@ Object.assign(Duel.prototype, {
   },
 
   * pvFinalFlash() { // 2230 ファイナルフラッシュ: the blue aura, the long charge in the ZG close-up, the beam from the right
-    const st = this.pv;
+    const st = this.pvSt();
     this.pvFormat(st);
     st.dx = 338; st.dy = 156; st.half = HALF.blue;
     this.se('Z3 変身');

@@ -1,7 +1,7 @@
 // Field: free flight over the map, random encounters, the boss marker.
-import { view, img, input, audio, rand } from './core.js?v=20261108-1145';
-import { renderMap, drawTile, tileSheetPaths } from './tiles.js?v=20261108-1145';
-import { flySprite, walkSprite } from './costume.js?v=20261108-1145';
+import { view, img, input, audio, rand } from './core.js?v=20261108-1614';
+import { renderMap, drawTile, tileSheetPaths } from './tiles.js?v=20261108-1614';
+import { flySprite, walkSprite } from './costume.js?v=20261108-1614';
 
 const SPEED = 150; // art pixels per second (~4.7 tiles/s)
 // fieldHooks.step(state, step) → the distance actually flown this frame (src/cards_a.js: 飛機 doubles it); encounters and

@@ -9,15 +9,15 @@
 //   z3e 第五章 人造人間        map 40                 1326-1420 → Z4 (variable 41 = 2001)
 // state.flags.z3: the chapter being played ('z3a' … 'z3e', 'done'); state.flags.z3At: { ch, at } a story step to pick
 // up again after loading (saved right before a story battle, as Z2 does). Variable 40 = 2 (the Z3 art, src/era.js).
-import { input, setFaces } from './core.js?v=20261108-1145';
-import { playScenes, addNodes } from './cutscene.js?v=20261108-1145';
-import { setParty, moveTo, enterMap, card } from './chapter2.js?v=20261108-1145';
-import { makeMember, levelUp } from './party.js?v=20261108-1145';
-import { eventCard } from './items.js?v=20261108-1145';
-import { setZ2Env } from './z2scenes.js?v=20261108-1145';
-import { FORMS, isSuper } from './supersaiyan.js?v=20261108-1145';
-import { applyEra } from './era.js?v=20261108-1145';
-import { newHand } from './battle.js?v=20261108-1145';
+import { input, setFaces } from './core.js?v=20261108-1614';
+import { playScenes, addNodes } from './cutscene.js?v=20261108-1614';
+import { setParty, moveTo, enterMap, card } from './chapter2.js?v=20261108-1614';
+import { makeMember, levelUp } from './party.js?v=20261108-1614';
+import { eventCard } from './items.js?v=20261108-1614';
+import { setZ2Env } from './z2scenes.js?v=20261108-1614';
+import { FORMS, isSuper } from './supersaiyan.js?v=20261108-1614';
+import { applyEra } from './era.js?v=20261108-1614';
+import { newHand } from './battle.js?v=20261108-1614';
 
 export const Z3 = (game) => game.world.z3;
 export const ORDER = ['z3a', 'z3b', 'z3c', 'z3d', 'z3e', 'z4a', 'z4b', 'z4c', 'z4d', 'z4e', 'z4f']; // (Z4 too: docs/z4-plan.md)
@@ -237,14 +237,26 @@ export function play(game, key, part) {
 // a story battle of battle_process (world.z3.battles[no]): saved right before it (state.flags.z3At = { ch, at }), so a
 // lost fight or a load starts again from here. opts: dmgRate (variable 81), turns (variable 94: the battle ends after
 // that many turns → 'break'), stopWhen, foeHp, loseOk … (src/battle.js). Returns 'win' | 'lose' | 'break'.
+// The event battle's switches the pages turn on are read here (a chapter's own opts win): 25-29 (one more attack,
+// battle.js attacks), 17 味方必ず回避, 18 敵必ず回避, 40 1回しか攻撃しない; afterwards they are cleared, with variables
+// 81 / 82, as reset_battle_flag does after every battle (all.rb 13288).
+export function resetBattleFlags(s) { // (a battle film too: src/z3c.js duelScene, set_battle_event)
+  for (const k of [17, 18, 25, 26, 27, 28, 29, 40]) s.sw[k] = false;
+  s.var[81] = 0;
+  s.var[82] = 0;
+}
 export async function fight(game, no, at, opts = {}) {
-  const s = game.state, b = Z3(game).battles[no];
+  const s = game.state, b = Z3(game).battles[no], sw = s.sw;
   s.flags.z3At = { ch: s.flags.z3, at: at ?? String(no) };
   game.save(true);
   game.busy = false;
-  const o = { ...opts };
+  const o = {
+    alone: !!sw[25], hp30: !!sw[26], hp40: !!sw[27], two: !!sw[28], hp50: !!sw[29],
+    partyEvade: !!sw[17], foesEvade: !!sw[18], once: !!sw[40], ...opts,
+  };
   if (o.turns) { const n = o.turns, prev = o.stopWhen; o.stopWhen = (bt) => bt.turn >= n + 1 || !!(prev && prev(bt)); delete o.turns; }
   const won = await game.startBattle(b.foes, true, b.bgm ? { bgm: b.bgm, ...o } : { eventBgm: true, ...o });
+  resetBattleFlags(s);
   begin(game);
   return won ? 'win' : game.lastResult;
 }

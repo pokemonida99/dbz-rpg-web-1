@@ -5,9 +5,9 @@
 //   47 魔閃光 2147 (93143), 41                 63 拡散エネルギー波 2163 (93390), 24  64 気円斬 2164 (93544), 41
 //   73 繰気弾 2173 (94003), 41                 82 四身の拳 2182 (94436), 23          83 気功砲 2183 (94508), 23
 //   84 四身の拳気功砲 2184 (94564), 46         92 超能力 2192 (94737), 25            123 爆発波 2223 (95039), 23
-import { audio, img } from './core.js?v=20261108-1145';
-import { Duel, STD_Y, CENTER_CHAX, RAY_SPEED } from './anime.js?v=20261108-1145';
-import { ZfStage } from './anime_zfighters.js?v=20261108-1145';
+import { audio, img } from './core.js?v=20261108-1614';
+import { Duel, STD_Y, CENTER_CHAX, RAY_SPEED } from './anime.js?v=20261108-1614';
+import { ZfStage } from './anime_zfighters.js?v=20261108-1614';
 
 const pic = (n) => `Graphics/Pictures/${n}`;
 const BLINK = pic('Z3_必殺技_超カメハメ波(球点滅).png'); // effects 235, 259

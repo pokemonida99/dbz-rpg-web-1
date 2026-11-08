@@ -2,9 +2,9 @@
 //   after Raditz → the other world, Garlic Jr., Karin Tower → team split (north / east / west pairs)
 //   → Snake Way (map 5, Goku alone) → King Kai → the north pair in the Sansho area (map 8) → 桑修 → end of chapter.
 // state.flags.ch2 tracks the step: 'snake' → 'north' → 'done'. Members not in the party wait in state.bench.
-import { img, audio, rand, input, sleep } from './core.js?v=20261108-1145';
-import { playScenes } from './cutscene.js?v=20261108-1145';
-import { makeMember } from './party.js?v=20261108-1145';
+import { img, audio, rand, input, sleep } from './core.js?v=20261108-1614';
+import { playScenes } from './cutscene.js?v=20261108-1614';
+import { makeMember } from './party.js?v=20261108-1614';
 
 const FACE_PARTY = 'Graphics/Pictures/Z1_顔味方.PNG'; // 64×64, one row per actor (actor id - 3)
 
@@ -210,7 +210,7 @@ css.textContent = `
 .ch2-team .slots b { color: #d0480c; font-weight: 400; }
 .ch2-team .roster { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .ch2-team .mem { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 0; font-size: 14px; color: var(--ink);
-  border: 8px solid transparent; border-image: url("assets/ui/frame.png") 8 / 8px stretch; background: var(--cream) padding-box; }
+  border: 8px solid transparent; border-image: var(--frame) var(--frame-k) / 8px stretch; background: var(--cream) padding-box; }
 .ch2-team .mem:disabled { opacity: .3; }
 .ch2-team .mem.undo { justify-content: center; font-size: 16px; }
 .ch2-team .ask { font-size: 18px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }

@@ -4,8 +4,8 @@
 // (output_cutin draws nothing while $btl_progress == 0), so neither does this.
 // A ComboDuel is a Duel whose left side can be any of the participants: `crew` = { actorId: { normal, special } }.
 // Frame numbers in the comments are the original's @battle_anime_frame.
-import { audio } from './core.js?v=20261108-1145';
-import { Duel, draw, spark, BALL, RAY, BACKS, MAKANKO_BALL, POWER_BALL, BOOM, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED, SW, moveFilm, ANIME_IMAGES } from './anime.js?v=20261108-1145';
+import { audio } from './core.js?v=20261108-1614';
+import { Duel, draw, spark, BALL, RAY, BACKS, MAKANKO_BALL, POWER_BALL, BOOM, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED, SW, moveFilm, ANIME_IMAGES } from './anime.js?v=20261108-1614';
 
 // combo skill id → [film, damage pattern]
 const FILMS = {
@@ -959,6 +959,7 @@ export class ComboDuel extends Duel {
     for (let n = 0; n < order.length; n++) {
       this.L.sheets = this.crew[order[n]];
       if (n > 0) { this.A.y = STD_Y; this.A.x = TEC_CENTER; this.G.y = -200; this.pose(this.A, 0, true); yield* this.wait(10); }
+      this.pv = null; // (src/anime_piccolo_vegeta.js: each member's film its own stage)
       yield* this[tecs[n]]();
       if (n < order.length - 1) { this.effect(null); this.behind(null); audio.seStop(); }
     }

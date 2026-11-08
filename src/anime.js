@@ -3,7 +3,7 @@
 // the enemy on the right — played at 60 frames a second with the original sprites, beams and sounds.
 // Positions, speeds and frame numbers follow the original's anime_pattern / effect_pattern / back_anime_pattern
 // (pattern numbers are noted on each piece). The stage is drawn into its own canvas and cropped to the phone.
-import { img, audio, rand } from './core.js?v=20261108-1145';
+import { img, audio, rand } from './core.js?v=20261108-1614';
 
 export const SW = 640, SH = 356;
 // a film drew its cut-in (y 292-356) this frame: on a phone that band is below the stage's window (src/battle.js drawFilm)
@@ -53,6 +53,8 @@ const BACKS = {
   galick: pic('Z1_戦闘_必殺技_気を溜める8.png'), kaioken: pic('Z1_戦闘_必殺技_気を溜める9.PNG'),
   auraBlue: pic('Z1_戦闘_必殺技_気を溜める(青).PNG'),
 };
+const SHOCK_ERA = [BACKS.shock, pic('Z2_戦闘_必殺技_背景_衝撃波系.png'), pic('Z3_戦闘_必殺技_背景_衝撃波系.png')];
+const era40 = () => { const s = globalThis.__game && globalThis.__game.state; return (s && s.var && s.var[40]) || 0; };
 // the Willow chapter: Dr. Willow's rush (two 472×244 frames), the 96×96 after-image, the ice, the big explosion (Z2)
 const WILLOW_RUSH = pic('Z1_戦闘_必殺技_突進(ウィロー).png');
 const AFTER_BIG = pic('戦闘アニメ96×96用回避.png');
@@ -63,7 +65,7 @@ const BOOM_BIG = pic('戦闘アニメ_爆発5.PNG'); // 4 frames of 158×160
 const MOON = pic('Z1_戦闘_必殺技_満月.PNG');
 const GOHAN_SP = pic('Z1_戦闘_必殺技_ゴハン.PNG');
 
-export const ANIME_IMAGES = [SPARK, BOOM, DIGITS, WILLOW_RUSH, AFTER_BIG, ICE, BOOM_BIG, MOON, GOHAN_SP, MAKANKO_BALL, PIERCE_FRONT, RAY_DOWN, KIENZAN, POWER_BALL, SOKIDAN, SOKIDAN_PINK, ...Object.values(BALL),
+export const ANIME_IMAGES = [...SHOCK_ERA.slice(1), SPARK, BOOM, DIGITS, WILLOW_RUSH, AFTER_BIG, ICE, BOOM_BIG, MOON, GOHAN_SP, MAKANKO_BALL, PIERCE_FRONT, RAY_DOWN, KIENZAN, POWER_BALL, SOKIDAN, SOKIDAN_PINK, ...Object.values(BALL),
   ...Object.values(RAY).map((r) => r[0]), ...Object.values(BACKS)];
 
 // special moves by skill id → the original's animation (attack pattern = skill id + 10)
@@ -383,8 +385,9 @@ export class Duel {
     return (c, t) => { const k = Math.floor(t / 5) % n; draw(c, sheet, 0, k * stride, w, h, x, y); };
   }
   // back 1: the shock-wave streaks behind the defender
-  shockBack() {
-    return (c, t) => { const k = Math.floor(t / 5) % 3; draw(c, BACKS.shock, 0, k * 180, 640, 180, 0, 80); };
+  shockBack() { // ($btl_top_file_name: the party's Z2_ / Z3_ one from Z2 on, all.rb 133823)
+    const sheet = this.p ? SHOCK_ERA[Math.min(2, era40())] : BACKS.shock;
+    return (c, t) => { const k = Math.floor(t / 5) % 3; draw(c, sheet, 0, k * 180, 640, 180, 0, 80); };
   }
   // back 9: the 気功砲 column coming down on the defender
   kikouBack() {

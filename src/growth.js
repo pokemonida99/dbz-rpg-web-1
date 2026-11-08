@@ -9,8 +9,8 @@
 // got {skill: 1} learned, set {skill: 1} ever set, zp, maxLv (top level reached), plus {hp,ki,atk,def,agi} from ZP,
 // ko (knocked out: stays out until HP is back to full or the party rests).
 // Per game: state.skillSeen {skill: n} ($skill_set_get_num[1], which skills the 追加技能 list offers), var[305] pool.
-import { audio, say, choose, rand, VERSION } from './core.js?v=20261108-1145';
-import { levelUp, levelCap } from './party.js?v=20261108-1145';
+import { audio, say, choose, rand, VERSION } from './core.js?v=20261108-1614';
+import { levelUp, levelCap } from './party.js?v=20261108-1614';
 
 const SKILL_GET_MAX = 9; // $skill_get_max
 const HINSHI = 31; // $hinshi_hp: below this HP % a member is "dying"
@@ -707,7 +707,7 @@ import(`./items.js?v=${VERSION}`).then((it) => { if (it.fieldCards) { cardsMod =
 
 const css = document.createElement('style');
 css.textContent = `
-.gr-num { position: absolute; left: 8px; right: 8px; bottom: calc(var(--safe-b) + 150px); z-index: 70; background: #ffd8a0;
+.gr-num { position: absolute; left: 8px; right: 8px; bottom: calc(var(--safe-b) + 150px); z-index: 70; background: var(--cream);
   border: 4px solid #c8642a; padding: 8px; display: flex; flex-direction: column; gap: 6px; color: var(--ink); }
 .gr-val { font-size: 28px; text-align: center; letter-spacing: 4px; }
 .gr-row { display: flex; gap: 4px; }

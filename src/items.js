@@ -9,10 +9,10 @@
 //               effects (power, guard, first strike, dodge, KI-free move, stopping or weakening an enemy, scouter).
 // Data: world.items / cardShop / drops (tools/build_items.py). Battle hooks: the exports under "battle" below.
 // Menus: the 卡牌 slot of src/partymenu.js (battle 菜單 and field menu, battle = null on the field).
-import { img, audio, toast, rand } from './core.js?v=20261108-1145';
-import { newCard } from './battle.js?v=20261108-1145';
-import { menuEntries, hooks } from './partymenu.js?v=20261108-1145';
-import { ext } from './growth.js?v=20261108-1145'; // (先手必勝, カードドロップ: src/skills_d.js)
+import { img, audio, toast, rand } from './core.js?v=20261108-1614';
+import { newCard } from './battle.js?v=20261108-1614';
+import { menuEntries, hooks } from './partymenu.js?v=20261108-1614';
+import { ext } from './growth.js?v=20261108-1614'; // (先手必勝, カードドロップ: src/skills_d.js)
 
 const ICONS = 'ui/item_cards.png'; // 64×64 icons, 10 a row, the Z1 column of the original 顔カード.PNG
 const CARDS = 'Graphics/Pictures/カード関係.PNG';
@@ -337,15 +337,15 @@ function faceCanvas(sheet, row, col = 0) {
 const CSS = `
 #cards { position: absolute; inset: 0; z-index: 45; background: rgba(0,0,0,.72); display: flex; flex-direction: column; gap: 6px;
   padding: calc(var(--safe-t) + 8px) 8px calc(var(--safe-b) + 8px); color: var(--ink); }
-#cards .cw { border: 10px solid transparent; border-image: url("assets/ui/frame.png") 8 / 10px stretch; background: var(--cream) padding-box; padding: 4px 6px; }
+#cards .cw { border: 10px solid transparent; border-image: var(--frame) var(--frame-k) / 10px stretch; background: var(--cream) padding-box; padding: 4px 6px; }
 #cards .head { display: flex; align-items: center; justify-content: space-between; font-size: 19px; }
 #cards .head small { font-size: 14px; color: #6a4a24; }
 #cards .tabs { display: flex; gap: 6px; }
-#cards .tabs button { flex: 1; padding: 4px; font-size: 16px; border: 2px solid #b08850; background: #fbe6bf; color: var(--ink); border-radius: 4px; }
+#cards .tabs button { flex: 1; padding: 4px; font-size: 16px; border: 2px solid #b08850; background: var(--cream-hi); color: var(--ink); border-radius: 4px; }
 #cards .tabs button.on { background: #d0480c; color: #fff; border-color: #d0480c; }
 #cards .list { flex: 1; min-height: 0; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; align-content: start; touch-action: pan-y; }
 #cards .it { display: flex; align-items: center; gap: 6px; padding: 3px; border: 2px solid transparent; background: none; text-align: left; min-width: 0; }
-#cards .it.sel { border-color: #d0480c; background: #fbe6bf; }
+#cards .it.sel { border-color: #d0480c; background: var(--cream-hi); }
 #cards .it.off { opacity: .45; }
 #cards .it canvas { image-rendering: pixelated; flex: none; }
 #cards .it .nm { font-size: 15px; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -361,7 +361,7 @@ const CSS = `
 #cards .acts button.bad { background: #c33; color: #fff; }
 #cards .head small.tick { color: #d0480c; }
 #cards .it.flash { animation: cflash .5s steps(4); }
-@keyframes cflash { 0%, 50% { background: #fff6c8; } 25%, 75% { background: #ffd23c; } 100% { background: #fbe6bf; } }
+@keyframes cflash { 0%, 50% { background: #fff6c8; } 25%, 75% { background: #ffd23c; } 100% { background: var(--cream-hi); } }
 #cards .ct.bump { display: inline-block; animation: cbump .4s steps(5); }
 @keyframes cbump { 0% { transform: scale(1); } 40% { transform: scale(1.8); color: #d0480c; } 100% { transform: scale(1); } }
 #cards .cw { position: relative; }

@@ -6,18 +6,18 @@
 // The scenes of chapters 3 and 4 (z1field 1230-1325, 1431-1434, 1581) and the story nodes both use are here; src/z3d.js
 // imports them. Also here: CE45 (the Super Saiyan transformation pictures) and set_battle_event (a battle film with no
 // input, src/anime.js Duel).
-import { audio, img, loadImages, view } from './core.js?v=20261108-1145';
-import { addScenes, addNodes } from './cutscene.js?v=20261108-1145';
-import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261108-1145';
-import { makeMember, applyLevel } from './party.js?v=20261108-1145';
-import { ensure } from './growth.js?v=20261108-1145';
-import { superSaiyan } from './supersaiyan.js?v=20261108-1145';
-import { newHand } from './battle.js?v=20261108-1145';
-import { Duel, SW, SH, ANIME_IMAGES, addMoves } from './anime.js?v=20261108-1145';
-import { drawAnim, animFrames } from './vxanim.js?v=20261108-1145'; // (map 36: animation 4 on the landed pod)
+import { audio, img, loadImages, view } from './core.js?v=20261108-1614';
+import { addScenes, addNodes } from './cutscene.js?v=20261108-1614';
+import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261108-1614';
+import { makeMember, applyLevel } from './party.js?v=20261108-1614';
+import { ensure } from './growth.js?v=20261108-1614';
+import { superSaiyan } from './supersaiyan.js?v=20261108-1614';
+import { newHand } from './battle.js?v=20261108-1614';
+import { Duel, SW, SH, ANIME_IMAGES, addMoves } from './anime.js?v=20261108-1614';
+import { drawAnim, animFrames } from './vxanim.js?v=20261108-1614'; // (map 36: animation 4 on the landed pod)
 import {
-  registerZ3, nextZ3, Z3, begin, play, fight, toField, party, addMember, member, heal, card, moveTo,
-} from './z3.js?v=20261108-1145';
+  registerZ3, nextZ3, Z3, begin, play, fight, toField, party, addMember, member, heal, card, moveTo, resetBattleFlags,
+} from './z3.js?v=20261108-1614';
 
 const MAPS = ['36'];
 
@@ -182,25 +182,33 @@ export async function transformFilm(st, ui, who, s) {
 }
 
 // ---------- set_battle_event: a battle film nobody plays (Scene_Db_Battle_Anime with $game_variables[96]) ----------
-// 1: Trunks (a Super Saiyan) against Mecha Frieza — Frieza attacks and misses, the Shining Sword Attack (the action 187
-//    = move 177) ends him; 2: Goku against Trunks (enemy 134 twice) — Goku's blow and the first Trunks' miss, the
-//    second one's lands. The damage is not shown or dealt ($game_variables[96] != 0: no damage result).
+// 1: Trunks (a Super Saiyan) against Mecha Frieza — Frieza's Death Ball (the action 410 = move 400) misses, the Shining
+//    Sword Attack (the action 187 = move 177) ends him; switch 135 (page 19): no BGM stop, no encounter sound, the
+//    story's music goes on. 2: Goku against Trunks (enemy 134 twice, all.rb 52535) — Goku's blow lands (switch 129),
+//    the first Trunks' sword (the action 182 → 2272: move 407) lands, the second one's misses (@event_atc_hit
+//    [false, true]: true = evaded); @set_bgm 14 = Z3 戦闘1. The damage is not shown or dealt ($game_variables[96] != 0).
 async function duelScene(st, ctx, quiet, key) {
+  if (gameRef) resetBattleFlags(gameRef.state); // (the film reads none of them; skipped or not, they end with it)
   if (quiet || !gameRef) return;
   const w = gameRef.world, d = C(gameRef).duels[key];
   const m = gameRef.state.party.find((x) => x.id === d.party) || member(gameRef, d.party);
   const a = w.actors[m.id], f = w.enemies[d.foe];
   const party = { normal: a.sprite, special: a.special }, foe = { normal: f.portrait, special: f.sprite, size: f.size };
   const acts = key === '1241'
-    ? [{ p: false, skill: null, hit: false }, { p: true, skill: 177, hit: true }]
-    : [{ p: true, skill: null, hit: false }, { p: false, skill: null, hit: false }, { p: false, skill: null, hit: true }];
+    ? [{ p: false, skill: 400, hit: false }, { p: true, skill: 177, hit: true }]
+    : [{ p: true, skill: null, hit: true }, { p: false, skill: 407, hit: true }, { p: false, skill: 407, hit: false }];
   await loadImages([party.normal, party.special, foe.normal, foe.special, d.backdrop, ...ANIME_IMAGES]);
-  await duelFilm(st.ui, acts.map((x) => ({ party, foe, ray: a.ray, ...x })), d.backdrop);
+  await duelFilm(st.ui, acts.map((x) => ({ party, foe, ray: a.ray, ...x })), d.backdrop,
+    key === '1241' ? { quiet: true } : { bgm: 'Z3 戦闘1' });
 }
-export async function duelFilm(ui, acts, backdrop) {
+// opts.quiet: switch 135 エンカウント音鳴らさない (the music goes on, no encounter sound); opts.bgm: @set_bgm
+export async function duelFilm(ui, acts, backdrop, opts = {}) {
   ui.dlg.hidden = true;
-  audio.stopBgm();
-  audio.se('Z1 敵発見', 80); // ($BGM_encount, as a battle starts)
+  if (!opts.quiet) {
+    audio.stopBgm();
+    audio.se('Z1 敵発見', 80); // ($BGM_encount, as a battle starts)
+  }
+  if (opts.bgm) audio.playBgm(opts.bgm);
   const cv = document.createElement('canvas');
   cv.style.zIndex = '1';
   ui.el.appendChild(cv);

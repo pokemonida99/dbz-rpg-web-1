@@ -4,15 +4,15 @@
 //   the herb man and the dinosaur (5-star ball), the mine and the gatekeeper (dynamite), the base (Kraz, battle 1197) →
 //   1200: four balls → Vegeta alone on map 34: the barrier and its three generators, the base (Ear, battle 1216) →
 //   1217: the others come, seven balls → map 35 Porunga (two wishes) → variable 41 = 1440 → 第二章 (src/z3b.js).
-import { addScenes, addNodes } from './cutscene.js?v=20261108-1145';
-import { makeMember, applyLevel } from './party.js?v=20261108-1145';
-import { eventCard } from './items.js?v=20261108-1145';
-import { ensure } from './growth.js?v=20261108-1145';
-import { superSaiyan } from './supersaiyan.js?v=20261108-1145';
-import { newHand } from './battle.js?v=20261108-1145';
+import { addScenes, addNodes } from './cutscene.js?v=20261108-1614';
+import { makeMember, applyLevel } from './party.js?v=20261108-1614';
+import { eventCard } from './items.js?v=20261108-1614';
+import { ensure } from './growth.js?v=20261108-1614';
+import { superSaiyan } from './supersaiyan.js?v=20261108-1614';
+import { newHand } from './battle.js?v=20261108-1614';
 import {
   registerZ3, startZ3, nextZ3, Z3, begin, play, fight, toField, party, member, heal, card, moveTo,
-} from './z3.js?v=20261108-1145';
+} from './z3.js?v=20261108-1614';
 
 const MAPS = ['33', '34', '35'];
 
@@ -110,10 +110,14 @@ async function start(game) {
   await play(game, '1100', 0);
   return openingBattle(game);
 }
-// battle 1107: variable 81 = 20 (the party's damage ×20), afterwards variable 95 = 1151
+// battle_process $Battle_MapID of this chapter's battles (all.rb 182903-182915): 0 Namek, 4 the hills, 6 the snow
+const BACKDROP = { 1107: 0, 1197: 4, 1216: 6 };
+const backdrop = (no) => ({ backdrop: `bg/z3_battle_${BACKDROP[no]}.png` });
+// battle 1107: variable 81 = 20 (the party's damage ×20), switch 17 (page 1100: the party always evades, src/z3.js
+// fight), afterwards variable 95 = 1151
 async function openingBattle(game) {
   const s = game.state;
-  if (await fight(game, '1107', 'opening', { dmgRate: C(game).opening.dmgRate }) !== 'win') return;
+  if (await fight(game, '1107', 'opening', { dmgRate: C(game).opening.dmgRate, ...backdrop(1107) }) !== 'win') return;
   s.var[81] = 0;
   s.var[41] = 1151;
   await play(game, '1151'); // ends: $partyc, variable 43 = 51
@@ -145,7 +149,7 @@ async function base33(game) {
 }
 async function base33Battle(game) {
   const s = game.state;
-  if (await fight(game, '1197', 'base33') !== 'win') return;
+  if (await fight(game, '1197', 'base33', backdrop(1197)) !== 'win') return;
   s.var[41] = 1200;
   await play(game, '1200'); // the balls, CE180, variable 43 + 1, $partyc = [12]
   const c = C(game);
@@ -163,7 +167,7 @@ async function base34(game) {
 }
 async function base34Battle(game) {
   const s = game.state;
-  if (await fight(game, '1216', 'base34') !== 'win') return;
+  if (await fight(game, '1216', 'base34', backdrop(1216)) !== 'win') return;
   s.var[41] = 1217;
   await play(game, '1217'); // the others come ($partyc in the page); Vegeta throws the balls and goes
   party(game, C(game).after.party);

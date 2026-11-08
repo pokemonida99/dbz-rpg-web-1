@@ -8,9 +8,9 @@
 //     absorbed (CE68), the film 2281 (Final Flash) → 2291 Vegeta beaten; Goku and Gohan in the room → map 44 (9,8)
 //   map 44 (15,4): 2331 → 流派一致修行 (src/z3train.js, pattern 2: 超悟空・超悟飯) → 2341 Cell's tournament, No. 16,
 //     Goku sees the perfect Cell, off to New Namek → variable 41 = 2701: 第四章 (金屬古拉)
-import { registerZ3, nextZ3, Z3, toField, party, moveTo, card } from './z3.js?v=20261108-0950';
-import { ryuhaPairTraining } from './z3train.js?v=20261108-0950';
-import { chapterScenes, battle, playPages, stop, use, devBase } from './z4b.js?v=20261108-0950';
+import { registerZ3, nextZ3, Z3, toField, party, moveTo, card } from './z3.js?v=20261108-1000';
+import { ryuhaPairTraining } from './z3train.js?v=20261108-1000';
+import { chapterScenes, battle, playPages, stop, use, devBase } from './z4b.js?v=20261108-1000';
 
 const MAPS = ['46', '44'];
 const C = (game) => Z3(game).z4c;

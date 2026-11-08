@@ -61,6 +61,7 @@ for i in range(46):
             px[(x + dx) % 128, (y + dy) % 128] = (143, 180, 255, 255)
 sky.save(os.path.join(root, 'assets', 'ui', 'stars.png'))
 # the boot screen's logo: the original title's DRAGON BALL Z (Graphics/System/Title.png), its black made clear
+# (index.html now shows assets/ui/logo_hd.png instead: GPT redrew this crop crisp, 2026-11-08, magenta keyed out)
 logo = Image.open(os.path.join(root, 'assets', 'Graphics', 'System', 'Title.png')).convert('RGBA').crop((36, 28, 344, 124))
 lp = logo.load()
 for y in range(logo.height):

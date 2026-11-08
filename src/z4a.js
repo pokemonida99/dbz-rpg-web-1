@@ -6,16 +6,16 @@
 //   map 45 (the flight, a short film here) → variable 41 = 2091 → 第二章 (src/z4b.js).
 // Map 44 (精神と時の部屋) is shared by Z4 chapters 1 / 3 / 5: its training spot is { chapter: 'z4', page: 'htc' },
 // handled by whichever chapter is being played (variable 121 says who trains).
-import { audio, img } from './core.js?v=20261108-0950';
-import { addScenes } from './cutscene.js?v=20261108-0950';
-import { makeMember, applyLevel } from './party.js?v=20261108-0950';
-import { superSaiyan } from './supersaiyan.js?v=20261108-0950';
-import { newHand } from './battle.js?v=20261108-0950';
-import { applyEra } from './era.js?v=20261108-0950';
-import { ryuhaPairTraining } from './z3train.js?v=20261108-0950';
+import { audio, img } from './core.js?v=20261108-1000';
+import { addScenes } from './cutscene.js?v=20261108-1000';
+import { makeMember, applyLevel } from './party.js?v=20261108-1000';
+import { superSaiyan } from './supersaiyan.js?v=20261108-1000';
+import { newHand } from './battle.js?v=20261108-1000';
+import { applyEra } from './era.js?v=20261108-1000';
+import { ryuhaPairTraining } from './z3train.js?v=20261108-1000';
 import {
   registerZ3, nextZ3, Z3, begin, play, fight, toField, party, heal, card, moveTo,
-} from './z3.js?v=20261108-0950';
+} from './z3.js?v=20261108-1000';
 
 const MAPS = ['42', '44', '45'];
 

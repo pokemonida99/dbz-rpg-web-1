@@ -5,9 +5,9 @@
 // runs out he says 「從頭開始吧……」 and the map starts over (rocks back, Gohan at the start). The action button on
 // the Dragon Ball ends it (CE 76: variable 41 = 420). Data: world.pond (tools/build_z2pond.py); rules: docs/z2-pond.md.
 // Runs at the original's 60 frames a second whatever the display rate; window.__pond.tick(n) steps it by hand.
-import { img, audio, say, input, rand } from './core.js?v=20261108-0950';
-import { renderMap, tileSheetPaths } from './tiles.js?v=20261108-0950';
-import { el, overlay } from './fieldmenu.js?v=20261108-0950';
+import { img, audio, say, input, rand } from './core.js?v=20261108-1000';
+import { renderMap, tileSheetPaths } from './tiles.js?v=20261108-1000';
+import { el, overlay } from './fieldmenu.js?v=20261108-1000';
 
 const DIR = { 2: [0, 1], 4: [-1, 0], 6: [1, 0], 8: [0, -1] }; // RPG Maker directions
 const ROW = { 2: 0, 4: 1, 6: 2, 8: 3 }; // character sheet rows

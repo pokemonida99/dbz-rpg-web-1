@@ -4,9 +4,9 @@
 // (src/opening.js), with its 略過 button. Events come from tools/build_data.py script(): the usual runEvent nodes plus
 // {v41} (the page, which z1field reads), {z1field}, {fadeout}.
 // Skipping still applies every switch, variable and card of the rest of the event, so the story flags stay right.
-import { audio, loadImages, toast } from './core.js?v=20261108-0950';
-import { eventCard } from './items.js?v=20261108-0950';
-import { overlay, Stage, say, SCENE_X, SCENE_Y, SCROLL_X, ENE, PLAY_X } from './opening.js?v=20261108-0950';
+import { audio, loadImages, toast } from './core.js?v=20261108-1000';
+import { eventCard } from './items.js?v=20261108-1000';
+import { overlay, Stage, say, SCENE_X, SCENE_Y, SCROLL_X, ENE, PLAY_X } from './opening.js?v=20261108-1000';
 
 export const cutRules = { wait: (n) => n }; // 事件等待 of a later round (switch 882, src/laps_rules.js)
 

@@ -124,6 +124,14 @@ def add(world, h):
         m['hero'] = D('map%03d' % mid)['events']['2']['pages'][-1]['graphic']['tile_id']
         m['grid'] = True
         m['ev'] = build_timeroom.map_events(D, mid, m['h'])
+    # the cave (map 22): its events as the original's — event 7 is キュイ (enemy1 character 0 facing right) until switch 87
+    # (beaten); 5 and 6 the two ways out. The original draws him only from switch 96 (Frieza's gang came) though its
+    # Event_Check (all.rb 185113) lets him be fought before: here he stands there whenever he can be fought
+    ev = build_timeroom.map_events(D, 22, world['maps']['22']['h'])
+    for x, y, evp in ev:
+        if (x, y) == (5, 25):
+            evp[1][0] = []
+    world['maps']['22']['ev'] = ev
     for mid in ('20', '21'):  # the gravity room / King Kai's planet: the ring of floor tiles only (src/field.js path maps)
         world['maps'][mid]['path'] = [1544]
 

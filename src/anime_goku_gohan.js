@@ -9,12 +9,12 @@
 // @tec_output_back from frame 30 of pattern 32) and the cut-in (output_cutin: the member's 味方カットイン, after the
 // cut to the defender the enemy's 敵カットイン). src/anime.js has neither yet, so these films bring their own: a wrap
 // of launch() and render() that only acts for them (agSt). Frame numbers in the comments are @battle_anime_frame.
-import { audio, img, loadImages } from './core.js?v=20261108-0950';
-import { Duel, addMoves, moveFilm, draw, filmCut, spark, SW, SH, STD_Y, CENTER_ENEX, CENTER_CHAX, TEC_CENTER, RAY_SPEED } from './anime.js?v=20261108-0950';
-import { battleHooks } from './battle.js?v=20261108-0950';
-import { registerZ3, party, heal } from './z3.js?v=20261108-0950';
-import { superSaiyan, moveTransforms } from './supersaiyan.js?v=20261108-0950';
-import { applyLevel } from './party.js?v=20261108-0950';
+import { audio, img, loadImages } from './core.js?v=20261108-1000';
+import { Duel, addMoves, moveFilm, draw, filmCut, spark, SW, SH, STD_Y, CENTER_ENEX, CENTER_CHAX, TEC_CENTER, RAY_SPEED } from './anime.js?v=20261108-1000';
+import { battleHooks } from './battle.js?v=20261108-1000';
+import { registerZ3, party, heal } from './z3.js?v=20261108-1000';
+import { superSaiyan, moveTransforms } from './supersaiyan.js?v=20261108-1000';
+import { applyLevel } from './party.js?v=20261108-1000';
 
 addMoves({
   26: 'angaSuperKame', 27: 'angaShunkanKame', 29: 'angaSs', // 悟空

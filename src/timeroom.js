@@ -8,16 +8,16 @@
 //   area      a door to an era's area (area = the page the original runs, 9102 …): phase 2 registers them here
 // state.flags.tr = what page 15 kept for the way back (variables 231-235, $story_partyc, $story_sp_saiya); variable 43 is
 // 999 inside, the story's value comes back on leaving.
-import { audio, say, choose, sleep } from './core.js?v=20261108-0950';
-import { registerZ3, begin, play, heal, member, party, startChapter } from './z3.js?v=20261108-0950';
-import { moveTo, enterMap } from './chapter2.js?v=20261108-0950';
-import { syncSuperSaiyan, FORMS } from './supersaiyan.js?v=20261108-0950';
-import { eventCard, fieldCards } from './items.js?v=20261108-0950';
-import { memberChange } from './partymenu.js?v=20261108-0950';
-import { holds } from './field.js?v=20261108-0950';
-import { apeOffAll } from './cards_a.js?v=20261108-0950'; // CE160 大猿全解除
-import { applyLevel } from './party.js?v=20261108-0950';
-import { ensure } from './growth.js?v=20261108-0950';
+import { audio, say, choose, sleep } from './core.js?v=20261108-1000';
+import { registerZ3, begin, play, heal, member, party, startChapter } from './z3.js?v=20261108-1000';
+import { moveTo, enterMap } from './chapter2.js?v=20261108-1000';
+import { syncSuperSaiyan, FORMS } from './supersaiyan.js?v=20261108-1000';
+import { eventCard, fieldCards } from './items.js?v=20261108-1000';
+import { memberChange } from './partymenu.js?v=20261108-1000';
+import { holds } from './field.js?v=20261108-1000';
+import { apeOffAll } from './cards_a.js?v=20261108-1000'; // CE160 大猿全解除
+import { applyLevel } from './party.js?v=20261108-1000';
+import { ensure } from './growth.js?v=20261108-1000';
 
 const TR = (game) => game.world.timeroom;
 const TX = (game) => TR(game).text;

@@ -12,15 +12,15 @@
 // Each family is one piece of code in the original with the members and a few numbers changed: here one film per
 // family with those numbers in a table. The stage is src/anime_zfighters.js's (the strips, the cut-in, the original's
 // back / effect counters). Frame numbers in the comments are the original's @battle_anime_frame.
-import { img, audio } from './core.js?v=20261108-0950';
-import { Duel, spark, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED } from './anime.js?v=20261108-0950';
-import { ComboDuel, addComboFilms } from './combo-anime.js?v=20261108-0950';
-import { ZfStage, zfBlt } from './anime_zfighters.js?v=20261108-0950';
-import { AndaGather } from './anime_androids.js?v=20261108-0950';
-import { registerZ3, party, heal } from './z3.js?v=20261108-0950';
-import { applyLevel } from './party.js?v=20261108-0950';
-import { superSaiyan } from './supersaiyan.js?v=20261108-0950';
-import { comboData } from './combo.js?v=20261108-0950';
+import { img, audio } from './core.js?v=20261108-1000';
+import { Duel, spark, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED } from './anime.js?v=20261108-1000';
+import { ComboDuel, addComboFilms } from './combo-anime.js?v=20261108-1000';
+import { ZfStage, zfBlt } from './anime_zfighters.js?v=20261108-1000';
+import { AndaGather } from './anime_androids.js?v=20261108-1000';
+import { registerZ3, party, heal } from './z3.js?v=20261108-1000';
+import { applyLevel } from './party.js?v=20261108-1000';
+import { superSaiyan } from './supersaiyan.js?v=20261108-1000';
+import { comboData } from './combo.js?v=20261108-1000';
 
 const pic = (n) => `Graphics/Pictures/${n}`;
 const STD_CHAX = -70; // STANDARD_CHAX (src/anime.js)

@@ -2,7 +2,7 @@
 //   王子の誇り 9 / 428 / 429   fighting alone: damage dealt ×fx.a, taken ×fx.g; EXP ×fx.b while not the top level
 //   サイヤ人の結束 80-88       like Z戦士の絆: per other fighting member holding it, dealt +(fx.a − 1), taken −(1 − fx.g)
 //   応援 77-79, 197-202        the first fighting member (card order) holding it: everyone's dealt ×fx.a, taken ×fx.g
-import * as growth from './growth.js?v=20261108-0950';
+import * as growth from './growth.js?v=20261108-1000';
 
 const G = () => window.__game; // (main.js) the running game: the party for 王子の誇り's EXP (the exp hook gets no world)
 const n = (v) => Number(v) || 0;

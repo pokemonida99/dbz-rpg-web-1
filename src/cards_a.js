@@ -15,16 +15,16 @@
 // default 不保持: back), and the story turns 悟飯 back after the Z1 bosses and Willow (Map007 #ゴハン大猿OFF: the
 // tacApeOff node, tools/build_data.py), as does CE160 in the 時之間 (apeOffAll). Switches 364-368 are $oozaru_flag (CE9
 // reads them); the 作戰 move is kept apart for the ape (variables 442-453, tacgvar).
-import { audio, say, choose, sleep, toast, rand } from './core.js?v=20261108-0950';
-import { fieldCards, cardState } from './items.js?v=20261108-0950';
-import * as battle from './battle.js?v=20261108-0950';
-import * as combo from './combo.js?v=20261108-0950';
-import * as field from './field.js?v=20261108-0950';
-import { has, ensure, useSkillCard, revive, ran } from './growth.js?v=20261108-0950';
-import { pickMember, tally } from './partymenu.js?v=20261108-0950';
-import { registerZ3, party } from './z3.js?v=20261108-0950';
-import { addNodes } from './cutscene.js?v=20261108-0950';
-import { ssOff } from './supersaiyan.js?v=20261108-0950';
+import { audio, say, choose, sleep, toast, rand } from './core.js?v=20261108-1000';
+import { fieldCards, cardState } from './items.js?v=20261108-1000';
+import * as battle from './battle.js?v=20261108-1000';
+import * as combo from './combo.js?v=20261108-1000';
+import * as field from './field.js?v=20261108-1000';
+import { has, ensure, useSkillCard, revive, ran } from './growth.js?v=20261108-1000';
+import { pickMember, tally } from './partymenu.js?v=20261108-1000';
+import { registerZ3, party } from './z3.js?v=20261108-1000';
+import { addNodes } from './cutscene.js?v=20261108-1000';
+import { ssOff } from './supersaiyan.js?v=20261108-1000';
 
 const SE_ERR = 'Z3 エラー';
 const APE = { sprite: 'Graphics/Pictures/Z1_戦闘_ゴハン(大猿)96×96.png', special: 'Graphics/Pictures/Z1_戦闘_必殺技_ゴハン(大猿)96×96.png', size: 192 };

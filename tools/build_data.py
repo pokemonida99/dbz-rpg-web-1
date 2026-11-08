@@ -441,5 +441,11 @@ world = fix_case(world)
 for i in (25, 26):
     for k in (i, str(i)):
         if k in world['actors']: world['actors'][k]['name'] = '未來悟飯'
+# TileA1 by variable 17 (create_tilemap 33067: 0/1 TileA1, else TileA1_n): its first autotile is space on TileA1 and
+# the sea / ice / Kuun / Outer ground on the others. Variable 17 = 2 from the Z3 start (page 1151) through Z4 and in the
+# 時之間 copies of those maps; the ZG pages set 3 (西の都 6391), 4 (氷の大陸 6331), 5 (クーン 6481), 6 (オウター 6531).
+A1 = {**{m: 2 for m in (*range(33, 50), 55, *range(73, 96))}, 107: 3, 106: 4, 108: 5, 109: 6}
+for m, n in A1.items():
+    if str(m) in world['maps']: world['maps'][str(m)]['a1'] = n
 json.dump(world, open(os.path.join(root, 'data', 'world.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 print('world.json written')

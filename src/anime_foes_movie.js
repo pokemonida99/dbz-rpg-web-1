@@ -3,11 +3,11 @@
 // ゴーストライチー, ハッチヒャック, タード一味 and ガーリック(Z3). All of them are enemies of the Z3 move switch
 // (enemy id ≥ 101), attack pattern = skill id + 10; most of their waves are the enemies' shared films
 // (src/anime_foes_common.js), the rest are their own patterns, ported here frame by frame on the same stage (FeStage).
-import { audio, rand } from './core.js?v=20261108-1614';
-import { Duel, spark, STD_Y, CENTER_CHAX, CENTER_ENEX } from './anime.js?v=20261108-1614';
-import { feRegister, feFilms, foeId, feFallback } from './anime_foes_common.js?v=20261108-1614';
-import { registerZ3, party, heal } from './z3.js?v=20261108-1614';
-import { applyLevel } from './party.js?v=20261108-1614';
+import { audio, rand } from './core.js?v=20261108-1751';
+import { Duel, spark, STD_Y, CENTER_CHAX, CENTER_ENEX } from './anime.js?v=20261108-1751';
+import { feRegister, feFilms, foeId, feFallback } from './anime_foes_common.js?v=20261108-1751';
+import { registerZ3, party, heal } from './z3.js?v=20261108-1751';
+import { applyLevel } from './party.js?v=20261108-1751';
 
 const pic = (n) => `Graphics/Pictures/${n}`;
 const STD_ENEX = 602, STD_ENEY = STD_Y;

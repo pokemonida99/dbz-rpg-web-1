@@ -1,5 +1,5 @@
 // RPG Maker VX tilemap drawing (A1–A5 autotiles and B–E sheets), rendered once into layer canvases.
-import { img } from './core.js?v=20261108-1614';
+import { img } from './core.js?v=20261108-1751';
 
 const FLOOR = [
   [[2,4],[1,4],[2,3],[1,3]],[[2,0],[1,4],[2,3],[1,3]],[[2,4],[3,0],[2,3],[1,3]],[[2,0],[3,0],[2,3],[1,3]],
@@ -25,6 +25,8 @@ const FALL = [[[2,0],[1,0],[2,1],[1,1]],[[0,0],[1,0],[0,1],[1,1]],[[2,0],[3,0],[
 
 const SHEETS = ['TileA1', 'TileA2', 'TileA3', 'TileA4', 'TileA5', 'TileB', 'TileC', 'TileD', 'TileE'];
 export const tileSheetPaths = SHEETS.map((n) => `Graphics/System/${n}.png`);
+// TileA1_2 … _6 (create_tilemap: variable 17), the sheet a map's {a1} asks for in place of TileA1 (tools/build_data.py)
+export const a1Paths = [2, 3, 4, 5, 6].map((n) => `Graphics/System/TileA1_${n}.png`);
 
 export function drawTile(c, bm, id, dx, dy, anim) {
   if (id < 1024) {
@@ -64,7 +66,7 @@ export function drawTile(c, bm, id, dx, dy, anim) {
 
 // Renders the map into a ground canvas and an "above characters" canvas (☆ tiles).
 export function renderMap(map, passages) {
-  const bm = tileSheetPaths.map((p) => { const e = img(p); return e.ok ? e.im : null; });
+  const bm = tileSheetPaths.map((p, i) => { const e = img(i === 0 && map.a1 ? `Graphics/System/TileA1_${map.a1}.png` : p); return e.ok ? e.im : null; });
   const W = map.w * 32, H = map.h * 32;
   const ground = mkCanvas(W, H), upper = mkCanvas(W, H);
   const g = ground.getContext('2d'), u = upper.getContext('2d');

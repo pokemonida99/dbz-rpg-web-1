@@ -8,8 +8,8 @@
 // line (the scratch converter rb2js.py: case / when / if, @x → o.x); naRun is the frame loop around it (67470-67600):
 // the pattern, then output_battle_anime (the attacker's @gx flips every frame, or @ax when the enemy attacks), then
 // the effect pattern (120-123) at ray_x / ray_y; anime_pattern_fromat ends a pattern.
-import { audio } from './core.js?v=20261108-1614';
-import { Duel, draw } from './anime.js?v=20261108-1614';
+import { audio } from './core.js?v=20261108-1751';
+import { Duel, draw } from './anime.js?v=20261108-1751';
 
 const STANDARD_CHAX = -70, STANDARD_CHAY = 120, STANDARD_ENEX = 602, STANDARD_ENEY = 120;
 const CENTER_CHAX = 240, CENTER_ENEX = 304;

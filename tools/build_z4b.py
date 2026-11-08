@@ -214,7 +214,7 @@ def cell_faces(nodes, v):
     state = {'v': v}
 
     def form():
-        return '沙魯' if state['v'] < 2167 else '沙魯(第２形態)' if state['v'] < 2275 else '沙魯(完全體)'
+        return '沙魯(第１形態)' if state['v'] < 2167 else '沙魯(第２形態)' if state['v'] < 2275 else '沙魯(完全體)'
 
     def walk(ns):
         out = []

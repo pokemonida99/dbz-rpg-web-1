@@ -3,7 +3,7 @@
 // the enemy on the right — played at 60 frames a second with the original sprites, beams and sounds.
 // Positions, speeds and frame numbers follow the original's anime_pattern / effect_pattern / back_anime_pattern
 // (pattern numbers are noted on each piece). The stage is drawn into its own canvas and cropped to the phone.
-import { img, audio, rand } from './core.js?v=20261108-1614';
+import { img, audio, rand } from './core.js?v=20261108-1751';
 
 export const SW = 640, SH = 356;
 // a film drew its cut-in (y 292-356) this frame: on a phone that band is below the stage's window (src/battle.js drawFilm)

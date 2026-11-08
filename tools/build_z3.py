@@ -228,6 +228,8 @@ def add(world, h):
             k += 1
         return out
 
+    base_faces = faces
+
     def nodes_of(lst, faces=faces):
         """script() plus BGM changes ({bgm}) and loops ({loop}); speakers with a Z3 face get say[2] = 'z3:name'."""
         lst = loops(resolve_jumps(lst))
@@ -247,6 +249,12 @@ def add(world, h):
                     who, text = n['say'][0], n['say'][1]
                     if who in NARRATION:
                         n = {'say': ['', f'{who}「{text}」']}
+                    elif who in faces and faces[who] != base_faces.get(who):
+                        # a chapter's own face for this name (沙魯: 第１形態 27 in Z4 第一章, 完全體 29 in the Cell Games):
+                        # its own key, or the last chapter's table would win for every page
+                        key = f'z3:{who}:{os.path.basename(faces[who][0]).split(".")[0]}:{faces[who][1]}'
+                        world['faces'][key] = faces[who]
+                        n = {'say': [who, text, key]}
                     elif who in faces or who == '？':
                         n = {'say': [who, text, 'z3:' + who]}
                 for k in ('then', 'else', 'loop'):

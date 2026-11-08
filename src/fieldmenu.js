@@ -10,11 +10,12 @@
 // goldGot, goldSpent, cardBuy, cardSell, chaMax [actor, enemy, damage], eneMax [enemy, actor, damage];
 // state.foeKills[enemy] ($ene_defeat_num), state.foeSeen[enemy] ($ene_enc_history_flag),
 // state.foeScouted[enemy] ($ene_sco_history_flag: HP and drops shown), state.cardUses[item] ($card_run_num).
-import { view, img, audio, say, choose, textSpeed, warmImages } from './core.js?v=20261108-1751';
-import { Battle, battleOpts } from './battle.js?v=20261108-1751';
-import { fieldCards } from './items.js?v=20261108-1751';
-import { holds, fieldOpts } from './field.js?v=20261108-1751';
-import { shownFoes, foeFace } from './db3ed.js?v=20261108-1751'; // the 図鑑's enemies (update_eneput_flag)
+import { view, img, audio, say, choose, textSpeed, warmImages } from './core.js?v=20261108-2252';
+import { Battle, battleOpts } from './battle.js?v=20261108-2252';
+import { fieldCards } from './items.js?v=20261108-2252';
+import { holds, fieldOpts } from './field.js?v=20261108-2252';
+import { cheat, cheatFill } from './cheat.js?v=20261108-2252';
+import { shownFoes, foeFace } from './db3ed.js?v=20261108-2252'; // the 図鑑's enemies (update_eneput_flag)
 
 const SE_OK = 'Z3 決定', SE_MOVE = 'Z3 カーソル移動', SE_ERR = 'Z3 エラー';
 const FOE_FACES = 'Graphics/Pictures/Z1_顔敵.PNG', FACES = 'Graphics/Pictures/Z1_顔味方.PNG', CARDS = 'Graphics/Pictures/カード関係.PNG';
@@ -23,14 +24,17 @@ const RADAR = 'Graphics/Pictures/ドラゴンレーダー.PNG', BALL = 'Graphics
 
 // ---------- options (Scene_Db_Option) ----------
 const OPT_KEY = 'dbz-portrait-options';
-export const options = { bgm: 0, ready: 0, enc: 1, encSe: 0, battleFast: 0, quickGo: 0, fastMsg: 0, skipOp: 0, skipRecap: 0, runSkill: 0, runSlide: 0, goalArrow: 1 };
+export const options = { bgm: 0, ready: 0, enc: 1, encSe: 0, battleFast: 1, quickGo: 0, fastMsg: 0, skipOp: 0, skipRecap: 0, runSkill: 0, runSlide: 0, goalArrow: 1, cheat: 0, cheatCards: 0 };
 try { Object.assign(options, JSON.parse(localStorage.getItem(OPT_KEY)) || {}); } catch (e) { /* first run */ }
+if (!options.fastV) { options.battleFast = 1; options.fastV = 1; } // 戰鬥速度 now starts 高速化 (saves of the settings from before keep 默認值 otherwise)
 // src/laps_rules.js: the rows a later round adds; its event battles' songs (variables 428 / 429)
 export const lapOptions = { rows: () => [], ready: () => options.ready, event: () => 0 };
 const saveOptions = () => { try { localStorage.setItem(OPT_KEY, JSON.stringify(options)); } catch (e) { /* private mode */ } };
 textSpeed.instant = !!options.fastMsg;
 battleOpts.quick = !!options.quickGo;
 fieldOpts.arrow = !!options.goalArrow;
+cheat.on = !!options.cheat;
+cheat.cards = !!options.cheatCards;
 
 // 戰鬥BGM (set_battle_bgm_name, variable 37): 0 默認 follows the story (Z1 戦闘2 from the Sansho area on), 1 隨機, then the
 // original's numbers with [file, title] (world.sys.bgm.battle, tools/build_sys.py; these four when it isn't there)
@@ -357,7 +361,7 @@ const OPTION_ROWS = [
   ['ready', '戰鬥前ＢＧＭ', songList('ready'), '設定戰鬥開始到第一次出招前的BGM（默認：不播）'],
   ['enc', '遇敵', [[0, '少'], [1, '普通'], [2, '多']], '設定遇敵頻率'],
   ['encSe', '遇敵音樂', [[0, 'DBZ 強襲！サイヤ人！'], [1, 'DBZ3 烈戦人造人間'], [2, 'DBZ 超サイヤ伝説'], [3, 'DBZ 悟空激闘伝']], '設定遇敵音'],
-  ['battleFast', '戰鬥速度', [[0, '默認值'], [1, '高速化']], '設定戰鬥動畫的速度'],
+  ['battleFast', '戰鬥速度', [[1, '高速化'], [0, '默認值']], '設定戰鬥動畫的速度（戰鬥中點一下畫面可切換）'],
   ['runSkill', '發動技能顯示', [[0, '全部'], [1, '攻擊時'], [2, '防禦時'], [3, '不顯示']], '設定戰鬥時技能發動的顯示條件'], // variable 351 (src/viz.js)
   ['runSlide', '技能顯示方法', [[0, '滑動'], [1, '固定位置']], '設定戰鬥時技能發動的顯示方法'], // variable 352
   ['quickGo', '選完直接出招', [[0, '關閉'], [1, '打開']], '全員選好卡片後不用按「出招！」，直接開始（和原版一樣）'],
@@ -365,6 +369,8 @@ const OPTION_ROWS = [
   ['skipOp', '跳過ＯＰ', [[0, '關閉'], [1, '打開']], '啟動時不播放片頭動畫'],
   ['skipRecap', '跳過概況', [[0, '關閉'], [1, '打開']], '讀取存檔時不顯示前情提要'],
   ['goalArrow', '目標箭頭', [[1, '顯示'], [0, '不顯示']], '地圖上主角旁的小箭頭，指向目前目標的方向（原版沒有）'], // src/field.js drawArrow
+  ['cheat', '作弊模式', [[0, '關閉'], [1, '打開']], 'CAP 和全員 ZP 變成 9999999，用了也不會減少；關掉後照常扣（原版沒有）'], // src/cheat.js
+  ['cheatCards', '卡片全滿', [[0, '關閉'], [1, '打開']], '所有卡片變成持有上限的張數（龍珠和劇情道具除外），用了也不會減少；關掉後照常扣（原版沒有）'], // src/cheat.js
 ];
 function openOptions(g) {
   let help = '';
@@ -380,6 +386,9 @@ function openOptions(g) {
         textSpeed.instant = !!options.fastMsg;
         battleOpts.quick = !!options.quickGo;
         fieldOpts.arrow = !!options.goalArrow;
+        cheat.on = !!options.cheat;
+        cheat.cards = !!options.cheatCards;
+        cheatFill(g.state, g.world);
         help = desc;
         if (key === 'encSe') audio.se('Z1 敵発見');
         render();

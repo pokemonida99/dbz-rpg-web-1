@@ -9,10 +9,11 @@
 //               effects (power, guard, first strike, dodge, KI-free move, stopping or weakening an enemy, scouter).
 // Data: world.items / cardShop / drops (tools/build_items.py). Battle hooks: the exports under "battle" below.
 // Menus: the 卡牌 slot of src/partymenu.js (battle 菜單 and field menu, battle = null on the field).
-import { img, audio, toast, rand } from './core.js?v=20261108-1751';
-import { newCard } from './battle.js?v=20261108-1751';
-import { menuEntries, hooks } from './partymenu.js?v=20261108-1751';
-import { ext } from './growth.js?v=20261108-1751'; // (先手必勝, カードドロップ: src/skills_d.js)
+import { img, audio, toast, rand } from './core.js?v=20261108-2252';
+import { pay, keepCard } from './cheat.js?v=20261108-2252';
+import { newCard } from './battle.js?v=20261108-2252';
+import { menuEntries, hooks } from './partymenu.js?v=20261108-2252';
+import { ext } from './growth.js?v=20261108-2252'; // (先手必勝, カードドロップ: src/skills_d.js)
 
 const ICONS = 'ui/item_cards.png'; // 64×64 icons, 10 a row, the Z1 column of the original 顔カード.PNG
 const CARDS = 'Graphics/Pictures/カード関係.PNG';
@@ -47,7 +48,7 @@ export function gainCard(world, s, id, n = 1) {
 let WORLD = null;
 export function setItemsWorld(w) { WORLD = w; }
 export const eventCard = (s, id, n) => (WORLD ? gainCard(WORLD, s, id, n) : null);
-export function lose(s, id) { if (!--s.cards[id]) delete s.cards[id]; }
+export function lose(s, id) { if (keepCard(WORLD && WORLD.items[id])) return; if (!--s.cards[id]) delete s.cards[id]; }
 
 // set_max_item_card: copies over the limit are sold for half their price
 export function trim(world, s) {
@@ -635,7 +636,7 @@ export function openShop(game) {
           if (tab === 'buy') {
             if (it.price > s.zeni || have >= maxOf(s, it)) { audio.se(SE_ERR, 70); toast(have >= maxOf(s, it) ? '已經到持有上限了' : 'CAP 不夠'); bad = it.price > s.zeni; if (bad) { locked = true; setTimeout(() => { locked = false; render(); }, 350); render(); } return; }
             fxFrom = s.zeni; fxId = sel; locked = true; setTimeout(() => { locked = false; render(); }, 450);
-            s.zeni -= it.price;
+            s.zeni -= pay(it.price);
             gainCard(world, s, sel);
           } else {
             s.zeni += Math.floor(it.price / 2);

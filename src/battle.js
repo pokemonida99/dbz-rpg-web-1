@@ -9,15 +9,15 @@
 // window over the stage. Tapping outside the window / anything but an enemy while targeting cancels that card.
 // A picked card wears its member's face: tap it (or the face above) to pick again for that member; 返回 undoes the
 // last pick. With everyone picked a big 出招！ starts the turn (or right away with 設定「選完直接出招」).
-import { view, img, loadImages, audio, sleep, rand } from './core.js?v=20261108-1751';
-import { levelUp, EXP_RATE } from './party.js?v=20261108-1751';
-import { Duel, ANIME_IMAGES, SW, SH, BACK_Y, filmCut } from './anime.js?v=20261108-1751';
-import { commandButtons, autoSkill, autoTarget, tally } from './partymenu.js?v=20261108-1751'; // command row, 作戰, counters
-import * as items from './items.js?v=20261108-1751'; // item cards: effects that touch the battle rules
-import { tryCombo, announceCombos, comboHints, hasCombos, HINT_TEXT } from './combo.js?v=20261108-1751'; // 組合技
-import * as growth from './growth.js?v=20261108-1751'; // passive skills, proficiency, KO, SP / ZP / EXP pool
-import { superSaiyan, moveTransforms, afterBattle as ssAfterBattle } from './supersaiyan.js?v=20261108-1751'; // 超サイヤ人
-import { skin } from './era.js?v=20261108-1751'; // the window skin of the story's era (frame, ground colour, ▼)
+import { view, img, loadImages, audio, sleep, rand } from './core.js?v=20261108-2252';
+import { levelUp, EXP_RATE } from './party.js?v=20261108-2252';
+import { Duel, ANIME_IMAGES, SW, SH, BACK_Y, filmCut } from './anime.js?v=20261108-2252';
+import { commandButtons, autoSkill, autoTarget, tally } from './partymenu.js?v=20261108-2252'; // command row, 作戰, counters
+import * as items from './items.js?v=20261108-2252'; // item cards: effects that touch the battle rules
+import { tryCombo, announceCombos, comboHints, hasCombos, HINT_TEXT } from './combo.js?v=20261108-2252'; // 組合技
+import * as growth from './growth.js?v=20261108-2252'; // passive skills, proficiency, KO, SP / ZP / EXP pool
+import { superSaiyan, moveTransforms, afterBattle as ssAfterBattle } from './supersaiyan.js?v=20261108-2252'; // 超サイヤ人
+import { skin } from './era.js?v=20261108-2252'; // the window skin of the story's era (frame, ground colour, ▼)
 
 export const SCHOOL = ['必', '龜', '神', '界', '魔', '惑', '基', '悟', '超'];
 const HAND = 6;

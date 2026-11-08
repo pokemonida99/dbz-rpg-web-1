@@ -9,8 +9,9 @@
 // got {skill: 1} learned, set {skill: 1} ever set, zp, maxLv (top level reached), plus {hp,ki,atk,def,agi} from ZP,
 // ko (knocked out: stays out until HP is back to full or the party rests).
 // Per game: state.skillSeen {skill: n} ($skill_set_get_num[1], which skills the 追加技能 list offers), var[305] pool.
-import { audio, say, choose, rand, VERSION } from './core.js?v=20261108-1751';
-import { levelUp, levelCap } from './party.js?v=20261108-1751';
+import { audio, say, choose, rand, VERSION } from './core.js?v=20261108-2252';
+import { levelUp, levelCap } from './party.js?v=20261108-2252';
+import { pay } from './cheat.js?v=20261108-2252';
 
 const SKILL_GET_MAX = 9; // $skill_get_max
 const HINSHI = 31; // $hinshi_hp: below this HP % a member is "dying"
@@ -479,8 +480,8 @@ export function applyAdd(world, state, m, id, slot) {
   if (r.kind !== 'place') {
     if (state.zeni < r.cost) return false;
     const k = sk(world, id);
-    if (!m.set[id]) { m.set[id] = 1; state.zeni -= k.cap; } else {
-      state.zeni -= r.cost;
+    if (!m.set[id]) { m.set[id] = 1; state.zeni -= pay(k.cap); } else {
+      state.zeni -= pay(r.cost);
       m.got[id] = 1;
       m.sp[id] = k.sp;
       if (nextRuns(world, m, id, false)) { seen(state, k.up, 1); m.set[k.up] = 1; }
@@ -497,7 +498,7 @@ export function typicalUp(world, m, slot) {
 export function applyTypicalUp(world, state, m, slot) {
   const u = typicalUp(world, m, slot);
   if (!u || state.zeni < u.cost) return false;
-  state.zeni -= u.cost;
+  state.zeni -= pay(u.cost);
   m.set[u.id] = m.got[u.id] = 1;
   seen(state, u.id, 1);
   m.sp[u.id] = need(world, u.id);
@@ -575,15 +576,15 @@ export async function useZp(game) {
       }
       if (n == null) continue;
       const cost = n * STATUSUP_ZP, after = m[stat] + n * step;
-      if (await ask([`${m.name}的　${label}自${m[stat]}　提高到　${after}\n可以嗎？　ZP　消費：${cost}　剩餘：${m.zp - cost}`])) continue;
+      if (await ask([`${m.name}的　${label}自${m[stat]}　提高到　${after}\n可以嗎？　ZP　消費：${cost}　剩餘：${m.zp - pay(cost)}`])) continue;
       audio.se('Z3 レベルアップ');
       flash();
-      await say([['', `${m.name}的　${label}自　${m[stat]}　提高到　${after}　\nZP　消費：${cost}　剩餘：${m.zp - cost}`]]);
+      await say([['', `${m.name}的　${label}自　${m[stat]}　提高到　${after}　\nZP　消費：${cost}　剩餘：${m.zp - pay(cost)}`]]);
       m.plus[key] += n * step;
       m[stat] += n * step;
       if (key === 'hp') m.hp += n * step;
       if (key === 'ki') m.ki += n * step;
-      m.zp -= cost;
+      m.zp -= pay(cost);
       m.runzp = (m.runzp || 0) + n;
       again = false;
     }

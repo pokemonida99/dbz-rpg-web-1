@@ -4,10 +4,10 @@
 //   s.sw[860]    on during any second or later round; s.sw[455] (from 時間君, page zgbj:90041): this save may start one
 //   s.sw[861]    必殺技 was carried over: CE9 (syncLap below), CE61 (src/costume.js), CE64 (src/grw.js) give those moves
 //   s.lapKeep    { members: { id: what carries over } }: everyone who joins later starts from it (makeMember, src/party.js)
-import { audio } from './core.js?v=20261108-1751';
-import { applyLevel, setMemberHook } from './party.js?v=20261108-1751';
-import { FORMS, superSaiyan, offHooks } from './supersaiyan.js?v=20261108-1751';
-import { registerZ3, party } from './z3.js?v=20261108-1751';
+import { audio } from './core.js?v=20261108-2252';
+import { applyLevel, setMemberHook } from './party.js?v=20261108-2252';
+import { FORMS, superSaiyan, offHooks } from './supersaiyan.js?v=20261108-2252';
+import { registerZ3, party } from './z3.js?v=20261108-2252';
 
 export const lapCount = (s) => (s && s.laps) || 0;
 export const isLap = (s) => lapCount(s) >= 1;

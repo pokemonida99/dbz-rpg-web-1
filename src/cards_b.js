@@ -11,11 +11,12 @@
 //   173 氣墊車  15 more card moves at double distance (variable 420, shared with 76 飛機)
 //   197 修行之石  every special move of one member +5 uses (add_actor_all_tec_level)
 //   203 重力裝置  CAP → ZP for one member, 15 CAP a point ($captozp_rate); never used up
-import { audio, say, choose, img } from './core.js?v=20261108-1751';
-import * as items from './items.js?v=20261108-1751';
-import * as battle from './battle.js?v=20261108-1751';
-import * as partymenu from './partymenu.js?v=20261108-1751';
-import * as growth from './growth.js?v=20261108-1751';
+import { audio, say, choose, img } from './core.js?v=20261108-2252';
+import * as items from './items.js?v=20261108-2252';
+import * as battle from './battle.js?v=20261108-2252';
+import * as partymenu from './partymenu.js?v=20261108-2252';
+import * as growth from './growth.js?v=20261108-2252';
+import { pay } from './cheat.js?v=20261108-2252';
 
 const { fieldCards, overlay, h, button, handCanvas } = items;
 const { newCard, KI_CARD } = battle;
@@ -215,7 +216,7 @@ function capToZp(game, m) {
         if (!ok) { audio.se('Z3 決定'); done(false); return; }
         audio.se(SE_POWER);
         ensure(m).zp += cap / CAP_RATE;
-        s.zeni -= cap;
+        s.zeni -= pay(cap);
         done(true);
       };
       row.append(b);

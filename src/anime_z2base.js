@@ -2,10 +2,10 @@
 // Z2 switch 58400 on): src/anime.js holds the Z1 ones (patterns 1xx), whose poses are the Z1 sheets' and go wrong on the Z2 / Z3 sheets
 // of the same member. Written out frame by frame like src/anime_z3base.js; f is @battle_anime_frame. The party on src/anime_zfighters.js's
 // stage, the enemies on src/anime_foes_common.js's. Moves with a film of their own in Z3 only come here in Z2 (Z3B: src/anime_z3base.js).
-import { audio, img } from './core.js?v=20261108-1751';
-import { Duel, addMoves, draw, RAY, STD_Y, CENTER_CHAX, CENTER_ENEX, BACK_Y, RAY_SPEED } from './anime.js?v=20261108-1751';
-import { ZfStage } from './anime_zfighters.js?v=20261108-1751';
-import { EFFECTS, BACKS, FE_IMAGES } from './anime_foes_common.js?v=20261108-1751';
+import { audio, img } from './core.js?v=20261108-2252';
+import { Duel, addMoves, draw, RAY, STD_Y, CENTER_CHAX, CENTER_ENEX, BACK_Y, RAY_SPEED } from './anime.js?v=20261108-2252';
+import { ZfStage } from './anime_zfighters.js?v=20261108-2252';
+import { EFFECTS, BACKS, FE_IMAGES } from './anime_foes_common.js?v=20261108-2252';
 
 const pic = (n) => `Graphics/Pictures/${n}`;
 // $btl_top_file_name + "戦闘_必殺技_…": [Z2_, Z3_] (the other era's where one has none)

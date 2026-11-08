@@ -1,7 +1,8 @@
 // Field: free flight over the map, random encounters, the boss marker.
-import { view, img, input, audio, rand } from './core.js?v=20261108-1751';
-import { renderMap, drawTile, tileSheetPaths } from './tiles.js?v=20261108-1751';
-import { flySprite, walkSprite } from './costume.js?v=20261108-1751';
+import { view, img, input, audio, rand } from './core.js?v=20261108-2252';
+import { renderMap, drawTile, tileSheetPaths } from './tiles.js?v=20261108-2252';
+import { cheatFill } from './cheat.js?v=20261108-2252';
+import { flySprite, walkSprite } from './costume.js?v=20261108-2252';
 
 const SPEED = 150; // art pixels per second (~4.7 tiles/s)
 // fieldHooks.step(state, step) → the distance actually flown this frame (src/cards_a.js: 飛機 doubles it); encounters and
@@ -209,6 +210,7 @@ export class Field {
   }
 
   update(dt) {
+    cheatFill(this.game.state, this.game.world); // 作弊模式／卡片全滿 (src/cheat.js)
     if (this.paused) return;
     const s = this.game.state;
     if (this.map.ev) this.syncEvents(); // (the 時之間 maps, and a few events of the story maps)

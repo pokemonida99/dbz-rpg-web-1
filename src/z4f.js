@@ -8,18 +8,18 @@
 //     → 2571 → map 49 the kamehameha duel → 2591 heaven, Shenron, Capsule Corporation → 2602 the end (2691 the staff
 //     roll, 2693 Roshi) → 「Z4 完」 and the title screen (ZG 待續).
 //   After the clear (switch 458, the 時之間 in the original) 2461 asks whether everyone fights → battle 2464 → 2621.
-import { audio, img, loadImages, toast } from './core.js?v=20261108-1751';
-import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261108-1751';
-import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261108-1751';
-import { addMoves, ANIME_IMAGES } from './anime.js?v=20261108-1751';
-import { makeMember, applyLevel } from './party.js?v=20261108-1751';
-import { superSaiyan, syncSuperSaiyan, afterBattle, offHooks, onHooks, changeHooks } from './supersaiyan.js?v=20261108-1751';
-import { applyEra } from './era.js?v=20261108-1751';
-import { newHand } from './battle.js?v=20261108-1751';
-import { cardSquare } from './cardgames.js?v=20261108-1751';
-import { spotTally } from './fieldmenu.js?v=20261108-1751';
-import { duelFilm, screenPic } from './z3c.js?v=20261108-1751';
-import { registerZ3, Z3, begin, fight, toField, party, addMember, leave, member, heal, card, moveTo, setParty } from './z3.js?v=20261108-1751';
+import { audio, img, loadImages, toast } from './core.js?v=20261108-2252';
+import { addScenes, addNodes, playScenes } from './cutscene.js?v=20261108-2252';
+import { SCROLL_X, SCENE_Y, ENE, PLAY_X } from './opening.js?v=20261108-2252';
+import { addMoves, ANIME_IMAGES } from './anime.js?v=20261108-2252';
+import { makeMember, applyLevel } from './party.js?v=20261108-2252';
+import { superSaiyan, syncSuperSaiyan, afterBattle, offHooks, onHooks, changeHooks } from './supersaiyan.js?v=20261108-2252';
+import { applyEra } from './era.js?v=20261108-2252';
+import { newHand } from './battle.js?v=20261108-2252';
+import { cardSquare } from './cardgames.js?v=20261108-2252';
+import { spotTally } from './fieldmenu.js?v=20261108-2252';
+import { duelFilm, screenPic } from './z3c.js?v=20261108-2252';
+import { registerZ3, Z3, begin, fight, toField, party, addMember, leave, member, heal, card, moveTo, setParty } from './z3.js?v=20261108-2252';
 
 const MAPS = ['48', '49'];
 const C = (game) => Z3(game).z4f;

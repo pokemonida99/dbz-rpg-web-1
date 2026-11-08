@@ -1,7 +1,7 @@
 // Field: free flight over the map, random encounters, the boss marker.
-import { view, img, input, audio, rand } from './core.js?v=20261108-0722';
-import { renderMap, drawTile, tileSheetPaths } from './tiles.js?v=20261108-0722';
-import { flySprite, walkSprite } from './costume.js?v=20261108-0722';
+import { view, img, input, audio, rand } from './core.js?v=20261108-0936';
+import { renderMap, drawTile, tileSheetPaths } from './tiles.js?v=20261108-0936';
+import { flySprite, walkSprite } from './costume.js?v=20261108-0936';
 
 const SPEED = 150; // art pixels per second (~4.7 tiles/s)
 // fieldHooks.step(state, step) → the distance actually flown this frame (src/cards_a.js: 飛機 doubles it); encounters and
@@ -307,6 +307,7 @@ export class Field {
     }
     c.drawImage(this.layers.upper, -cx, -cy);
     this.drawEvents(c, cx, cy, true);
+    if (!this.cam) this.drawArrow(c, s, cx, cy);
     if (this.near) { // "!" over the player's head
       const bx = Math.round(s.x - cx), by = Math.round(s.y - (this.map.walk ? 30 : 46) - cy + Math.sin(this.anim * 3) * 2);
       c.fillStyle = '#fff';
@@ -315,6 +316,34 @@ export class Field {
       c.fillRect(bx - 2, by - 7, 4, 8);
       c.fillRect(bx - 2, by + 3, 4, 3);
     }
+  }
+
+  // where the goal is (not in the original — on the big Z2 / Z3 maps it is easy to lose the way): the story spot the goal
+  // line names (「目標：打倒多多利亞」 → the spot 多多利亞), else a boss standing here, else the nearest story spot
+  goalSpot() {
+    const s = this.game.state, goal = this.game.goalText || '';
+    const spots = this.pois.filter((p) => p.label && !EVERYDAY.has(p.label) && !p.label.startsWith('回') && !(p.chapter === 'tr' && TR_DOORS.has(p.page))
+      && !(p.gone && (s.sw || {})[p.gone]) && (!p.when || holds(s, p.when)));
+    const named = spots.filter((p) => { const core = p.label.replace(SPOT_VERB, '').replace(/說話$/, ''); return goal.includes(p.label) || (core.length >= 2 && goal.includes(core)); });
+    const bosses = this.bossList().filter((b) => !b.after || s.flags[b.after]);
+    const pick = named.length ? named : bosses.length ? bosses : spots.filter((p) => p.chapter);
+    let best = null, bd = Infinity;
+    for (const p of pick) { const d = Math.hypot(p.x * 32 + 16 - s.x, p.y * 32 + 16 - s.y); if (d < bd) { bd = d; best = p; } }
+    return best && { x: best.x * 32 + 16, y: best.y * 32 + 16, d: bd };
+  }
+  // a small arrow circling the player, pointing at goalSpot; gone once it is close (4 tiles)
+  drawArrow(c, s, cx, cy) {
+    const g = this.goalSpot();
+    if (!g || g.d < 128) return;
+    const px = s.x - cx, py = s.y - (this.map.walk ? 0 : 12) - cy, a = Math.atan2(g.y - s.y, g.x - s.x);
+    const r = (this.map.walk ? 28 : 42) + Math.sin(this.anim * 3) * 2, ax = px + Math.cos(a) * r, ay = py + Math.sin(a) * r;
+    c.save();
+    c.translate(Math.round(ax), Math.round(ay));
+    c.rotate(a);
+    c.beginPath(); c.moveTo(11, 0); c.lineTo(-7, -9); c.lineTo(-3, 0); c.lineTo(-7, 9); c.closePath();
+    c.lineWidth = 3; c.strokeStyle = '#fff'; c.lineJoin = 'round'; c.stroke();
+    c.fillStyle = '#d0480c'; c.fill();
+    c.restore();
   }
 
   // how far the HUD's faces reach down the screen (art px): the camera may go that far above the map's top edge, so
@@ -349,6 +378,12 @@ export class Field {
     input.dx = input.dy = 0;
   }
 }
+
+// the places that are not the story (the card shops, inns and the like; the time room's own doors and counters) — also
+// left out of src/main.js spotsGoal — and the verbs before a spot's name
+export const EVERYDAY = new Set(['卡片商店', '修行', '進入旅館', '隊伍變更', '界王修行', '巴布魯斯修行', '古雷格利修行', '重力修行', '回到時之間', '時之間']);
+export const TR_DOORS = new Set(['party', 'go', 'area', 'leave', 'info', 'practice', 'arena']);
+const SPOT_VERB = /^(進入|前往|靠近|調查|接觸|迎戰|拜訪|離開|和|到)/;
 
 export const nextEncounterSteps = () => 12 + rand(14);
 

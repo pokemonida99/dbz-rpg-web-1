@@ -9,10 +9,10 @@
 // The original's switch is set in `terminate`, i.e. whenever the scene is left other than by cancelling at the
 // first screen — that includes leaving it to pick the trainee — so here it is set as soon as the trainee is picked.
 // Frame timings (Graphics.wait 30 per card, 60 for messages when variable 38 = 0) follow the original at 60 fps.
-import { img, audio, rand } from './core.js?v=20261108-0722';
-import { newCard } from './battle.js?v=20261108-0722';
-import { levelUp, EXP_RATE } from './party.js?v=20261108-0722';
-import { el, overlay, button, sprite } from './fieldmenu.js?v=20261108-0722';
+import { img, audio, rand } from './core.js?v=20261108-0936';
+import { newCard } from './battle.js?v=20261108-0936';
+import { levelUp, EXP_RATE } from './party.js?v=20261108-0936';
+import { el, overlay, button, sprite } from './fieldmenu.js?v=20261108-0936';
 
 const P = (n) => `Graphics/Pictures/${n}.PNG`;
 const CARDS = P('カード関係'), DIGITS = P('数字英語'), FACES = P('Z1_顔味方');

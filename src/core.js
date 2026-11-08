@@ -1,6 +1,6 @@
 // Shared runtime: canvas scaling, assets, input, audio, dialogue, toast.
 
-export const VERSION = '20261108-0722'; // stamped by tools/bump.py on each deploy
+export const VERSION = '20261108-0936'; // stamped by tools/bump.py on each deploy
 export const ASSET_ROOT = 'assets/';
 export const assetUrl = (p) => (ASSET_ROOT + p).split('/').map(encodeURIComponent).join('/');
 
@@ -274,7 +274,20 @@ const dlg = document.getElementById('dialog');
 const dlgWho = dlg.querySelector('.who'), dlgText = dlg.querySelector('.text');
 const dlgFace = dlg.querySelector('.face'), dlgChoices = dlg.querySelector('.choices');
 let dlgAdvance = null;
-dlg.addEventListener('pointerdown', (e) => { e.stopPropagation(); if (dlgAdvance) dlgAdvance(); });
+// a tap anywhere goes on while the box waits (not while choosing); the tap, and the click after it, reach nothing under it
+let eatClick = 0;
+window.addEventListener('pointerdown', (e) => {
+  if (dlg.hidden || !dlgAdvance || !dlgChoices.hidden) return;
+  e.stopPropagation(); e.preventDefault();
+  audio.unlock();
+  eatClick = performance.now() + 800;
+  dlgAdvance();
+}, true);
+window.addEventListener('click', (e) => {
+  if (performance.now() > eatClick) return;
+  eatClick = 0;
+  e.stopPropagation(); e.preventDefault();
+}, true);
 
 // speaker name → [face sheet, row] (64×64 faces of the original); set from world.faces
 let faces = {};

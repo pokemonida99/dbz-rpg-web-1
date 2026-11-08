@@ -7,9 +7,9 @@
 //           「カクカク対策」). 3720 frames.
 //   z2crew  z2_op with op_change 4 (ZG バーダック一味編): a member's 640×69 band of z2_op_kirikae (row $z2opchano, the
 //           title's picture too) slides in from the left at y 154 while pictures 216-231 show.
-import { audio } from './core.js?v=20261108-0722';
-import { addOpening, blt } from './opening.js?v=20261108-0722';
-import { crewNo } from './opening_pick.js?v=20261108-0722';
+import { audio } from './core.js?v=20261108-0936';
+import { addOpening, blt } from './opening.js?v=20261108-0936';
+import { crewNo } from './opening_pick.js?v=20261108-0936';
 
 const pic = (n) => `Graphics/Pictures/${n}`;
 const num3 = (n) => String(n).padStart(3, '0');

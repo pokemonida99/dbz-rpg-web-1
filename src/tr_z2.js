@@ -7,9 +7,9 @@
 //                  9346 go straight on to 9324 / 9347 after a win (switch 128)
 //          z2warp  map 71's squares between its parts (9353-9362)
 // The card squares, inns and training squares are the ordinary ones (world.pois effect shop / rest / training).
-import { registerArea, registerTrSpot, registerBackdrop, enterArea, leaveArea, trBattle, goTo } from './timeroom.js?v=20261108-0722';
-import { registerZ3, begin, party } from './z3.js?v=20261108-0722';
-import { moveTo } from './chapter2.js?v=20261108-0722';
+import { registerArea, registerTrSpot, registerBackdrop, enterArea, leaveArea, trBattle, goTo } from './timeroom.js?v=20261108-0936';
+import { registerZ3, begin, party } from './z3.js?v=20261108-0936';
+import { moveTo } from './chapter2.js?v=20261108-0936';
 
 const C = (game) => game.world.trz2;
 

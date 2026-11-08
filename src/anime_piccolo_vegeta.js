@@ -15,10 +15,10 @@
 // to it) — the Z1 films (src/anime.js) have neither. Positions are written for the party attacking (the only side
 // that has these moves); an enemy using one gets the same film mirrored.
 // Frame numbers in the comments are the original's @battle_anime_frame of the pattern.
-import { audio, img, rand } from './core.js?v=20261108-1004';
-import { registerZ3, party, heal } from './z3.js?v=20261108-1004';
-import { applyLevel } from './party.js?v=20261108-1004';
-import { addMoves, ANIME_IMAGES, Duel, draw, filmCut, SW, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED, BACK_Y } from './anime.js?v=20261108-1004';
+import { audio, img, rand } from './core.js?v=20261108-1145';
+import { registerZ3, party, heal } from './z3.js?v=20261108-1145';
+import { applyLevel } from './party.js?v=20261108-1145';
+import { addMoves, ANIME_IMAGES, Duel, draw, filmCut, SW, STD_Y, CENTER_CHAX, CENTER_ENEX, TEC_CENTER, RAY_SPEED, BACK_Y } from './anime.js?v=20261108-1145';
 
 addMoves({ 32: 'pvBakuretsuha', 39: 'pvGekiretsu', 40: 'pvMakuHoidan', 41: 'pvMakankoFull', // 比克
   122: 'pvVegetaWave', 125: 'pvBigBang', 130: 'pvFinalFlash' }); // 貝吉塔 / 超貝吉塔

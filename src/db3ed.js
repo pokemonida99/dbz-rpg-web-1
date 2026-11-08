@@ -4,7 +4,7 @@
 // by set_character_face (their clothes: src/costume.js), then the enemies of get_ene_history_list as update_eneput_flag
 // lets it show them (world.db3ed.foes, tools/build_costume.py), Arale last. The last card stays five times as long, and
 // a tap (Input::C) then — 「Z3 アタリ」 — is what leads to 「遇見阿拉蕾」 (page 90911); returns whether it was pressed.
-import { img, audio, assetUrl, loadImages } from './core.js?v=20261108-1004';
+import { img, audio, assetUrl, loadImages } from './core.js?v=20261108-1145';
 
 const PIC = 'Graphics/Pictures/';
 const PARTY = [3, 14, 4, 5, 18, 6, 7, 8, 9, 10, 24, 15, 12, 19, 17, 20, 25, 26, 21, 22, 23, 16, 32, 27, 28, 29, 30]; // @chano (超サイヤ人も混み)

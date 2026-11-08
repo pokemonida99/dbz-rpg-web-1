@@ -84,8 +84,8 @@ def add(world, h, z3):
 
     def ce(p):
         n = p[0]
-        if n == 46:  # 悟空超サイヤ人変身
-            return [{'x': 'ss', 'on': 1}]
+        if n == 46:  # 悟空超サイヤ人変身: the state, then CE45's pictures (src/z3c.js transformFilm, clothes by variable 171)
+            return [{'x': 'ss', 'on': 1}, {'x': 'z3Transform', 'who': 'goku'}]
         if n == 14:  # ドラゴンボール使用
             return [{'item': [i, -99]} for i in range(2, 9)]
         if n == 180:  # 時の間新エリア開放 (and its notice card)
